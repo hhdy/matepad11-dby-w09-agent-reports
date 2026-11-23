@@ -62,7 +62,7 @@ powershell.exe -NoProfile -File .\tools\Analyze-DBY-W09-Firmware.ps1 -FirmwarePa
 ## 版本
 
 - Tool: Analyze-DBY-W09-Firmware.ps1
-- Version: 1.0.1
+- Version: 1.0.2
 
 
 ## DTBO header regression test
@@ -74,3 +74,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-DTBO-Header
 \`\`\`
 
 The test creates a temporary 68-byte synthetic DTBO table, runs the analyzer, verifies that the high-bit magic \`D7B7AB1E\` is recognized, checks that the entry count is reported as 1, and removes its temporary files. It does not touch the real firmware folder or the tablet.
+
+
+Version 1.0.2 also includes `recovery_vbmeta.img` and `erecovery_vbmeta.img` in the boot/AVB metadata inventory and local inspection copies.

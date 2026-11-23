@@ -1,0 +1,1678 @@
+﻿# ADB read-only device report
+# Captured: 2026-11-23T22:33:52.9809513+08:00
+
+=== adb devices -l ===
+adb : * daemon not running; starting now at tcp:5037
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:31 字符: 5
++     adb devices -l
++     ~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (* daemon not ru...now at tcp:5037    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+* daemon started successfully
+List of devices attached
+W3VBB21724204537       device product:DBY-W09 model:DBY_W09 device:HWDBY transport_id:1
+
+=== adb get-state: device ===
+ro.product.model=DBY-W09
+ro.product.device=HWDBY
+ro.product.name=DBY-W09
+ro.board.platform=kona
+ro.boot.hardware=qcom
+ro.soc.model=SM8250
+ro.soc.manufacturer=QTI
+ro.build.fingerprint=HUAWEI/DBY-W09/HWDBY:12/HUAWEIDBY-W09/104.3.0.196C00:user/release-keys
+ro.vendor.build.fingerprint=qti/kona/kona:11/RP1A.200720.011/huawei202408300839:user/dev-keys
+ro.build.version.release=12
+ro.build.version.sdk=31
+ro.vendor.build.version.sdk=30
+ro.build.version.security_patch=2022-08-01
+ro.bootloader=unknown
+ro.boot.slot_suffix=
+ro.boot.verifiedbootstate=orange
+ro.boot.flash.locked=0
+ro.crypto.state=encrypted
+ro.crypto.type=file
+ro.product.cpu.abi=arm64-v8a
+
+=== uname -a ===
+Linux localhost 4.19.157-perf+ #1 SMP PREEMPT Fri Aug 30 08:34:06 CST 2024 aarch64
+
+=== /proc/version ===
+Linux version 4.19.157-perf+ (HarmonyOS@localhost) (clang version 10.0.7 for Android NDK, GNU ld (binutils-2.27-bd24d23f) 2.27.0.20170315) #1 SMP PREEMPT Fri Aug 30 08:34:06 CST 2024
+
+=== /proc/cpuinfo ===
+Processor	: AArch64 Processor rev 14 (aarch64)
+processor	: 0
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x51
+CPU architecture: 8
+CPU variant	: 0xd
+CPU part	: 0x805
+CPU revision	: 14
+
+processor	: 1
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x51
+CPU architecture: 8
+CPU variant	: 0xd
+CPU part	: 0x805
+CPU revision	: 14
+
+processor	: 2
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x51
+CPU architecture: 8
+CPU variant	: 0xd
+CPU part	: 0x805
+CPU revision	: 14
+
+processor	: 3
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x51
+CPU architecture: 8
+CPU variant	: 0xd
+CPU part	: 0x805
+CPU revision	: 14
+
+processor	: 4
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd0d
+CPU revision	: 0
+
+processor	: 5
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd0d
+CPU revision	: 0
+
+processor	: 6
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd0d
+CPU revision	: 0
+
+processor	: 7
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd0d
+CPU revision	: 0
+
+Hardware	: Qualcomm Technologies, Inc KONA
+
+=== /proc/meminfo ===
+MemTotal:       11984584 kB
+MemFree:          908044 kB
+MemAvailable:    6304664 kB
+Buffers:            7616 kB
+Cached:          5108612 kB
+SwapCached:       161672 kB
+Active:          4700620 kB
+Inactive:        3356864 kB
+Active(anon):    2247636 kB
+Inactive(anon):   885664 kB
+Active(file):    2452984 kB
+Inactive(file):  2471200 kB
+Unevictable:      143404 kB
+Mlocked:          143404 kB
+SwapTotal:       8967696 kB
+SwapFree:        7510860 kB
+Dirty:               236 kB
+Writeback:             0 kB
+AnonPages:       3076576 kB
+Mapped:          2283432 kB
+Shmem:             53804 kB
+KReclaimable:     612116 kB
+Slab:             520596 kB
+SReclaimable:     173092 kB
+SUnreclaim:       347504 kB
+KernelStack:      102908 kB
+PageTables:       169304 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    14959988 kB
+Committed_AS:   193177292 kB
+VmallocTotal:   263061440 kB
+VmallocUsed:      159872 kB
+VmallocChunk:          0 kB
+Percpu:             9184 kB
+HardwareCorrupted:     0 kB
+CmaTotal:         368640 kB
+CmaFree:               0 kB
+Protected:        182260 kB
+
+=== /proc/cmdline ===
+adb : cat: /proc/cmdline: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /proc/cmdline: Permission de    nied:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /proc/bootconfig ===
+adb : cat: /proc/bootconfig: No such file or directory
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /proc/boot...le or directory    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /sys/devices/soc0 ===
+total 0
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 accessory_chip
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 build_id
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 chip_family
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 chip_name
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 family
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 foundry_id
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 hw_platform
+-rw-r--r-- 1 root root 4096 2026-11-23 01:21 image_crm_version
+-rw-r--r-- 1 root root 4096 2026-11-23 01:21 image_variant
+-rw-r--r-- 1 root root 4096 2026-11-23 01:21 image_version
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 images
+-r--r--r-- 1 root root 4096 2026-11-23 01:20 machine
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 ncluster_array_offset
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 ndefective_parts_array_offset
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 nmodem_supported
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 nproduct_id
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 num_clusters
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 num_defective_parts
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 platform_subtype
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 platform_subtype_id
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 platform_version
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 pmic_die_revision
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 pmic_model
+drwxr-xr-x 2 root root    0 2026-11-23 22:31 power
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 raw_device_family
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 raw_device_number
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 raw_id
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 raw_version
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 revision
+-rw-r--r-- 1 root root 4096 2026-11-23 01:21 select_image
+-rw-r----- 1 root root 4096 2026-11-23 01:20 serial_number
+-r--r--r-- 1 root root 4096 2026-11-23 01:20 soc_id
+lrwxrwxrwx 1 root root    0 2026-11-23 22:31 subsystem -> ../../bus/soc
+-rw-r--r-- 1 root root 4096 2026-11-23 22:31 uevent
+-r--r--r-- 1 root root 4096 2026-11-23 22:31 vendor
+
+=== soc_id ===
+356
+
+=== soc revision ===
+2.1
+
+=== soc machine ===
+KONA
+
+=== soc family ===
+Snapdragon
+
+=== /sys/firmware ===
+total 0
+drwxr-xr-x 3 root root      0 2026-11-23 22:31 devicetree
+-r-------- 1 root root 800316 2026-11-23 22:31 fdt
+
+=== /proc/device-tree ===
+lrwxrwxrwx 1 root root 29 2026-11-23 22:31 /proc/device-tree -> /sys/firmware/devicetree/base
+
+=== device-tree compatible ===
+adb : cat: /proc/device-tree/compatible: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /proc/devi...rmission denied    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /dev/block/by-name ===
+total 0
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ALIGN_TO_128K_1 -> /dev/block/sdd1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ALIGN_TO_128K_2 -> /dev/block/sdf1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 abl -> /dev/block/sde6
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 aop -> /dev/block/sde1
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 apdp -> /dev/block/sde18
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bluetooth -> /dev/block/sde5
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 boot -> /dev/block/sde9
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bootfail_info -> /dev/block/sda8
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bsp_info -> /dev/block/sda5
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 cache -> /dev/block/sda10
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 cdt -> /dev/block/sdd2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 cust -> /dev/block/dm-0
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ddr -> /dev/block/sdd3
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 devcfg -> /dev/block/sde10
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 devinfo -> /dev/block/sde16
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dfx -> /dev/block/sde24
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dip -> /dev/block/sde17
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 dsp -> /dev/block/sde7
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dtbo -> /dev/block/sde13
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 eng_system -> /dev/block/sda14
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 eng_vendor -> /dev/block/sda15
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery -> /dev/block/sda16
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_ramdisk -> /dev/block/sda17
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_vbmeta -> /dev/block/sda23
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_vendor -> /dev/block/sda18
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 featenabler -> /dev/block/sde15
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 frp -> /dev/block/sda11
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 fsc -> /dev/block/sdf5
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 fsg -> /dev/block/sdf4
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 fw_ufsdev -> /dev/block/sda34
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 hw_product -> /dev/block/dm-1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 hyp -> /dev/block/sde3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 keymaster -> /dev/block/sde8
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 kpatch -> /dev/block/sda31
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 limits -> /dev/block/sde19
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 log -> /dev/block/sda12
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 metadata -> /dev/block/sda32
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 misc -> /dev/block/sda4
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modem -> /dev/block/sde4
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modemst1 -> /dev/block/sdf2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modemst2 -> /dev/block/sdf3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 nvme -> /dev/block/sda3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 odm -> /dev/block/dm-2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 oeminfo -> /dev/block/sda7
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 patch -> /dev/block/sda30
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 persist -> /dev/block/sda2
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preas -> /dev/block/sda35
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preavs -> /dev/block/sda36
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preload -> /dev/block/sda39
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 qupfw -> /dev/block/sde11
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 ramdisk -> /dev/block/sda22
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 rawdump -> /dev/block/sde20
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery -> /dev/block/sda19
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_ramdisk -> /dev/block/sda20
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_vbmeta -> /dev/block/sda24
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_vendor -> /dev/block/sda21
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 reserved1 -> /dev/block/sda6
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 reserved2 -> /dev/block/sda33
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 reserved3 -> /dev/block/sda13
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 reserved4 -> /dev/block/sdc1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 rrecord -> /dev/block/sda9
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sda -> /dev/block/sda
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sdb -> /dev/block/sdb
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sdc -> /dev/block/sdc
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sdd -> /dev/block/sdd
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sde -> /dev/block/sde
+lrwxrwxrwx 1 root root 14 2026-11-23 01:20 sdf -> /dev/block/sdf
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 secdata -> /dev/block/sde23
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ssd -> /dev/block/sda1
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 storsec -> /dev/block/sde21
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 super -> /dev/block/sda37
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 system -> /dev/block/dm-3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 tz -> /dev/block/sde2
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 uefisecapp -> /dev/block/sde14
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 uefivarstore -> /dev/block/sde22
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 userdata -> /dev/block/sda40
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta -> /dev/block/sde12
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_cust -> /dev/block/sda28
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_hw_product -> /dev/block/sda29
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_odm -> /dev/block/sda27
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_system -> /dev/block/sda25
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_vendor -> /dev/block/sda26
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 vendor -> /dev/block/dm-4
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 version -> /dev/block/sda38
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 xbl -> /dev/block/sdb1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 xbl_config -> /dev/block/sdb2
+
+=== /dev/block/bootdevice/by-name ===
+total 0
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ALIGN_TO_128K_1 -> /dev/block/sdd1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ALIGN_TO_128K_2 -> /dev/block/sdf1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 abl -> /dev/block/sde6
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 aop -> /dev/block/sde1
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 apdp -> /dev/block/sde18
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bluetooth -> /dev/block/sde5
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 boot -> /dev/block/sde9
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bootfail_info -> /dev/block/sda8
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 bsp_info -> /dev/block/sda5
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 cache -> /dev/block/sda10
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 cdt -> /dev/block/sdd2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 cust -> /dev/block/dm-0
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ddr -> /dev/block/sdd3
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 devcfg -> /dev/block/sde10
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 devinfo -> /dev/block/sde16
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dfx -> /dev/block/sde24
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dip -> /dev/block/sde17
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 dsp -> /dev/block/sde7
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 dtbo -> /dev/block/sde13
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 eng_system -> /dev/block/sda14
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 eng_vendor -> /dev/block/sda15
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery -> /dev/block/sda16
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_ramdisk -> /dev/block/sda17
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_vbmeta -> /dev/block/sda23
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 erecovery_vendor -> /dev/block/sda18
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 featenabler -> /dev/block/sde15
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 frp -> /dev/block/sda11
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 fsc -> /dev/block/sdf5
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 fsg -> /dev/block/sdf4
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 fw_ufsdev -> /dev/block/sda34
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 hw_product -> /dev/block/dm-1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 hyp -> /dev/block/sde3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 keymaster -> /dev/block/sde8
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 kpatch -> /dev/block/sda31
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 limits -> /dev/block/sde19
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 log -> /dev/block/sda12
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 metadata -> /dev/block/sda32
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 misc -> /dev/block/sda4
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modem -> /dev/block/sde4
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modemst1 -> /dev/block/sdf2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 modemst2 -> /dev/block/sdf3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 nvme -> /dev/block/sda3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 odm -> /dev/block/dm-2
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 oeminfo -> /dev/block/sda7
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 patch -> /dev/block/sda30
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 persist -> /dev/block/sda2
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preas -> /dev/block/sda35
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preavs -> /dev/block/sda36
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 preload -> /dev/block/sda39
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 qupfw -> /dev/block/sde11
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 ramdisk -> /dev/block/sda22
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 rawdump -> /dev/block/sde20
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery -> /dev/block/sda19
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_ramdisk -> /dev/block/sda20
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_vbmeta -> /dev/block/sda24
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 recovery_vendor -> /dev/block/sda21
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 reserved1 -> /dev/block/sda6
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 reserved2 -> /dev/block/sda33
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 reserved3 -> /dev/block/sda13
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 reserved4 -> /dev/block/sdc1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 rrecord -> /dev/block/sda9
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 secdata -> /dev/block/sde23
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 ssd -> /dev/block/sda1
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 storsec -> /dev/block/sde21
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 super -> /dev/block/sda37
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 system -> /dev/block/dm-3
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 tz -> /dev/block/sde2
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 uefisecapp -> /dev/block/sde14
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 uefivarstore -> /dev/block/sde22
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 userdata -> /dev/block/sda40
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta -> /dev/block/sde12
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_cust -> /dev/block/sda28
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_hw_product -> /dev/block/sda29
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_odm -> /dev/block/sda27
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_system -> /dev/block/sda25
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 vbmeta_vendor -> /dev/block/sda26
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 vendor -> /dev/block/dm-4
+lrwxrwxrwx 1 root root 16 2026-11-23 01:20 version -> /dev/block/sda38
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 xbl -> /dev/block/sdb1
+lrwxrwxrwx 1 root root 15 2026-11-23 01:20 xbl_config -> /dev/block/sdb2
+
+=== /dev/block/platform ===
+total 0
+drwxr-xr-x 3 root root 60 2026-11-23 01:20 soc
+
+=== /vendor/etc/vintf ===
+total 12
+-rw-r--r-- 1 root root   3108 2026-09-13 20:20 compatibility_matrix.xml
+drwxr-xr-x 2 root shell  1128 2026-09-13 20:20 manifest
+-rw-r--r-- 1 root root  34874 2026-09-13 20:20 manifest.xml
+
+=== VINTF manifest directory ===
+total 88
+-rw-r--r-- 1 root root  323 2026-09-13 20:20 android.hardware.atrace@1.0-service.xml
+-rw-r--r-- 1 root root  323 2026-09-13 20:20 android.hardware.cas@1.2-service.xml
+-rw-r--r-- 1 root root  344 2026-09-13 20:20 android.hardware.gnss@2.0-service-airoha.xml
+-rw-r--r-- 1 root root 2226 2026-09-13 20:20 android.hardware.graphics.mapper-impl-qti-display.xml
+-rw-r--r-- 1 root root  218 2026-09-13 20:20 android.hardware.health@2.1.xml
+-rw-r--r-- 1 root root 2075 2026-09-13 20:20 android.hardware.keymaster@4.0-service.xml
+-rw-r--r-- 1 root root  171 2026-09-13 20:20 android.hardware.lights-qti.xml
+-rw-r--r-- 1 root root  361 2026-09-13 20:20 android.hardware.neuralnetworks@1.3-service-qti-hta.xml
+-rw-r--r-- 1 root root  460 2026-09-13 20:20 android.hardware.neuralnetworks@1.3-service-qti.xml
+-rw-r--r-- 1 root root 1844 2026-09-13 20:20 android.hardware.thermal@2.0-service.qti.xml
+-rw-r--r-- 1 root root 1878 2026-09-13 20:20 android.hardware.usb@1.2-service.xml
+-rw-r--r-- 1 root root  370 2026-09-13 20:20 android.hardware.wifi.hostapd.xml
+-rw-r--r-- 1 root root  313 2026-09-13 20:20 android.hardware.wifi@1.0-service.xml
+-rw-r--r-- 1 root root 1926 2026-09-13 20:20 c2_manifest_vendor.xml
+-rw-r--r-- 1 root root  330 2026-09-13 20:20 manifest.xml
+-rw-r--r-- 1 root root 1687 2026-09-13 20:20 power.xml
+-rw-r--r-- 1 root root  641 2026-09-13 20:20 vendor.huawei.hardware.sensors@2.1.xml
+-rw-r--r-- 1 root root 2203 2026-09-13 20:20 vendor.qti.hardware.display.allocator-service.xml
+-rw-r--r-- 1 root root 2953 2026-09-13 20:20 vendor.qti.hardware.display.composer-service.xml
+-rw-r--r-- 1 root root  457 2026-09-13 20:20 vendor.qti.hardware.limits@1.0-service.xml
+-rw-r--r-- 1 root root  882 2026-09-13 20:20 vendor.qti.hardware.qxr-service.xml
+-rw-r--r-- 1 root root  472 2026-09-13 20:20 vendor.qti.hardware.servicetracker@1.2-service.xml
+
+=== /vendor/lib/modules ===
+total 524
+-rw-r--r-- 1 root root  45128 2026-09-13 20:20 gspca_main.ko
+-rw-r--r-- 1 root root  15680 2026-09-13 20:20 lcd.ko
+-rw-r--r-- 1 root root  34704 2026-09-13 20:20 llcc_perfmon.ko
+-rw-r--r-- 1 root root    198 2026-09-13 20:20 modules.alias
+-rw-r--r-- 1 root root    458 2026-09-13 20:20 modules.dep
+-rw-r--r-- 1 root root    154 2026-09-13 20:20 modules.load
+-rw-r--r-- 1 root root     55 2026-09-13 20:20 modules.softdep
+-rw-r--r-- 1 root root  26320 2026-09-13 20:20 mpq-adapter.ko
+-rw-r--r-- 1 root root  93880 2026-09-13 20:20 mpq-dmx-hw-plugin.ko
+-rw-r--r-- 1 root root  51416 2026-09-13 20:20 msm_11ad_proxy.ko
+-rw-r--r-- 1 root root  23592 2026-09-13 20:20 rdbg.ko
+-rw-r--r-- 1 root root  60816 2026-09-13 20:20 rmnet_perf.ko
+-rw-r--r-- 1 root root 183040 2026-09-13 20:20 rmnet_shs.ko
+-rw-r--r-- 1 root root  48376 2026-09-13 20:20 wigig_sensing.ko
+-rw-r--r-- 1 root root 641488 2026-09-13 20:20 wil6210.ko
+
+=== /vendor_dlkm/lib/modules ===
+adb : ls: /vendor_dlkm/lib/modules: No such file or directory
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ls: /vendor_dlk...le or directory    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /system_dlkm/lib/modules ===
+adb : ls: /system_dlkm/lib/modules: No such file or directory
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ls: /system_dlk...le or directory    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /odm/lib/modules ===
+adb : ls: /odm/lib/modules: No such file or directory
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_pkg\MatePad11_DBY-W09_Agent_鍙閲囬泦.ps1:79 字符: 7
++       adb shell $item[0] 2>&1
++       ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ls: /odm/lib/mo...le or directory    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+=== /sys/module ===
+total 0
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 abov_sar
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ak8789
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 alarmtimer
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 apparmor
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 arm_smmu
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 asix
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 atlantic_fwd
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 binder
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 binder_alloc
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 bio_crypt_ctx
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 blk_cgroup
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 block
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 bluetooth
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 bonding
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 brd
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 bridge
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_context_utils
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_cpas_hw
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_cpas_soc
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_csiphy_core
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_debug_util
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cam_smmu_api
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 cdc_ncm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cfg80211
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cgroup_workingset
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ch
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cifs
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 configfs
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cpufreq
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cpuidle
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 cryptomgr
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 diagchar
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dm_bufio
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dm_mod
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dm_snapshot
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dm_verity
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 dpi_hw_hook
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 drm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 drm_kms_helper
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 dummy
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dvb_core
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 dwc3
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 edac_core
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ehci_hcd
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 eud
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 event_timer
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 fb
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 firmware_class
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 fscrypto
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ftdi_sio
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 fuse
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 glink_pkt
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 hid
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 hid_apple
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 hid_magicmouse
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 huawei_battery
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 hw_nve
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 i2c_algo_bit
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ip6_tunnel
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 ipv6
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 kernel
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 keyboard
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_core
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_eth
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_ip
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_ip6
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_netlink
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 l2tp_ppp
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 loop
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 lpm_levels
+drwxr-xr-x 10 root root 0 2026-11-23 22:31 lpm_stats
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 mhi_qcom
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 mmcblk
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 module
+drwxr-xr-x  6 root root 0 2026-11-23 22:31 msm_11ad_proxy
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 msm_drm
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 msm_isense_cdsp
+drwxr-xr-x  5 root root 0 2026-11-23 01:20 msm_performance
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 msm_poweroff
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 msm_show_resume_irq
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 mt20xx
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_amanda
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_ftp
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_h323
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_irc
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_netbios_ns
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_sane
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nf_conntrack_tftp
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 nfc
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 nvme
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 nvme_core
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 oom_kill
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 overlay
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 pblk
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 pci_msm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 peripheral_loader
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 ppp_mppe
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 printk
+drwxr-xr-x  3 root root 0 2026-11-23 01:20 process_reclaim
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 qpnp_power_on
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 qpnp_qnovo5
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 r8152
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 radio_i2c_rtc6226_qca
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 random
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 rcupdate
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 rcutree
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 reclaim_acct
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 rfkill
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 rng_core
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sch_htb
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 scsi_mod
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sctp
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sdhci
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sdhci_msm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 service_locator
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sg
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sit
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sky2
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 slab_common
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 smsc911x
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 snd
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 snd_pcm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 snd_timer
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 snd_usb_audio
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 spidev
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 spurious
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 srcutree
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 subsystem_restart
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 swr_ctrl_dlkm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 sysrq
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tcp_cubic
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tda18271
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tda827x
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tda8290
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tda9887
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tea5761
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tea5767
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tuner_simple
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tuner_xc2028
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 tx_macro_dlkm
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 ufshcd_core
+drwxr-xr-x  2 root root 0 2026-11-23 22:31 ufshcd_pltfrm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 usb_bam
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 usb_f_gsi
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 usb_f_mtp
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 usb_f_uvc
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 usb_storage
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 usbcore
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 usbhid
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 uvcvideo
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 v4l2_mem2mem
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 va_macro_dlkm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 videobuf2_common
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 videobuf2_v4l2
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 vservices
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 vservices_serial
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 vt
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 watchdog_v2
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 wlan
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 workqueue
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 wsa881x_dlkm
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 xc4000
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 xc5000
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 xhci_hcd
+drwxr-xr-x  4 root root 0 2026-11-23 22:31 xpad
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 xt_quota2
+drwxr-xr-x  3 root root 0 2026-11-23 22:31 zram
+
+=== dumpsys battery ===
+Current Battery Service state:
+  AC powered: false
+  USB powered: true
+  Wireless powered: false
+  Max charging current: 500000
+  Max charging voltage: 5000000
+  Charge counter: 6645248
+  status: 2
+  health: 2
+  present: true
+  level: 96
+  scale: 100
+  voltage: 4292
+  temperature: 226
+  technology: Li-ion
+
+=== dumpsys display ===
+DISPLAY MANAGER (dumpsys display)
+  mOnlyCode=false
+  mSafeMode=false
+  mPendingTraversal=false
+  mViewports=[DisplayViewport{type=INTERNAL, valid=true, isActive=true, displayId=0, uniqueId='local:4630947148733638273', physicalPort=129, orientation=0, logicalFrame=Rect(0, 0 - 1600, 2560), physicalFrame=Rect(0, 0 - 1600, 2560), deviceWidth=1600, deviceHeight=2560}]
+  mDefaultDisplayDefaultColorMode=0
+  mWifiDisplayScanRequestCount=0
+  mStableDisplaySize=Point(1600, 2560)
+  mMinimumBrightnessCurve=[(0.0, 0.0), (2000.0, 50.0), (4000.0, 90.0)]
+
+
+Display States: size=1
+  Display Id=0
+  Display State=ON
+  Display Brightness=0.1137
+  Display SdrBrightness=0.1137
+
+Display Adapters: size=4
+  LocalDisplayAdapter
+  VirtualDisplayAdapter
+  OverlayDisplayAdapter
+    mCurrentOverlaySetting=
+    mOverlays: size=0
+  WifiDisplayAdapter
+    mCurrentStatus=WifiDisplayStatus{featureState=2, scanState=0, activeDisplayState=0, activeDisplay=null, displays=[], sessionInfo=WifiDisplaySessionInfo:
+        Client/Owner: Client
+        GroupId: 
+        Passphrase: 
+        SessionId: 0
+        IP Address: }
+    mFeatureState=2
+    mScanState=0
+    mActiveDisplayState=0
+    mActiveDisplay=null
+    mDisplays=[]
+    mAvailableDisplays=[]
+    mRememberedDisplays=[]
+    mPendingStatusChangeBroadcast=false
+    mSupportsProtectedBuffers=false
+    mDisplayController:
+      mWifiDisplayOnSetting=false
+      mWifiP2pEnabled=true
+      mWfdEnabled=false
+      mWfdEnabling=false
+      mNetworkInfo=[type: WIFI_P2P[], state: UNKNOWN/IDLE, reason: (unspecified), extra: (none), failover: false, available: false, roaming: false]
+      mScanRequested=false
+      mDiscoverPeersInProgress=false
+      mDesiredDevice=null
+      mConnectingDisplay=null
+      mDisconnectingDisplay=null
+      mCancelingDisplay=null
+      mConnectedDevice=null
+      mConnectionRetriesLeft=0
+      mRemoteDisplay=null
+      mRemoteDisplayInterface=null
+      mRemoteDisplayConnected=false
+      mAdvertisedDisplay=null
+      mAdvertisedDisplaySurface=null
+      mAdvertisedDisplayWidth=0
+      mAdvertisedDisplayHeight=0
+      mAdvertisedDisplayFlags=0
+      mAvailableWifiDisplayPeers: size=0
+
+Display Devices: size=1
+  DisplayDeviceInfo{"鍐呯疆灞忓箷": uniqueId="****", 1600 x 2560, modeId 2, defaultModeId 1, supportedModes [{id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}, {id=2, width=1600, height=2560, fps=120.00001, alternativeRefreshRates=[60.000004]}], colorMode 0, supportedColorModes [0], hdrCapabilities HdrCapabilities{mSupportedHdrTypes=[2, 3, 4], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}, allmSupported false, gameContentTypeSupported false, density 320, 280.275 x 280.275 dpi, appVsyncOff 1000000, presDeadline 13333333, touch INTERNAL, rotation 0, type INTERNAL, address ****, deviceProductInfo DeviceProductInfo{name=, manufacturerPnpId=QCM, productId=1, modelYear=null, manufactureDate=ManufactureDate{week=27, year=2006}, connectionToSinkType=0}, state ON, frameRateOverride , brightnessMinimum 0.0, brightnessMaximum 1.0, brightnessDefault 0.4, FLAG_DEFAULT_DISPLAY, FLAG_ROTATES_WITH_CONTENT, FLAG_SECURE, FLAG_SUPPORTS_PROTECTED_BUFFERS}
+    mAdapter=LocalDisplayAdapter
+    mUniqueId=local:4630947148733638273
+    mDisplayToken=android.os.BinderProxy@d8f520d
+    mCurrentLayerStack=0
+    mCurrentOrientation=0
+    mCurrentLayerStackRect=Rect(0, 0 - 1600, 2560)
+    mCurrentDisplayRect=Rect(0, 0 - 1600, 2560)
+    mCurrentSurface=null
+    mPhysicalDisplayId=4630947148733638273
+    mDisplayModeSpecs={baseModeId=1 allowGroupSwitching=false primaryRefreshRateRange=[0 60] appRequestRefreshRateRange=[0 Infinity]}
+    mDisplayModeSpecsInvalid=false
+    mActiveModeId=2
+    mActiveColorMode=0
+    mDefaultModeId=1
+    mState=ON
+    mBrightnessState=0.1137
+    mBacklightAdapter=BacklightAdapter [useSurfaceControl=true (force_anyway? false), backlight=com.android.server.lights.LightsService$LightImpl@26d220c]
+    mAllmSupported=false
+    mAllmRequested=false
+    mGameContentTypeSupported=false
+    mGameContentTypeRequested=false
+    mStaticDisplayInfo=StaticDisplayInfo{isInternal=true, density=2.0, secure=true, deviceProductInfo=DeviceProductInfo{name=, manufacturerPnpId=QCM, productId=1, modelYear=null, manufactureDate=ManufactureDate{week=27, year=2006}, connectionToSinkType=0}}
+    mSfDisplayModes=
+      DisplayMode{id=0, width=1600, height=2560, xDpi=280.275, yDpi=280.275, refreshRate=60.000004, appVsyncOffsetNanos=1000000, presentationDeadlineNanos=16666666, group=0}
+      DisplayMode{id=1, width=1600, height=2560, xDpi=280.275, yDpi=280.275, refreshRate=120.00001, appVsyncOffsetNanos=1000000, presentationDeadlineNanos=13333333, group=0}
+    mActiveSfDisplayMode=DisplayMode{id=1, width=1600, height=2560, xDpi=280.275, yDpi=280.275, refreshRate=120.00001, appVsyncOffsetNanos=1000000, presentationDeadlineNanos=13333333, group=0}
+    mSupportedModes=
+      DisplayModeRecord{mMode={id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}}
+      DisplayModeRecord{mMode={id=2, width=1600, height=2560, fps=120.00001, alternativeRefreshRates=[60.000004]}}
+    mSupportedColorModes=[0]
+    mDisplayDeviceConfig=DisplayDeviceConfig{mLoadedFrom=<config.xml>, mBacklight=null, mNits=null, mRawBacklight=null, mRawNits=null, mBrightness=null, mBrightnessToBacklightSpline=MonotoneCubicSpline{[(0.0, 0.0: 1.0), (1.0, 1.0: 1.0)]}, mBacklightToBrightnessSpline=MonotoneCubicSpline{[(0.0, 0.0: 1.0), (1.0, 1.0: 1.0)]}, mBacklightMinimum=0.015686, mBacklightMaximum=1.0, mBrightnessDefault=0.4, mQuirks=null, isHbmEnabled=false, mHbmData=null, mBrightnessRampFastDecrease=0.7058824, mBrightnessRampFastIncrease=0.7058824, mBrightnessRampSlowDecrease=0.23529412, mBrightnessRampSlowIncrease=0.23529412, mAmbientLightSensor=Sensor{type: , name: , refreshRateRange: [0.0, Infinity]} , mProximitySensor=Sensor{type: , name: , refreshRateRange: [0.0, Infinity]} , mRefreshRateLimitations= []}
+
+LogicalDisplayMapper:
+  mSingleDisplayDemoMode=false
+  mCurrentLayout=[{addr: {port=129, model=0x40446de55de066}, dispId: 0(ON)}]
+  
+  Logical Displays: size=1
+  Display 0:
+    mDisplayId=0
+    mPhase=1
+    mLayerStack=0
+    mHasContent=true
+    mDesiredDisplayModeSpecs={baseModeId=1 allowGroupSwitching=false primaryRefreshRateRange=[0 60] appRequestRefreshRateRange=[0 Infinity]}
+    mRequestedColorMode=0
+    mDisplayOffset=(0, 0)
+    mDisplayScalingDisabled=false
+    mPrimaryDisplayDevice=鍐呯疆灞忓箷
+    mBaseDisplayInfo=DisplayInfo{"鍐呯疆灞忓箷", displayId 0", displayGroupId 0, FLAG_SECURE, FLAG_SUPPORTS_PROTECTED_BUFFERS, FLAG_TRUSTED, real 1600 x 2560, largest app 1600 x 2560, smallest app 1600 x 2560, appVsyncOff 1000000, presDeadline 13333333, mode 2, defaultMode 1, modes [{id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}, {id=2, width=1600, height=2560, fps=120.00001, alternativeRefreshRates=[60.000004]}], hdrCapabilities HdrCapabilities{mSupportedHdrTypes=[2, 3, 4], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}, userDisabledHdrTypes [], minimalPostProcessingSupported false, rotation 0, state ON, FLAG_SECURE, FLAG_SUPPORTS_PROTECTED_BUFFERS, FLAG_TRUSTED, type INTERNAL, uniqueId "****", app 1600 x 2560, density 320 (280.275 x 280.275) dpi, layerStack 0, colorMode 0, supportedColorModes [0], address ****, deviceProductInfo DeviceProductInfo{name=, manufacturerPnpId=QCM, productId=1, modelYear=null, manufactureDate=ManufactureDate{week=27, year=2006}, connectionToSinkType=0}, removeMode 0, refreshRateOverride 0.0, brightnessMinimum 0.0, brightnessMaximum 1.0, brightnessDefault 0.4}
+    mOverrideDisplayInfo=DisplayInfo{"鍐呯疆灞忓箷", displayId 0", displayGroupId 0, FLAG_SECURE, FLAG_SUPPORTS_PROTECTED_BUFFERS, FLAG_TRUSTED, real 1600 x 2560, largest app 2560 x 2480, smallest app 1600 x 1520, appVsyncOff 1000000, presDeadline 13333333, mode 2, defaultMode 1, modes [{id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}, {id=2, width=1600, height=2560, fps=120.00001, alternativeRefreshRates=[60.000004]}], hdrCapabilities HdrCapabilities{mSupportedHdrTypes=[2, 3, 4], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}, userDisabledHdrTypes [], minimalPostProcessingSupported false, rotation 0, state ON, FLAG_SECURE, FLAG_SUPPORTS_PROTECTED_BUFFERS, FLAG_TRUSTED, type INTERNAL, uniqueId "****", app 1600 x 2560, density 320 (280.275 x 280.275) dpi, layerStack 0, colorMode 0, supportedColorModes [0], address ****, deviceProductInfo DeviceProductInfo{name=, manufacturerPnpId=QCM, productId=1, modelYear=null, manufactureDate=ManufactureDate{week=27, year=2006}, connectionToSinkType=0}, removeMode 0, refreshRateOverride 0.0, brightnessMinimum 0.0, brightnessMaximum 1.0, brightnessDefault 0.4}
+    mRequestedMinimalPostProcessing=false
+    mFrameRateOverrides=[]
+    mPendingFrameRateOverrideUids={}
+  
+  DeviceStateToLayoutMap:
+    Registered Layouts:
+    state(-1): [{addr: {port=129, model=0x40446de55de066}, dispId: 0(ON)}]
+
+DisplayModeDirector
+  mSupportedModesByDisplay:
+    0 -> [{id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}, {id=2, width=1600, height=2560, fps=120.00001, alternativeRefreshRates=[60.000004]}]
+  mDefaultModeByDisplay:
+    0 -> {id=1, width=1600, height=2560, fps=60.000004, alternativeRefreshRates=[120.00001]}
+  mVotesByDisplay:
+    -1:
+      PRIORITY_USER_SETTING_MIN_REFRESH_RATE -> Vote{width=-1, height=-1, minRefreshRate=0.0, maxRefreshRate=Infinity, disableRefreshRateSwitching=false, baseModeRefreshRate=0.0}
+      PRIORITY_DEFAULT_REFRESH_RATE -> Vote{width=-1, height=-1, minRefreshRate=0.0, maxRefreshRate=60.0, disableRefreshRateSwitching=false, baseModeRefreshRate=0.0}
+  mModeSwitchingType: SWITCHING_TYPE_WITHIN_GROUPS
+  mAlwaysRespectAppRequest: false
+  SettingsObserver
+    mDefaultRefreshRate: 60.0
+    mDefaultPeakRefreshRate: 0.0
+  AppRequestObserver
+    mAppRequestedModeByDisplay:
+    mAppPreferredRefreshRateRangeByDisplay:
+  BrightnessObserver
+    mAmbientLux: -1.0
+    mBrightness: 37
+    mDefaultDisplayState: 2
+    mLowPowerModeEnabled: false
+    mRefreshRateChangeable: false
+    mShouldObserveDisplayLowChange: false
+    mShouldObserveAmbientLowChange: false
+    mRefreshRateInLowZone: 0
+    mShouldObserveDisplayHighChange: false
+    mShouldObserveAmbientHighChange: false
+    mRefreshRateInHighZone: 0
+    mLastSensorData: 0.0
+    mTimestamp: 1970-01-01 08:00:00.000
+  UdfpsObserver
+    mLocalHbmEnabled: 
+    mGlobalHbmEnabled: 
+  SensorObserver
+    mIsProxActive=false
+    mDozeStateByDisplay:
+      0 -> false
+   HbmObserver
+     mHbmEnabled: {}
+
+Callbacks: size=33
+  0: mPid=2399, mWifiDisplayScanRequested=false
+  1: mPid=2861, mWifiDisplayScanRequested=false
+  2: mPid=2944, mWifiDisplayScanRequested=false
+  3: mPid=3322, mWifiDisplayScanRequested=false
+  4: mPid=3886, mWifiDisplayScanRequested=false
+  5: mPid=4661, mWifiDisplayScanRequested=false
+  6: mPid=7500, mWifiDisplayScanRequested=false
+  7: mPid=8238, mWifiDisplayScanRequested=false
+  8: mPid=8481, mWifiDisplayScanRequested=false
+  9: mPid=9104, mWifiDisplayScanRequested=false
+  10: mPid=9863, mWifiDisplayScanRequested=false
+  11: mPid=10016, mWifiDisplayScanRequested=false
+  12: mPid=10174, mWifiDisplayScanRequested=false
+  13: mPid=10641, mWifiDisplayScanRequested=false
+  14: mPid=11104, mWifiDisplayScanRequested=false
+  15: mPid=11529, mWifiDisplayScanRequested=false
+  16: mPid=12261, mWifiDisplayScanRequested=false
+  17: mPid=12493, mWifiDisplayScanRequested=false
+  18: mPid=17078, mWifiDisplayScanRequested=false
+  19: mPid=17616, mWifiDisplayScanRequested=false
+  20: mPid=17827, mWifiDisplayScanRequested=false
+  21: mPid=17960, mWifiDisplayScanRequested=false
+  22: mPid=23151, mWifiDisplayScanRequested=false
+  23: mPid=25611, mWifiDisplayScanRequested=false
+  24: mPid=26884, mWifiDisplayScanRequested=false
+  25: mPid=27066, mWifiDisplayScanRequested=false
+  26: mPid=27138, mWifiDisplayScanRequested=false
+  27: mPid=27419, mWifiDisplayScanRequested=false
+  28: mPid=27532, mWifiDisplayScanRequested=false
+  29: mPid=30761, mWifiDisplayScanRequested=false
+  30: mPid=30933, mWifiDisplayScanRequested=false
+  31: mPid=31386, mWifiDisplayScanRequested=false
+  32: mPid=32511, mWifiDisplayScanRequested=false
+
+Display Power Controllers: size=1
+
+Display Power Controller:
+  mDisplayId=0
+  mLightSensor={Sensor name="stm_vd6281 Ambient Light Sensor Non-wakeup", vendor="STMicroelectronics", version=65536, type=5, maxRange=1.0, resolution=0.01, power=0.001, minDelay=0}
+
+Display Power Controller Locked State:
+  mDisplayReadyLocked=true
+  mPendingRequestLocked=policy=BRIGHT, useProximitySensor=false, screenBrightnessOverride=NaN, useProximitySensorbyPhone=false, useAutoBrightness=true, screenAutoBrightnessAdjustmentOverride=NaN, screenLowPowerBrightnessFactor=1.0, blockScreenOn=false, lowPowerMode=false, boostScreenBrightness=false, dozeScreenBrightness=NaN, dozeScreenState=UNKNOWN, useSmartBacklight=true, brightnessWaitMode=false, brightnessWaitRet=false, screenAutoBrightness=-1, mScreenChangedReason=0, userId=0
+  mPendingRequestChangedLocked=false
+  mPendingWaitForNegativeProximityLocked=false
+  mPendingUpdatePowerStateLocked=false
+
+Display Power Controller Configuration:
+  mScreenBrightnessRangeDefault=0.4
+  mScreenBrightnessDozeConfig=0.05
+  mScreenBrightnessDimConfig=0.05
+  mScreenBrightnessForVrRangeMinimum=0.307087
+  mScreenBrightnessForVrRangeMaximum=1.0
+  mScreenBrightnessForVrDefault=0.33464
+  mUseSoftwareAutoBrightnessConfig=true
+  mAllowAutoBrightnessWhileDozingConfig=false
+  mSkipScreenOnBrightnessRamp=false
+  mColorFadeFadesConfig=true
+  mColorFadeEnabled=true
+  mDisplayBlanksAfterDozeConfig=false
+  mBrightnessBucketsInDozeConfig=false
+
+Display Power Controller Thread State:
+  mPowerRequest=policy=BRIGHT, useProximitySensor=false, screenBrightnessOverride=NaN, useProximitySensorbyPhone=false, useAutoBrightness=true, screenAutoBrightnessAdjustmentOverride=NaN, screenLowPowerBrightnessFactor=1.0, blockScreenOn=false, lowPowerMode=false, boostScreenBrightness=false, dozeScreenBrightness=NaN, dozeScreenState=UNKNOWN, useSmartBacklight=true, brightnessWaitMode=false, brightnessWaitRet=false, screenAutoBrightness=-1, mScreenChangedReason=0, userId=0
+  mUnfinishedBusiness=false
+  mWaitingForNegativeProximity=false
+  mProximitySensor=null
+  mProximitySensorEnabled=false
+  mProximityThreshold=0.0
+  mProximity=Unknown
+  mPendingProximity=Unknown
+  mPendingProximityDebounceTime=-1 (35127765 ms ago)
+  mScreenOffBecauseOfProximity=false
+  mLastUserSetScreenBrightness=0.11764706
+  mPendingScreenBrightnessSetting=0.11372549
+  mTemporaryScreenBrightness=NaN
+  mAutoBrightnessAdjustment=0.101960786
+  mBrightnessReason=automatic
+  mTemporaryAutoBrightnessAdjustment=NaN
+  mPendingAutoBrightnessAdjustment=0.101960786
+  mScreenBrightnessForVrFloat=0.33464
+  mAppliedAutoBrightness=true
+  mAppliedDimming=false
+  mAppliedLowPower=false
+  mAppliedScreenBrightnessOverride=false
+  mAppliedTemporaryBrightness=false
+  mDozing=false
+  mSkipRampState=RAMP_STATE_SKIP_NONE
+  mScreenOnBlockStartRealTime=75908918
+  mScreenOffBlockStartRealTime=74170578
+  mPendingScreenOnUnblocker=null
+  mPendingScreenOnExUnblocker=null
+  mPendingScreenOffUnblocker=null
+  mPendingScreenOff=false
+  mReportedToPolicy=REPORTED_TO_POLICY_SCREEN_ON
+  mScreenBrightnessRampAnimator.isAnimating()=false
+  mColorFadeOnAnimator.isStarted()=false
+  mColorFadeOffAnimator.isStarted()=false
+
+Display Power State:
+  mStopped=false
+  mScreenState=ON
+  mScreenBrightness=0.1137
+  mSdrScreenBrightness=0.1137
+  mScreenReady=true
+  mScreenUpdatePending=false
+  mColorFadePrepared=false
+  mColorFadeLevel=1.0
+  mColorFadeReady=true
+  mColorFadeDrawPending=false
+
+Photonic Modulator State:
+  mPendingState=ON
+  mPendingBacklight=0.1137
+  mPendingSdrBacklight=0.1137
+  mActualState=ON
+  mActualBacklight=0.1137
+  mActualSdrBacklight=0.1137
+  mStateChangeInProgress=false
+  mBacklightChangeInProgress=false
+
+Color Fade State:
+  mPrepared=false
+  mMode=2
+  mDisplayLayerStack=0
+  mDisplayWidth=1600
+  mDisplayHeight=2560
+  mSurfaceVisible=false
+  mSurfaceAlpha=0.0
+
+Automatic Brightness Controller Configuration:
+  mScreenBrightnessRangeMinimum=0.015686
+  mScreenBrightnessRangeMaximum=1.0
+  mScreenBrightnessRangeSetByAppMin=0
+  mScreenBrightnessRangeSetByAppMax=2147483647
+  mDozeScaleFactor=1.0
+  mInitialLightSensorRate=300
+  mNormalLightSensorRate=300
+  mLightSensorWarmUpTimeConfig=0
+  mBrighteningLightDebounceConfig=4000
+  mDarkeningLightDebounceConfig=8000
+  mResetAmbientLuxAfterWarmUpConfig=true
+  mAmbientLightHorizon=10000
+  mWeightingIntercept=10000
+
+Automatic Brightness Controller State:
+  mLightSensor={Sensor name="stm_vd6281 Ambient Light Sensor Non-wakeup", vendor="STMicroelectronics", version=65536, type=5, maxRange=1.0, resolution=0.01, power=0.001, minDelay=0}
+  mLightSensorEnabled=true
+  mLightSensorEnableTime=34784846 (342919 ms ago)
+  mCurrentLightSensorRate=300
+  mAmbientLux=1.0
+  mAmbientLuxValid=true
+  mAmbientBrighteningThreshold=0.0
+  mAmbientDarkeningThreshold=0.0
+  mScreenBrighteningThreshold=0.12509805
+  mScreenDarkeningThreshold=0.090980396
+  mLastObservedLux=0.0
+  mLastObservedLuxTime=0 (35127766 ms ago)
+  mRecentLightSamples=0
+  mAmbientLightRingBuffer=[]
+  mScreenAutoBrightness=0.11372549
+  mDisplayPolicy=BRIGHT
+  mShortTermModelTimeout=300000
+  mShortTermModelAnchor=1.0
+  mShortTermModelValid=true
+  mBrightnessAdjustmentSamplePending=false
+  mBrightnessAdjustmentSampleOldLux=1.0
+  mBrightnessAdjustmentSampleOldBrightness=0.11372549
+  mForegroundAppPackageName=null
+  mPendingForegroundAppPackageName=null
+  mForegroundAppCategory=-1
+  mPendingForegroundAppCategory=-1
+
+SimpleMappingStrategy
+  mSpline=MonotoneCubicSpline{[(0.0, 0.031459432: 0.08618763), (1.0, 0.11764706: 0.03870923), (8.0, 0.21011145: 0.008481856), (55.0, 0.61291796: 0.0011392802), (350.0, 0.72518694: 7.4579E-5), (1600.0, 0.9818972: 5.6359928E-5), (2550.0, 1.0: 9.570934E-6)]}
+  mMaxGamma=3.0
+  mAutoBrightnessAdjustment=0.073390484
+  mUserLux=1.0
+  mUserBrightness=0.11764706
+
+HysteresisLevels
+  mBrighteningThresholds=[0.1]
+  mDarkeningThresholds=[0.2]
+  mThresholdLevels=[]
+HysteresisLevels
+  mBrighteningThresholds=[0.1]
+  mDarkeningThresholds=[0.2]
+  mThresholdLevels=[]
+HighBrightnessModeController:
+  mBrightness=0.0
+  mCurrentMin=0.0
+  mCurrentMax=1.0
+  mHbmMode=off
+  mHbmData=null
+  mAmbientLux=0.0 (old/invalid)
+  mIsInAllowedAmbientRange=false
+  mIsAutoBrightnessEnabled=false
+  mIsHdrLayerPresent=false
+  mBrightnessMin=0.0
+  mBrightnessMax=1.0
+  remainingTime=0
+  mIsTimeAvailable= false
+  mRunningStartTimeMillis=-1 (35127767 ms ago)
+  mIsThermalStatusWithinLimit=true
+  mIsBlockedByLowPowerMode=false
+  width*height=1600*2560
+  mEvents=
+  SkinThermalStatusObserver:
+    mStarted: false
+    ThermalService not available
+
+
+BrightnessTracker state:
+  mStarted=false
+  mLastBatteryLevel=NaN
+  mLastBrightness=-1.0
+  mLastSensorReadings.size=0
+  mEventsDirty=false
+  mEvents.size=0
+  mWriteBrightnessTrackerStateScheduled=false
+  mSensorRegistered=false
+  mColorSamplingEnabled=false
+  mNoFramesToSample=0
+  mFrameRate=0.0
+
+PersistentDataStore
+  mLoaded=true
+  mDirty=false
+  RememberedWifiDisplays:
+  DisplayStates:
+    0: local:4630947148733638273
+      ColorMode=0
+      BrightnessValue=0.11372549
+  StableDeviceValues:
+      StableDisplayWidth=1600
+      StableDisplayHeight=2560
+  BrightnessConfigurations:
+
+=== dumpsys input ===
+INPUT MANAGER (dumpsys input)
+
+Input Manager State:
+  Interactive: true
+  System UI Lights Out: false
+  Pointer Speed: -2
+  Pointer Gestures Enabled: true
+  Show Touches: false
+  Pointer Capture Enabled: false
+
+Event Hub State:
+  BuiltInKeyboardId: -2
+  Devices:
+    1: kona-qrd-snd-card Button Jack
+      Classes: KEYBOARD
+      Path: /dev/input/event5
+      Enabled: true
+      Descriptor: 1ea723021fdc7e237c47f085797c1f9b43090b75
+      Location: ALSA
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+    2: kona-qrd-snd-card Headset Jack
+      Classes: SWITCH
+      Path: /dev/input/event4
+      Enabled: true
+      Descriptor: 120f6f3e3f00e89550ecb526f61d706b7284cc02
+      Location: ALSA
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: 
+      KeyCharacterMapFile: 
+      ConfigurationFile: 
+      VideoDevice: <none>
+    3: input_mt_wrapper
+      Classes: KEYBOARD | TOUCH | TOUCH_MT
+      Path: /dev/input/event2
+      Enabled: true
+      Descriptor: a988c03908bee014d81671ffdd909090304130b5
+      Location: 
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+    5: gpio-keys
+      Classes: KEYBOARD
+      Path: /dev/input/event1
+      Enabled: true
+      Descriptor: 485d69228e24f5e46da1598745890b214130dbc4
+      Location: gpio-keys/input0
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0019, vendor=0x0001, product=0x0001, version=0x0100
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+    -1: Virtual
+      Classes: KEYBOARD | ALPHAKEY | DPAD | VIRTUAL
+      Path: <virtual>
+      Enabled: true
+      Descriptor: a718a782d34bc767f4689c232d64d527998ea7fd
+      Location: 
+      ControllerNumber: 0
+      UniqueId: <virtual>
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Virtual.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+    4: qpnp_pon
+      Classes: KEYBOARD
+      Path: /dev/input/event0
+      Enabled: true
+      Descriptor: fb60d4f4370f5dbe8267b63d38dea852987571ab
+      Location: qpnp_pon/input0
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+    6: huawei,ts_pen
+      Classes: KEYBOARD | TOUCH
+      Path: /dev/input/event3
+      Enabled: true
+      Descriptor: a301c71c985c8ffef0c04e90c97d81f30fdb665e
+      Location: 
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      VideoDevice: <none>
+  Unattached video devices:
+    <none>
+
+Input Reader State (Nums of device: 7):
+  Device 6: kona-qrd-snd-card Headset Jack
+    EventHub Devices: [ 2 ] 
+    Generation: 18
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x80000000
+    KeyboardType: 0
+    ControllerNum: 0
+    Switch Input Mapper:
+      SwitchValues: 0
+  Device 7: kona-qrd-snd-card Button Jack
+    EventHub Devices: [ 1 ] 
+    Generation: 845
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00000101
+    KeyboardType: 1
+    ControllerNum: 0
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 5: input_mt_wrapper
+    EventHub Devices: [ 3 ] 
+    Generation: 919
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00001103
+    KeyboardType: 1
+    ControllerNum: 0
+    Motion Ranges:
+      X: source=0x00001002, min=0.000, max=1599.000, flat=0.000, fuzz=0.000, resolution=0.000
+      Y: source=0x00001002, min=0.000, max=2559.000, flat=0.000, fuzz=0.000, resolution=0.000
+      PRESSURE: source=0x00001002, min=0.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      SIZE: source=0x00001002, min=0.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      TOUCH_MAJOR: source=0x00001002, min=0.000, max=3018.874, flat=0.000, fuzz=0.000, resolution=0.000
+      TOUCH_MINOR: source=0x00001002, min=0.000, max=3018.874, flat=0.000, fuzz=0.000, resolution=0.000
+      TOOL_MAJOR: source=0x00001002, min=0.000, max=3018.874, flat=0.000, fuzz=0.000, resolution=0.000
+      TOOL_MINOR: source=0x00001002, min=0.000, max=3018.874, flat=0.000, fuzz=0.000, resolution=0.000
+      ORIENTATION: source=0x00001002, min=-1.571, max=1.571, flat=0.000, fuzz=0.000, resolution=0.000
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 31966755790000
+    Touch Input Mapper (mode - DIRECT):
+      Parameters:
+        GestureMode: MULTI_TOUCH
+        DeviceType: TOUCH_SCREEN
+        AssociatedDisplay: hasAssociatedDisplay=true, isExternal=false, displayId=''
+        OrientationAware: true
+      Raw Touch Axes:
+        X: min=0, max=12799, flat=0, fuzz=0, resolution=0
+        Y: min=0, max=20479, flat=0, fuzz=0, resolution=0
+        Pressure: min=0, max=100, flat=0, fuzz=0, resolution=0
+        TouchMajor: min=0, max=1, flat=0, fuzz=0, resolution=0
+        TouchMinor: min=0, max=1, flat=0, fuzz=0, resolution=0
+        ToolMajor: unknown range
+        ToolMinor: unknown range
+        Orientation: min=-90, max=90, flat=0, fuzz=0, resolution=0
+        Distance: unknown range
+        TiltX: unknown range
+        TiltY: unknown range
+        TrackingId: min=0, max=9, flat=0, fuzz=0, resolution=0
+        Slot: unknown range
+      Calibration:
+        touch.size.calibration: geometric
+        touch.pressure.calibration: physical
+        touch.orientation.calibration: interpolated
+        touch.distance.calibration: none
+        touch.coverage.calibration: none
+      Affine Transformation:
+        X scale: 1.000
+        X ymix: 0.000
+        X offset: 0.000
+        Y xmix: 0.000
+        Y scale: 1.000
+        Y offset: 0.000
+      Viewport INTERNAL: displayId=0, uniqueId=local:4630947148733638273, port=129, orientation=0, logicalFrame=[0, 0, 1600, 2560], physicalFrame=[0, 0, 1600, 2560], deviceSize=[1600, 2560], isActive=[1]
+      RawSurfaceWidth: 1600px
+      RawSurfaceHeight: 2560px
+      SurfaceLeft: 0
+      SurfaceTop: 0
+      SurfaceRight: 1600
+      SurfaceBottom: 2560
+      PhysicalWidth: 1600px
+      PhysicalHeight: 2560px
+      PhysicalLeft: 0
+      PhysicalTop: 0
+      SurfaceOrientation: 0
+      Translation and Scaling Factors:
+        XTranslate: 0.000
+        YTranslate: 0.000
+        XScale: 0.125
+        YScale: 0.125
+        XPrecision: 8.000
+        YPrecision: 8.000
+        GeometricScale: 0.125
+        PressureScale: 0.010
+        SizeScale: 1.000
+        OrientationScale: 0.017
+        DistanceScale: 0.000
+        HaveTilt: false
+        TiltXCenter: 0.000
+        TiltXScale: 0.000
+        TiltYCenter: 0.000
+        TiltYScale: 0.000
+      Last Raw Button State: 0x00000000
+      Last Raw Touch: pointerCount=0
+      Last Cooked Button State: 0x00000000
+      Last Cooked Touch: pointerCount=0
+      Stylus Fusion:
+        ExternalStylusConnected: false
+        External Stylus ID: -1
+        External Stylus Data Timeout: 9223372036854775807
+      External Stylus State:
+        When: 9223372036854775807
+        Pressure: 0.000000
+        Button State: 0x00000000
+        Tool Type: 0
+  Device 4: qpnp_pon
+    EventHub Devices: [ 4 ] 
+    Generation: 848
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00000101
+    KeyboardType: 1
+    ControllerNum: 0
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 34119210372000
+  Device 3: gpio-keys
+    EventHub Devices: [ 5 ] 
+    Generation: 847
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00000101
+    KeyboardType: 1
+    ControllerNum: 0
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 32968848190000
+  Device 2: huawei,ts_pen
+    EventHub Devices: [ 6 ] 
+    Generation: 920
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00005103
+    KeyboardType: 1
+    ControllerNum: 0
+    Motion Ranges:
+      X: source=0x00005002, min=0.000, max=1599.000, flat=0.000, fuzz=0.000, resolution=0.000
+      Y: source=0x00005002, min=0.000, max=2559.000, flat=0.000, fuzz=0.000, resolution=0.000
+      PRESSURE: source=0x00005002, min=0.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      ORIENTATION: source=0x00005002, min=-3.142, max=3.142, flat=0.000, fuzz=0.000, resolution=0.000
+      TILT: source=0x00005002, min=0.000, max=1.571, flat=0.000, fuzz=0.000, resolution=0.000
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+    Touch Input Mapper (mode - DIRECT):
+      Parameters:
+        GestureMode: MULTI_TOUCH
+        DeviceType: TOUCH_SCREEN
+        AssociatedDisplay: hasAssociatedDisplay=true, isExternal=false, displayId=''
+        OrientationAware: true
+      Raw Touch Axes:
+        X: min=0, max=12800, flat=0, fuzz=0, resolution=0
+        Y: min=0, max=20480, flat=0, fuzz=0, resolution=0
+        Pressure: min=0, max=16384, flat=0, fuzz=0, resolution=0
+        TouchMajor: unknown range
+        TouchMinor: unknown range
+        ToolMajor: unknown range
+        ToolMinor: unknown range
+        Orientation: unknown range
+        Distance: unknown range
+        TiltX: min=-90, max=90, flat=0, fuzz=0, resolution=0
+        TiltY: min=-90, max=90, flat=0, fuzz=0, resolution=0
+        TrackingId: unknown range
+        Slot: unknown range
+      Calibration:
+        touch.size.calibration: none
+        touch.pressure.calibration: physical
+        touch.orientation.calibration: none
+        touch.distance.calibration: none
+        touch.coverage.calibration: none
+      Affine Transformation:
+        X scale: 1.000
+        X ymix: 0.000
+        X offset: 0.000
+        Y xmix: 0.000
+        Y scale: 1.000
+        Y offset: 0.000
+      Viewport INTERNAL: displayId=0, uniqueId=local:4630947148733638273, port=129, orientation=0, logicalFrame=[0, 0, 1600, 2560], physicalFrame=[0, 0, 1600, 2560], deviceSize=[1600, 2560], isActive=[1]
+      RawSurfaceWidth: 1600px
+      RawSurfaceHeight: 2560px
+      SurfaceLeft: 0
+      SurfaceTop: 0
+      SurfaceRight: 1600
+      SurfaceBottom: 2560
+      PhysicalWidth: 1600px
+      PhysicalHeight: 2560px
+      PhysicalLeft: 0
+      PhysicalTop: 0
+      SurfaceOrientation: 0
+      Translation and Scaling Factors:
+        XTranslate: 0.000
+        YTranslate: 0.000
+        XScale: 0.125
+        YScale: 0.125
+        XPrecision: 8.001
+        YPrecision: 8.000
+        GeometricScale: 0.125
+        PressureScale: 0.000
+        SizeScale: 0.000
+        OrientationScale: 0.000
+        DistanceScale: 0.000
+        HaveTilt: true
+        TiltXCenter: 0.000
+        TiltXScale: 0.017
+        TiltYCenter: 0.000
+        TiltYScale: 0.017
+      Last Raw Button State: 0x00000000
+      Last Raw Touch: pointerCount=0
+      Last Cooked Button State: 0x00000000
+      Last Cooked Touch: pointerCount=0
+      Stylus Fusion:
+        ExternalStylusConnected: false
+        External Stylus ID: -1
+        External Stylus Data Timeout: 9223372036854775807
+      External Stylus State:
+        When: 9223372036854775807
+        Pressure: 0.000000
+        Button State: 0x00000000
+        Tool Type: 0
+  Device -1: Virtual
+    EventHub Devices: [ -1 ] 
+    Generation: 3
+    IsExternal: false
+    AssociatedDisplayPort: <none>
+    AssociatedDisplayUniqueId: <none>
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 2
+    ControllerNum: 0
+    Keyboard Input Mapper:
+      Parameters:
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 2
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Configuration:
+    ExcludedDeviceNames: []
+    VirtualKeyQuietTime: 0.0ms
+    PointerVelocityControlParameters: scale=0.707, lowThreshold=500.000, highThreshold=3000.000, acceleration=3.000
+    WheelVelocityControlParameters: scale=1.000, lowThreshold=15.000, highThreshold=50.000, acceleration=4.000
+    PointerGesture:
+      Enabled: true
+      QuietInterval: 100.0ms
+      DragMinSwitchSpeed: 50.0px/s
+      TapInterval: 150.0ms
+      TapDragInterval: 300.0ms
+      TapSlop: 20.0px
+      MultitouchSettleInterval: 100.0ms
+      MultitouchMinDistance: 15.0px
+      SwipeTransitionAngleCosine: 0.3
+      SwipeMaxWidthRatio: 0.2
+      MovementSpeedRatio: 0.8
+      ZoomSpeedRatio: 0.3
+      Viewports:
+        Viewport INTERNAL: displayId=0, uniqueId=local:4630947148733638273, port=129, orientation=0, logicalFrame=[0, 0, 1600, 2560], physicalFrame=[0, 0, 1600, 2560], deviceSize=[1600, 2560], isActive=[1]
+
+Input Classifier State:
+  Motion Classifier:
+    <nullptr>
+
+Input Dispatcher State:
+  DispatchEnabled: true
+  DispatchFrozen: false
+  InputFilterEnabled: true
+  FocusedDisplayId: 0
+  FocusedApplications:
+    displayId=0, name='ActivityRecord{fa11315 u0 com.huawei.android.launcher/.unihome.UniHomeLauncher t302}', dispatchingTimeout=5000ms
+  FocusedWindows:
+    displayId=0, name='17a8f26 com.huawei.android.launcher/com.huawei.android.launcher.unihome.UniHomeLauncher'
+  FocusRequests:
+    displayId=0, name='17a8f26 com.huawei.android.launcher/com.huawei.android.launcher.unihome.UniHomeLauncher' result='OK'
+  FocusedWindowRequestedPointerCapture: false
+  CurrentWindowWithPointerCapture: None
+  TouchStates: <no displays touched>
+  Display: 3
+    Windows: <none>
+  Display: 5
+    Windows: <none>
+  Display: 0
+    Windows:
+      0: name='ca8ab9f GestureNavBottom', id=2061, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=0.00, flags=NOT_FOCUSABLE | NOT_TOUCH_MODAL | LAYOUT_IN_SCREEN | LAYOUT_NO_LIMITS | HARDWARE_ACCELERATED, type=2024, frame=[0,2460][1600,2560], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=[100,2516][1500,2560], inputFeatures=0x0, ownerPid=2399, ownerUid=1000, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (TRANSLATE)
+            1.0000  -0.0000  0.0000
+            -0.0000  1.0000  -2460.0000
+            0.0000  0.0000  1.0000
+      1: name='86f0efd GestureNavRight', id=1853, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=0.00, flags=NOT_FOCUSABLE | NOT_TOUCH_MODAL | LAYOUT_IN_SCREEN | LAYOUT_NO_LIMITS | HARDWARE_ACCELERATED, type=2024, frame=[1568,64][1600,2560], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=[1568,64][1600,2560], inputFeatures=0x0, ownerPid=2399, ownerUid=1000, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (TRANSLATE)
+            1.0000  -0.0000  -1568.0000
+            -0.0000  1.0000  -64.0000
+            0.0000  0.0000  1.0000
+      2: name='e59bf9a GestureNavLeft', id=1846, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=0.00, flags=NOT_FOCUSABLE | NOT_TOUCH_MODAL | LAYOUT_IN_SCREEN | LAYOUT_NO_LIMITS | HARDWARE_ACCELERATED, type=2024, frame=[0,64][32,2560], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=[0,64][32,2560], inputFeatures=0x0, ownerPid=2399, ownerUid=1000, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (TRANSLATE)
+            1.0000  -0.0000  0.0000
+            -0.0000  1.0000  -64.0000
+            0.0000  0.0000  1.0000
+      3: name='3b3858e StatusBar', id=86, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=1.00, flags=NOT_FOCUSABLE | SPLIT_TOUCH | HARDWARE_ACCELERATED | DRAWS_SYSTEM_BAR_BACKGROUNDS, type=2000, frame=[0,0][1600,160], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=[0,0][1600,64], inputFeatures=0x0, ownerPid=2944, ownerUid=10079, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (IDENTITY)
+      4: name='recents_animation_input_consumer', id=1237, displayId=0, portalToDisplayId=-1, paused=false, focusable=true, hasWallpaper=false, visible=false, alpha=1.00, flags=0x0, type=2022, frame=[0,0][1600,2560], globalScale=1.000000, applicationInfo.name=recents_animation_input_consumer, applicationInfo.token=0xb400007c5ffba310, touchableRegion=[0,0][1600,2560], inputFeatures=0x0, ownerPid=2399, ownerUid=1000, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (IDENTITY)
+      5: name='dbaa837 com.huawei.intelligent.Workspace', id=2086, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=1.00, flags=NOT_FOCUSABLE | NOT_TOUCHABLE | LAYOUT_NO_LIMITS | HARDWARE_ACCELERATED | DRAWS_SYSTEM_BAR_BACKGROUNDS, type=APPLICATION, frame=[-2559,0][-960,2560], globalScale=1.000000, applicationInfo.name=ActivityRecord{fa11315 u0 com.huawei.android.launcher/.unihome.UniHomeLauncher t302}, applicationInfo.token=0xb400007c2519d650, touchableRegion=[-2560,0][-960,2560], inputFeatures=0x0, ownerPid=17078, ownerUid=10052, dispatchingTimeout=5000ms, trustedOverlay=false, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (TRANSLATE)
+            1.0000  -0.0000  2560.0000
+            -0.0000  1.0000  0.0000
+            0.0000  0.0000  1.0000
+      6: name='17a8f26 com.huawei.android.launcher/com.huawei.android.launcher.unihome.UniHomeLauncher', id=2082, displayId=0, portalToDisplayId=-1, paused=false, focusable=true, hasWallpaper=true, visible=true, alpha=1.00, flags=NOT_TOUCH_MODAL | LAYOUT_IN_SCREEN | LAYOUT_INSET_DECOR | SHOW_WALLPAPER | SPLIT_TOUCH | HARDWARE_ACCELERATED | DRAWS_SYSTEM_BAR_BACKGROUNDS, type=FIRST_APPLICATION_WINDOW, frame=[0,0][1600,2560], globalScale=1.000000, applicationInfo.name=ActivityRecord{fa11315 u0 com.huawei.android.launcher/.unihome.UniHomeLauncher t302}, applicationInfo.token=0xb400007c2519d650, touchableRegion=[0,0][1600,2560], inputFeatures=0x0, ownerPid=11104, ownerUid=10109, dispatchingTimeout=5000ms, trustedOverlay=true, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (IDENTITY)
+      7: name='Wallpaper BBQ wrapper#89', id=89, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=0.95, flags=NOT_TOUCH_MODAL, type=UNKNOWN, frame=[-479,0][2080,2560], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=<empty>, inputFeatures=NO_INPUT_CHANNEL, ownerPid=2944, ownerUid=10079, dispatchingTimeout=5000ms, trustedOverlay=false, hasToken=false, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (TRANSLATE)
+            1.0000  -0.0000  480.0000
+            -0.0000  1.0000  0.0000
+            0.0000  0.0000  1.0000
+      8: name='f944746 com.android.systemui.HwImageWallpaper', id=88, displayId=0, portalToDisplayId=-1, paused=false, focusable=false, hasWallpaper=false, visible=true, alpha=1.00, flags=NOT_FOCUSABLE | NOT_TOUCHABLE | LAYOUT_IN_SCREEN | LAYOUT_NO_LIMITS | SCALED | LAYOUT_INSET_DECOR, type=2013, frame=[0,0][0,0], globalScale=1.000000, applicationInfo.name=, applicationInfo.token=<null>, touchableRegion=[0,0][2560,2560], inputFeatures=0x0, ownerPid=2944, ownerUid=10079, dispatchingTimeout=5000ms, trustedOverlay=false, hasToken=true, touchOcclusionMode=BLOCK_UNTRUSTED
+        transform (ROT_0) (IDENTITY)
+  Global monitors in display 0:
+    0: 'PointerEventDispatcher0 (server)', 
+  Gesture monitors in display 0:
+    0: 'swipe-up (server)', 
+  RecentQueue: <empty>
+  PendingEvent: <none>
+  InboundQueue: <empty>
+  ReplacedKeys: <empty>
+  Connections:
+    688: channelName='dbaa837 com.huawei.intelligent.Workspace (server)', windowName='dbaa837 com.huawei.intelligent.Workspace (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    873: channelName='a33f075 com.hunhepan.search/com.hunhepan.search.MainActivity (server)', windowName='a33f075 com.hunhepan.search/com.hunhepan.search.MainActivity (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    781: channelName='c70d65c com.github.metacubex.clash.meta/com.github.kr328.clash.MainActivity (server)', windowName='c70d65c com.github.metacubex.clash.meta/com.github.kr328.clash.MainActivity (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    850: channelName='3e293f7 com.android.settings/com.android.settings.HWSettings (server)', windowName='3e293f7 com.android.settings/com.android.settings.HWSettings (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    719: channelName='d68f1af com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity (server)', windowName='d68f1af com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    525: channelName='17a8f26 com.huawei.android.launcher/com.huawei.android.launcher.unihome.UniHomeLauncher (server)', windowName='17a8f26 com.huawei.android.launcher/com.huawei.android.launcher.unihome.UniHomeLauncher (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    595: channelName='623c07c com.android.settings/com.android.settings.Settings$DisplaySettingsActivity (server)', windowName='623c07c com.android.settings/com.android.settings.Settings$DisplaySettingsActivity (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    546: channelName='recents_animation_input_consumer (server)', windowName='recents_animation_input_consumer (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    628: channelName='fe9fda6 InputMethod (server)', windowName='fe9fda6 InputMethod (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    472: channelName='23a7360 NotificationShade (server)', windowName='23a7360 NotificationShade (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    606: channelName='b9c7d0 pip-dismiss-overlay (server)', windowName='b9c7d0 pip-dismiss-overlay (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    657: channelName='f944746 com.android.systemui.HwImageWallpaper (server)', windowName='f944746 com.android.systemui.HwImageWallpaper (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    441: channelName='86f0efd GestureNavRight (server)', windowName='86f0efd GestureNavRight (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    845: channelName='bcd2926 InputMethod (server)', windowName='bcd2926 InputMethod (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    837: channelName='b9de6f3 com.huawei.photos/com.huawei.gallery.app.GalleryMain (server)', windowName='b9de6f3 com.huawei.photos/com.huawei.gallery.app.GalleryMain (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    449: channelName='d803e0e GestureSildeOut (server)', windowName='d803e0e GestureSildeOut (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    520: channelName='swipe-up (server)', windowName='swipe-up (server)', status=NORMAL, monitor=true, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    453: channelName='f251df5 GestureNavAnim (server)', windowName='f251df5 GestureNavAnim (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    444: channelName='ca8ab9f GestureNavBottom (server)', windowName='ca8ab9f GestureNavBottom (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    562: channelName='99151be AssistPreviewPanel (server)', windowName='99151be AssistPreviewPanel (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    477: channelName='3b3858e StatusBar (server)', windowName='3b3858e StatusBar (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    570: channelName='83846ae NavigationBar0 (server)', windowName='83846ae NavigationBar0 (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    533: channelName='466f225 ShellDropTarget (server)', windowName='466f225 ShellDropTarget (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    434: channelName='e59bf9a GestureNavLeft (server)', windowName='e59bf9a GestureNavLeft (server)', status=NORMAL, monitor=false, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    261: channelName='PointerEventDispatcher0 (server)', windowName='PointerEventDispatcher0 (server)', status=NORMAL, monitor=true, responsive=true
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+  AppSwitch: not pending
+  Configuration:
+    KeyRepeatDelay: 50ms
+    KeyRepeatTimeout: 400ms
+    LatencyTracker:
+      mTimelines.size() = 0
+      mEventTimes.size() = 0
+    LatencyAggregator:
+      Sketches:
+        mDownSketches[0]->num_values = 0 size = 0.0KB mMoveSketches[0]->num_values = 0 size = 0.0KB
+        mDownSketches[1]->num_values = 0 size = 0.0KB mMoveSketches[1]->num_values = 0 size = 0.0KB
+        mDownSketches[2]->num_values = 0 size = 0.0KB mMoveSketches[2]->num_values = 0 size = 0.0KB
+        mDownSketches[3]->num_values = 0 size = 0.0KB mMoveSketches[3]->num_values = 0 size = 0.0KB
+        mDownSketches[4]->num_values = 0 size = 0.0KB mMoveSketches[4]->num_values = 0 size = 0.0KB
+        mDownSketches[5]->num_values = 0 size = 0.0KB mMoveSketches[5]->num_values = 0 size = 0.0KB
+        mDownSketches[6]->num_values = 0 size = 0.0KB mMoveSketches[6]->num_values = 0 size = 0.0KB
+      mNumSketchEventsProcessed=0
+      mLastSlowEventTime=0
+      mNumEventsSinceLastSlowEventReport = 0
+      mNumSkippedSlowEvents = 0
+
+
+
+=== SurfaceFlinger display ids ===
+Display 4630947148733638273 (HWC display 0): port=129 pnpId=QCM displayName=""
+

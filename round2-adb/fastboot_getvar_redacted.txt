@@ -1,0 +1,1 @@
+﻿NOT AVAILABLE: device is in Android adb mode, not fastboot. No reboot was issued.

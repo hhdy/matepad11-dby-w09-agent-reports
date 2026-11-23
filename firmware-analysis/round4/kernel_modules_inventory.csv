@@ -1,0 +1,2 @@
+﻿partition,module_path,file_name,size_bytes,compression,vermagic,depends,note
+<BLOCKED>,,,,,,EROFS content listing unavailable: no trusted dump.erofs/fsck.erofs/debugfs; no module/firmware enumerated

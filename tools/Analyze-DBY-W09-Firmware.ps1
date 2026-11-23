@@ -131,14 +131,75 @@ function Get-BootImageReport {
         }
         elseif ($item.Name -match '^dtbo\.img$') {
             $magic = Read-U32BE -Stream $fs -Offset 0
-            if ($magic -eq 0xD7B7AB1E) {
-                $lines.Add("DTBO_TOTAL_SIZE_BYTES: " + (Read-U32BE -Stream $fs -Offset 4))
-                $lines.Add("DTBO_HEADER_SIZE_BYTES: " + (Read-U32BE -Stream $fs -Offset 8))
-                $lines.Add("DTBO_ENTRY_SIZE_BYTES: " + (Read-U32BE -Stream $fs -Offset 12))
-                $lines.Add("DTBO_ENTRY_COUNT: " + (Read-U32BE -Stream $fs -Offset 16))
-                $lines.Add("DTBO_ENTRIES_OFFSET: " + (Read-U32BE -Stream $fs -Offset 20))
-                $lines.Add("DTBO_PAGE_SIZE_BYTES: " + (Read-U32BE -Stream $fs -Offset 24))
-                $lines.Add("DTBO_VERSION: " + (Read-U32BE -Stream $fs -Offset 28))
+            # Compare the formatted hexadecimal text rather than an untyped 0xD7B7AB1E
+            # literal. Windows PowerShell 5.1 can parse high-bit hex literals as signed Int32.
+            $magicHex = "{0:X8}" -f ([uint64]$magic)
+            $lines.Add("DTBO_MAGIC_HEX: " + $magicHex)
+            if ($magicHex -eq "D7B7AB1E") {
+                $totalSize = [long](Read-U32BE -Stream $fs -Offset 4)
+                $headerSize = [long](Read-U32BE -Stream $fs -Offset 8)
+                $entrySize = [long](Read-U32BE -Stream $fs -Offset 12)
+                $entryCount = [long](Read-U32BE -Stream $fs -Offset 16)
+                $entriesOffset = [long](Read-U32BE -Stream $fs -Offset 20)
+                $pageSize = [long](Read-U32BE -Stream $fs -Offset 24)
+                $dtboVersion = [long](Read-U32BE -Stream $fs -Offset 28)
+
+                $lines.Add("DTBO_TOTAL_SIZE_BYTES: " + $totalSize)
+                $lines.Add("DTBO_HEADER_SIZE_BYTES: " + $headerSize)
+                $lines.Add("DTBO_ENTRY_SIZE_BYTES: " + $entrySize)
+                $lines.Add("DTBO_ENTRY_COUNT: " + $entryCount)
+                $lines.Add("DTBO_ENTRIES_OFFSET: " + $entriesOffset)
+                $lines.Add("DTBO_PAGE_SIZE_BYTES: " + $pageSize)
+                $lines.Add("DTBO_VERSION: " + $dtboVersion)
+
+                $tableEnd = $entriesOffset + ($entryCount * $entrySize)
+                $valid = $true
+                $problems = New-Object System.Collections.Generic.List[string]
+                if ($totalSize -lt 32 -or $totalSize -gt $fs.Length) {
+                    $valid = $false
+                    $problems.Add("total_size is outside the file or smaller than the header")
+                }
+                if ($headerSize -lt 32 -or $headerSize -gt $totalSize) {
+                    $valid = $false
+                    $problems.Add("header_size is outside the declared DTBO image")
+                }
+                if ($entrySize -lt 32) {
+                    $valid = $false
+                    $problems.Add("entry_size is smaller than the standard 32-byte entry")
+                }
+                if ($entriesOffset -lt $headerSize -or $tableEnd -gt $totalSize) {
+                    $valid = $false
+                    $problems.Add("entry table range is outside the declared DTBO image")
+                }
+                if ($entryCount -gt 0 -and $entrySize -eq 0) {
+                    $valid = $false
+                    $problems.Add("entry_size is zero while entry_count is nonzero")
+                }
+
+                if ($valid) {
+                    $lines.Add("DTBO_HEADER_VALIDATION: VALID")
+                }
+                else {
+                    $lines.Add("DTBO_HEADER_VALIDATION: INVALID - " + ($problems -join "; "))
+                }
+
+                if ($valid -and $entryCount -gt 0) {
+                    $displayCount = [int][Math]::Min($entryCount, 32)
+                    for ($entryIndex = 0; $entryIndex -lt $displayCount; $entryIndex++) {
+                        $entryBase = $entriesOffset + ($entryIndex * $entrySize)
+                        $dtSize = Read-U32BE -Stream $fs -Offset ($entryBase + 0)
+                        $dtOffset = Read-U32BE -Stream $fs -Offset ($entryBase + 4)
+                        $dtId = Read-U32BE -Stream $fs -Offset ($entryBase + 8)
+                        $dtRev = Read-U32BE -Stream $fs -Offset ($entryBase + 12)
+                        $lines.Add(("DTBO_ENTRY_{0}: SIZE_BYTES={1} OFFSET={2} ID=0x{3:X8} REV=0x{4:X8}" -f $entryIndex, $dtSize, $dtOffset, [uint64]$dtId, [uint64]$dtRev))
+                    }
+                    if ($entryCount -gt $displayCount) {
+                        $lines.Add("DTBO_ENTRY_DISPLAY_TRUNCATED: showing first 32 of " + $entryCount)
+                    }
+                }
+            }
+            else {
+                $lines.Add("DTBO_HEADER_VALIDATION: NOT_PARSED (magic mismatch)")
             }
         }
         elseif ($item.Name -match 'ramdisk.*\.img$') {

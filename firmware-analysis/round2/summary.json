@@ -1,0 +1,15 @@
+﻿{
+    "DeviceTarget":  "Huawei MatePad 11 DBY-W09",
+    "SoCPlatform":  "Qualcomm KONA / SM8250 (from existing device report; not re-probed)",
+    "SourceMode":  "EXTRACTED_DIRECTORY_READ_ONLY",
+    "SourceName":  "images",
+    "InventoryRows":  43,
+    "ExtractedBootRelatedImages":  15,
+    "OutputFiles":  [
+                        "partition_inventory.csv",
+                        "firmware_analysis.txt",
+                        "selected_images_sha256.csv",
+                        "payloads/"
+                    ],
+    "Safety":  "Local read-only package inspection only; no device connection or partition writes."
+}

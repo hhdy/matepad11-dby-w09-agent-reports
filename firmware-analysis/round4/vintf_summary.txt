@@ -1,0 +1,9 @@
+VINTF / MANIFEST SUMMARY — ROUND4
+============================================================
+Status: BLOCKED
+vendor.img and odm.img are EROFS. Enumerating /vendor/etc/vintf/manifest.xml
+or compatibility matrix requires a trusted read-only EROFS tool.
+No dump.erofs / fsck.erofs / debugfs exists on this host; WSL is blocked by
+command security policy. Per task rule, no unvalidated EROFS decoder was written,
+no mount/repair/journal replay was attempted. No HAL interface, instance, version,
+transport or kernel FCM level could be read; recorded as UNKNOWN.

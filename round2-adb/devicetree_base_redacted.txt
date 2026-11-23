@@ -1,0 +1,85 @@
+﻿# DTB root nodes via /sys/firmware/devicetree/base
+# Captured: 
+2026-11-23T22:53:09.7372870+08:00
+=== model ===
+adb.exe : * daemon not running; starting now at tcp:5037
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (* daemon not ru...now at tcp:5037 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+* daemon started successfully
+cat: /sys/firmware/devicetree/base/model: Permission denied
+=== compatible ===
+adb.exe : cat: /sys/firmware/devicetree/base/compatible: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== #address-cells ===
+adb.exe : cat: /sys/firmware/devicetree/base/#address-cells: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== #size-cells ===
+adb.exe : cat: /sys/firmware/devicetree/base/#size-cells: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== name ===
+adb.exe : cat: /sys/firmware/devicetree/base/name: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== qcom,msm-id ===
+adb.exe : cat: /sys/firmware/devicetree/base/qcom,msm-id: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== qcom,board-id ===
+adb.exe : cat: /sys/firmware/devicetree/base/qcom,board-id: Permission denied
+所在位置 行:513 字符: 392
++ ...  $lines += (& $adb shell ('cat /sys/firmware/devicetree/base/' + $n)  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== memory node ===
+total 0
+-r--r--r-- 1 root root  4 2026-11-23 22:50 ddr_device_type
+-r--r--r-- 1 root root  7 2026-11-23 22:50 device_type
+-r--r--r-- 1 root root  7 2026-11-23 22:50 name
+-r--r--r-- 1 root root 48 2026-11-23 22:50 reg
+=== chosen/bootargs ===
+adb.exe : cat: /sys/firmware/devicetree/base/chosen/bootargs: Permission denied
+所在位置 行:513 字符: 661
++ ...  $lines += (& $adb shell cat /sys/firmware/devicetree/base/chosen/boo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/firmw...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== rootparam ===
+total 0
+-????????? ? ?    ?     ?                ? hardware_version
+-r--r--r-- 1 root root  8 2026-11-23 22:50 huawei,modem_id
+-r--r--r-- 1 root root 10 2026-11-23 22:50 name
+-r--r--r-- 1 root root  4 2026-11-23 22:50 phandle
+-r--r--r-- 1 root root 11 2026-11-23 22:50 qcom,board_name
+-????????? ? ?    ?     ?                ? qcom,boardid
+-r--r--r-- 1 root root  8 2026-11-23 22:50 qcom,product_name

@@ -142,3 +142,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Analyze-DBY-W09
 ## Next task
 
 Round 2 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND3.md`](./AGENT_TASK_ROUND3.md)，执行 super.img Logical Partition 元数据和 boot/DTBO 设备树只读分析。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
+
+
+---
+
+## Parallel task: Xiaomi Pad 5 Pro split-package audit
+
+用户另有两套 Xiaomi Pad 5 Pro 分卷移植包，位于本地 `D:\123pan\Downloads`。在不影响 DBY-W09 round3 分析的前提下，可并行读取 [`AGENT_TASK_XIAOMI_ZIP.md`](./AGENT_TASK_XIAOMI_ZIP.md)，先识别两套分卷组、校验完整性和列出包内结构。不要把原始压缩包或固件二进制上传到 GitHub；不要运行包内脚本或刷机。

@@ -1,0 +1,21 @@
+Agent note on this run
+======================
+The source script 01_本地固件包只读检查.ps1 had a path-safety bug: in
+Get-SafeDestination, the string '\\' was used where a single backslash was
+intended, so the allowed destination prefix ended with two backslashes and
+every allow-listed copy was rejected with "Unsafe archive entry path blocked".
+First run (230810) therefore copied 0 files.
+
+A workspace-only copy was patched at two lines (62 and 64) to use '\' and the
+check was rerun (230849). The original script in Downloads was NOT modified.
+Result: 11 allow-listed images copied with SHA-256, 43 inventory rows.
+
+Known classification gaps in the source script (not changed):
+  - erecovery.img, erecovery_ramdisk.img, erecovery_vbmeta.img,
+    erecovery_vendor.img, recovery_vbmeta.img, recovery_vendor.img are
+    classified as OTHER and were NOT copied.
+  - vendor.img / odm.img are not present as standalone files in this images
+    folder; they are expected to live inside super.img.
+No sensitive partitions (persist, modemst1/2, fsg, fsc, oeminfo, userdata,
+FRP, metadata) were copied.
+All operations were local and read-only against the source directory.

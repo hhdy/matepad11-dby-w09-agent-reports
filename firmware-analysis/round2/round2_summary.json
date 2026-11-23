@@ -1,0 +1,36 @@
+{
+  "task": "AGENT_TASK_ROUND2 - DTBO fix verification and super.img read-only analysis",
+  "device_target": "Huawei MatePad 11 DBY-W09",
+  "firmware_source": "local HarmonyOS 4.3 images directory (43 images, not re-uploaded, unchanged)",
+  "completed_read_only_checks": [
+    "DTBO synthetic regression test on Windows PowerShell 5.1: PASS (high-bit magic D7B7AB1E, one-entry header)",
+    "Re-parsed real firmware with fixed analyzer; 43-image inventory, 15 boot-related images copied locally for header inspection",
+    "DTBO header now parsed: MAGIC D7B7AB1E, ENTRY_COUNT 9, HEADER_VALIDATION VALID, 9 entry summaries",
+    "boot.img key fields confirmed identical to round 1: header v2, kernel 22264379 B, ramdisk 519986 B, page 4096 B, DTB 1664243 B",
+    "super.img first 64 bytes read only: Android sparse image (3A FF 26 ED); block_size 4096, total_blocks 1835008, total_chunks 127, expanded size 7516192768 B (7 GiB)",
+    "Source firmware directory verified unchanged (43 files name/size/mtime identical before and after)"
+  ],
+  "skipped_steps_and_reasons": {
+    "lpdump_metadata": "SKIPPED - lpdump not installed on this host (exact-name search found none). Per task section 5, stop tool execution when tools absent; no untrusted binary download, no WSL/Linux install.",
+    "simg2img_unsparse": "SKIPPED - simg2img not installed; source is Android sparse and lpdump requires non-sparse input. No conversion performed.",
+    "lpunpack_extract_vendor_odm": "SKIPPED - lpunpack absent and prerequisites (lpdump metadata, trusted tool, slot/partition names) unmet. No partition extracted."
+  },
+  "not_performed": [
+    "No flashing, no device connection, no partition writes",
+    "No kernel compilation",
+    "No unpacking of kernel/ramdisk/DTB payloads (header identification only)",
+    "No super.img partition extraction",
+    "No full-file hashing of large images",
+    "No firmware binaries, PAT, or device identifiers uploaded"
+  ],
+  "uploaded_reports": [
+    "dtbo_regression_test.txt",
+    "partition_inventory.csv",
+    "firmware_analysis.txt",
+    "selected_images_sha256.csv",
+    "summary.json",
+    "super_image_header.txt",
+    "round2_summary.json"
+  ],
+  "privacy": "All reports scanned for serial, MAC, PAT, user paths and tokens; personal paths redacted to <USERPROFILE> before upload."
+}

@@ -1,0 +1,34 @@
+XIAOMI PACKAGE 1 — TEXT EVIDENCE DIGEST (metadata only)
+=======================================================
+Per task rule: third-party README / flash scripts have unclear license/authorship.
+Only file names, archive paths, sizes, SHA-256 and short factual summaries are
+published here. Full text remains local in D:\DBY-W09_XiaomiReference_Audit\.
+
+All files below were CRC-verified and extracted read-only to text_evidence/.
+Detailed SHA-256 manifest: extraction_manifest.json (same directory).
+
+1. README.txt (uncompressed 3998 bytes)
+   - Identifies ROM: "ColorOS17_elish_sfix18_full"; "ColorOS 17 for
+     Xiaomi Pad 5 Pro (elish / SM8250)"; packaged 2026-11-19.
+   - States boot.img is APatch-patched and APatch manager preinstalled.
+   - States super.img is sfix18 build, previously validated on real device.
+   - Documents fastboot 36.0.1+ incompatibility with --disable-verity.
+   - NOT republished: full third-party document text.
+
+2. images.sha256 (uncompressed 3091 bytes)
+   - 36 SHA-256 lines for images/* firmware files.
+   - super.img line: 053af4a81df218b3ffc0c3002c393e8061f11fb918d75e3743aa893330d2a403
+   - Used as existing official-style checksum manifest only; no new full-volume
+     SHA-256 was computed (per task rule).
+
+3. flash_all.sh / flash_all.bat (4716 / 4162 bytes)
+4. flash_all_except_storage.sh / .bat (4509 / 3995 bytes)
+   - Static text read only; NEVER executed.
+   - First line checks: getvar product must match "^product: *elish".
+   - Preflight refuses to write if bundled fastboot lacks --disable-verity.
+   - Writes 35 firmware partitions; "except_storage" variants preserve
+     metadata/userdata.
+   - NOT republished: full third-party script text.
+
+No kernel source, DTS, defconfig, Makefile, Kconfig or patch was found in
+package 1, so no such file was extracted or digested.

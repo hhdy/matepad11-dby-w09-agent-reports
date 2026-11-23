@@ -1,0 +1,107 @@
+{
+  "task": "AGENT_TASK_ROUND4.md",
+  "status": "PARTIAL",
+  "source_super": "local HarmonyOS 4.3 super.img (read-only)",
+  "source_snapshot_unchanged": true,
+  "synthetic_tests": {
+    "total": 11,
+    "passed": 11,
+    "status": "PASS"
+  },
+  "metadata_revalidation": {
+    "sparse_chunks": 127,
+    "expanded_size_bytes": 7516192768,
+    "geometry_checksum": "4E31CF64275442F40E25C772A18D1FCCD8B1291232E593F65E522FC7AC07DF03",
+    "all_four_metadata_copies_valid": true,
+    "canonical_sha256": "746EBF7AA5CD431C77BCB05CD63855689F1B110E256895C969462D58B44CE7C8",
+    "matches_round3_baseline": true
+  },
+  "extent_plan": {
+    "vendor": {
+      "first_extent_index": 4,
+      "num_extents": 1,
+      "steps": [
+        {
+          "extent_index": 4,
+          "target_data": 11907072,
+          "num_sectors": 1996168,
+          "offset_bytes": 6096420864,
+          "num_bytes": 1022038016,
+          "target_source": 0,
+          "first_logical_sector": 2048
+        }
+      ],
+      "total_bytes": 1022038016,
+      "aligned": true
+    },
+    "odm": {
+      "first_extent_index": 2,
+      "num_extents": 1,
+      "steps": [
+        {
+          "extent_index": 2,
+          "target_data": 5539840,
+          "num_sectors": 100768,
+          "offset_bytes": 2836398080,
+          "num_bytes": 51593216,
+          "target_source": 0,
+          "first_logical_sector": 2048
+        }
+      ],
+      "total_bytes": 51593216,
+      "aligned": true
+    }
+  },
+  "extraction": {
+    "status": "PASS",
+    "partitions": {
+      "vendor": {
+        "file_name": "vendor.img",
+        "bytes": 1022038016,
+        "sha256": "REDACTED_LOCAL_ONLY"
+      },
+      "odm": {
+        "file_name": "odm.img",
+        "bytes": 51593216,
+        "sha256": "REDACTED_LOCAL_ONLY"
+      }
+    },
+    "baseline_discrepancies": [],
+    "full_raw_super_generated": false
+  },
+  "filesystem": {
+    "vendor": {
+      "type": "EROFS",
+      "magic": "0xE0F5E1E2 @ 1024",
+      "signature_detection": "PASS",
+      "content_listing": "BLOCKED"
+    },
+    "odm": {
+      "type": "EROFS",
+      "magic": "0xE0F5E1E2 @ 1024",
+      "signature_detection": "PASS",
+      "content_listing": "BLOCKED"
+    },
+    "blocker": "No trusted read-only EROFS tool (dump.erofs/fsck.erofs/debugfs) on host; WSL blocked by security policy."
+  },
+  "inventories": {
+    "kernel_modules": "BLOCKED",
+    "firmware": "BLOCKED",
+    "vintf": "BLOCKED"
+  },
+  "gki_portability": {
+    "status": "UNKNOWN",
+    "reason": "EROFS content unreadable; no modules/vermagic/KMI evidence obtainable this round.",
+    "note": "Old kernel 4.19.157-perf+ from round1; Xiaomi elish has no kernel source/DTS and APatch-repacked boot, not usable as Huawei vendor evidence."
+  },
+  "not_performed": [
+    "other logical partitions",
+    "full raw super",
+    "mount/repair",
+    "flashing",
+    "device connection",
+    "root",
+    "kernel build",
+    "module load"
+  ]
+}

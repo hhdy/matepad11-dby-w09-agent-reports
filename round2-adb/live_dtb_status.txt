@@ -1,0 +1,9 @@
+﻿# adb pull /sys/firmware/fdt # Captured: 2026-11-23T22:52:24.8587326+08:00
+adb.exe : adb: error: failed to stat remote object '/sys/firmware/fdt': Permiss
+ion denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:89 字符: 10
++ $pull = (& $adb pull /sys/firmware/fdt $dtbPath 2>&1 | Out-String)
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (adb: error: fai...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError

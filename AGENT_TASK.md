@@ -135,3 +135,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Analyze-DBY-W09
 ## 本轮完成标准
 
 只有在本地脚本成功运行、四份报告经过隐私检查并上传至 `firmware-analysis/round1/` 后，才可标记为完成。否则必须报告具体阻塞点，不能虚报成功。
+
+
+---
+
+## Next task
+
+Round 1 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND2.md`](./AGENT_TASK_ROUND2.md)，执行 DTBO 修复验证和 super.img 的 lpdump / lpunpack 只读分析。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。

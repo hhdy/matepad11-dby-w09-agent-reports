@@ -141,4 +141,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Analyze-DBY-W09
 
 ## Next task
 
-Round 1 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND2.md`](./AGENT_TASK_ROUND2.md)，执行 DTBO 修复验证和 super.img 的 lpdump / lpunpack 只读分析。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
+Round 2 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND3.md`](./AGENT_TASK_ROUND3.md)，执行 super.img Logical Partition 元数据和 boot/DTBO 设备树只读分析。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。

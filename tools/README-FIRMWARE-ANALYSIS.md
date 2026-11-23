@@ -62,7 +62,7 @@ powershell.exe -NoProfile -File .\tools\Analyze-DBY-W09-Firmware.ps1 -FirmwarePa
 ## 版本
 
 - Tool: Analyze-DBY-W09-Firmware.ps1
-- Version: 1.0.0
+- Version: 1.0.1
 
 
 ## DTBO header regression test

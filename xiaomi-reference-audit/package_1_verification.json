@@ -1,0 +1,36 @@
+{
+  "source_volumes": [
+    {
+      "path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.z01",
+      "size": 4294967296
+    },
+    {
+      "path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.zip",
+      "size": 2194062296
+    }
+  ],
+  "virtual_total_size": 6489029592,
+  "volume_count": 2,
+  "eocd": {
+    "eocd_disk_no": 1,
+    "eocd_cd_disk": 1,
+    "eocd_entries_this_disk": 51,
+    "eocd_entries_total": 51,
+    "eocd_cd_size_32": 11305,
+    "eocd_cd_offset_32": 2194050893,
+    "zip64_used": false,
+    "entry_count": 51,
+    "cd_size": 11305,
+    "cd_offset_logical": 6489018189,
+    "cd_disk": 1
+  },
+  "entry_count": 51,
+  "crc_verified_entries": 46,
+  "directory_entries": 5,
+  "total_uncompressed_size": 8528938587,
+  "max_single_uncompressed_size": 7663020944,
+  "compression_ratio": 1.314,
+  "local_header_signature_all_ok": true,
+  "path_risks": [],
+  "integrity_status": "ARCHIVE_TEST_OK"
+}

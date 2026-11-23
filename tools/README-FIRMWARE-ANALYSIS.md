@@ -63,3 +63,14 @@ powershell.exe -NoProfile -File .\tools\Analyze-DBY-W09-Firmware.ps1 -FirmwarePa
 
 - Tool: Analyze-DBY-W09-Firmware.ps1
 - Version: 1.0.0
+
+
+## DTBO header regression test
+
+After pulling the latest \`firmware-audit-v1\` branch, run this synthetic-file test on Windows PowerShell 5.1 and PowerShell 7:
+
+\`\`\`powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-DTBO-Header.ps1
+\`\`\`
+
+The test creates a temporary 68-byte synthetic DTBO table, runs the analyzer, verifies that the high-bit magic \`D7B7AB1E\` is recognized, checks that the entry count is reported as 1, and removes its temporary files. It does not touch the real firmware folder or the tablet.

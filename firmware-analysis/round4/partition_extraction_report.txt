@@ -1,0 +1,55 @@
+DBY-W09 ROUND4 — VENDOR / ODM SELECTIVE READ-ONLY EXTRACTION REPORT
+========================================================================
+Task: AGENT_TASK_ROUND4.md. Source: local HarmonyOS 4.3 super.img (read-only).
+
+1. PRE-EXTRACTION VALIDATION
+   - Sparse header / 127 chunks re-validated in SparseImage.__init__: PASS
+     (114 RAW, 7 FILL, 6 DONT_CARE; no CRC32 chunks; expanded 7,516,192,768 B).
+   - Geometry checksum re-verified: 4E31CF64275442F40E25C772A18D1FCCD8B1291232E593F65E522FC7AC07DF03
+   - Metadata slots primary/backup for slot0 & slot1: all VALID.
+     slot0 primary @ 12288   VALID SHA=746EBF7AA5CD431C77BCB05C
+     slot0 backup  @ 143360  VALID SHA=746EBF7AA5CD431C77BCB05C
+     slot1 primary @ 77824   VALID SHA=746EBF7AA5CD431C77BCB05C
+     slot1 backup  @ 208896  VALID SHA=746EBF7AA5CD431C77BCB05C
+   - Canonical metadata SHA identical across all four copies: 746EBF7AA5CD431C77BCB05CD63855689F1B110E256895C969462D58B44CE7C8
+   - Matches round3 baseline 746EBF7A...: YES
+
+2. EXTENT PLAN (looked up BY NAME from metadata, not hard-coded)
+   vendor: first_extent_index=4 num_extents=1
+     extent idx=4 LINEAR target_data=11907072 num_sectors=1996168 -> offset=6096420864 bytes=1022038016 (target_source=0, first_logical_sector=2048)
+     total=1022038016 bytes, logical_block_size aligned=YES
+   odm: first_extent_index=2 num_extents=1
+     extent idx=2 LINEAR target_data=5539840 num_sectors=100768 -> offset=2836398080 bytes=51593216 (target_source=0, first_logical_sector=2048)
+     total=51593216 bytes, logical_block_size aligned=YES
+   - Offset rule: super_offset_bytes = target_data * 512 (NO first_logical_sector addition).
+   - Bounds/alignment/overflow checks all PASS. No baseline discrepancies: YES
+
+3. EXTRACTION RESULT (local working copies only)
+   vendor  file=vendor.img bytes=1022038016 (metadata planned=1022038016) SHA-256 local=<REDACTED; kept local only>
+   odm     file=odm.img bytes=51593216 (metadata planned=51593216) SHA-256 local=<REDACTED; kept local only>
+   - Chunked 2 MiB reads; source super.img never written; full 7 GiB raw NOT generated.
+   - Source snapshot before/after identical (size/mtime snapshot compared: UNCHANGED; exact values redacted).
+   - Only vendor/odm extracted; system/hw_product/cust/userdata/modem NOT touched.
+
+4. KNOWN TOOL LIMITATION OBSERVED DURING SYNTHETIC TESTS
+   - round3 SparseImage.read() has a mid-chunk FILL phase issue when a read starts
+     at a non-zero offset inside a FILL chunk and spans to the next chunk.
+   - Verified this does NOT affect this extraction: neither vendor nor odm byte
+     range overlaps any FILL or DONT_CARE chunk (both are entirely RAW). Sequential
+     full-range reads used by the extractor are byte-exact (verified by SHA).
+   - No round3 script was modified.
+
+5. STATUS SUMMARY
+   - Synthetic tests: 11/11 PASS (see partition_extractor_test.txt).
+   - Partition extraction: PASS (metadata revalidation + lengths + local SHA all OK).
+   - Filesystem signature detection: PASS (EROFS magic in both images).
+   - Filesystem content listing: BLOCKED (no trusted read-only EROFS tool).
+   - Kernel module inventory: BLOCKED (depends on content listing).
+   - Firmware inventory: BLOCKED (depends on content listing).
+   - VINTF summary: BLOCKED (depends on content listing).
+
+6. COMPLIANCE
+   - No device connection, flashing, root, partition write, or kernel build.
+   - No full raw super expansion; no other logical partition extracted.
+   - No module loaded/executed; no filesystem mounted/repaired.
+   - No partition binary / firmware / module / DTB uploaded; hash CSV stays local.

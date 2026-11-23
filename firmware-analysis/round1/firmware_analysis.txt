@@ -1,0 +1,143 @@
+﻿MatePad 11 DBY-W09 - Local Firmware Read-Only Analysis
+Generated: 2026-11-24 00:29:57 +08:00
+Source mode: EXTRACTED_DIRECTORY_READ_ONLY
+Source name: images
+Image inventory rows: 43
+No device connection, ADB, fastboot, flashing, partition writes, or firmware-provided scripts were used.
+
+=== IMAGE INVENTORY SUMMARY ===
+BOOT_OR_METADATA_IMAGE: 15
+DYNAMIC_PARTITIONS_CONTAINER: 1
+LARGE_IMAGE_REVIEW_ONLY: 1
+LARGE_PARTITION_IMAGE: 2
+OTHER_PARTITION_IMAGE: 24
+
+=== BOOT / DTBO / RAMDISK HEADER ANALYSIS ===
+Maximum selected-image extraction size: 512 MiB per file
+
+FILE: boot.img
+SIZE_BYTES: 100663296
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 3B BA 53 01 00 80 00 00
+ANDROID_BOOT_HEADER_VERSION: 2
+KERNEL_SIZE_BYTES: 22264379
+RAMDISK_SIZE_BYTES: 519986
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 4096
+OS_VERSION_PACKED: 369099083
+CMDLINE: earlycon=msm_geni_serial,0xa90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket reboot=panic_warm androidboot.selinux=enforce unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user
+RECOVERY_DTBO_SIZE_BYTES: 0
+HEADER_SIZE_BYTES: 1660
+DTB_SIZE_BYTES: 1664243
+DTB_ADDRESS: 32505856
+
+FILE: dtbo.img
+SIZE_BYTES: 25165824
+MAGIC: ANDROID_DTBO | D7 B7 AB 1E 00 2D 39 62 00 00 00 20 00 00 00 20
+
+FILE: erecovery.img
+SIZE_BYTES: 100663296
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 70 94 53 01 00 80 00 00
+ANDROID_BOOT_HEADER_VERSION: 2
+KERNEL_SIZE_BYTES: 22254704
+RAMDISK_SIZE_BYTES: 519986
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 4096
+OS_VERSION_PACKED: 369099083
+CMDLINE: earlycon=msm_geni_serial,0xa90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket reboot=panic_warm androidboot.selinux=enforce unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user
+RECOVERY_DTBO_SIZE_BYTES: 25165824
+HEADER_SIZE_BYTES: 1660
+DTB_SIZE_BYTES: 1664243
+DTB_ADDRESS: 32505856
+
+FILE: erecovery_ramdisk.img
+SIZE_BYTES: 33554432
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 00 00 00 00 00 80 00 80
+ANDROID_BOOT_HEADER_VERSION: 0
+KERNEL_SIZE_BYTES: 0
+RAMDISK_SIZE_BYTES: 29099169
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 2048
+OS_VERSION_PACKED: 335544651
+CMDLINE: androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci slub_min_objects=12 unmovable_isolate1=2:192M,3:224M,4:256M androidboot.selinux=enforcing buildvariant=user
+
+FILE: ramdisk.img
+SIZE_BYTES: 2097152
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 00 00 00 00 00 80 00 10
+ANDROID_BOOT_HEADER_VERSION: 0
+KERNEL_SIZE_BYTES: 0
+RAMDISK_SIZE_BYTES: 1322962
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 2048
+OS_VERSION_PACKED: 402653544
+CMDLINE: 
+
+FILE: recovery.img
+SIZE_BYTES: 100663296
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 70 94 53 01 00 80 00 00
+ANDROID_BOOT_HEADER_VERSION: 2
+KERNEL_SIZE_BYTES: 22254704
+RAMDISK_SIZE_BYTES: 519986
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 4096
+OS_VERSION_PACKED: 369099083
+CMDLINE: earlycon=msm_geni_serial,0xa90000 androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket reboot=panic_warm androidboot.selinux=enforce unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user
+RECOVERY_DTBO_SIZE_BYTES: 25165824
+HEADER_SIZE_BYTES: 1660
+DTB_SIZE_BYTES: 1664243
+DTB_ADDRESS: 32505856
+
+FILE: recovery_ramdisk.img
+SIZE_BYTES: 33554432
+MAGIC: ANDROID_BOOT_IMAGE | 41 4E 44 52 4F 49 44 21 00 00 00 00 00 80 00 80
+ANDROID_BOOT_HEADER_VERSION: 0
+KERNEL_SIZE_BYTES: 0
+RAMDISK_SIZE_BYTES: 29099169
+SECOND_SIZE_BYTES: 0
+PAGE_SIZE_BYTES: 2048
+OS_VERSION_PACKED: 335544651
+CMDLINE: androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci slub_min_objects=12 unmovable_isolate1=2:192M,3:224M,4:256M androidboot.selinux=enforcing buildvariant=user
+
+FILE: vbmeta.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+FILE: vbmeta_cust.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+FILE: vbmeta_hw_product.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+FILE: vbmeta_odm.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+FILE: vbmeta_system.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+FILE: vbmeta_vendor.img
+SIZE_BYTES: 1048576
+MAGIC: AVB_VBMETA | 41 56 42 30 00 00 00 01 00 00 00 00 00 00 00 00
+
+=== OPTIONAL TOOL AVAILABILITY (DETECTED ONLY; NOT EXECUTED) ===
+magiskboot: NOT FOUND
+unpack_bootimg: NOT FOUND
+unpack_bootimg.py: NOT FOUND
+lpunpack: NOT FOUND
+lpdump: NOT FOUND
+dtc: NOT FOUND
+lz4: NOT FOUND
+7z: NOT FOUND
+python: AVAILABLE (<USERPROFILE>\AppData\Local\Microsoft\WindowsApps\python.exe)
+python3: AVAILABLE (<USERPROFILE>\AppData\Local\Microsoft\WindowsApps\python3.exe)
+wsl.exe: AVAILABLE (C:\WINDOWS\system32\wsl.exe)
+
+=== IMPORTANT REVIEW NOTES ===
+1. Header identification is not proof that an image is compatible with GKI.
+2. super.img, preload.img, cache.img and other large partitions are inventoried only; no large partition is extracted.
+3. Boot-related files above MaxExtractMiB are not copied.
+4. payloads/ contains local working copies. Do not commit proprietary firmware binaries to this public repository.
+5. DTB payloads, vendor modules, UFS firmware and PCI IDs still require separate evidence-based analysis.
+6. Verify hashes against the original package before any later experiment.

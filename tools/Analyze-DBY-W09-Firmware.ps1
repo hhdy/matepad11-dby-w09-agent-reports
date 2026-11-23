@@ -4,7 +4,8 @@ param(
     [string]$FirmwarePath,
     [string]$OutputPath = ".\DBY-W09_FirmwareAnalysis",
     [switch]$NoExtractBootImages,
-    [switch]$HashLargeFiles
+    [switch]$HashLargeFiles,
+    [ValidateRange(1, 2048)][int]$MaxExtractMiB = 512
 )
 
 Set-StrictMode -Version Latest
@@ -51,7 +52,9 @@ function Read-AsciiField {
     $read = $Stream.Read($b, 0, $available)
     if ($read -le 0) { return "" }
     $value = [System.Text.Encoding]::ASCII.GetString($b, 0, $read)
-    return ($value.Split([char]0)[0]).Trim()
+    $nul = $value.IndexOf([char]0)
+    if ($nul -ge 0) { $value = $value.Substring(0, $nul) }
+    return $value.Trim()
 }
 
 function Format-MiB {
@@ -76,9 +79,9 @@ function Get-FileMagic {
         if ($b[0] -eq 0x02 -and $b[1] -eq 0x21 -and $b[2] -eq 0x4C -and $b[3] -eq 0x18) { return "LZ4_LEGACY | $hex" }
         if ($b[0] -eq 0xFD -and $b[1] -eq 0x37 -and $b[2] -eq 0x7A -and $b[3] -eq 0x58) { return "XZ | $hex" }
         if ($b[0] -eq 0x28 -and $b[1] -eq 0xB5 -and $b[2] -eq 0x2F -and $b[3] -eq 0xFD) { return "ZSTD | $hex" }
-        if ($b[0] -eq 0x3A -and $b[1] -eq 0x26 -and $b[2] -eq 0xED -and $b[3] -eq 0x30) { return "ANDROID_SPARSE_IMAGE | $hex" }
+        if ($b[0] -eq 0x3A -and $b[1] -eq 0xFF -and $b[2] -eq 0x26 -and $b[3] -eq 0xED) { return "ANDROID_SPARSE_IMAGE | $hex" }
         if ($b[0] -eq 0xD0 -and $b[1] -eq 0x0D -and $b[2] -eq 0xFE -and $b[3] -eq 0xED) { return "FLATTENED_DEVICE_TREE | $hex" }
-        if ($b[0] -eq 0x07 -and $b[1] -eq 0x07 -and $b[2] -eq 0x01 -and $b[3] -eq 0x00) { return "CPIO_NEWC | $hex" }
+        if ($asciiLength -ge 6 -and $ascii.Substring(0, 6) -eq "070701") { return "CPIO_NEWC | $hex" }
         if ($b[0] -eq 0xD7 -and $b[1] -eq 0xB7 -and $b[2] -eq 0xAB -and $b[3] -eq 0x1E) { return "ANDROID_DTBO | $hex" }
         return "UNKNOWN | $hex"
     }
@@ -123,6 +126,7 @@ function Get-BootImageReport {
                 $lines.Add("HEADER_SIZE_BYTES: " + (Read-U32LE -Stream $fs -Offset 20))
                 $lines.Add("PAGE_SIZE_BYTES: 4096 (fixed for header v3+)")
                 $lines.Add("CMDLINE: " + (Read-AsciiField -Stream $fs -Offset 44 -Length 1536))
+                if ($version -ge 4) { $lines.Add("BOOT_SIGNATURE_SIZE_BYTES: " + (Read-U32LE -Stream $fs -Offset 1580)) }
             }
         }
         elseif ($item.Name -match '^dtbo\.img$') {
@@ -211,6 +215,10 @@ try {
         })
         $usedNames = @{}
         foreach ($source in $selected) {
+            if ($source.Length -gt ($MaxExtractMiB * 1MB)) {
+                $skippedLarge.Add($source.RelativePath + " (" + $source.Length + " bytes; exceeds MaxExtractMiB=" + $MaxExtractMiB + ")")
+                continue
+            }
             $base = [System.IO.Path]::GetFileName($source.Name)
             $destName = $base
             $counter = 1
@@ -246,7 +254,9 @@ try {
     $inventory | Group-Object Classification | Sort-Object Name | ForEach-Object { $analysis.Add(($_.Name + ": " + $_.Count)) }
     $analysis.Add("")
     $analysis.Add("=== BOOT / DTBO / RAMDISK HEADER ANALYSIS ===")
+    $analysis.Add("Maximum selected-image extraction size: " + $MaxExtractMiB + " MiB per file")
     $hashRows = New-Object System.Collections.Generic.List[object]
+    $skippedLarge = New-Object System.Collections.Generic.List[string]
     if (-not $NoExtractBootImages -and (Test-Path -LiteralPath $payloadDir)) {
         Get-ChildItem -LiteralPath $payloadDir -File | Sort-Object Name | ForEach-Object {
             $analysis.Add("")
@@ -254,6 +264,11 @@ try {
             $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
             $hashRows.Add([pscustomobject]@{ FileName = $_.Name; SizeBytes = [long]$_.Length; SHA256 = $hash; Source = "Extracted locally for inspection" })
         }
+    }
+    if ($skippedLarge.Count -gt 0) {
+        $analysis.Add("")
+        $analysis.Add("=== SKIPPED BOOT-RELATED FILES ABOVE EXTRACTION LIMIT ===")
+        foreach ($skipped in $skippedLarge) { $analysis.Add($skipped) }
     }
     if ($HashLargeFiles -and $sourceMode -eq "EXTRACTED_DIRECTORY_READ_ONLY") {
         $analysis.Add("")
@@ -278,9 +293,10 @@ try {
     $analysis.Add("=== IMPORTANT REVIEW NOTES ===")
     $analysis.Add("1. Header identification is not proof that an image is compatible with GKI.")
     $analysis.Add("2. super.img, preload.img, cache.img and other large partitions are inventoried only; no large partition is extracted.")
-    $analysis.Add("3. payloads/ contains local working copies. Do not commit proprietary firmware binaries to this public repository.")
-    $analysis.Add("4. DTB payloads, vendor modules, UFS firmware and PCI IDs still require separate evidence-based analysis.")
-    $analysis.Add("5. Verify hashes against the original package before any later experiment.")
+    $analysis.Add("3. Boot-related files above MaxExtractMiB are not copied.")
+    $analysis.Add("4. payloads/ contains local working copies. Do not commit proprietary firmware binaries to this public repository.")
+    $analysis.Add("5. DTB payloads, vendor modules, UFS firmware and PCI IDs still require separate evidence-based analysis.")
+    $analysis.Add("6. Verify hashes against the original package before any later experiment.")
     $analysis | Set-Content -LiteralPath (Join-Path $outputFull "firmware_analysis.txt") -Encoding UTF8
     $hashRows | Export-Csv -LiteralPath (Join-Path $outputFull "selected_images_sha256.csv") -NoTypeInformation -Encoding UTF8
     $summary = [pscustomobject]@{

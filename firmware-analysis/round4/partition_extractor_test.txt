@@ -1,0 +1,13 @@
+SYNTHETIC-ONLY TEST OUTPUT — all fixtures are synthetic; NO real firmware was read.
+Tests: 11, Passed: 11, Failed: 0
+[PASS] T1 RAW/FILL/DONT_CARE cross-boundary
+[PASS] T2 multi-extent concatenation + SHA
+[PASS] T3 ZERO extent fail-closed — raised ExtractionError: vendor extent 0 target_type=ZERO (not LINEAR); fail closed
+[PASS] T4 unknown target type fail-closed — raised ExtractionError: vendor extent 0 target_type=UNKNOWN (not LINEAR); fail close
+[PASS] T5 out-of-range overflow-safe fail-closed — raised ExtractionError: vendor extent 0 exceeds block device bounds
+[PASS] T6 negative target_data fail-closed — raised ExtractionError: vendor extent 0 invalid target_data/num_sectors
+[PASS] T7 bad block-device index fail-closed — raised ExtractionError: vendor extent 0 bad target_source 5
+[PASS] T8 target_data < first_logical_sector fail-closed — raised ExtractionError: vendor extent 0 target_data 4 < first_logical_sector 10
+[PASS] T9 unaligned extent fail-closed — raised ExtractionError: vendor extent start/size not block-aligned
+[PASS] T10 short read fail-closed — raised ExtractionError: short read at 0
+[PASS] T11 missing partition fail-closed — raised ExtractionError: partition not found in metadata: vendor

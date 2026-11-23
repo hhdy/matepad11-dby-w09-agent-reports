@@ -28,6 +28,7 @@ powershell.exe -NoProfile -File .\tools\Analyze-DBY-W09-Firmware.ps1 -FirmwarePa
 
 - -NoExtractBootImages：只生成清单，不复制启动相关镜像。
 - -HashLargeFiles：仅在输入为已解压目录时，对 512 MiB 及以上的大镜像计算 SHA-256；耗时和磁盘读取量会增加，默认关闭。
+- -MaxExtractMiB：单个启动相关镜像的最大复制阈值，默认 512 MiB；超过阈值只记录并跳过复制。
 
 ## 输出内容
 

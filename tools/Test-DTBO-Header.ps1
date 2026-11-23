@@ -43,6 +43,9 @@ try {
     Set-U32BE -Buffer $bytes -Offset 44 -Value 1
 
     [System.IO.File]::WriteAllBytes((Join-Path $inputDir "dtbo.img"), $bytes)
+    $avbBytes = [System.Text.Encoding]::ASCII.GetBytes("AVB0")
+    [System.IO.File]::WriteAllBytes((Join-Path $inputDir "recovery_vbmeta.img"), $avbBytes)
+    [System.IO.File]::WriteAllBytes((Join-Path $inputDir "erecovery_vbmeta.img"), $avbBytes)
 
     & $AnalyzerPath -FirmwarePath $inputDir -OutputPath $outputDir -MaxExtractMiB 8
 
@@ -62,6 +65,8 @@ try {
         "DTBO_PAGE_SIZE_BYTES: 4096",
         "DTBO_HEADER_VALIDATION: VALID",
         "DTBO_ENTRY_0: SIZE_BYTES=4 OFFSET=64 ID=0x00000001 REV=0x00000001"
+        "FILE: recovery_vbmeta.img"
+        "FILE: erecovery_vbmeta.img"
     )
 
     foreach ($expected in $required) {
@@ -70,6 +75,12 @@ try {
         }
     }
 
+    $hashReport = [System.IO.File]::ReadAllText((Join-Path $outputDir "selected_images_sha256.csv"))
+    foreach ($name in @("recovery_vbmeta.img", "erecovery_vbmeta.img")) {
+        if ($hashReport.IndexOf($name, [System.StringComparison]::Ordinal) -lt 0) {
+            throw "Recovery AVB image was not copied/hashed: $name"
+        }
+    }
     Write-Host "PASS: Windows PowerShell DTBO high-bit magic and one-entry header test." -ForegroundColor Green
 }
 finally {

@@ -1,0 +1,119 @@
+﻿# readable device-tree nodes # Captured: 2026-11-23T22:52:24.2612064+08:00
+=== /sys/firmware/fdt ===
+-r-------- 1 root root 800316 2026-11-23 22:31 /sys/firmware/fdt
+=== /sys/firmware/devicetree/base ===
+total 0
+-r--r--r--   1 root root  4 2026-11-23 22:50 #address-cells
+-r--r--r--   1 root root  4 2026-11-23 22:50 #size-cells
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 __symbols__
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 aliases
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 antenna_board_detect
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 ar
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 audio_gpio_ctl
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 battery_core
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 battery_fault
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 battery_model
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 battery_ui_capacity
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 boost_5v
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 btkb_led
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 buck_boost
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 buck_charge
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 charge_pump
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 chosen
+-r--r--r--   1 root root 33 2026-11-23 22:31 compatible
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 cpu-pmu
+drwxr-xr-x  11 root root  0 2026-11-23 22:50 cpus
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 dev_detect
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 deviceboxID
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 direct_charge_ps
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 direct_charger
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 direct_charger_sc
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 ffc_control
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 firmware
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei,lcd_panel
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_accessory
+drwxr-xr-x   5 root root  0 2026-11-23 22:50 huawei_audio_info
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_batt_identify
+drwxr-xr-x   4 root root  0 2026-11-23 22:50 huawei_batt_info
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_batt_soh
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_boot_time
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_bt_info
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_edk2_charger
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_gps_info
+drwxr-xr-x   5 root root  0 2026-11-23 22:50 huawei_hall_sensor
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_mixed_battery
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_pogo_acc
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_pogopin_sw
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_power_proxy
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_power_supply
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_ptst
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_slpi_sensor
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_thp@10
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 huawei_wifi_info
+drwxr-xr-x   4 root root  0 2026-11-23 22:50 hw_adsp_misc
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 hwevext_adc
+-r--r--r--   1 root root  4 2026-11-23 22:50 interrupt-parent
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 mem-offline
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 memory
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 mntn_switch
+-r--r--r--   1 root root 34 2026-11-23 22:50 model
+-r--r--r--   1 root root  1 2026-11-23 22:50 name
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 ovp_channel_switch
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 pd_dpm
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 power_thermalzone
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 product_name_camera
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 psci
+-r--r--r--   1 root root  8 2026-11-23 22:50 qcom,board-id
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 qcom,huawei_charger
+-r--r--r--   1 root root  8 2026-11-23 22:50 qcom,msm-id
+drwxr-xr-x  39 root root  0 2026-11-23 22:50 reserved-memory
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 rootparam
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 sensor_hw_config
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 shell_back@0
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 shell_frame@0
+drwxr-xr-x   3 root root  0 2026-11-23 22:50 shell_front@0
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 singleap_no_modem
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 singleap_wifionly
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 sle95250
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 sle95250_1
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 smartpakit
+drwxr-xr-x 527 root root  0 2026-11-23 22:50 soc
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 soc_decimal
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 switch_interface
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 usb_short_circuit_protect
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 vbus_channel_boost_gpio
+drwxr-xr-x   6 root root  0 2026-11-23 22:50 vendor
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 vibrator_hw_config
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 water_check
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wired_channel_switch
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_aux_tx
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_charger
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_fw
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_ps
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_ps_aux
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_sc
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_tx
+drwxr-xr-x   2 root root  0 2026-11-23 22:50 wireless_tx_pen_kb
+=== /proc/device-tree/model ===
+adb.exe : cat: /proc/device-tree/model: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:82 字符: 9
++         & $adb shell ('cat /proc/device-tree/' + $n + ' | tr ' + [cha ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /proc/devi...rmission denied    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=== /proc/device-tree/compatible ===
+adb.exe : cat: /proc/device-tree/compatible: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:82 字符: 9
++         & $adb shell ('cat /proc/device-tree/' + $n + ' | tr ' + [cha ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /proc/devi...rmission denied    :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+=== /proc/device-tree/chosen ===
+total 0
+-r--r--r-- 1 root root 1507 2026-11-23 22:50 bootargs
+-r--r--r-- 1 root root    8 2026-11-23 22:50 kaslr-seed
+-r--r--r-- 1 root root    8 2026-11-23 22:50 linux,initrd-end
+-r--r--r-- 1 root root    8 2026-11-23 22:50 linux,initrd-start
+-r--r--r-- 1 root root    7 2026-11-23 22:50 name

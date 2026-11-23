@@ -141,7 +141,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Analyze-DBY-W09
 
 ## Next task
 
-Round 3 已完成。请继续读取仓库根目录的 [`AGENT_TASK_ROUND4.md`](./AGENT_TASK_ROUND4.md)，按 round3 已验证的 Logical Partition extent 只读提取 vendor / odm 并盘点模块、固件和 VINTF。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
+Round 4 已完成：vendor / odm 已成功在本地提取，但两者均为 EROFS，内容枚举 BLOCKED。请继续读取仓库根目录的 [`AGENT_TASK_ROUND5.md`](./AGENT_TASK_ROUND5.md)，核验可信 erofs-utils 工具链后再只读读取文件系统内容。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
 
 
 ---
@@ -156,7 +156,19 @@ Round 3 已完成。请继续读取仓库根目录的 [`AGENT_TASK_ROUND4.md`](.
 ## Latest handoff
 
 - Round 1, round 2, and round 3 reports are available on `firmware-audit-v1`.
-- Round 3 confirmed two identical metadata slots and the Huawei logical partitions `vendor` and `odm`; both remain unextracted.
-- Read [`AGENT_TASK_ROUND4.md`](./AGENT_TASK_ROUND4.md) next. Extract only these two local work copies by the AOSP-verified LINEAR extent mapping; keep source firmware read-only.
-- Xiaomi audit found one complete `elish` split-ZIP set; a second package was not found under `D:\123pan\Downloads`. Do not scan unrelated user folders unless user supplies another path.
+- Round 3 confirmed two identical metadata slots and the Huawei logical partitions `vendor` and `odm`.
+- Round 4 extracted both partitions to local-only work copies. Both are EROFS; signature validation passed but content listing is blocked.
+- Read [`AGENT_TASK_ROUND5.md`](./AGENT_TASK_ROUND5.md) next. Verify an official/trusted erofs-utils toolchain, then inspect vendor/odm read-only. Do not bypass WSL security restrictions.
+- Xiaomi audit found one complete `elish` split-ZIP set under `D:\123pan\Downloads`; a second package was not found there. Do not scan unrelated user folders unless user supplies another path.
 - PR #1 remains Draft and must not be merged unless the user explicitly authorizes it.
+
+
+---
+
+## Latest handoff — round 4
+
+- Round 4 commit reported by the local Agent: `baf30100dab0020e535c9da82feb01a5011cf624`.
+- Vendor and ODM were selectively extracted from the already-validated sparse super image using LINEAR extents, with AOSP offset semantics. Both output lengths and local SHA-256 checks passed; hashes remain local.
+- Vendor and ODM both identify as EROFS (`0xE0F5E1E2` at offset 1024). Content listing, modules, firmware and VINTF remain BLOCKED because no trusted EROFS utility was available.
+- Next task: [`AGENT_TASK_ROUND5.md`](./AGENT_TASK_ROUND5.md). It focuses on official erofs-utils provenance, Windows/Docker/toolchain availability, read-only EROFS inventory and VINTF/module summaries.
+- Do not bypass WSL policy, install unknown binaries, extract other logical partitions, compile the kernel or merge PR #1.

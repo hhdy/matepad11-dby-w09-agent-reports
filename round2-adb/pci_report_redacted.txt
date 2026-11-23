@@ -1,0 +1,30 @@
+﻿# PCI vendor/device IDs # Captured: 2026-11-23T22:52:23.0971124+08:00
+PCI 0000:00:00.0 vendor=adb.exe : cat: /sys/bus/pci/devices/0000:00:00.0/vendor: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:49 字符: 19
++ ...       $v = (& $adb shell ('cat /sys/bus/pci/devices/' + $d + '/vendor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/bus/p...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError device=adb.exe : cat: /sys/bus/pci/devices/0000:00:00.0/device: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:50 字符: 19
++ ...       $i = (& $adb shell ('cat /sys/bus/pci/devices/' + $d + '/device ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/bus/p...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+PCI 0000:01:00.0 vendor=adb.exe : cat: /sys/bus/pci/devices/0000:01:00.0/vendor: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:49 字符: 19
++ ...       $v = (& $adb shell ('cat /sys/bus/pci/devices/' + $d + '/vendor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/bus/p...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError device=adb.exe : cat: /sys/bus/pci/devices/0000:01:00.0/device: Permission denied
+所在位置 D:\workbuddy\2026-11-23-22-29-12\_round2_collect.ps1:50 字符: 19
++ ...       $i = (& $adb shell ('cat /sys/bus/pci/devices/' + $d + '/device ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /sys/bus/p...rmission denied 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+=== raw directory ===
+0000:00:00.0
+0000:01:00.0

@@ -141,7 +141,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Analyze-DBY-W09
 
 ## Next task
 
-Round 2 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND3.md`](./AGENT_TASK_ROUND3.md)，执行 super.img Logical Partition 元数据和 boot/DTBO 设备树只读分析。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
+Round 3 已完成。请继续读取仓库根目录的 [`AGENT_TASK_ROUND4.md`](./AGENT_TASK_ROUND4.md)，按 round3 已验证的 Logical Partition extent 只读提取 vendor / odm 并盘点模块、固件和 VINTF。不要合并 PR #1，不上传任何固件二进制，也不要要求用户重新上传已有固件。
 
 
 ---
@@ -149,3 +149,14 @@ Round 2 已完成后，请继续读取仓库根目录的 [`AGENT_TASK_ROUND3.md`
 ## Parallel task: Xiaomi Pad 5 Pro split-package audit
 
 用户另有两套 Xiaomi Pad 5 Pro 分卷移植包，位于本地 `D:\123pan\Downloads`。在不影响 DBY-W09 round3 分析的前提下，可并行读取 [`AGENT_TASK_XIAOMI_ZIP.md`](./AGENT_TASK_XIAOMI_ZIP.md)，先识别两套分卷组、校验完整性和列出包内结构。不要把原始压缩包或固件二进制上传到 GitHub；不要运行包内脚本或刷机。
+
+
+---
+
+## Latest handoff
+
+- Round 1, round 2, and round 3 reports are available on `firmware-audit-v1`.
+- Round 3 confirmed two identical metadata slots and the Huawei logical partitions `vendor` and `odm`; both remain unextracted.
+- Read [`AGENT_TASK_ROUND4.md`](./AGENT_TASK_ROUND4.md) next. Extract only these two local work copies by the AOSP-verified LINEAR extent mapping; keep source firmware read-only.
+- Xiaomi audit found one complete `elish` split-ZIP set; a second package was not found under `D:\123pan\Downloads`. Do not scan unrelated user folders unless user supplies another path.
+- PR #1 remains Draft and must not be merged unless the user explicitly authorizes it.

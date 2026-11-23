@@ -1,0 +1,6 @@
+﻿# Fastboot read-only probe; no reboot is issued
+# Captured: 2026-11-23T22:34:03.5159950+08:00
+
+=== fastboot devices (only reports devices already in fastboot) ===
+No device is currently in fastboot mode. Script will not reboot the tablet to enter it.
+

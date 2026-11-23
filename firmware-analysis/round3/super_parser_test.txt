@@ -1,0 +1,42 @@
+super parser synthetic unit tests
+Python: 3.13.14 (WorkBuddy bundled CPython 3.13, callable from the Windows command shell)
+Command: python Test-DBY-W09-SuperParser.py
+Result: 22/22 PASS, exit 0
+Fixtures: all generated in temporary files; no real firmware was read.
+
+Coverage:
+  - sparse RAW / FILL / DONT_CARE / CRC32 chunk reads and random cross-chunk read
+  - sparse bad magic, sum(chunk_sz) mismatch, RAW size mismatch -> rejected
+  - CRC32 running checksum computed and matched
+  - geometry SHA-256 valid + corruption rejected
+  - metadata header SHA-256 valid + corruption rejected
+  - metadata tables SHA-256 valid + corruption rejected
+  - table bounds, entry_size, extent block-device index -> rejected
+  - synthetic sparse super with 1 partition / 1 group / 1 block device / 1 LINEAR extent parsed
+  - two metadata slots canonical-identical and content SHA-256 stable
+
+--- raw test output ---
+PASS: sparse RAW read | b'ABCD'
+PASS: sparse FILL read | b'\x7f\x00\0\0'
+PASS: sparse DONT_CARE read
+PASS: sparse cross-chunk read | b'CD\x7f\0\0\0\0\0'
+PASS: sparse CRC32 chunk accepted | [{"chunk_index": 1, "stored_crc32_hex": "0xDB1720A5", "computed_crc32_hex": "0xDB1720A5", "match": true}]
+PASS: sparse bad magic rejected | bad sparse magic 0xDEADBEEF
+PASS: sparse block total mismatch rejected | sum(chunk_sz)=1 != total_blks=5
+PASS: sparse RAW size mismatch rejected | RAW chunk 0 data_size 2 != chunk_sz*blk_sz 4
+PASS: geometry checksum valid | 4096
+PASS: geometry checksum rejection | geometry checksum mismatch
+PASS: metadata header checksum valid
+PASS: partition parsed | [{"name": "system", "attributes": 0, "attributes_hex": "0x00000000", "group_index": 0, "first_extent_index": 0, "num_extents": 1}]
+PASS: group parsed
+PASS: block device parsed | [{"first_logical_sector": 3072, "alignment": 4, "alignment_offset": 0, "size_bytes": 100000, "partition_name": "super", "flags": 0}]
+PASS: extent parsed | [{"index": 0, "num_sectors": 100, "num_bytes": 51200, "target_type": 0, "target_type_name": "LINEAR", "target_data": 0, "target_source": 0}]
+PASS: metadata header checksum rejection | metadata header checksum mismatch
+PASS: metadata tables checksum rejection | metadata tables checksum mismatch
+PASS: metadata table bounds rejection | table partitions out of bounds
+PASS: metadata entry_size rejection | table partitions out of bounds
+PASS: metadata extent block-device index rejection | extent target_source >= block device count
+PASS: two slots canonical identical
+PASS: slot content sha256 stable
+
+TOTAL=22 PASS=22 FAIL=0

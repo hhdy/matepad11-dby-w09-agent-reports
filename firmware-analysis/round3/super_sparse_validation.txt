@@ -1,0 +1,19 @@
+DBY-W09 super.img - read-only sparse validation
+source_size_bytes: 7114729004
+sparse_header: {"blk_sz": 4096, "chunk_hdr_sz": 12, "expanded_size_bytes": 7516192768, "file_hdr_sz": 28, "image_checksum": 0, "image_checksum_hex": "0x00000000", "magic": 3978755898, "magic_hex": "0xED26FF3A", "major_version": 1, "minor_version": 0, "total_blks": 1835008, "total_chunks": 127}
+chunk_type_counts: {"DONT_CARE": 6, "FILL": 7, "RAW": 114}
+sum_chunk_blocks: 1835008 (expected 1835008)
+all_chunk_headers_in_bounds: PASS
+all_chunk_data_sizes_valid: PASS
+all_chunk_data_in_bounds: PASS
+logical_block_total_check: PASS
+crc32_chunks: none present
+full_image_expansion: NOT PERFORMED
+full_image_hash: NOT COMPUTED
+geometry_source: primary @ 4096
+geometry_magic: 0x616C4467
+geometry_struct_size: 52
+geometry_checksum_hex: 4E31CF64275442F40E25C772A18D1FCCD8B1291232E593F65E522FC7AC07DF03
+metadata_max_size: 65536
+metadata_slot_count: 2
+logical_block_size: 4096

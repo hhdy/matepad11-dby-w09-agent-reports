@@ -1,0 +1,90 @@
+{
+  "geometry": {
+    "magic": 1634485351,
+    "struct_size": 52,
+    "checksum_hex": "4E31CF64275442F40E25C772A18D1FCCD8B1291232E593F65E522FC7AC07DF03",
+    "metadata_max_size": 65536,
+    "metadata_slot_count": 2,
+    "logical_block_size": 4096,
+    "source_offset": 4096,
+    "source_label": "primary",
+    "magic_hex": "0x616C4467"
+  },
+  "slot_count": 2,
+  "slots": [
+    {
+      "slot": 0,
+      "primary_offset": 12288,
+      "backup_offset": 143360,
+      "status": "VALID",
+      "chosen_source": "primary/slot0",
+      "attempts": [
+        {
+          "source": "primary",
+          "offset": 12288,
+          "status": "VALID"
+        },
+        {
+          "source": "backup",
+          "offset": 143360,
+          "status": "VALID"
+        }
+      ],
+      "partition_count": 5,
+      "extent_count": 5,
+      "group_count": 2,
+      "block_device_count": 1,
+      "partition_names": [
+        "cust",
+        "hw_product",
+        "odm",
+        "system",
+        "vendor"
+      ],
+      "group_names": [
+        "default",
+        "qti_dynamic_partitions"
+      ],
+      "content_sha256": "746EBF7AA5CD431C77BCB05CD63855689F1B110E256895C969462D58B44CE7C8"
+    },
+    {
+      "slot": 1,
+      "primary_offset": 77824,
+      "backup_offset": 208896,
+      "status": "VALID",
+      "chosen_source": "primary/slot1",
+      "attempts": [
+        {
+          "source": "primary",
+          "offset": 77824,
+          "status": "VALID"
+        },
+        {
+          "source": "backup",
+          "offset": 208896,
+          "status": "VALID"
+        }
+      ],
+      "partition_count": 5,
+      "extent_count": 5,
+      "group_count": 2,
+      "block_device_count": 1,
+      "partition_names": [
+        "cust",
+        "hw_product",
+        "odm",
+        "system",
+        "vendor"
+      ],
+      "group_names": [
+        "default",
+        "qti_dynamic_partitions"
+      ],
+      "content_sha256": "746EBF7AA5CD431C77BCB05CD63855689F1B110E256895C969462D58B44CE7C8"
+    }
+  ],
+  "slots_content_identical": true,
+  "note": "Both primary and backup attempts are recorded per slot. No slot was silently selected as 'correct'; differences are reported by content_sha256.",
+  "partition_extraction": "NOT PERFORMED",
+  "binary_upload": "NOT PERFORMED"
+}

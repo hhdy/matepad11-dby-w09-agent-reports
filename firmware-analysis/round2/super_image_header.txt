@@ -1,0 +1,26 @@
+﻿DBY-W09 super.img - read-only header inspection
+SIZE_BYTES=7114729004
+SIZE_GIB=6.6261
+HEADER_HEX=3A FF 26 ED 01 00 00 00 1C 00 0C 00 00 10 00 00 00 00 1C 00 7F 00 00 00 00 00 00 00 C2 CA 00 00 01 00 00 00 10 00 00 00 00 00 00 00 C1 CA 00 00 42 00 00 00 0C 20 04 00 67 44 6C 61 34 00 00 00
+MAGIC=3A FF 26 ED
+FILE_ACCESS=READ_ONLY_SHARED|no copy|no write|no full hash
+SPARSE_MAGIC=3AFF26ED (Android sparse image)
+SPARSE_MAJOR_VERSION=1
+SPARSE_MINOR_VERSION=0
+SPARSE_FILE_HEADER_SIZE=28
+SPARSE_CHUNK_HEADER_SIZE=12
+SPARSE_BLOCK_SIZE_BYTES=4096
+SPARSE_TOTAL_BLOCKS=1835008
+SPARSE_TOTAL_CHUNKS=127
+SPARSE_IMAGE_CHECKSUM=0
+EXPANDED_RAW_SIZE_BYTES=7516192768
+EXPANDED_RAW_SIZE_GIB=7
+HEADER_ONLY_READ=YES (no simg2img conversion performed)
+
+=== DISK SPACE (for potential unsparse; NOT performed) ===
+DISK_C|free_GB=65.53|used_GB=133.55
+DISK_D|free_GB=333.17|used_GB=398.03
+RAW_SUPER_NEEDED_GB=7.0 (7,516,192,768 bytes)
+AOSP_TOOLS_STATUS: lpdump=NOT_FOUND, lpunpack=NOT_FOUND, simg2img=NOT_FOUND (exact-name search across D:\, <USERPROFILE>\AppData\Local\Android, C:\Program Files, C:\tools)
+STOP CONDITION: per AGENT_TASK_ROUND2.md section 5/6, tools absent -> stop tool execution; no download of untrusted binaries, no WSL/Linux install, no sparse->raw conversion, no lpunpack.
+No partition image was extracted. super.img was only read 64 bytes (header) and left untouched.

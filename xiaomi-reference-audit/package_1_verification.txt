@@ -1,0 +1,68 @@
+PACKAGE 1 — READ-ONLY ZIP SPLIT VERIFICATION
+============================================================
+source_volumes: [{"path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.z01", "size": 4294967296}, {"path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.zip", "size": 2194062296}]
+virtual_total_size: 6489029592
+volume_count: 2
+eocd: {"eocd_disk_no": 1, "eocd_cd_disk": 1, "eocd_entries_this_disk": 51, "eocd_entries_total": 51, "eocd_cd_size_32": 11305, "eocd_cd_offset_32": 2194050893, "zip64_used": false, "entry_count": 51, "cd_size": 11305, "cd_offset_logical": 6489018189, "cd_disk": 1}
+entry_count: 51
+crc_verified_entries: 46
+directory_entries: 5
+total_uncompressed_size: 8528938587
+max_single_uncompressed_size: 7663020944
+compression_ratio: 1.314
+local_header_signature_all_ok: True
+path_risks: []
+integrity_status: ARCHIVE_TEST_OK
+
+PER-ENTRY RESULTS
+[01] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/ | crc=None | sig=True | 
+[02] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/ | crc=None | sig=True | 
+[03] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/linux/ | crc=None | sig=True | 
+[04] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/linux/fastboot | crc=True | sig=True | 
+[05] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/windows/ | crc=None | sig=True | 
+[06] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/windows/AdbWinApi.dll | crc=True | sig=True | 
+[07] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/windows/AdbWinUsbApi.dll | crc=True | sig=True | 
+[08] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/bin/windows/fastboot.exe | crc=True | sig=True | 
+[09] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.bat | crc=True | sig=True | 
+[10] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.sh | crc=True | sig=True | 
+[11] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.bat | crc=True | sig=True | 
+[12] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.sh | crc=True | sig=True | 
+[13] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images.sha256 | crc=True | sig=True | 
+[14] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/ | crc=None | sig=True | 
+[15] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/abl.elf | crc=True | sig=True | 
+[16] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/aop.mbn | crc=True | sig=True | 
+[17] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/apdp.mbn | crc=True | sig=True | 
+[18] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/boot.img | crc=True | sig=True | 
+[19] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/BTFM.bin | crc=True | sig=True | 
+[20] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/cmnlib.mbn | crc=True | sig=True | 
+[21] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/cmnlib64.mbn | crc=True | sig=True | 
+[22] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/devcfg.mbn | crc=True | sig=True | 
+[23] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/dspso.bin | crc=True | sig=True | 
+[24] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/dtbo.img | crc=True | sig=True | 
+[25] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/dummy.img | crc=True | sig=True | 
+[26] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/featenabler.mbn | crc=True | sig=True | 
+[27] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/hyp.mbn | crc=True | sig=True | 
+[28] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/imagefv.elf | crc=True | sig=True | 
+[29] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/km41.mbn | crc=True | sig=True | 
+[30] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/logfs_ufs_8mb.bin | crc=True | sig=True | 
+[31] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/metadata.img | crc=True | sig=True | 
+[32] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/misc.img | crc=True | sig=True | 
+[33] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/multi_image.mbn | crc=True | sig=True | 
+[34] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/NON-HLOS.bin | crc=True | sig=True | 
+[35] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/persist.img | crc=True | sig=True | 
+[36] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/qupv3fw.elf | crc=True | sig=True | 
+[37] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/rescue.img | crc=True | sig=True | 
+[38] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/spunvm.bin | crc=True | sig=True | 
+[39] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/storsec.mbn | crc=True | sig=True | 
+[40] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/super.img | crc=True | sig=True | 
+[41] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/tz.mbn | crc=True | sig=True | 
+[42] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/uefi_sec.mbn | crc=True | sig=True | 
+[43] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/userdata.img | crc=True | sig=True | 
+[44] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/vbmeta.img | crc=True | sig=True | 
+[45] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/vbmeta_system.img | crc=True | sig=True | 
+[46] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/vendor_boot.img | crc=True | sig=True | 
+[47] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/vendor_boot_a.img | crc=True | sig=True | 
+[48] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/xbl.elf | crc=True | sig=True | 
+[49] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/xbl_config.elf | crc=True | sig=True | 
+[50] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/zeros_5sectors.bin | crc=True | sig=True | 
+[51] elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/README.txt | crc=True | sig=True | 

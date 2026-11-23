@@ -1,0 +1,64 @@
+XIAOMI PAD 5 PRO PACKAGE — READ-ONLY STRUCTURE REPORT
+======================================================================
+Task: AGENT_TASK_XIAOMI_ZIP.md (second task book)
+Scope: D:/123pan/Downloads only; no source volume was modified.
+
+1. VOLUME SET IDENTIFICATION
+   - elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.z01 | 4294967296 bytes | modified times recorded in volume_inventory.csv
+   - elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.zip | 2194062296 bytes | modified times recorded in volume_inventory.csv
+   Grouping: one set only, same base name, .z01 (volume 1) + .zip (last volume, disk 2).
+   Evidence: .z01 starts PK0708 PK0304; .zip EOCD disk_no=1, cd_disk=1, 51 entries.
+   Volume numbers: 1 and 2 present, contiguous, no duplicate, no obvious size anomaly.
+   Second set: NOT FOUND in task-specified directory; see package_2_summary.json.
+
+2. INTEGRITY (read-only virtual concatenation; no extraction of binaries)
+   - WinRAR 5.50 command-line: RAR-only, cannot parse split ZIP (reported 'not RAR').
+   - bsdtar 3.8.1: "Unrecognized archive format" for split ZIP.
+   - Info-ZIP unzip -Z: central directory OK (51 entries); unzip -t warned multi-part
+     unsupported and emitted offset warnings for disk-1 entries; CRC lines OK.
+   - Self-written read-only verifier: virtual volume mapping + per-entry CRC-32,
+     result ARCHIVE_TEST_OK: 46 file entries verified,
+     5 directories, 0 path risks.
+   - Total declared uncompressed size 8528938587 bytes;
+     largest single entry 7663020944 bytes (super.img).
+   - No password prompt, no encryption flag, no CRC error, no unexpected end.
+
+3. PATH SAFETY
+   - No ../ traversal, no absolute/drive/UNC path, no duplicate entry, no symlink observed.
+   - Safe for selective text extraction; extraction limited to allowlisted plain text.
+
+4. ARCHIVE CONTENTS (51 entries)
+   - 1 README.txt, 1 images.sha256, 4 flash_all*.sh/.bat scripts.
+   - 2 fastboot binaries (bin/linux/fastboot, bin/windows/fastboot.exe + 2 DLLs).
+   - 35 images: abl/aop/apdp/boot/BTFM/cmnlib/cmnlib64/devcfg/dspso/dtbo/dummy/
+     featenabler/hyp/imagefv/km41/logfs/metadata/misc/multi_image/NON-HLOS/persist/
+     qupv3fw/rescue/spunvm/storsec/super/tz/uefi_sec/userdata/vbmeta/vbmeta_system/
+     vendor_boot/vendor_boot_a/xbl/xbl_config/zeros_5sectors.
+   - 0 kernel source / DTS / defconfig / patch files.
+
+5. DEVICE IDENTITY (text evidence)
+   - product=elish; Xiaomi Pad 5 Pro; SM8250/KONA family (README).
+   - ColorOS 17 port, sfix18, packaged 2026-11-19; APatch-patched boot.
+   - Android version and kernel version: NOT confirmed (no build.prop inside).
+   - boot.img header: {"archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/boot.img", "magic": "ANDROID!", "kernel_size": 51131920, "ramdisk_size": 27598134, "page_size": 1580, "page_size_note": "NON-STANDARD: 1580 is not a power of two; typical AOSP page_size is 4096. Consistent with a third-party/APatch repack of this boot image; value recorded verbatim, not normalized.", "os_version_raw": 0, "cmdline": "androidboot.selinux=permissive", "cmdline_offset": 44, "header_size_v2": 0, "parsed": true, "dtbo_archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/dtbo.img", "dtbo_magic_hex": "d7b7ab1e"}
+
+6. SELECTIVE TEXT EXTRACTION
+   - Extracted 6 allowlisted plain-text entries to text_evidence/.
+   - Each entry archived path, size and SHA-256 recorded in extraction_manifest.json.
+   - No binary extracted; no script executed; no installer run.
+
+7. DBY-W09 ADAPTATION VALUE
+   - [NOT_DIRECTLY_REUSABLE] elish fastboot ROM (all 35 firmware images): Prebuilt board-specific binaries; never flash to DBY-W09; no source reuse.
+   - [NOT_DIRECTLY_REUSABLE] APatch-patched boot.img / super.img (sfix18): Contains root patch and ColorOS user-space; unrelated to GKI 6.18 kernel tree.
+   - [REFERENCE_ONLY] flash_all*.sh / .bat preflight logic: Only as a text example of fastboot --disable-verity feature detection; never execute.
+   - [REFERENCE_ONLY] images.sha256 manifest: Integrity-check workflow example; hashes specific to elish images.
+   - [REFERENCE_ONLY] SM8250/KONA platform identity (text claim only): Confirms same SoC family as DBY-W09, but 870板-level bins/OPP cannot be copied to 865 board.
+   - [UNKNOWN] kernel source / DTS / defconfig / patches: Absent from this package; no such evidence available. Cannot claim GKI 6.18 direct merge.
+   - Xiaomi Pad 5 Pro 870 and Huawei DBY-W09 865 share KONA/SM8250, but SoC bins,
+     OPP/CPU frequency, board ID, panel, touch, regulator and GPIO must NOT be copied.
+   - No kernel source present; no claim of direct GKI 6.18 merge is made.
+
+8. COMPLIANCE
+   - No flashing, unlocking, rebooting, rooting, device writes or partition changes.
+   - No source archive modified; no firmware binary uploaded or extracted for upload.
+   - No package script/EXE/installer executed.

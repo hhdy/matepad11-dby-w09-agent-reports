@@ -157,15 +157,15 @@ ROUND29 另确认 `of_genpd_add_provider_onecell()` 在注册 GenPD provider 之
 
 ROUND32 已完成单文件精确源 apply 核验，并与 ROUND36 在同一个临时两文件树中按序应用通过：源 blob SHA 分别为 `1dd41f6d...` / `962dffcd...`，补丁 SHA 分别为 `efe2d932...` / `dad87ef8...`；两次 `git apply --check`、实际 `git apply` 和组合 `git diff --check` 均 PASS。PyYAML 解析与相关 JSON Schema 条件逻辑测试通过；仍未运行完整 dt-schema / dt_binding_check / dtbs_check。
 
-ROUND30 的父级对照另发现：HOS4.3 已报告 MMCX ARC → MX ARC parent-supply 边，但 ACK .33 的 SM8250 RPMHPD descriptor 只为 CX 设置 MX parent，MMCX 使用无 parent 的 plain descriptor。若增加 MMCX→MX GenPD 层级，通用 GenPD 会通过 dev_pm_opp_xlate_performance_state() 换算父域 pstate；当前所有 RPMHPD 域使用同一 OPP enum 表且无 required-opps 转换时，helper 原样传递同一个 pstate，并不自动实现 HOS min-dropout delta。HOS 的 qcom,min-dropout-voltage-level 仍 UNKNOWN / NOT_CAPTURED，因此不能直接添加 parent pointer，须把 MMCX→MX corner equivalence 单独列为阻塞项。
+ROUND30/50 的 ACK 源码缺口仍然存在：固定 ACK .33 的 SM8250 RPMHPD descriptor 只为 CX 设置 MX parent，MMCX 使用无 parent 的 plain descriptor。ROUND14 已补齐 HOS4.3 MMCX/MX 静态 provider/child 属性：MMCX ALL/AO/SO 的 min/init=64 (LOW_SVS)，MX MMCX-supply/AO 的 min/init=16 (RETENTION)，set 3/1/2=ALL/ACTIVE/SLEEP；ALL/AO dropout 原始值为 0xffffffff。ROUND51 通过公开 KONA 源码确认它被存为 signed int 并作为 -1 加入 ARC 逻辑 parent request path，而不是 no-dropout sentinel。ROUND14 还确认一条新的 MX MMCX-supply→CX MMCX-supply parent-supply，因此至少五条边已知，完整总数仍未盘点。相同 corner 编号不等于 ACK GenPD 已实现 vendor ARC 的 per-child parent/dropout/proxy 语义；不要给共享 MMCX descriptor 加 MX parent。
 
 ### 7.3 HOS4.3 ARC / proxy
 
-ROUND11 找到 4 条 ARC level parent-supply 边和 6 条 ARC proxy-supply 边；它们属于 Vendor RPMh ARC/proxy，不是 VRM 物理输入。ACK 上游 qcom-rpmh-regulator 不等同于旧 Vendor ARC provider。不能把 vendor ARC 节点直接搬进 ACK DTS。
+ROUND11 最初确认 4 条 ARC level parent-supply 边和 6 条 ARC proxy-supply 边；ROUND14 后续确认第五条 parent-supply，因此当前为至少 5 条已证明 parent 边，完整总数仍 UNKNOWN。ROUND14 还确认 MMCX ALL child 有 self-target proxy-supply、proxy-consumer-enable 和 TURBO..MAX 临时 boot voltage request。它们属于 Vendor RPMh ARC/proxy，不是 VRM 物理输入或永久 always-on。ACK 上游 qcom-rpmh-regulator 不等同于旧 Vendor ARC provider；ACK 暂无等价 generic proxy helper。不能把 vendor ARC 节点直接搬进 ACK DTS。详见 ROUND51。
 
 ### 7.4 PM8150 电源输入与 DRMS
 
-完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。ROUND13 已完成 HOS4.3 S4/L5/L6/L9/L17/S8 mode/DRMS 字段核验；ROUND48 已基于公开 SM8250 KONA vendor header/driver 映射其旧 vendor enum，并更新 main 分支 review DTS。DTBO entry selection 与 effective post-overlay 仍 UNKNOWN；不得根据 HOS4.2 参考树臆造供电或模式属性。
+完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`，所以 PMIC 输出的真实物理输入树仍是独立 gate。ROUND13 完成 mode/DRMS 字段审计，ROUND14 完成 ARC corner/dropout/proxy 与 S8 静态 enable 属性审计；ROUND48/51 已将 HOS vendor enum 映射到 ACK symbolic mode，S8 初始值最终保留 RET，不增加强制 enable。ROUND52 第一版 UFS driver 只实现 VDDP/L6 load+enable 与延迟 cleanup，不消费 S8/VCCQ-parent。DTBO entry selection/effective post-overlay 仍 UNKNOWN；不得根据 HOS4.2 参考树臆造供电或模式属性。
 
 ### 7.5 Memory / reserved-memory
 
@@ -180,19 +180,21 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### 本地 Agent（当前无活动任务）
 
-- **ROUND12：已交付 / BLOCKED**。报告：`firmware-analysis/round12/round12_avb_metadata_findings.txt`。无可信已安装 AVB 工具，未做 footer / descriptor 解析；不重复执行，AVB gate 保持 UNKNOWN。
-- **firmware-analysis ROUND13：已完成 / 已上传**。报告：`firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`；本地 Agent 按要求只上传脱敏文本并停止，不得重跑或要求再次解析 FDT。
-- 当前本地 Agent 队列为空。只在新的问题必须依赖本机已有工作副本或可信本地工具、且相关工具确实已存在时，才创建新的只读任务；不得为了推进而创建无有效输入的任务。
-- 不得安装、下载、写 parser、调用 WSL 或更改安全策略。报告只放脱敏文本在 `firmware-audit-v1`；不更新 `main`、受保护 ACK DTS 草案分支或 PR #1。
+- **ROUND12：已交付 / BLOCKED**。报告 `firmware-analysis/round12/round12_avb_metadata_findings.txt` 已上传；无可信已安装 AVB 工具，footer/vbmeta descriptor coverage 仍 UNKNOWN。不要重复执行，也不要安装工具。
+- **firmware-analysis ROUND13：已完成 / 已上传**。报告 `firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`。不要重新扫描。
+- **firmware-analysis ROUND14：已完成 / 已上传**。报告 `firmware-analysis/round14/round14_arc_mmcx_mx_power_properties.txt`；只复用 ROUND3 已审核 work copy/parser 和 phandle/path index，没有重跑 ROUND11/13 或 DTBO scan，上传后停止。
+- 当前本地 Agent 队列为空。不要重跑 ROUND11/13/14；只有新问题确实需要不同的本机独有事实，且现有工作副本/工具路径可用时，才创建一次性只读任务。
+- 不得安装、下载、写 parser、调用 WSL 或更改安全策略。Agent 仅可上传脱敏文本到 `firmware-audit-v1`；不更新 `main`、受保护 ACK DTS 草案分支或 PR #1，不编译，不操作设备。
 
-### GPT 侧（当前继续工作）
+### GPT 侧（继续 Stage A）
 
-- ROUND38 已整理 UFS dual-GenPD 补丁序列；ROUND32/36 schema patch pair 与 ROUND37 DTS patch 均通过精确源文件 fixture 的真实 apply 检查，ROUND33 driver 只有 hunk/source-context 核验且已增加 exact OPP-table identity 检查。ROUND39 已锁定 ACK `.33_r00` 的 Kleaf/Bazel 构建入口和工具链常量：KMI gen5 / Clang `r584948c` / Rust `1.91.1.p3`。ROUND40 发现 VCCQ-parent/VDDP companion sketch 的 teardown 顺序风险，未合并前要先重构。ROUND41 对照精确 `gki_defconfig` 与 Kleaf BUILD target 后确定：因 storage-first 要求 Qualcomm UFS/QMP/GCC/RPMhPD/ICC/SMMU built-in、早期 ramdisk module loading 未证实，默认应新增不含 `base_kernel` 的 full-image custom `kernel_build`，按 `yukawa` 例子构建；ROUND31 fragment 应放在 `post_defconfig_fragments`，Kleaf 在 `make defconfig` 后应用、执行 `olddefconfig` 并检查 final `.config`；full `yukawa` 模式本身不自动提供设备 KMI enforcement，后续还需设备专属 `kmi_symbol_list` + `kernel_abi`。ROUND39 进一步核实当前 Kleaf 使用独立 `rules_devicetree` `dtb()/dtbo()` 编译设备树、`dtbo_image` 封装 DTBO 分区；不要把 `dtbs` 塞进 `kernel_build.make_goals` 或假定设备需要 vendor_boot。mixed build 仅作早期模块加载经验证后的条件备选。下一阶段先保存 `repo manifest -r`，取得完整 ACK worktree/toolchain，在 disposable tree 应用 UFS 双域系列、重构供电补丁，再跑 dt-schema、DTB、Kconfig、编译和设备验证。局部测试绝不等于内核已可启动。 ROUND42 对照另一台 SM8250 设备使用的 FreeABL LinuxLoader：标准 ABL 路径不是自动创建 `/memory`，而是要求输入 FDT 已有该节点，缺失时会报 EFI_NOT_FOUND；仅后续用 UEFI RAM Partition Protocol 改写 reg。不能再把“ABL 一定会补 memory 节点”作为设计假设，需取得 Huawei HOS4.3 最终 post-ABL FDT 或准确 ABL 源码。其 no-map carveout 操作也依赖已有 reserved-memory children。 ROUND43 又对照 ACK 内核实际扫描代码，确认 classic FDT 路径只认带 `device_type=memory` 的根节点及 `linux,usable-memory`/`reg`，`/reserved-memory` 不能代替；若真实走 EFI stub 并带完整 `/chosen/linux,uefi-*` 元数据，则 EFI memory map 是另一种内存来源。华为实际 kernel entry path 仍待证据确认。
-- 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
-- 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
-- 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
-- ROUND12 AVB 检查已上传并 BLOCKED；ROUND13 mode/DRMS 核验已完成，ACK 侧语义与 DTS 决策见 ROUND47/ROUND48。后续可由 GPT 继续固定 ACK / 公共源码研究；本地 Agent 队列为空。
-- 每一轮先读本文件和已有报告，再开展新工作；不要重新做 Android 12L 的泛化调研。
+- ROUND32/36 schema、ROUND37 board DTS、ROUND33 dual-GenPD driver 已整理为 patch series；ROUND52 又补充 UFS VDDP/VCCQ-parent binding 及 VDDP/L6 managed lifecycle。严格的内存模拟按 ROUND32 → ROUND36 → ROUND52-0001 → ROUND37 → ROUND33 → ROUND52-0002 顺序验证了 15/15 hunk 的旧/新上下文和精确行号，但这不是实际 `git apply`。
+- 当前 VDDP 方案：DTS 属性存在时使用 mandatory `devm_regulator_get("qcom,vddp-ref-clk")`，设置 100µA load 后 enable；cleanup action 在 `ufshcd_remove()` 完成通用 VCCQ shutdown 后执行，并在 `regulator_put()` 前 disable + 清负载。devres LIFO 确保 callback 运行时 HBA 和 variant host 对象仍有效。
+- S8/VCCQ-parent 不由第一版 ACK UFS driver 获取或投票；ACK HFSMPS510 没有 DRMS 回调，210mA load-only 请求是 no-op。S8 保留 RET initial，不强制 enable，运行时状态 UNKNOWN。
+- ROUND51 已把 MMCX/MX ARC 静态角点、dropout 与第五条 parent edge 对账；完整 ARC graph、effective DTBO 和 runtime vote 仍是单独 gate。
+- 当前真正的下一门槛是完整 ACK 6.18.33 工作树和可执行构建环境：实际 `git apply --check`/apply、checkpatch、dt_binding_check、dtbs_check/dtc、最终 Kconfig/.config 和 Kleaf build；此后才可能进入受控设备验证。read-only Local Agent 不得承担源码修改或编译。
+- AVB footer/vbmeta、ramdisk、EROFS、memory/reserved-memory final handoff、selected DTBO 与 PMIC 物理输入树仍有各自 blocker。Stage B DerpFest 不得提前开始。
+- 每一轮先读本文件和已有报告；不要重新做 Android 12L 泛化调研。
 
 ## 9. 阶段验收定义
 
@@ -214,7 +216,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ---
 
-**新会话的正确起点：先读本文件及 `AGENT_TASK.md` 末尾的最新状态。ROUND12 为 BLOCKED、ROUND13 已完成、本地 Agent 队列为空。继续由 GPT 独立完成可从固定 ACK / 公共源码推进的阶段 A 工作；只有确实需要本机已有副本或工具时才新建只读 Agent 任务。不要重新讨论 Android 12L，不要提前跳到 DerpFest 全系统适配，也不要改动 PR #1 或受保护 ACK DTS 草案分支，除非用户明确授权。**
+**新会话的正确起点：先读本文件及 `AGENT_TASK.md` 末尾的最新状态。ROUND12 AVB 为 BLOCKED；ROUND13/14 已完成；ROUND15 未创建，本地 Agent 队列为空。ROUND49/50/51/52 已更新 UFS、电源域和 ARC 设计，但完整 ACK 工作树 apply、checkpatch、dt-schema、DTB、最终 Kconfig、Kleaf 编译和实机启动均未完成。当前真正门槛是完整 ACK 6.18.33 工作树和构建环境，不是重复解析本机 FDT。不要重新讨论 Android 12L，不要提前跳到 DerpFest 全系统适配，也不要改动 PR #1 或受保护 ACK DTS 草案分支，除非用户明确授权。**
 
 
 ## 10. Latest progress — ROUND44 UFS dual-GenPD probe contract review
@@ -308,11 +310,9 @@ Current DBY-W09 board DTS draft still has HPM initial mode on PM8150 S4/L5/L6/L9
 
 The public same-device Linux DTS used as a HOS4.2 cross-reference shows HPM initial mode on the PM8150 UFS rails, while LPM/HPM + allow-set-load appears on PM8150L L6/L9 for microSD. This is **not evidence of actual HOS4.3 settings** and must not be copied mechanically.
 
-HOS4.3 `regulator-initial-mode`, `regulator-allowed-modes`, `regulator-allow-set-load`, `regulator-system-load` and suspend-mode properties remain UNKNOWN because ROUND7's filtered inventory did not include them. The required local ROUND13 audit (base boot FDT plus applicable stock DTBO fragments) remains queued after the sole active local ROUND12 AVB task. ROUND47 report provides the exact property checklist and ACK-side interpretation:
-`kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`.
+ROUND13/14 已完成 HOS4.3 base-FDT 静态字段审计：上游标准 `regulator-*` mode/DRMS 属性在所检查范围内 NOT_FOUND；本机实际使用 provider-level `qcom,supported-modes` / `qcom,mode-threshold-currents` 与 child-level `qcom,init-mode` / `qcom,set`。ROUND48/51 已按固定 ACK enum 完成符号转换并更新 main DTS：L5/L9 HPM initial，L6/L17 LPM initial，LPM/HPM allowed + DRMS；S4 不强制模式；S8 RET initial、RET/AUTO allowed，不强制 enable。MMC X/MX ARC 与 S8 enable 静态属性已在 ROUND14 提取，proxy/ARC 等价性差异见 ROUND51。临时 proxy 生命周期与 ACK 不具备的 ARC/proxy helper 仍是启动期差异；runtime mode/enable 状态均未读取。
 
-ROUND47 is public-source review only. No local FDT/DTBO was re-parsed, and no regulator mode was read at runtime. Full-tree apply, DTS/schema, DTB, Kconfig, Kleaf build and device boot remain NOT_RUN. ROUND12 continues independently; no new Agent task was started. Stage A ACK 6.18.33 remains the only active project stage; DerpFest Stage B stays deferred.
-
+ROUND47/48/51 为固定 ACK 与公开 KONA 源码审查；ROUND13/14 为本机静态 FDT 提取，均未读取 runtime regulator mode。完整树 apply、DTS/schema、DTB、Kconfig、Kleaf build 和设备启动仍 NOT_RUN。ROUND12 AVB 继续 BLOCKED；Local Agent 队列为空。Stage A ACK 6.18.33 仍是唯一项目阶段，DerpFest Stage B 继续等待。
 
 ## 14. Local evidence status — ROUND12 AVB blocked; ROUND13/14 complete
 

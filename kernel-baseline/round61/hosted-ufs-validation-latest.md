@@ -1,16 +1,16 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: ee036878a3f709f3be7251bb6d0ba45cf39ee7ea
-- Workflow run ID: 45444339257
+- Workflow commit: 3c0b7e40caa062d3b6d683791d75eceb62f4e2dc
+- Workflow run ID: 45445251142
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-7707ca89dc3f27d6c84ed39f26ddc04faa5b618e99faf1f1e296423be14dbdda  /home/runner/work/_temp/round61-processed-schema.json
+8a8b8f685e8a74ba04745ac7d4127eab89e8ce646e897ec96d56955d95e8b288  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
-d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65  /home/runner/work/_temp/round61-ufs-applied.diff
+5f67eaeb5769f3a756cfa1f6e8ae3655bf55de69687342e39481b8768000ff30  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  M BUILD.bazel
  M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
@@ -23,25 +23,15 @@ ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  BUILD.bazel                                        |  19 ++
  .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml    |   5 +
  .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  18 +-
- .../devicetree/bindings/ufs/qcom,ufs.yaml          |  55 ++++
+ .../devicetree/bindings/ufs/qcom,ufs.yaml          |  30 +++
  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c            | 123 ++++++++-
  drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
  drivers/ufs/host/ufs-qcom.h                        |   4 +
- 7 files changed, 498 insertions(+), 7 deletions(-)
+ 7 files changed, 473 insertions(+), 7 deletions(-)
 
 ## ufs-sm8250-1-domain-valid-validation.log
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: /: 'compatible' is a required property
-	from schema $id: http://devicetree.org/schemas/root-node.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: /: 'model' is a required property
-	from schema $id: http://devicetree.org/schemas/root-node.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10]] is too short
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10]] is too short
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
 
 ## round33-checkpatch.log
 total: 0 errors, 0 warnings, 0 checks, 232 lines checked
@@ -84,6 +74,12 @@ NOTE: Ignored message types: CAMELCASE
   LINT    ./Documentation/devicetree/bindings
   DTEX    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
   DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
+Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): power-domains: [[4294967295, 2]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interconnect-names', 'interconnects', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
   DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
   DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
   DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
@@ -92,6 +88,8 @@ Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
 Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
 
 ## round61-ufs-example-validation.log
 Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
@@ -100,4 +98,4 @@ Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
 
 ## dt_binding_check log SHA-256
-414f6b8a050d36ad6b8e86520eb4dcf3f6c2245e49c5f343c0f6ec04ac0c9bcc  /home/runner/work/_temp/round61-dt-binding-check.log
+4bba6eb9b751a8571403c2d217f32dd329712f537c61cc6c6656e154353053f7  /home/runner/work/_temp/round61-dt-binding-check.log

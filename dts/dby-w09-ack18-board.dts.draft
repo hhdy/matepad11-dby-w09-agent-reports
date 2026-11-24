@@ -94,6 +94,16 @@
  * Do not add vph_pwr=3.7 V, fake fixed regulators, vendor ARC properties or
  * proxy-supply translations to silence the gap. Treat regulator parent-path
  * verification as an electrical/bring-up gate before any boot test.
+ *
+ * ROUND22 source review confirms the HOS4.3 ARC level graph is a real vendor
+ * RPMh accelerator feature, not a generic regulator parent graph. Upstream
+ * ACK android17-6.18 qcom-rpmh-regulator only matches VRM/XOB, so these ARC
+ * child nodes must remain disabled/absent until an ARC-capable driver is
+ * deliberately ported and reviewed. The SoC rpmhpd/OPP provider remains a
+ * separate system performance-domain mechanism, not a one-to-one substitute.
+ * The six proxy-supply phandles are also not self-implementing: ACK lacks the
+ * vendor boot-time proxy-consumer helper. Their matching proxy request flags
+ * have not yet been verified in the local FDT report scope.
  */
 &apps_rsc {
 	regulators-0 {

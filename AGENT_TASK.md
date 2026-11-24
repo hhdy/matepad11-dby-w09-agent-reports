@@ -4,7 +4,7 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **当前本地 Agent：ROUND12 唯一待办（只读 AVB 元数据核验）。** ROUND11 已完成并上传。ROUND12 只核验现有 HOS4.3 boot/ramdisk/DTBO 与 vbmeta 的 AVB footer / descriptor 关系；只使用本机已有可信工具，无工具则 BLOCKED，不安装、不下载、不使用 WSL。GPT 继续负责其余公开源码审查和 DTS/Kconfig 设计，不重复 ROUND1–ROUND11。
+> **当前本地 Agent：firmware-analysis ROUND13 唯一活动任务。** ROUND12 已上传但在可信 AVB 工具门槛 BLOCKED：没有进行 footer / vbmeta descriptor 解析，不要重复执行或安装工具。当前 ROUND13 只读核验 HOS4.3 PM8150 UFS rails 的 mode / DRMS / suspend 属性；任务书：`firmware-analysis/round13/AGENT_TASK.md`。注意这与历史 `kernel-baseline/round13` DTS 设计是不同工作流。
 
 ## 当前项目目标
 
@@ -86,7 +86,7 @@
 - ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect；其 OPP 表引用 RPMHPD required-opps。ROUND27 发现 Host 当前附着 GCC UFS_PHY_GDSC，而 GCC/GDSC 没有到 RPMHPD 的已证实父级/性能状态回调，因此 required-opps 不能视为已生效的 MMCX vote。ACK 提供 devm_pm_domain_attach_list() 多域接口；可让 Host 同时附着 RPMHPD MMCX 与 UFS_PHY_GDSC，并在 OPP table 初始化前将唯一 required-opps index 0 手动映射到 RPMHPD virtual device。不能对两个 domain 直接启用 PD_FLAG_REQUIRED_OPP，因为第二个 required_dev_index 会超出当前单元素 required-opps 数组。此 UFS patch 仍未实现。Kconfig 草案保留 QCOM_RPMHPD。上游 ACK Host driver 原本不消费 `qcom,vddp-ref-clk` / `qcom,vccq-parent`，ROUND23/24 patch sketch 补充两者的可选 regulator get/load/enable/cleanup。L6 具 DRMS 聚合负载；S8 没有 DRMS set_load，210mA vote may no-op。HOS4.3 ARC parent/proxy 不能照搬到 ACK VRM group，且完整 MMCX/CX/MX corner equivalence 尚未建立。
 - UFS 的直接 UFS_PHY_GDSC 由 GCC 提供；ACK ufs_opp_table 虽声明 required-opps 指向 RPMHPD OPP，但 ROUND27 确认性能级请求通过当前 GenPD 路由，原始 GCC GDSC 没有已证实的 RPMHPD 父级。QCOM_RPMHPD 暂时保留为待通过 UFS dual-GenPD patch 接通的 provider，不应写成已生效的 UFS vote。
 - UART：ACK 将 uart2(qcom,geni-debug-uart) 作为 ttyMSM/earlycon console 候选，将 uart6(qcom,geni-uart) 作为 ttyHS 普通串口；HOS4.3 androidboot.console 与物理串口映射尚未证实，两个节点均暂缓启用。见 ROUND17。
-- Legacy boot：HOS4.3 本机文件大小与同型号公开项目的 boot 96 MiB、ramdisk 2 MiB、DTBO 24 MiB 一致；同型号公开流程保留 boot header v2 + 嵌入 ramdisk，另更新 ramdisk 分区及 /rootparam DTBO。HOS4.3 boot/ramdisk/dtbo AVB footer 与 vbmeta descriptor 覆盖范围尚待 ROUND12 只读核验。
+- Legacy boot：HOS4.3 本机文件大小与同型号公开项目的 boot 96 MiB、ramdisk 2 MiB、DTBO 24 MiB 一致；同型号公开流程保留 boot header v2 + 嵌入 ramdisk，另更新 ramdisk 分区及 /rootparam DTBO。ROUND12 已上传但 AVB footer 与 vbmeta descriptor 检查因无可信已安装工具而 BLOCKED；覆盖关系仍 UNKNOWN。
 - Android 首阶段：支持在逻辑分区挂载前从 initramfs /lib/modules 按内核版本/page-size 加载模块；DBY-W09 legacy ABL 是否按 AOSP 要求暴露此目录仍 UNKNOWN。当前 UFS/QMP 保守内建。ROUND20 已确认 BLK_DEV_DM=y 和 EROFS_FS=y；无 DM_LINEAR 独立 Kconfig 项，DM_VERITY/FEC 等待 ROUND12。
 - 内存 / 保留区：ROUND7 的 HOS4.3 base FDT 无 /memory 节点，但含 34 个 /reserved-memory 子节点；同型号 HOS4.2 公共 DTS 也没有普通 /memory 节点且只显式保留 4 个节点。ROUND42 对照公开 SM8250 FreeABL LinuxLoader 发现，标准路径会查找既有 /memory，缺失则 EFI_NOT_FOUND；随后从 EFI_RAMPARTITION_PROTOCOL 更新其 reg，不自动创建节点。该参考不是 Huawei ABL，因此实际 HOS4.3 最终 post-ABL FDT 仍 UNKNOWN；不要再假定 ABL 一定注入 memory node。其可选 carveout-removal path 读取既有 /reserved-memory/no-map 并扣除 RAM banks，不会重建 34 个子节点。见 ROUND19/ROUND42；最终 memory/reserved-memory 是实际 DTB 编译和启动前硬性 gate。 在参考实现中该错误会沿 LoadAddrAndDTUpdate 传播并让非 RUMI 平台停止正常 boot；FdtPathOffset 可匹配唯一 memory@unit-address，不是字面名强制。 ROUND43 对照 ACK 自身：classic path 只从带 `device_type=memory` 的 FDT root child 读 RAM；真正 EFI-stub entry + 完整 `/chosen/linux,uefi-*` 元数据可由 UEFI map 重建 memblock，是一条独立例外。仅有 UEFI ABL 或 Qualcomm EFI_KERNEL_PROTOCOL 不足以证明使用 Linux EFI stub。 ROUND44 对照固定 OPP core 发现 `_opp_table_alloc_required_tables()` 明确只检查第一个可用 OPP entry；ROUND33 同样使用首项来检查唯一 required-opps provider 与其 OPP table identity，符合 ACK 的 table-level 解析逻辑，不需要增加逐项扫描。该结论仍是源码审查，未 full-tree apply/build。
 - Panel ACTIVE_PROFILE=UNKNOWN；ROUND10 ramdisk BLOCKED；EROFS 内容 BLOCKED；system/cust/hw_product filesystem 类型和完整 fstab 未明。
@@ -186,3 +186,21 @@ ROUND47 已完成 ACK .33_r00 PM8150 regulator mode / DRMS 能力审查。固定
 **ROUND13 local evidence 仍待查：** ROUND7 过滤报告不含 `regulator-initial-mode`、`regulator-allowed-modes`、`regulator-allow-set-load`。ROUND13 应在 ROUND12 完成后，只读扫描已存在 HOS4.3 base boot FDT 与适用 stock DTBO fragment，定向查 PM8150 S4/L5/L6/L9/L17 和 PM8150L S8 的 initial-mode、allowed-modes、allow-set-load、system-load 与 suspend-state mode/on-off properties；须保留节点路径和 overlay fragment→target 关系。ROUND47 报告：`kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`。
 
 ROUND47 仅为固定 ACK 源码和公开 HOS4.2 交叉参考审查，不代表 HOS4.3 本机字段结果或运行时 mode 读数。ROUND12 仍是唯一活动本地 Agent 任务；未创建/派发另一个 Agent 任务。Stage A 6.18.33 内核仍是唯一当前主线，Stage A 实际启动和存储验收前不开始 DerpFest Stage B。
+
+
+## 最新本地任务状态（2026-11-24）— ROUND12 BLOCKED；ROUND13 唯一活动任务
+
+ROUND12 已上传到 `firmware-audit-v1`：
+`firmware-analysis/round12/round12_avb_metadata_findings.txt`
+
+结果：**BLOCKED at tool gate**。本机没有已安装可信 avbtool / 已审查 AVB helper；已审查脚本不解析 AVB footer 或 vbmeta descriptors。未执行 AVB 解析，没有安装/下载工具，没有使用 WSL 或更改安全策略。因此 footer、original-image-size、descriptor coverage 和链式 vbmeta 关系继续 BLOCKED / UNKNOWN。不要从 AVB0 magic 或文件大小推断。
+
+当前唯一活动本地任务是 **firmware-analysis ROUND13：HOS4.3 PM8150 UFS regulator mode / DRMS metadata audit**：
+- 任务书：`firmware-analysis/round13/AGENT_TASK.md`（本文件所在仓库 main）。
+- 只读扫描已有 ROUND3 base boot-FDT work copy 和 ROUND7/8 stock DTBO work copies；重用 ROUND3 已审查 parser 与 ROUND9 resolution pattern。
+- 目标：PM8150 S4/L5/L6/L9/L17 与 PM8150L S8 的 initial-mode、allowed-modes、allow-set-load、system-load 和 suspend-state mode/on-off 属性，保留节点路径及 fragment-to-target 关联。
+- 不安装工具、不下载、不写 parser、不重提取固件、不连接设备、不写分区。
+- 只将脱敏文本结果上传到 `firmware-audit-v1` 的 `firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`；上传后停止。
+- 该 `firmware-analysis/round13` 与历史 `kernel-baseline/round13` ACK DTS 设计是不同命名空间，不应混淆。
+
+ROUND47 已提供 ACK 侧 regulator DRMS 解释；ROUND13 负责补充实际 HOS4.3 本机字段，不要把 HOS4.2 公共 DTS 当作 HOS4.3 证据。

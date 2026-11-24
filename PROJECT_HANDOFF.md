@@ -94,12 +94,12 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 ## 6. 已完成的内核移植研究（无需从零重做）
 
 - ROUND31：ACK .33_r00 UFS/QMP/SM8250 GCC/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig 依赖闭环；storage-first fragment 的隐藏依赖注释已更新，最终 Kconfig 解析仍 NOT_RUN。
-- [ROUND33：SM8250 UFS 双 GenPD driver patch 草案](./kernel-baseline/round33/sm8250-ufs-dual-genpd-patch-design.md)：在 `ufs_qcom_probe()` / 通用 init 之前只对 SM8250 双域 MMCX→GCC UFS_PHY_GDSC 拓扑 attach domains，并将 UFS 唯一 `required-opps` slot 0 明确绑定到 MMCX。还检查 required-opps 目标 OPP provider 为 qcom,sm8250-rpmhpd；单域设备路径保留。patch 尚未应用/编译/checkpatch/运行；两个 hunk 已对照固定 ACK 源码做了逐行上下文和行数核对，但没有在完整内核工作树上执行 git apply。
+- [ROUND33：SM8250 UFS 双 GenPD driver patch 草案](./kernel-baseline/round33/sm8250-ufs-dual-genpd-patch-design.md)：在 `ufs_qcom_probe()` / 通用 init 之前只对 SM8250 双域 MMCX→GCC UFS_PHY_GDSC 拓扑 attach domains，并将 UFS 唯一 `required-opps` slot 0 明确绑定到 MMCX；验证 required-opps 目标 RPMHPD provider，保留单域路径。最新固定源码 hunk 核验：ACK `ufs-qcom.c` blob `a80c6998406dbc88c25dbd9977699ba481207efe`、patch blob `454a4443035cf3451c87e2735f0b876d65d52f8b`；include 与 probe 两个 hunk 的旧侧上下文及声明行数均 PASS。仍未在完整工作树 `git apply`、checkpatch、编译或实机验证。
 - [ROUND34：ROUND33 UFS 双 GenPD 补丁的固定 ACK 源码与生命周期审查](./kernel-baseline/round34/round33-pinned-source-lifecycle-review.md)：按 `android17-6.18.33_r00` 精确复核 GenPD 多域自动附着规则、attach-list 返回值与 `PD_FLAG_DEV_LINK_ON` 链路标志、OPP required-dev 的初始化时序、多次 OPP config token 不互相覆盖，以及 devres 逆序清理。审查未发现已核实的 API/生命周期冲突；这只是源码审查通过，不代表补丁已应用、编译或设备验证。
 - [ROUND35：DBY-W09 UFS 双 GenPD 的 DTS 集成缺口](./kernel-baseline/round35/dby-w09-ufs-dual-genpd-dts-integration-gap.md)：实际读取 `ack18-dby-w09-dts-draft` 上的板级 DTS 后确认，`&ufs_mem_hc` 只补 rails/status，没有覆盖 `power-domains`；因此继承单个 GCC `UFS_PHY_GDSC`，ROUND33 helper 会按兼容逻辑走单域返回路径，MMCX 映射尚未集成。提出下一版 DTS 需要 MMCX index 0 + GCC GDSC index 1；仅写入 main 报告，没有修改 DTS 草案分支。
 - [ROUND36：SM8250 UFS 双域 binding 数量约束](./kernel-baseline/round36/sm8250-ufs-power-domain-schema-limit.md)：固定 ACK commit `8ad08f...` 的 `qcom,ufs-common.yaml` 将 `power-domains` 限为 `maxItems: 1`。已新增 compatible-scoped schema patch，仅允许 `qcom,sm8250-ufshc` 最多两个域，其他 Qualcomm UFS 仍最多一个。最终 patch blob SHA `dad87ef8dfefee6141b8a7949982c007c4a03b4a`；目标文件本地测试副本的 Git blob SHA 与上游精确匹配 `962dffcd28b44b3489be5615c75e7270a0c45dc4`，ROUND36 在单文件精确 blob fixture 上 `git apply --check`、`git apply`、`git diff --check` 均 PASS；PyYAML 解析通过，独立 JSON Schema Draft 7 条件逻辑测试通过（SM8250 允许 1/2 个域、拒绝 3 个；其他 UFS 允许 1 个、拒绝 2 个）。另外将 patched ROUND32 `qcom,ufs.yaml` 与 ROUND36 `qcom,ufs-common.yaml` 的相关条件合并做 JSON Schema Draft 7 测试：SM8250 八 clocks/单 reg/two domains 和旧单域场景通过；三域、九 clocks、错误第八时钟名、双 reg，以及非 SM8250 双域均按预期拒绝。此结果不是 dt-schema 规范验证或完整 ACK 工作树验证；dt_binding_check/dtbs_check 尚无工具运行，ROUND33 也未作全树 git apply。
-- [ROUND37：DBY-W09 UFS Host 双 GenPD board DTS delta](./kernel-baseline/round37/dby-w09-ufs-dual-genpd-board-dts-delta.md)：新增独立 DTS patch draft，仅给 `&ufs_mem_hc` 增加 MMCX index 0 + GCC `UFS_PHY_GDSC` index 1，并显式 include 两个 domain ID 头文件；已与受保护 DTS 分支当前文件完整文本做两个 hunk 的旧侧上下文及行数核验（源 blob `e86c870...`），均 PASS。patch blob `486654c...`。未应用，未改 `ack18-dby-w09-dts-draft`，未 dtc/schema 验证。 已与受保护分支当前 board DTS 完整文本逐行核验两个 hunk，行数及旧侧上下文均通过；仍未应用或编译。
-- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：ACK .33 及当前上游的 qcom,ufs.yaml 都遗漏 qcom,sm8250-ufshc；SM8250 节点实际为 8 clocks、无 ICE 窗口、单 reg。独立 schema-only patch 草案位于 round32；三个 hunk 已逐行匹配固定 ACK 原始 YAML，old/new 行数声明一致，但未执行 git apply；dt_binding_check/dtbs_check 未运行，且未包含 dual-GenPD 变更。
+- [ROUND37：DBY-W09 UFS Host 双 GenPD board DTS delta](./kernel-baseline/round37/dby-w09-ufs-dual-genpd-board-dts-delta.md)：新增独立 DTS patch draft，仅给 `&ufs_mem_hc` 增加 MMCX index 0 + GCC `UFS_PHY_GDSC` index 1，并显式 include 两个 domain ID 头文件。patch blob `486654c8d0b1b785190253270f5e83f796f07362`；受保护 DTS 文件 blob `e86c8707c413a9376b1e332a94e292b86acde3e2`。两个 hunk 的旧侧上下文及行数均与当前文件逐行匹配；未应用、未修改保护分支、未 dtc/schema 验证。
+- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：固定 ACK `qcom,ufs.yaml` 漏列 `qcom,sm8250-ufshc`；补丁 blob `efe2d932da34716c631de22d89aba19730cc7f50` 与仓库草案一致，目标源 blob `1dd41f6d5258014d59c8c8005bc54f7994351a52`。在该精确单文件 fixture 上 `git apply --check`、`git apply`、`git diff --check` 均 PASS；仍未运行 dt-schema/dtbs_check，也未在完整 ACK 工作树集成。
 
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
 
@@ -146,9 +146,9 @@ ROUND29 已将设计缩小并精确到 ACK `.33_r00`：在 `ufs_qcom_probe()` �
 
 ROUND29 另确认 `of_genpd_add_provider_onecell()` 在注册 GenPD provider 之前先为 RPMHPD 域注册 indexed OPP table，因此 attach-list 成功后再绑定 required_dev，不会因 RPMHPD OPP table 尚未注册而触发 `-ENODEV`。这只是源码顺序证明，运行时未验证。不能对两个域使用 `PD_FLAG_REQUIRED_OPP`，因为它会把 index 1 映射到不存在的第二个 required-opps 槽位。设计报告列出剩余的 DTS order、probe defer、runtime-PM、错误 unwind、实际 vote、HOS corner 对等验证。尚未实现、编译或测试。
 
-ROUND32 确认 `qcom,ufs.yaml` 未将 `qcom,sm8250-ufshc` 纳入 schema select/compatible enum；该缺漏在当前 Linux 主线版本仍存在。实际 SM8250 UFS node 是八个时钟、没有 ICE reg window、单个 reg window。已创建 schema-only patch 草案，只补 compatible 与相应时钟/寄存器布局，不改变 power-domains 数量或顺序。补丁尚未应用，dt_binding_check/dtbs_check 未运行；其三段 hunk 已逐行对照固定 ACK YAML 并核对行数一致，但未在工作树中执行 git apply。
+ROUND32 已完成独立单文件 apply 核验：精确源 blob 与本地 fixture SHA 匹配，仓库补丁 SHA 匹配；`git apply --check`、`git apply`、`git diff --check` 均 PASS。补丁仍未进入完整 ACK 工作树，`dt_binding_check` / `dtbs_check` 未运行。
 
-ROUND33 已创建 `ufs-qcom.c` 双 GenPD patch 草案，且做了 exact-source 级别结构审查及 patch hunk 计数一致性核对。它只在明确的 SM8250 双域布局下运行；验证 MMCX 与 GCC GDSC provider/ID、UFS OPP 的 required-opps 数量和目标 provider 后，再在 `ufshcd_pltfrm_init()` 前 attach domains 并将唯一 required_dev index 0 映射到 MMCX。旧单域路径不变。它没有处理 MMCX→MX 父级角点差异（ROUND30）。未应用、未 checkpatch、未编译、未 schema 验证、未实机测试。
+ROUND33 的 exact-source hunk 核验与 §6 一致；driver 设计仍是条件性候选，未完整应用、checkpatch、编译或设备验证。ROUND30 的 MMCX→MX 父级角点等价性仍为独立阻塞。
 ROUND30 的父级对照另发现：HOS4.3 已报告 MMCX ARC → MX ARC parent-supply 边，但 ACK .33 的 SM8250 RPMHPD descriptor 只为 CX 设置 MX parent，MMCX 使用无 parent 的 plain descriptor。若增加 MMCX→MX GenPD 层级，通用 GenPD 会通过 dev_pm_opp_xlate_performance_state() 换算父域 pstate；当前所有 RPMHPD 域使用同一 OPP enum 表且无 required-opps 转换时，helper 原样传递同一个 pstate，并不自动实现 HOS min-dropout delta。HOS 的 qcom,min-dropout-voltage-level 仍 UNKNOWN / NOT_CAPTURED，因此不能直接添加 parent pointer，须把 MMCX→MX corner equivalence 单独列为阻塞项。
 
 ### 7.3 HOS4.3 ARC / proxy
@@ -179,7 +179,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### GPT 侧（当前继续工作）
 
-- ROUND34 源码/生命周期审查未发现已核实的 API 顺序冲突；ROUND35 确认现有 DBY-W09 DTS 尚未增加 MMCX 第二域；ROUND36 又在固定 ACK `.33_r00` 的 `qcom,ufs-common.yaml` 中确认 `power-domains.maxItems = 1`，已准备 compatible-scoped schema widening patch。接下来必须组合 ROUND32 + ROUND36 + DTS 双域 delta + ROUND33，在完整工作树中做 git apply、dt-schema、dtbs_check、Kconfig、编译，再进入设备验证。
+- ROUND32 + ROUND36 的 schema 补丁在各自固定源文件 fixture 上均通过单文件 `git apply --check` / apply / diff-check；组合条件逻辑测试通过。ROUND37 提供尚未应用的 board DTS 双域 delta；ROUND33 driver hunk 与固定源文件逐行匹配。下一阶段需要完整 ACK `.33_r00` 工作树和 dt-schema/dtc/checkpatch 工具，按 ROUND32 → ROUND36 → ROUND37 → ROUND33 集成，在临时 worktree 中做全树应用、绑定校验、DTB、Kconfig 与编译验证；仍不得把这些单文件/局部检查称为完整移植或设备可启动。
 - 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。

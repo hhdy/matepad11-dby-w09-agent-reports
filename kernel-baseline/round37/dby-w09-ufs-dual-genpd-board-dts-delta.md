@@ -53,7 +53,7 @@ The current original single-domain layout remains accepted by the ROUND36 bindin
 
 ## 4. Validation still required
 
-- Apply this board delta to a disposable copy of the current board DTS draft and confirm the exact hunk context.
+- The delta has already passed `git apply --check`, `git apply`, and `git diff --check` on an exact-blob one-file fixture. Next, integrate it into a disposable full ACK `.33_r00` worktree at the actual board DTS source path and run DTS preprocessing / `dtc`.
 - Integrate it in the full ACK .33_r00 source tree with ROUND32/ROUND36 binding changes.
 - Run dt_binding_check, dtbs_check, and dtc; inspect the final compiled DTB to confirm exactly two UFS Host power domains in the specified order.
 - Confirm the UFS PHY's own GCC GDSC property is unchanged.

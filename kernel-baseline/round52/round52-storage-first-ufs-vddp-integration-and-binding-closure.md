@@ -30,7 +30,7 @@ Patch: kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycl
 - Fixed ACK source blobs reviewed: ufs-qcom.c = a80c6998406dbc88c25dbd9977699ba481207efe; ufs-qcom.h = 5f979daabd5323184eeee137cc8ecc076193979e.
 - Intended patch order: ROUND33 dual-GenPD UFS driver draft first, then ROUND52-0002. Its include hunk expects the post-ROUND33 pm_domain/pm_opp include lines; header fields do not conflict with ROUND33.
 - It reads qcom,vddp-ref-clk-max-microamp, obtains the qcom,vddp-ref-clk regulator consumer, sets the load, and enables the supply before ufs_qcom_setup_clocks() powers up the Qualcomm PHY.
-- It registers devm cleanup after devm_regulator_get_optional(). The cleanup disables VDDP and then clears its load. The devres release order is after ufshcd_remove() completes generic UFS VCCQ shutdown and before the managed regulator handle is put.
+- It registers devm cleanup after devm_regulator_get(). The cleanup disables VDDP and then clears its load. The devres release order is after ufshcd_remove() completes generic UFS VCCQ shutdown and before the managed regulator handle is put.
 - VDDP is held enabled for the entire bound lifetime in this first storage-focused iteration. Suspend/resume rail switching is intentionally deferred.
 - State flags are set only after successful operations. If load setup fails, no vote is marked. If enable fails, deferred cleanup clears the successfully set load. If action registration fails, devm_add_action_or_reset invokes cleanup immediately while the state flags are still false.
 - Cleanup is best-effort. If regulator_disable() fails, it logs and retains the load vote rather than lowering load while the enable reference may still be active. This failure path is not runtime-tested.
@@ -52,7 +52,7 @@ Performed:
 - Re-fetched the fixed ACK qcom,ufs.yaml, ufs-qcom.c and ufs-qcom.h blobs and checked all authored patch hunk line counts.
 - Re-verified KONA UFS semantics: VDDP does load+enable and disable-then-clear-load; VCCQ-parent is load-only.
 - Confirmed ROUND52-0002 is ordered after ROUND33 because its include context expects ROUND33's pm_domain/pm_opp additions.
-- Inspected devm_regulator_get_optional() and fixed ACK UFS variant init / remove placement.
+- Inspected devm_regulator_get() and fixed ACK UFS variant init / remove placement.
 
 NOT_RUN:
 - Full-tree git apply / combined git apply --check.

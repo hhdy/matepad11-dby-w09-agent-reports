@@ -29,7 +29,7 @@ The draft now preserves that known stock value. This is stronger evidence than o
 
 ## Source and evidence basis
 
-- Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC, RPMh XO clock, IOMMU and interconnect topology.
+- Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC GDSC, RPMh XO clock and RPMh OPP references, IOMMU and interconnect topology.
 - Local ROUND7/ROUND9 HOS4.3 facts: stock DTBO rootparam values and UFS rail closure.
 - Local ROUND8 overlay target map: stock entry 8 has 145 fragments and is incompatible with a minimal ACK base.
 - Public same-device Linux DTS / rootparam overlay, used as a cross-reference only, not copied as a complete Android/ACK solution.

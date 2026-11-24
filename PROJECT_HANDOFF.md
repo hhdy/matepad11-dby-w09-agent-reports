@@ -418,3 +418,26 @@ ROUND52 ordered patch-context simulation update: the final patch series was appl
 
 
 ROUND52 final driver-object lifetime note: fixed ACK ufshcd_alloc_host() registers the SCSI-host release action before Qualcomm variant init. The variant's ufs_qcom_host devm allocation and then VDDP cleanup action are registered later. Devres LIFO runs VDDP cleanup while host and hba are still valid, after ufshcd_remove() has completed generic VCCQ shutdown.
+
+
+## 16. Parallel AI delegation — ROUND54 (2026-11-24)
+
+The user plans to connect a second GitHub-capable AI to accelerate the project. A non-overlapping work split has been prepared:
+
+- **Primary AI / ChatGPT:** continue ROUND53 and subsequent Stage-A work on main, focusing on Kconfig closure, storage-first boot prerequisites and integration planning.
+- **Second AI:** independently red-team review the existing ROUND32/36/37/33/52 UFS patch series, regulator lifecycle/error paths, GenPD/required-OPP logic, binding schema and board DTS consistency.
+
+Second AI onboarding:
+- Coordination index: `ai-parallel/README.md`
+- Full task contract: `ai-parallel/ROUND54_TASK.md`
+- Copy/paste start prompt: `ai-parallel/SECOND_AI_START_PROMPT.md`
+- Dedicated branch (already created from latest main): `ai-parallel/round54-ufs-review`
+- Required report template: `ai-parallel/round54/ROUND54_REVIEW.md` on the dedicated branch.
+
+The second AI must commit only to its dedicated branch. It may place justified candidate patches under `ai-parallel/round54/candidates/`, but must not overwrite canonical patch drafts or reports. It must not edit main, `ack18-dby-w09-dts-draft`, `firmware-audit-v1`, or PR #1; no PR/merge is requested. The primary AI will review its report before adopting any change. This parallel AI is distinct from the local read-only firmware Agent and does not need local device/firmware access.
+
+Current state at task dispatch:
+- ROUND49/50/51 source reviews completed.
+- ROUND52 UFS binding + VDDP driver drafts prepared; 15/15 strict in-memory hunk-position simulation passed, but no full-tree git apply/build.
+- ROUND53 static Kconfig dependency-closure audit created; actual Kconfig resolution/final `.config`/Kleaf build remain not run.
+- Stage A ACK 6.18.33 remains the sole active porting stage; DerpFest Stage B remains deferred until real Stage-A boot and storage/basic-hardware acceptance.

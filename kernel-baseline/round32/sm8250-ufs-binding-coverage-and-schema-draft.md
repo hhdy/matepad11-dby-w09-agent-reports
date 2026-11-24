@@ -91,3 +91,13 @@ The proposed UFS dual-GenPD branch can identify the specific SoC via of_device_i
 - `git apply`: **PASS** against the isolated fixture.
 - `git diff --check`: **PASS** after application.
 - `dt_binding_check`, `dtbs_check`, `dtc`, and full-tree integration remain **NOT_RUN** because the required dt-schema/device-tree toolchain and full source tree were not available in this environment.
+
+## 8. Combined ROUND32 + ROUND36 logic check
+
+The patched ROUND32 `qcom,ufs.yaml` and patched ROUND36 `qcom,ufs-common.yaml` were parsed with PyYAML and their relevant SM8250 and power-domain conditionals were composed into an isolated JSON Schema Draft 7 test. Results:
+- SM8250 with its three compatible strings, eight named clocks, one reg window and two power domains: **ACCEPT**.
+- SM8250 retaining one power domain: **ACCEPT** (backward-compatible layout).
+- SM8250 with three power domains, nine clocks, a wrong eighth clock name, or two reg windows: **REJECT**.
+- Non-SM8250 Qualcomm UFS with two power domains: **REJECT**.
+
+All expected outcomes passed. This checks the composition of the two edited conditional rules, not the complete dt-schema meta-schema, the full included binding graph, `dt_binding_check`, or the final device DTB. Those validations remain NOT_RUN.

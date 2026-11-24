@@ -1,11 +1,13 @@
 # AGENT_TASK.md — DBY-W09 GKI / ACK 内核移植调研总入口
 
-> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND8.md。** ChatGPT 已完成 ROUND7 的公开项目/上游驱动对照；本轮只需解析本机现有 DTBO8 的 fragment target 与关键硬件子树，解决本地 FDT 报告未保留的 phandle 目标映射。
+> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND9.md。** ROUND8 已完成 145/145 fragment target 解析和 UFS/rootparam 映射；ROUND9 只补齐尚未解析的 supply / pinctrl / GPIO / camera / USB endpoint，不重复 fragment target、PATH 探测或上游公开研究。
 
 ## 当前任务
 
-- [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：只读分析 ROUND3 已有的 base FDT candidate 0 和 DTBO entry 8，解析 fragment target -> base node path，确认 rootparam、UFS、panel、THP、wireless、audio、camera、USB/DP 的目标节点及关键 GPIO/pinctrl。只上传三份脱敏文本报告。
-- [ROUND8 ChatGPT 独立硬件对照报告](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)：已将 HOS 4.3 与同型号 svesnav/youzjuzi 项目、Linux v6.18 驱动逐项比较；不要重复公开资料研究。
+- [AGENT_TASK_ROUND9.md](./AGENT_TASK_ROUND9.md)：只读使用 ROUND3 已有 FDT candidate 0 + DTBO entry 8，补充 UFS supply phandle、THP/panel/WLAN GPIO-pinctrl、camera sensor board properties、USB-C/DP endpoints。只上传四份脱敏文本报告。
+- [ROUND9 ChatGPT 独立驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)：已比对 HOS4.3、同型号 Linux 参考与 Linux v6.18 upstream driver/binding；不要重复公开源码研究。
+- [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：已完成 145/145 fragment target 解析，确认 fragment@143 -> /rootparam，并确认 entry 8 的 fragment@63/@64 修改 UFS PHY/Host；只作历史任务参考。
+- [ROUND8 HOS4.3 与同型号 Linux 对照](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)：历史阶段报告，target 解析前版本。
 - [ROUND7 本地 FDT 属性清单](./AGENT_TASK_ROUND7.md)：已完成，13/13 FDT VALID，9 个 DTBO entries 已有属性清单。
 - [ROUND6 上游 GKI 基线报告](./kernel-baseline/round6/upstream-baseline-research.md)：由 ChatGPT 完成，区分 6.18.33 活跃源码分支和 6.18.32 已发布 GKI release；Android 12 / Android 17 兼容风险、Kleaf/KMI 已调查。ROUND6 PATH 工具探测不是 ROUND8 前置条件，暂时不阻塞。
 
@@ -21,9 +23,10 @@
 
 ## 当前关键技术判断
 
-- Huawei board-id 0x206a / DBY_W09_VG 与本机 HOS 4.3 DTBO entry 8 对应。
-- Linux v6.18 已有 SM8250 UFS host / QMP UFS PHY；HOS 4.3 boot FDT 默认 disabled，而同型号 Linux board DTS 会启用并补齐 rails。需要确认实际 overlay/最终 FDT 状态，不能断言缺少 UFS driver。
-- HOS 4.3 DTBO 包含 Debussy/NT36523 C-PHY panel profiles、Huawei THP、QCA6390-compatible wireless、WCD938x/WSA881x 与 SmartPA、camera、USB-C/DP 节点。具体选中 profile / fragment targets 需要 ROUND8 本地核验。
+- Huawei board-id 0x206a / DBY_W09_VG 与本机 HOS 4.3 DTBO entry 8 对应；ROUND8 已解析 145/145 fragment，fragment@143 确认为 /rootparam。
+- ROUND8 entry 8 fragment@63/@64 将 UFS PHY/Host status 设为 ok 并配置供电属性；Linux v6.18 有 SM8250 UFS host + QMP UFS PHY，HOS PHY compatible 与主线 match 字符串不同，板级 DTS 必须规范化。
+- 同型号 port 证据表明 THP / panel / audio / camera / USB-C 有较多 Huawei 专属适配；本机活动 panel profile、部分 GPIO/pinctrl、camera sensor model 尚未全部由本地 HOS4.3 属性闭环。
+- Round9 driver compatibility matrix 已列出主要 upstream-compatible 字符串差异与 vendor firmware/configuration 阻塞。
 - EROFS 内容层仍 BLOCKED；没有 vendor/odm 模块清单、vermagic、firmware、VINTF 或供应商 KMI 证据。
 - Android 12 userspace + android17-6.18 不在 Google 官方支持矩阵中；项目最终 platform target 仍需后续产品决策。
 - 详细对照见 ROUND6 / ROUND7 / ROUND8 ChatGPT research reports。
@@ -43,6 +46,7 @@
 
 ## 历史任务书
 
+- [ROUND8](./AGENT_TASK_ROUND8.md)
 - [ROUND2](./AGENT_TASK_ROUND2.md)
 - [ROUND3](./AGENT_TASK_ROUND3.md)
 - [Xiaomi ZIP 审计](./AGENT_TASK_XIAOMI_ZIP.md)
@@ -51,4 +55,4 @@
 - [ROUND6 本机工具探测](./AGENT_TASK_ROUND6.md)
 - [ROUND7 FDT 属性 inventory](./AGENT_TASK_ROUND7.md)
 
-本地 Agent 完成 ROUND8 后，只回传 DTBO8 fragment target 和必要硬件属性摘要。随后由 ChatGPT 继续完成最终字段对照与 ACK 6.18.33 移植方案；不重复进行已完成的公开研究。
+本地 Agent 完成 ROUND9 后，只回传可安全解析的供电/pinctrl/GPIO/camera/USB属性摘要。随后由 ChatGPT 继续把这些字段与 ACK 6.18.33 的实际设备树/驱动绑定核对；不重复进行已完成的公开研究。

@@ -93,6 +93,12 @@ The board DTS draft now:
 
 The current PM8150 input supply is intentionally unspecified because the local base FDT does not expose an external input relationship. This is a fail-closed source draft, not a verified electrical schematic.
 
+## 3.5 Additional ACK VRM parent-supply gap identified in ROUND21
+
+The ACK PM8150 VRM driver table has a non-NULL supply_name for the exact UFS rails: S4 uses vdd-s4; L5 uses vdd-l3-l4-l5-l18; L6/L9 use vdd-l6-l9; L17 uses vdd-l13-l16-l17. ROUND11's full apps_rsc scan found no corresponding VRM supply phandles; the four parent-supply properties it did find are legacy ARC level-provider edges, not these PMIC VRM input links.
+
+The regulator core can use a dummy parent when Device Tree is populated and a named supply cannot be resolved. That means missing parent phandles do not necessarily force a regulator probe failure; the dummy regulator assumes the physical supply is present and already enabled. This is not evidence of the actual electrical parent or proof that the PMIC rails are safe under ACK runtime voltage/mode transitions. The UFS consumer-to-output mapping remains locally resolved, but the PM8150 output-rail input power-tree remains NOT_ESTABLISHED. See ROUND21.
+
 ## 4. Changed files
 
 Branch ack18-dby-w09-dts-draft:

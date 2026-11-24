@@ -19,7 +19,7 @@ qcom,ufs.yaml edits. It does not alter compatible selection or other SoCs.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml b/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
-@@ -89,6 +89,7 @@
+@@ -98,4 +98,5 @@
          clocks:
            minItems: 8
          clock-names:

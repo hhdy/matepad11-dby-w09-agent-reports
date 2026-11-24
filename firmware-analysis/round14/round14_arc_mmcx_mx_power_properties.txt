@@ -1,0 +1,337 @@
+ROUND14 — HOS4.3 MMCX/MX ARC corner/dropout and S8 enable-property audit
+Device: Huawei MatePad 11 2021 DBY-W09 / HarmonyOS 4.3 firmware, stock base boot FDT
+Mode: READ-ONLY, existing work copies only. No device, no flash, no unlock, no write.
+Status: COMPLETE for the scoped property extraction; runtime semantics UNKNOWN.
+Report type: static device-tree metadata only.
+
+======================================================================
+1. TOOL / INPUT GATE STATUS
+======================================================================
+Input gate                                                     RESULT
+------------------------------------------------------------  ---------------
+ROUND3 base boot-FDT work copy present                         YES
+ROUND3 reviewed FDT parser present                             YES (reused unchanged)
+ROUND9 base phandle/path index (same base FDT)                 YES (reused)
+ROUND11 parent-supply edge list used as authoritative          YES
+ROUND13 S8 provider/child identity used as authoritative       YES
+New parser / script / tool written or modified                 NO
+Firmware re-extracted, boot image unpacked, new work copy      NO
+Tool installed or downloaded, WSL invoked                      NO
+Device / ADB / fastboot / runtime status read                  NO
+main, protected DTS branch, PR #1 modified                     NO
+
+Parse sanity of the existing base FDT (read-only load, no rewrite):
+  file size (bytes)       : 556524
+  FDT totalsize (bytes)   : 556524
+  decoded nodes           : 3471
+  decoded property paths  : 3281
+  parser error list       : empty
+
+Parser classification note (applies to the string fields below):
+  The reviewed parser's string/stringlist heuristic classified some
+  all-ASCII properties (compatible, and regulator-name on the "-ao"/"-so"
+  child nodes) as u32 arrays instead of strings. For those fields this report
+  shows BOTH the raw u32 words and the ASCII obtained by byte-decoding the
+  same property value in big-endian order. The ASCII is a direct byte
+  decode of the property, not an inference, and no parser was modified.
+
+======================================================================
+2. PROVIDER-LEVEL PROPERTIES
+======================================================================
+2.1 MMCX provider
+----------------------------------------------------------------------
+  node path        : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+  compatible       : raw u32 <0x71636f6d 0x2c72706d 0x682d6172 0x632d7265
+                            0x67756c61 0x746f7200>
+                     byte-decoded ASCII : "qcom,rpmh-arc-regulator"
+  qcom,resource-name            = "mmcx.lvl"
+  qcom,send-defaults            = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,always-wait-for-ack      = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,use-awake-state          = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  proxy-supply                  = <105>  (phandle 0x69)
+                                  resolved target node:
+                                  /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level
+                                  i.e. the provider's OWN ALL child (identity confirmed by
+                                  phandle owner lookup: phandle 105 belongs to that node).
+                                  Target identity only; runtime effect NOT inferred.
+  parent-supply properties carried on this provider node:
+    pm8150a_s4_level-parent-supply     = <127>
+    pm8150a_s4_level_ao-parent-supply  = <123>
+  direct child nodes (exact paths):
+    /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level      (ALL)
+    /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level-ao   (AO)
+    /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level-so   (SO)
+
+2.2 MX provider
+----------------------------------------------------------------------
+  node path        : /soc/rsc@18200000/rpmh-regulator-mxlvl
+  compatible       : raw u32 <0x71636f6d 0x2c72706d 0x682d6172 0x632d7265
+                            0x67756c61 0x746f7200>
+                     byte-decoded ASCII : "qcom,rpmh-arc-regulator"
+  qcom,resource-name            = "mx.lvl"
+  qcom,send-defaults            = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,always-wait-for-ack      = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,use-awake-state          = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  proxy-supply                  = NOT_FOUND_IN_INSPECTED_SCOPE (no proxy-supply on
+                                  this provider node; one exists on the MMCX provider
+                                  and on the CX provider, which are out of this scope)
+  parent-supply property carried on this provider node:
+    pm8150a_s3_mmcx_sup_level-parent-supply = <122>
+  direct child nodes (exact paths):
+    /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level
+    /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level-ao
+    /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+
+2.3 Scope note on a parent-supply property not in the ROUND11 edge list
+----------------------------------------------------------------------
+The MX provider node carries `pm8150a_s3_mmcx_sup_level-parent-supply = <122>`.
+This property is NOT one of the four edges listed by ROUND11. Phandle 122
+belongs to:
+  /soc/rsc@18200000/rpmh-regulator-cxlvl/regulator-pm8150-s3-mmcx-sup-level
+It is recorded here only as an observed raw property on a node inside the
+ROUND14 scope, with its phandle owner identified for traceability. It is NOT
+promoted to a confirmed MMCX→MX or MX→CX parent edge in this report, and
+ROUND11's four-edge set remains the authoritative edge list for this task.
+Downstream review should reconcile ROUND11's reported count (4) with this
+fifth property rather than assuming the ARC parent graph is complete.
+
+======================================================================
+3. CHILD-LEVEL PROPERTIES (four exact MMCX/MX children)
+======================================================================
+Values for regulator-min-microvolt / regulator-max-microvolt / qcom,set /
+qcom,init-voltage-level / qcom,min-dropout-voltage-level are LOGICAL ARC
+corner indices as stored in DT. They are NOT converted to physical
+microvolts, and 65535 (0xFFFF) is the stored maximum corner value, not a
+voltage. No corner-to-volt mapping is applied here.
+
+3.1 MMCX ALL child
+----------------------------------------------------------------------
+  node path       : /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level
+  parent provider : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+  phandle         : 105 (0x69)
+  regulator-name                 = "pm8150a_s4_level"
+  regulator-min-microvolt        = 64     (0x40)   logical corner
+  regulator-max-microvolt        = 65535  (0xffff) logical corner
+  qcom,set                       = 3      (0x3)
+  qcom,init-voltage-level        = 64     (0x40)
+  qcom,min-dropout-voltage-level = 4294967295 (0xffffffff) — stored max-u32 value
+  qcom,proxy-consumer-enable     = present, zero-length property (boolean-style
+                                   flag; DT presence semantics, no value payload)
+  qcom,proxy-consumer-voltage    = <384 65535>  (0x180, 0xffff)
+  qcom,proxy-consumer-current    = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+
+3.2 MMCX AO child
+----------------------------------------------------------------------
+  node path       : /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level-ao
+  parent provider : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+  phandle         : 961 (0x3c1)
+  regulator-name                 = raw u32 <0x706d3831 0x3530615f 0x73345f6c
+                                            0x6576656c 0x5f616f00>
+                                   byte-decoded ASCII : "pm8150a_s4_level_ao"
+  regulator-min-microvolt        = 64     (0x40)   logical corner
+  regulator-max-microvolt        = 65535  (0xffff) logical corner
+  qcom,set                       = 1      (0x1)
+  qcom,init-voltage-level        = 64     (0x40)
+  qcom,min-dropout-voltage-level = 4294967295 (0xffffffff) — stored max-u32 value
+  qcom,proxy-consumer-enable     = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-voltage    = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-current    = NOT_FOUND_IN_INSPECTED_SCOPE
+
+3.3 MMCX SO sibling (direct sibling under the same provider, included because
+    it is available in the existing parser result)
+----------------------------------------------------------------------
+  node path       : /soc/rsc@18200000/rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level-so
+  parent provider : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+  phandle         : NOT_FOUND_IN_INSPECTED_SCOPE (no phandle property on this node)
+  regulator-name                 = raw u32 <0x706d3831 0x3530615f 0x73345f6c
+                                            0x6576656c 0x5f736f00>
+                                   byte-decoded ASCII : "pm8150a_s4_level_so"
+  regulator-min-microvolt        = 64     (0x40)   logical corner
+  regulator-max-microvolt        = 65535  (0xffff) logical corner
+  qcom,set                       = 2      (0x2)
+  qcom,init-voltage-level        = 64     (0x40)
+  qcom,min-dropout-voltage-level = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-enable     = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-voltage    = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-current    = NOT_FOUND_IN_INSPECTED_SCOPE
+
+3.4 MX child — ALL-edge target (MMCX ALL parent target)
+----------------------------------------------------------------------
+  node path       : /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+  parent provider : /soc/rsc@18200000/rpmh-regulator-mxlvl
+  phandle         : 127 (0x7f)
+  regulator-name                 = "pm8150a_s3_mmcx_sup_level"
+  regulator-min-microvolt        = 16     (0x10)   logical corner
+  regulator-max-microvolt        = 65535  (0xffff) logical corner
+  qcom,set                       = 3      (0x3)
+  qcom,init-voltage-level        = 16     (0x10)
+  qcom,min-dropout-voltage-level = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,proxy-consumer-enable     = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-voltage    = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-current    = NOT_FOUND_IN_INSPECTED_SCOPE
+
+3.5 MX child — AO-edge target (MMCX AO parent target)
+----------------------------------------------------------------------
+  node path       : /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level-ao
+  parent provider : /soc/rsc@18200000/rpmh-regulator-mxlvl
+  phandle         : 123 (0x7b)
+  regulator-name                 = raw u32 <0x706d3831 0x3530615f 0x73335f6c
+                                            0x6576656c 0x5f616f00>
+                                   byte-decoded ASCII : "pm8150a_s3_level_ao"
+  regulator-min-microvolt        = 16     (0x10)   logical corner
+  regulator-max-microvolt        = 65535  (0xffff) logical corner
+  qcom,set                       = 1      (0x1)
+  qcom,init-voltage-level        = 16     (0x10)
+  qcom,min-dropout-voltage-level = NOT_FOUND_IN_INSPECTED_SCOPE (not on this node)
+  qcom,proxy-consumer-enable     = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-voltage    = NOT_FOUND_IN_INSPECTED_SCOPE
+  qcom,proxy-consumer-current    = NOT_FOUND_IN_INSPECTED_SCOPE
+
+3.6 ALL / AO / SO distinction observed inside MMCX provider
+----------------------------------------------------------------------
+  ALL : .../regulator-pm8150a-s4-level      phandle 105, qcom,set = 3,
+        carries proxy-supply target from the provider and all three
+        proxy-consumer-* fields (enable flag + voltage pair; current absent)
+  AO  : .../regulator-pm8150a-s4-level-ao   phandle 961, qcom,set = 1,
+        no proxy-consumer-* fields
+  SO  : .../regulator-pm8150a-s4-level-so   no phandle, qcom,set = 2,
+        no proxy-consumer-* fields, no min-dropout property
+  Distinct paths and values are kept separate; no values merged across
+  same-named nodes in different provider groups.
+
+======================================================================
+4. PARENT EDGES (ROUND11 authoritative list, paths confirmed)
+======================================================================
+  EDGE 1 (MMCX ALL):
+    source property : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+                      pm8150a_s4_level-parent-supply = <127>
+    resolved target : /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+    target identity : confirmed by phandle owner (127 = 0x7f)
+    target raw corners: min 16, max 65535, qcom,set 3, init-voltage-level 16
+
+  EDGE 2 (MMCX AO):
+    source property : /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+                      pm8150a_s4_level_ao-parent-supply = <123>
+    resolved target : /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level-ao
+    target identity : confirmed by phandle owner (123 = 0x7b)
+    target raw corners: min 16, max 65535, qcom,set 1, init-voltage-level 16
+    note: this target node is shared with the CX AO parent edge (ROUND11 item 4).
+
+  Additional observed property (NOT an authoritative edge in this task):
+    /soc/rsc@18200000/rpmh-regulator-mxlvl
+      pm8150a_s3_mmcx_sup_level-parent-supply = <122>
+    phandle owner : /soc/rsc@18200000/rpmh-regulator-cxlvl/regulator-pm8150-s3-mmcx-sup-level
+    See section 2.3. Recorded for reconciliation only; not counted as a
+    confirmed edge and not used to build a parent chain.
+
+  No other parent-supply or proxy-supply edge was discovered or enumerated.
+
+======================================================================
+5. S8 ENABLE / BOOT POLICY
+======================================================================
+5.1 Provider
+----------------------------------------------------------------------
+  node path        : /soc/rsc@18200000/rpmh-regulator-smpc8
+  compatible       : raw u32 <0x71636f6d 0x2c72706d 0x682d7672 0x6d2d7265
+                            0x67756c61 0x746f7200>
+                     byte-decoded ASCII : "qcom,rpmh-vrm-regulator"
+  qcom,resource-name            = "smpc8"
+  qcom,regulator-type           = "pmic5-hfsmps"
+  provider identity caveat      : the child node name and regulator-name use the
+                                  legacy "pm8150a" label; identity is taken from
+                                  this group node, its compatible and
+                                  qcom,resource-name = "smpc8". The "pm8150a"
+                                  string is NOT read as evidence of a separate
+                                  PM8150A provider group.
+
+5.2 Child
+----------------------------------------------------------------------
+  node path        : /soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8
+  parent provider  : /soc/rsc@18200000/rpmh-regulator-smpc8
+  phandle          : 170 (0xaa)
+  regulator-name                 = "pm8150a_s8"
+  qcom,init-enable               = NOT_FOUND_IN_INSPECTED_SCOPE (not on this child)
+  regulator-boot-on              = NOT_FOUND_IN_INSPECTED_SCOPE (not on this child)
+  regulator-always-on            = NOT_FOUND_IN_INSPECTED_SCOPE (not on this child)
+  regulator-state-standby        = NOT_FOUND_IN_INSPECTED_SCOPE (no such subnode)
+  regulator-state-mem            = NOT_FOUND_IN_INSPECTED_SCOPE (no such subnode)
+  regulator-state-disk           = NOT_FOUND_IN_INSPECTED_SCOPE (no such subnode)
+  qcom,set                       = 3      (0x3)
+  qcom,init-voltage              = 1200000 (0x124f80) microvolts
+  regulator-min-microvolt        = 1200000 (0x124f80)
+  regulator-max-microvolt        = 1400000 (0x155cc0)
+  (qcom,init-mode = 1, qcom,supported-modes = <1 3> and the threshold are
+   ROUND13 authoritative and intentionally not re-reported here.)
+
+Scope-level property census (whole base FDT, name presence only — this is the
+same result ROUND13 obtained, restated only for the S8 enable question):
+  qcom,init-enable          : 2 nodes total, both on L5-SO / L12-SO; NONE on S8
+  regulator-boot-on         : 0 nodes
+  regulator-always-on       : 0 nodes
+  regulator-state-standby   : 0 nodes
+  regulator-state-mem       : 0 nodes
+  regulator-state-disk      : 0 nodes
+  qcom,always-wait-for-ack  : 0 nodes
+  qcom,use-awake-state      : 0 nodes
+These zeros are NOT_FOUND_IN_INSPECTED_SCOPE for the parsed base FDT; they are
+not a claim that the property can never exist elsewhere.
+
+======================================================================
+6. DTBO BOUNDARY (reused, not re-parsed)
+======================================================================
+ROUND13 established, and this task reuses without re-parsing:
+  - all nine inspected stock DTBO entries were examined;
+  - zero fragment targets fell under /soc/rsc@18200000;
+  - the applicable/selected stock DTBO entry was NOT identified;
+  - therefore the effective post-overlay value of every property above is
+    UNKNOWN.
+The values in sections 2-5 are BASE-FDT STATIC values only. They must not be
+presented as verified post-overlay/effective values. No DTBO entry was parsed
+or selected by guess in this task.
+
+======================================================================
+7. STATUS SUMMARY
+======================================================================
+  COMPLETE   : provider identity (path + compatible + resource-name) for
+               MMCX, MX and S8 providers;
+               child identity and paths for MMCX ALL/AO/SO, MX ALL-target,
+               MX AO-target, S8;
+               raw corner values, qcom,set, init-voltage-level,
+               min-dropout-voltage-level, proxy-consumer-* fields where present;
+               S8 qcom,set / init-voltage / min-max microvolt;
+               ROUND11 edge 1 and edge 2 source and target paths.
+  NOT_FOUND_IN_INSPECTED_SCOPE : qcom,send-defaults (both ARC providers),
+               qcom,always-wait-for-ack, qcom,use-awake-state,
+               qcom,proxy-consumer-current on MMCX ALL,
+               min-dropout on MX children, MMCX SO and MX SO-equivalent,
+               proxy-supply on MX provider,
+               qcom,init-enable / regulator-boot-on / regulator-always-on /
+               regulator-state-standby|mem|disk on S8,
+               phandle on MMCX SO child.
+  UNKNOWN    : symbolic meaning of logical corner indices and of the
+               0xffffffff min-dropout value; effective post-overlay values;
+               whether any consumer actually enables or loads these rails.
+  BLOCKED    : none for this scoped extraction (input and parser gate passed).
+  NOT_RUN    : DTBO re-parse, entry selection, parent/proxy edge re-scan,
+               ROUND13 mode re-scan, EROFS, AVB, ramdisk, live/runtime read,
+               any compile or device interaction.
+
+======================================================================
+8. BOUNDARY STATEMENT
+======================================================================
+No runtime regulator mode, no runtime regulator enable/disable state and no
+live power-domain state were read. Every value in this report is static
+device-tree metadata from the existing base boot-FDT work copy. Nothing here
+proves that MMCX, MX or S8 is enabled, loaded, or at a particular voltage on
+a running device.
+
+This report is evidence for public-source comparison and DTS design only. It
+is not authorization to implement an ARC driver, to add an MMCX->MX parent
+edge in ACK, or to change S8 enable policy before review.
+
+Redaction: no local filesystem paths, no physical addresses or offsets, no
+binary payloads, no firmware hashes, no binary dumps, no serial numbers, IMEI,
+MAC or device identifiers beyond the public model/SoC identifiers, and no
+keys, salts, digests, signatures, rollback values, tokens or credentials.
+Device-tree node paths are public hardware topology paths already published
+in earlier rounds.

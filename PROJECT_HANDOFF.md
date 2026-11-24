@@ -727,3 +727,34 @@ These are same-model, strong structural cross-references; they are **not** direc
 The reported refusal of `fastboot boot` raises the possibility that a first test may require partition writes. Therefore a temporary RAM-boot route must not be assumed; any write/flash action requires exact local HOS4.3 metadata, a reviewed rollback plan, and separate explicit user authorization. No partition writes are authorized here.
 
 ROUND62 has been added as Phase E/F context to the second AI's ROUND61 long-running mission. It must not block ROUND61 Phase A–D real patch/schema/Kconfig/Image build work. Stage A remains the only mainline; Stage B waits for real Stage-A device acceptance.
+
+
+## ROUND63 — HOS4.3 UFS PHY vdda-phy-always-on lifecycle gap (2026-11-24)
+
+Primary AI compared the exact local HOS4.3 UFS PHY overlay inventory with the pinned ACK 6.18.33 QMP UFS PHY driver and found a new concrete integration difference.
+
+Local evidence:
+- `firmware-analysis/round8/round8_summary.json` on `firmware-audit-v1`, blob `2e5eec1be7d1364d90de7a8a500b516fcdddf3e1`.
+- Stock DTBO entry 8 fragment@63 targets `/soc/ufsphy_mem@1d87000` and records `vdda-phy-always-on`, L5 analog supply, and max-load values 89900µA / 18800µA.
+- This report is explicitly entry-8 evidence only; actual selected overlay/runtime regulator state remains UNKNOWN.
+
+Pinned ACK evidence:
+- `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`, blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: SM8250 static vreg list already supplies 89900/18800µA loads, but `qmp_ufs_power_off()` bulk-disables both rails and the driver never parses `vdda-phy-always-on`.
+- `Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml`, blob `fba7b2549ddee7ee4e048277a11a7da053d52887`: strict `additionalProperties: false`, no `vdda-phy-always-on` nor the two max-microamp properties.
+- `drivers/regulator/core.c`, blob `39d317ad73a33c4aa27e179cc436d8bf4daf5bcc`: a consumer's load vote contributes to DRMS while its regulator enable count is non-zero; dropping load to zero withdraws the active vote.
+
+Downstream Qualcomm behavior cross-check:
+- `LineageOS/android_kernel_oneplus_sm8150` commit `9f007fac27dce21d29d8230753b71d5634b8a00e`, `drivers/phy/qualcomm/phy-qcom-ufs.c` blob `f70871f45279ccb15f668ec7ce974c0f82d79004`: recognizes `vdda-phy-always-on`; its PHY power-off path clears the L5 consumer load but does not call regulator_disable for that rail.
+
+Primary AI has added:
+- Report: `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`.
+- Driver candidate: `kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft`, current blob `b0f6b5f72d773bf9797b527ff4d2ab71060b6d54`.
+- Binding candidate: `kernel-baseline/round63/0002-dt-bindings-phy-qmp-ufs-vdda-phy-always-on.patch.draft`, blob `a6668eebe293f9a35e9c08d6be4f37c4340e7ddd`.
+- Main review-only DTS draft now declares `vdda-phy-always-on;` and removes the redundant `vdda-phy-max-microamp=89900` / `vdda-pll-max-microamp=18800` properties because ACK's static SM8250 vreg list already carries those values and the strict schema does not accept the board-side properties. Updated DTS blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`.
+- `dts/README.md` now records the decision.
+
+The driver candidate retains the vdda-phy consumer enable reference from first PHY power-on through later PHY power-off cycles, toggles its load vote between the pinned init load and zero, leaves other PHY regulator rails on the existing bulk path, and balances the retained enable through a devm cleanup action before regulator handles are released. Nodes without the property retain the old bulk path. This is a design candidate only.
+
+**Not done:** no real git apply, checkpatch, dt_binding_check, C compile, Kconfig, Kleaf build, regulator measurement or hardware test. The provider-removal/device-link ordering and all error paths must be reviewed and tested. ROUND11/21 physical PM8150 L5 input-supply topology remains unresolved; ROUND63 does not invent a physical parent rail.
+
+The updated patch series for real integration now includes the QMP PHY binding and driver candidates before final board DTS schema/DTB validation. See ROUND63 §8 and the ROUND61 long-running AI task update.

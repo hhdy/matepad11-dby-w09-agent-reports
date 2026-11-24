@@ -27,14 +27,14 @@ It checks the exact provider and argument order:
 
 If the node has one domain, the existing generic attach path is preserved. A missing power-domains property is also left on the pre-existing path. More than two domains, or a two-domain layout with different providers/order, fails clearly rather than silently routing required OPP to the wrong supplier.
 
-The patch also reads the UFS OPP description and verifies that the first available OPP contains exactly one required-opps phandle. This matches the current SM8250 OPP table and the index-0 MMCX mapping.
+The patch reads the UFS OPP description, verifies that the first available OPP contains exactly one required-opps phandle, follows that phandle to its containing OPP table and provider node, and requires that provider to be qcom,sm8250-rpmhpd. This avoids applying the index-0 MMCX mapping to an unrelated required-OPP provider. The current SM8250 OPP table has two entries, each with one RPMHPD OPP reference.
 
 ## 3. Probe order
 
 The candidate order is:
 1. validate SM8250 compatible and two-domain shape;
 2. validate provider names and domain indices;
-3. validate that the OPP table's first available OPP has exactly one required-opps entry;
+3. validate one required-opps entry and confirm its containing OPP provider is qcom,sm8250-rpmhpd;
 4. call devm_pm_domain_attach_list() with PD_FLAG_DEV_LINK_ON;
 5. map required_dev = pd_list->pd_devs[0], required_dev_index = 0 through devm_pm_opp_set_config();
 6. call the existing ufshcd_pltfrm_init(), which later configures clock OPPs and adds the OPP table.

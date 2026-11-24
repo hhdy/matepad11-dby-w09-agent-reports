@@ -216,3 +216,21 @@ ROUND59 found and corrected the ROUND57 patch's malformed hunk header. Current m
 **Boundary:** the replay was performed in memory from exact GitHub source blobs. It is not real `git apply --check`, `git diff --check`, checkpatch, dt_binding_check, dtbs_check, Kconfig, Bazel or a build. ROUND37 still targets the review-only .dts.draft fixture rather than a real ACK DTS path. Full detail: `kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`.
 
 The local Agent is WorkBuddy using DeepSeek V4.1 Flash. ROUND17 lets WorkBuddy itself identify its execution-policy/approval path; do not send the user to an unverified Windows menu and do not bypass or retry blocked commands. The second AI remains on ROUND58 Kleaf implementation.
+
+
+## ROUND60 — primary review of second-AI Kleaf implementation (2026-11-24)
+
+Second AI completed ROUND58 on `ai-parallel/round58-kleaf-target-audit`. It delivered a no-`base_kernel` Image-first full custom Kleaf target candidate, a deterministic final .config validator and nine synthetic unit tests, plus a build runbook.
+
+Primary AI review in `kernel-baseline/round60/round60_primary_review_round58_kleaf_and_config_validator.md`:
+- pinned ACK BUILD insertion context exact match, and copied 132-line storage-first fragment matches the canonical main fragment;
+- no-`base_kernel` full custom target is consistent with the pinned `yukawa` pattern and ROUND41 storage-first driver requirement;
+- Kleaf manifest-declared `main-kernel-2026` config documentation confirms post_defconfig_fragments are applied after defconfig, then olddefconfig, with final config checks;
+- config checker implementation/tests inspected; second AI reports nine synthetic tests passed;
+- actual Git apply, buildifier, Bazel query, Kconfig, final .config validation and compile remain NOT_RUN.
+
+ROUND60 runbook note: use `set -o pipefail` when piping Bazel output through `tee`; avoid repeating the same target build when no source/config changed. Four Bazel jobs is only a conservative starting CPU cap; measure effective WSL memory before any memory cap.
+
+ROUND17's latest report confirms the wsl.exe block is WorkBuddy's own default Program Blacklist in WorkBuddy 5.11.3.0, not the Windows OS security menu. Status remains BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL; WorkBuddy has not yet removed/allowed the rule or invoked WSL again. User asked that WorkBuddy handle its own settings; keep progressing source-only kernel work without requesting OS security changes from the user.
+
+ROUND59 exact-source patch replay is complete with 16/16 hunks; ROUND57 hunk corrected. Full-tree apply, schema, config, compile and device test remain NOT_RUN.

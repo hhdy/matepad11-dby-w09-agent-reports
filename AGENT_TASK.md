@@ -207,25 +207,19 @@ ROUND47 提供 ACK 侧 regulator DRMS 解释；ROUND13 已补充实际 HOS4.3 �
 
 ---
 
-## Latest queue update — 2026-11-24 (ROUND12/13 complete)
+## Historical queue snapshot — ROUND12/13 complete, ROUND14 dispatched at that time
 
-This block supersedes historical statements above that described ROUND12 or ROUND13 as the active local task. Those are historical notes, not current instructions.
+This is an archived snapshot from before the ROUND14 upload. It is retained only to explain the historical task sequence and is not a current instruction.
 
-- ROUND12 AVB metadata report is uploaded on `firmware-audit-v1` and BLOCKED at the trusted-tool gate. Do not repeat it and do not install or download AVB tools.
-- ROUND13 PM8150 UFS regulator mode/DRMS report is uploaded on `firmware-audit-v1` and complete. The local Agent complied with its stop-after-upload requirement. Do not re-run ROUND13 or perform another local FDT parsing pass.
-- GPT has completed public Qualcomm SM8250 source cross-check and updated only the review-only `main` DTS draft, the ROUND48 report, `PROJECT_HANDOFF.md`, and `dts/README.md`.
-- Current local Agent task: **firmware-analysis ROUND14**. It is narrowly scoped to previously uncaptured HOS4.3 ARC MMCX/MX child power properties and S8 enable/boot policy, using only the existing ROUND3 FDT copy and audited parser. Do not repeat ROUND11 parent phandle extraction or ROUND13 mode/DTBO audit.
-- EROFS, AVB descriptors/footer, and ramdisk remain BLOCKED; no inference or workaround. No device interaction, unlock/root/flash/write, local compile, or protected-branch/PR modification is authorized.
-- `ack18-dby-w09-dts-draft` remains protected and untouched; PR #1 remains Draft. The updated DTS is on `main` and remains DRAFT ONLY.
-- Stage A ACK `android17-6.18.33_r00` remains the sole active project milestone. Do not begin Stage B DerpFest until Stage A actually boots and passes UFS/storage/basic-hardware checks.
-
----
-
+- ROUND12 was uploaded but BLOCKED at the trusted AVB tool gate.
+- ROUND13 was uploaded and COMPLETE.
+- ROUND14 was then dispatched as a single local read-only extraction task and is now COMPLETE, as documented in the current status block below.
+- The Stage A ACK 6.18.33 / Stage B DerpFest order has not changed.
+ 
 ## Historical task dispatch record — ROUND14 (superseded)
 
 ROUND14 was once the sole active Local Agent task. It has since been completed, uploaded to `firmware-audit-v1`, and superseded by the current empty-queue status below. The detailed task book and original instructions are retained for audit history only; **do not execute or repeat them**.
 
--
 
 ## Latest queue/status correction — ROUND14 complete; ROUND51 reviewed (2026-11-24)
 

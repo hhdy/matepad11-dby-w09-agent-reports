@@ -40,7 +40,7 @@ class ConfigCheckerTests(unittest.TestCase):
 
     def test_missing_qcom_smmu_driver_fails(self) -> None:
         text = self.config.read_text(encoding="utf-8").replace(
-            "CONFIG_ARM_SMMU_QCOM=y\\n", ""
+            "CONFIG_ARM_SMMU_QCOM=y\n", ""
         )
         self.config.write_text(text, encoding="utf-8")
         code, output = self.invoke()

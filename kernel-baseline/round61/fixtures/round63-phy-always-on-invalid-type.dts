@@ -1,0 +1,28 @@
+/dts-v1/;
+
+/ {
+    #address-cells = <1>;
+    #size-cells = <1>;
+
+    clk0: clock-controller-0 { #clock-cells = <0>; };
+    clk1: clock-controller-1 { #clock-cells = <0>; };
+    clk2: clock-controller-2 { #clock-cells = <0>; };
+    reset0: reset-controller { #reset-cells = <1>; };
+    pd0: power-domain-controller { #power-domain-cells = <0>; };
+    reg0: phy-regulator-0 { };
+    reg1: pll-regulator-1 { };
+
+    ufs-phy@1d87000 {
+        compatible = "qcom,sm8250-qmp-ufs-phy";
+        reg = <0x01d87000 0x1000>;
+        clocks = <&clk0>, <&clk1>, <&clk2>;
+        clock-names = "ref", "ref_aux", "qref";
+        power-domains = <&pd0>;
+        resets = <&reset0 0>;
+        reset-names = "ufsphy";
+        vdda-phy-supply = <&reg0>;
+        vdda-pll-supply = <&reg1>;
+        #phy-cells = <0>;
+        vdda-phy-always-on = <1>;
+    };
+};

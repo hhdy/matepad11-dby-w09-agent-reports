@@ -199,3 +199,17 @@ Sources:
 - https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh.c
 - https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh-rsc.c
 - https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/regulator/qcom-rpmh-regulator.c
+
+
+## 3.3 The required ACK RSC device hierarchy (ROUND23)
+
+ACK rpmh_write() obtains its controller handle with get_rpmh_ctrlr(dev), which reads driver data from dev->parent. The RSC platform driver sets its own driver data and only then calls devm_of_platform_populate(&pdev->dev), which creates child platform devices for the RSC's direct compatible children. The existing qcom-rpmh-regulator platform device is one of these direct children and passes its own pdev->dev to rpmh_write().
+
+A new ARC provider must follow the same hierarchy: one ARC aggregate/provider node as a direct child of apps_rsc, with the per-regulator nodes as children consumed by the ARC driver. The provider should store &pdev->dev as its RPMh context and pass that device to rpmh_write()/rpmh_write_async(). Do not pass the regulator_dev device or put the provider under an unrelated platform parent: ACK's get_rpmh_ctrlr() assumes the immediate parent carries struct rsc_drv driver data. Because RSC populates after setting drvdata, the direct-child probe order satisfies this contract.
+
+The existing ACK PMIC regulator driver confirms the pattern: qcom,pm8150-rpmh-regulators is matched as a platform child node; its children are registered as regulator devices by that driver. A separate ARC driver can follow the same platform-driver shape without modifying the generic RPMh RSC layer.
+
+Sources:
+- https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh.c
+- https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh-rsc.c
+- https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/regulator/qcom-rpmh-regulator.c

@@ -476,3 +476,9 @@ ROUND18 不处理 board DTS / DTB / DTBO / boot packaging / AVB，不连接或�
 ROUND18 执行前必须读取 main 最新 `firmware-analysis/round18/AGENT_TASK.md`。任务书已废弃旧 ROUND32 patch blob `efe2d932da34716c631de22d89aba19730cc7f50`；二号 AI 的修正版候选 `fade9cb2bdfd544c6736c7595af8380726edf318` 也因真实 `git apply --check` 失败而不得原样应用。ROUND18 本地 Agent 必须在独立副本中基于固定 ACK 的 `qcom,sc7180-ufshc.yaml` 重新制作最小补丁，先真实通过 apply-check，再 apply/diff-check 与 schema 正反例验证。若该 gate 阻塞，仍继续 Kleaf/Bazel/Kconfig/Image-only 构建。
 
 二号 AI 的 `ai-parallel/stagea-port-until-boot` 分支严格保持它自己维护；不得修改或推送到该分支。ROUND18 最新启动提示和唯一报告位置见其专属目录。
+
+## ROUND18 revision 2 — 最新补丁顺序和 clock hunk 校正（2026-11-25）
+
+本地 Agent 执行 ROUND18 时，必须以 main 最新 `firmware-analysis/round18/AGENT_TASK.md` revision 2 为唯一补丁序列。旧 ROUND32 blob `efe2d932...` 永久废弃；二号 AI 当前 clock 修正版候选为 `2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb`，仍须先在 ROUND18 副本真实 apply-check。新增 ROUND36 corrected range patch `a6e8eeaf9303e428e644245749e6daec4d0e38ac`，须在 ROUND52-0001 full-file schema patch 之后应用。准确次序和四个 schema 验证目标见 ROUND18 revision 2。
+
+二号 AI 分支保持独立维护，不向该分支写入。ROUND18 的其余 Kleaf/Bazel/Kconfig/Image-only 工作不得因 schema gate 阻断而停止。

@@ -51,7 +51,7 @@
 - 所有 11 条 phandle 均已解析；BLOCKED=NONE，UNKNOWN=NONE。
 - ACK 不支持把 vendor `qcom,rpmh-arc-regulator` 节点直接搬入上游 VRM regulator；性能级使用 ACK SM8250 rpmhpd/OPP 模型。完整 MMCX/CX/MX corner 等价性仍未建立。
 
-**当前本地 Agent：暂无待执行任务。** GPT 继续负责公开源码核对与草案迭代；只有确实需要本机独有证据时才下发新任务。不要重复 ROUND1–ROUND11。
+**当前本地 Agent：ROUND12 唯一待办（只读 AVB 元数据核验）。** ROUND11 已完成。ROUND12 只检查现有 HOS4.3 boot/ramdisk/DTBO/vbmeta 的 AVB footer 与 descriptor 覆盖；只使用本机已有可信工具，无工具则 BLOCKED，不安装、不下载、不使用 WSL。GPT 继续做公开源码与配置审查，不重复 ROUND1–ROUND11。
 
 ## 仓库与安全边界
 

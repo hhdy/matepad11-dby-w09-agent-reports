@@ -47,21 +47,43 @@
 };
 
 /*
- * The PM8150 output rails used by UFS are represented directly under the
- * SM8250 apps_rsc RPMh provider. The existing ROUND7 property inventory
- * confirms these regulator names and output-voltage windows, but does not
- * record regulator input-supply properties or resolve their parent source.
+ * HOS4.3 ROUND11 parent/proxy topology result:
  *
- * The same-device Linux 7.0 reference uses a fixed 3.7 V vph_pwr node and
- * vdd-s*-supply links, but that is a cross-reference based on HOS4.2, not a
- * verified HOS4.3 fact. Do not copy that parent topology into this minimal
- * ACK DTS until a targeted local base-FDT check establishes it.
+ * The local base FDT contains four *-parent-supply links under the legacy
+ * qcom,rpmh-arc-regulator level groups:
+ *   - cxlvl: pm8150_s3_level -> mxlvl / regulator-pm8150a-s3-level
+ *   - cxlvl: pm8150_s3_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
+ *   - mmcxlvl: pm8150a_s4_level -> mxlvl / regulator-pm8150a-s3-mmcx-sup-level
+ *   - mmcxlvl: pm8150a_s4_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
+ * ROUND11 also found six proxy-supply links, which are ARC proxy requests,
+ * not external input supplies.
+ *
+ * These are virtual voltage-level relationships, not PM8150 VRM input
+ * connections. The full HOS4.3 base-FDT property scan found no vdd-s1..s10,
+ * vin-supply or vph-pwr-supply properties. Do not add vph_pwr=3.7 V,
+ * vdd-s*-supply, or translate proxy-supply into a regulator input.
+ *
+ * ACK's upstream qcom-rpmh-regulator binding/driver handles PMIC VRM/XOB
+ * regulators, not the vendor qcom,rpmh-arc-regulator provider. SM8250's
+ * upstream SoC DTSI instead exposes rpmhpd performance levels/OPPs; the
+ * UFS OPP table uses required-opps against that provider. Keep this board
+ * file on that upstream model and do not copy vendor ARC nodes/properties.
+ *
+ * Important porting limit: the upstream SM8250 rpmhpd descriptor has a
+ * CX->MX parent relationship, while its MMCX descriptor does not mirror
+ * every HOS4.3 ARC parent edge. This first storage draft therefore does
+ * not claim a one-to-one translation of the complete vendor ARC graph.
+ * Revisit per subsystem if later consumers need MMCX/CX/MX corner behavior.
+ *
+ * The PM8150 VRM regulators below are only the HOS4.3 UFS output rails,
+ * with their locally resolved output constraints. Their PMIC input parent
+ * supply is intentionally omitted because none is exposed in the inspected
+ * HOS4.3 base FDT.
  */
 &apps_rsc {
 	regulators-0 {
 		compatible = "qcom,pm8150-rpmh-regulators";
 		qcom,pmic-id = "a";
-
 
 		/* HOS4.3: PM8150 S4, 1.8–1.92 V, initial level 1.8 V. */
 		vreg_s4a_1p8: smps4 {

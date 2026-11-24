@@ -76,13 +76,13 @@ Existing local facts:
 - system/cust/hw_product filesystem types and complete fstab/mount chain remain UNKNOWN.
 - ROUND10 ramdisk fstab, mount statements and module directives are NOT_READ_BLOCKED.
 
-Likely Android mount-stage candidates to resolve after the ramdisk/partition inventory:
-- `BLK_DEV_DM`, `DM_LINEAR` for dynamic logical partitions;
-- `DM_VERITY` for verified partitions if fstab uses it;
-- `EROFS_FS` for the confirmed vendor/odm partition format;
-- `EXT4_FS` and/or `F2FS_FS` for other partitions once filesystem types are confirmed.
+ROUND20 resolves part of this mount-stage list against Android first-stage source and the already-known partition evidence:
+- `BLK_DEV_DM=y` is required for dynamic logical partition mapping. In this ACK tree, `dm-linear` is compiled into `dm-mod`; there is no independent `CONFIG_DM_LINEAR` symbol.
+- `EROFS_FS=y` is required for the locally confirmed EROFS vendor and odm logical partitions.
+- `DM_VERITY` and `DM_VERITY_FEC` remain conditional on the AVB descriptors and actual first-stage fstab options; ROUND12 must resolve the AVB side.
+- `EXT4_FS` / `F2FS_FS` remain unknown until system/cust/hw_product filesystem types and fstab are known.
 
-These are not included as asserted final values in the storage-first fragment because the exact fstab, AVB chain and full partition formats have not been read. They will likely need to be built in or loaded from a trusted early ramdisk before Android mounts its logical partitions; the correct choice depends on the recovered init sequence.
+Android first-stage init can load modules from `/lib/modules` before first-stage mount, using a release/page-size-matched directory, `modules.dep` and related modprobe files plus `modules.load`. The public AOSP module-support guide describes a vendor-ramdisk path, but DBY-W09 has a legacy ABL header-v2 + separate-ramdisk arrangement rather than standard vendor_boot. Whether the user's ABL-combined initramfs exposes the expected path is unverified. Therefore UFS/QMP remains built-in as a conservative first-boot strategy, not because Android architecture forbids module loading.
 
 ## 6. Deferred Kconfig groups
 
@@ -106,4 +106,4 @@ These are not included as asserted final values in the storage-first fragment be
 
 ## 8. Next step
 
-Next: resolve the PMIC parent-input supply topology from the local HOS4.3 base FDT; then re-check the full olddefconfig result against the exact pinned ACK manifest on an explicitly approved build host. This storage-first fragment remains un-resolved and uncompiled. Keep the custom built-in ACK device kernel and any GKI boot retrofit as separate deliverables.
+ROUND11 completed the HOS4.3 ARC parent/proxy audit; ROUND16 records the ACK mapping boundary. ROUND20 now resolves BLK_DEV_DM and EROFS as mount-stage baseline requirements while keeping DM_VERITY/FEC and other filesystem drivers pending ROUND12/fstab evidence. Next source-side work: review the exact ACK first-stage module/LP/AVB source and continue legacy boot integration. A full olddefconfig resolution still requires an explicitly approved build host and exact pinned ACK manifest. This fragment remains un-resolved and uncompiled. Keep the custom ACK device kernel and any GKI boot retrofit as separate deliverables.

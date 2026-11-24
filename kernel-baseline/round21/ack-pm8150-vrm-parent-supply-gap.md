@@ -72,6 +72,31 @@ ROUND22 confirmed the four HOS4.3 parent-supply edges belong to qcom,rpmh-arc-re
 
 An ACK ARC port may help reproduce the HOS4.3 shared voltage-level hierarchy and make this generic regulator tree explicit, but it does not establish the physical PM8150 input source by itself. See ROUND22.
 
+## 4.6 UFS VCCQ parent rail is not the PMIC regulator input supply (ROUND23)
+
+The UFS Host overlay has a second, distinct property named `qcom,vccq-parent-supply`. ROUND9's HOS4.3 UFS supply closure identifies it as PM8150A S8 (`pm8150a_s8`), with an output window of 1.2–1.4 V and a maximum load request of 210 mA. This is not a `vdd-s8-supply` input property on the PM8150L regulator provider.
+
+The same-device public Linux 7.0 board DTS places the legacy `pm8150a_s8` resource in `regulators-1`, compatible `qcom,pm8150l-rpmh-regulators`, `qcom,pmic-id = "c"`, child `smps8`, regulator name `pm8150l_s8`. Its HOS4.2-derived range is 1.35–1.4 V; the current ACK draft deliberately uses the local HOS4.3-confirmed 1.2–1.4 V range instead. The HOS4.3 local inventory does not establish initial mode, regulator boot-on state, DRMS support, or the S8 physical input supply.
+
+Downstream Qualcomm UFS drivers explicitly parse `qcom,vccq-parent-supply` and `qcom,vccq-parent-max-microamp`. Some versions use the latter as a DRMS/load vote only; another Qualcomm-derived version also enables/disables the rail during init, link-off suspend and resume. ACK android17-6.18's `drivers/ufs/host/ufs-qcom.c` and `struct ufs_qcom_host` have no equivalent field/parser/callback, so a DTS property alone would have no effect.
+
+ROUND23 adds a review-only companion patch draft to:
+- look up the optional regulator by consumer ID `qcom,vccq-parent` when its supply property is present;
+- request the declared 210 mA load and enable S8 before UFS link bring-up;
+- release the load/enable vote on init failure or host exit;
+- document both properties in the ACK UFS common binding.
+
+Important limit: ACK PM8150L S8 maps to `pmic5_hfsmps510` and `rpmh_regulator_vrm_ops`, whose operations implement enable/disable/voltage/mode but no `set_load` / DRMS callback. The regulator core can return success without effect when DRMS is unsupported. Thus the proposed patch can preserve and attempt the load request, but it does not prove that 210 mA changes the S8 hardware mode. No PMIC-specific load-mode policy is guessed.
+
+The patch is a source draft, not applied or compiled. Its conservative always-enabled-while-UFS-bound policy differs from some downstream suspend/resume variants; exact HOS4.3 UFS driver semantics remain unknown. Do not claim PM behavior equivalence.
+
+Sources:
+- HOS4.3 local evidence: ROUND9 UFS supply closure and ROUND7 PM8150A S8 node inventory on `firmware-audit-v1`.
+- Same-device cross-reference: https://github.com/svesnav/linux-dby-w09/blob/main/sm8250-huawei-dby-w09.dts
+- ACK PM8150L table/ops: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/regulator/qcom-rpmh-regulator.c
+- ACK UFS driver: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/ufs/host/ufs-qcom.c
+- Downstream UFS parser/PM callbacks: https://github.com/LineageOS/android_kernel_oneplus_sm8150/blob/9f007fac27dce21d29d8230753b71d5634b8a00e/drivers/scsi/ufs/ufs-qcom.c and https://github.com/MotorolaMobilityLLC/kernel-msm/blob/0450c5076a8ec9415a10888c8c183ef6ff5f91b8/drivers/scsi/ufs/ufs-qcom.c
+
 ## 5. Potential future resolution paths (not implemented)
 
 1. Find an authoritative HOS4.3 board/PMIC source or a documented rail-power schematic that resolves the true PM8150 input network and voltage ranges.
@@ -92,6 +117,10 @@ No further local FDT parse is required; ROUND11 completed the relevant scope. Do
 | Actual physical PM8150 input network / external rail | UNKNOWN / NOT_ESTABLISHED |
 | Dummy-regulator fallback equals electrically correct platform configuration | NOT_ESTABLISHED |
 | Board DTS consumer-to-output rail phandles | SOURCE DRAFT MAPPED |
+| HOS4.3 UFS VCCQ parent rail PM8150A S8 | ROUND9 FOUND; same-device PM8150L/S8 group mapping SOURCE REVIEWED |
+| ACK UFS qcom,vccq-parent-supply consumption | NOT_SUPPORTED_UPSTREAM; companion patch DRAFTED |
+| PM8150L S8 DRMS set_load support in ACK | NOT PROVIDED BY CURRENT VRM OPS; regulator_set_load may be no-op |
+| S8 physical PMIC input supply / exact HOS mode and PM behavior | UNKNOWN / NOT_ESTABLISHED |
 | Power-tree runtime voltage/mode behavior | NOT_RUN |
 | DTS schema / Kconfig resolution / compile / boot | NOT_RUN |
 

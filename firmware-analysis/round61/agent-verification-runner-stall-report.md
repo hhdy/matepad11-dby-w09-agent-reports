@@ -4,7 +4,7 @@
 - **Executor:** Independent verification agent (local WorkBuddy agent, Windows 11 + WSL2), acting as the "Agent 3" requested by the taskbook
 - **Taskbook under execution:** `kernel-baseline/round61/AGENT_VERIFICATION_TASKBOOK_SECOND_AI.md` (blob `0a215a6e`, 4729 B), branch `ai-parallel/stagea-port-until-boot`
 - **Repository observed:** `hhdy/matepad11-dby-w09-agent-reports` (public, admin-scoped token)
-- **Verification window (UTC):** 2026-11-24T18:10:54Z → 2026-11-24T18:35Z (observation continues; the decisive event landed inside the window)
+- **Verification window (UTC):** 2026-11-24T18:10:54Z → 2026-11-24T18:30Z (observation continues; the decisive event landed inside the window)
 - **Revision:** rev 2 — revised after the flagged run reached a terminal state during observation. Rev 1 (18:21Z) concluded `NOT_STALLED / ALIVE` at ~85 % confidence; rev 2 upgrades this to **confirmed by direct outcome**.
 
 ## VERDICT
@@ -201,7 +201,7 @@ The history was short only because all previous runs aborted at checkpatch withi
 | Rev-1 prediction | Outcome |
 |---|---|
 | Run 45453412267 terminal in **18:30–19:35** | **Wrong on timing** — it completed at **18:21:43**, ~8 min *earlier* than my lower bound. Cause: I over-estimated pre-build overhead at 11 min; it was 6 m 13 s. |
-| Run 45455279898 terminal in 18:40–19:45 | **Pending** at 18:35 (still building) |
+| Run 45455279898 terminal in 18:40–19:45 | **Pending at 18:30** — 26 min into step 3, still `in_progress`, no failure signal |
 | On completion, logs flip 404 → 200 and artifacts 0 → 1 | **Correct** — 200 / 66 898 B; artifact `round61-ack-6.18.33-image-build` |
 | Substantive claim: not stalled, will finish without intervention | **Correct** |
 
@@ -217,7 +217,7 @@ Being early rather than late does not change the diagnosis, but the calibration 
 
 **3. Do *not* add `cancel-in-progress: true`.** This is a correction to rev 1. With that setting, the 18:03 recovery push would have **cancelled run 45453412267 four minutes into a build that went on to succeed**. The concurrency guard should not be "cancel the old one on every push"; it must be "do not start a second build on a false stall signal".
 
-**4. Replace the watchdog rule.** Current rule: `updated_at` unchanged ⇒ stalled (false positive guaranteed during long builds). Correct rule: take the **current step's `started_at`** from `GET /actions/runs/{id}/jobs` and alert only when its age exceeds a stage-aware budget — for this workflow, ≈ **50 min** (measured 28 m 44 s, ×1.75 headroom), with the hard backstop being `timeout-minutes: 180`. This budget is empirically justified rather than guessed: the duplicate run 45455279898 passed **35 min** in the same step while remaining healthy, so any threshold below ~45 min would have produced the same false alarm again.
+**4. Replace the watchdog rule.** Current rule: `updated_at` unchanged ⇒ stalled (false positive guaranteed during long builds). Correct rule: take the **current step's `started_at`** from `GET /actions/runs/{id}/jobs` and alert only when its age exceeds a stage-aware budget — for this workflow, ≈ **50 min** (measured 28 m 44 s, ×1.75 headroom), with the hard backstop being `timeout-minutes: 180`. This budget is anchored on measurement, not guesswork: the duplicate run 45455279898 was still healthy at **26 min** in the same step, so any threshold materially below ~45 min would reproduce the same false alarm.
 
 **5. Split step 3 into per-stage steps** (§9b). This is the durable fix: with per-stage steps, the 22-min build becomes its own `in_progress` step with its own timestamps, and "stall" can be localised in one API call. Secondary benefit: a failure reports its stage directly instead of requiring log archaeology.
 
@@ -326,6 +326,6 @@ One hosted-side advantage worth recording: `go install github.com/bazelbuild/bui
 | 18:28Z | branch HEAD advanced to `019463c350` "ROUND61: publish hosted manifest and Image build result"; `hosted-build-latest.md` → `Last stage: complete`, `Exit code: 0`, `BUILD_PASS` |
 | 18:30Z | `.config` SHA-256 `5f7fd8b3…` matched against the independent local ROUND18 build — identical |
 | 18:35Z | run 45455279898 still `in_progress` in step 3 (duplicate of the same source tree) |
-| 18:38Z | run 45455279898 step 3 elapsed **35 min** — already **longer** than the successful run A (28 m 44 s), and still healthy by every observable signal |
+| 18:29:36Z | run 45455279898 step 3 elapsed **26 min** — still below the successful run A's 28 m 44 s, `in_progress`, artifacts 0, no failure signal |
 
 **Net result of the verification: the run suspected of being orphaned finished successfully 29 m 56 s after it started, published the Image, and uploaded its evidence. No intervention was needed and none was performed.**

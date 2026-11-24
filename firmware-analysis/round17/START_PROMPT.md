@@ -1,10 +1,12 @@
-ROUND17 has been revised. The old taskbook guess "Security Center → Command Security → Program Blacklist" was unsupported and is withdrawn.
+ROUND17 has been revised. The earlier guessed Windows UI "Security Center → Command Security → Program Blacklist" is unsupported and withdrawn. Do not repeat it.
 
-Read and follow:
+The user has identified the local Agent as **WorkBuddy**, using **DeepSeek V4.1 Flash** as the selected model. Treat WorkBuddy as the execution host and DeepSeek as the selected model; do not infer command-sandbox settings or policy ownership from the model name.
+
+Read the current taskbook:
 https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round17/AGENT_TASK.md
 
-Do NOT invoke wsl.exe again yet. First passively identify the exact local Agent product/version and the command-execution policy layer that emitted the prior sandbox block message. Do not assume Defender, Windows Security Center, Codex, VS Code, or any specific endpoint product. Use only existing app metadata, logs already available, visible UI/help and official docs for the identified product. If identity cannot be established without running blocked commands, stop and ask the user for the local Agent name/version and screenshot of the block message.
+Do NOT invoke wsl.exe again yet. First passively identify WorkBuddy's exact version/build, execution mode, command runner/sandbox, approval settings, available logs and the source of the prior block message. Consult official WorkBuddy documentation for that exact product/version. Do not assume Windows Security Center, Defender, AppLocker, WDAC or any named endpoint product. Do not make the user search for an unverified Windows menu.
 
-No retries, alternate shells, script wrappers, copies, renames, UAC bypass, security changes or installation attempts. Do not launch the Agent elevated preemptively. Elevation is only considered if a specific later official step requires it and the user approves.
+No retries, alternate shells, script wrappers, copies, renames, UAC bypass, security changes or installation attempts. Do not preemptively elevate WorkBuddy. Elevation is only considered if a later, identified official install step requires it and the user approves.
 
-Preserve the existing C: Ubuntu unchanged. Fixed future plan is a separate Ubuntu-24.04 at D:\WSL\Ubuntu-24.04, once normal WSL execution is authorized. Continue the kernel-only official manifest + ACK pin procedure only after the policy gate is legitimately cleared. Do not patch or compile in ROUND17.
+Preserve the existing C: Ubuntu unchanged. Fixed future plan is a separate Ubuntu-24.04 at D:\WSL\Ubuntu-24.04, once normal WSL execution is legitimately authorized. Continue the kernel-only official manifest + ACK pin procedure only after the execution-policy gate is cleared. Do not patch or compile in ROUND17.

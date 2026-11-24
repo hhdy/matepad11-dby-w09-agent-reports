@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 3f7284355b881bbba59b5d6092ae384b324e574b
-- Workflow run ID: 45446651860
+- Workflow commit: 652f1c23d41ba7c88305faca5c5862d04aa1bdea
+- Workflow run ID: 45447082723
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-bfb10590d86d594c7fe839d7184adf8405fadf3495ba52dede5c81e48a90a155  /home/runner/work/_temp/round61-processed-schema.json
+b54fc84783b93e238cd25f596c15c75da1c4bd7b3a217de6a97929d6f4ead487  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 3e46b9a47922243671eb49883a767a857ac2ff0edd32fc8f6a04f98ae9914438  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -28,9 +28,9 @@ ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  6 files changed, 474 insertions(+), 7 deletions(-)
 
 ## ufs-sm8250-1-domain-valid-validation.log
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000: power-domains: [[10]] is too short
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000: power-domains: [[10, 0]] is too short
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000: power-domains: [[10]] is too short
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000: power-domains: [[10, 0]] is too short
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#
 /home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000: Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#

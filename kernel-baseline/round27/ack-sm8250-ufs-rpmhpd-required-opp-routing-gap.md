@@ -108,6 +108,30 @@ Sources:
 - OPP config required-dev index validation: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/opp/core.c
 - UFS OPP parsing order: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/ufs/host/ufshcd-pltfrm.c
 
+## 5.1 Multi-domain GenPD API detail (additional ACK source review)
+
+ACK provides devm_pm_domain_attach_list() and struct dev_pm_domain_attach_data for drivers whose device has multiple power-domains. It creates a virtual device for each listed domain, adds device links (by default DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME), and returns a struct dev_pm_domain_list containing pd_devs. The generic device-core genpd_dev_pm_attach() skips automatic attachment when more than one power-domain phandle is present, so the UFS driver must own this attach-list path.
+
+The existing UFS platform probe calls ufshcd_parse_operating_points() before ufshcd_init(). Inside ufshcd_parse_operating_points(), ACK calls devm_pm_opp_set_config() first and devm_pm_opp_of_add_table() second. That is an insertion point for multi-domain attachment and OPP required_dev configuration; dev_pm_opp_set_config() must be called before the OPP table is initialized.
+
+Important indexing trap: PD_FLAG_REQUIRED_OPP tells devm_pm_domain_attach_list() to configure required_dev_index=i for every attached domain. The UFS OPP entries currently contain exactly one required-opps phandle, so applying this flag to both the RPMHPD and GDSC domains will attempt to configure index 1 even though required_opp_count is 1; ACK OPP core rejects this with -EINVAL. Do not use PD_FLAG_REQUIRED_OPP for this two-domain, one-required-OPP layout.
+
+A possible source-patch sequence is therefore:
+1. Order UFS Host power-domains as RPMHPD MMCX first, GCC UFS_PHY_GDSC second; keep UFS PHY itself attached to GCC UFS_PHY_GDSC.
+2. In the Qualcomm UFS platform/variant setup before OPP table parsing, call devm_pm_domain_attach_list() without PD_FLAG_REQUIRED_OPP and retain the returned list.
+3. Set dev_pm_opp_config.required_dev to pd_list->pd_devs[0] and required_dev_index to 0, using devm_pm_opp_set_config() before devm_pm_opp_of_add_table(). The existing OPP required-opps[0] then targets the RPMHPD virtual device, while the second GDSC domain remains attached through its device link.
+4. Verify initial power-on/runtime-PM ordering, error unwind and managed teardown. The default attach-list flags create runtime-PM device links but do not themselves prove the UFS register-access/initialization sequence is safe.
+
+This is a source-derived implementation candidate only. It has not been patched or tested, and the RPMHPD MMCX-to-MX corner equivalence remains a separate HOS4.3 question.
+
+Sources:
+- Multi-domain GenPD attachment: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/base/power/common.c
+- GenPD attach-by-id behavior: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/pmdomain/core.c
+- Multi-domain flags/list structure: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/linux/pm_domain.h
+- OPP required-device mapping: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/linux/pm_opp.h
+- OPP config required-dev index validation: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/opp/core.c
+- UFS OPP parsing order: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/ufs/host/ufshcd-pltfrm.c
+
 ## 6. Verification status
 
 | Item | Status |
@@ -122,6 +146,9 @@ Sources:
 | UFS OPP required-opps actually reaches RPMHPD under the inspected topology | NOT ESTABLISHED; source path terminates at standalone GDSC GenPD |
 | HOS4.3 UFS ARC resource-name / qcom,set details | UNKNOWN / NOT_CAPTURED |
 | MMCX-to-MX HOS/ACK corner equivalence | NOT_ESTABLISHED |
+| devm_pm_domain_attach_list multi-domain API | SOURCE REVIEWED / AVAILABLE |
+| Single required-opps entry + two-domain PD_FLAG_REQUIRED_OPP mapping | INVALID: second required_dev_index exceeds required_opp_count |
+| Manual required_dev mapping to first RPMHPD virtual domain before OPP table init | DESIGN CANDIDATE |
 | devm_pm_domain_attach_list multi-domain API | SOURCE REVIEWED / AVAILABLE |
 | Single required-opps entry + two-domain PD_FLAG_REQUIRED_OPP mapping | INVALID: second required_dev_index exceeds required_opp_count |
 | Manual required_dev mapping to first RPMHPD virtual domain before OPP table init | DESIGN CANDIDATE |

@@ -2,7 +2,7 @@
 
 Date: 2026-11-24
 
-Status: **SCHEMA PATCH PAIR APPLIES TO EXACT PINNED SOURCE FILES; BOARD DTS AND DRIVER REMAIN DRAFTS.** This report consolidates the UFS MMCX route work from ROUND32–39 and defines the next full-tree integration sequence.
+Status: **SCHEMA PATCH PAIR APPLIES TO EXACT PINNED SOURCE FILES; BOARD DTS AND DRIVER REMAIN DRAFTS.** This report consolidates the UFS MMCX route work from ROUND32–40 and defines the next full-tree integration sequence.
 
 ## 1. Fixed baseline
 
@@ -28,7 +28,7 @@ Related reports:
 - ROUND36 common binding maxItems constraint and scoped fix.
 - ROUND37 DBY-W09 board DTS delta.
 - ROUND38 RPMhPD provider registration, deferred-probe rollback and required-OPP table identity review.
-- ROUND39 UFS VCCQ-parent / VDDP teardown ordering and merge-lifetime audit.
+- ROUND40 UFS VCCQ-parent / VDDP teardown ordering and merge-lifetime audit.
 
 ## 3. Required patch order for a disposable full-source worktree
 
@@ -115,7 +115,7 @@ The dual-domain UFS request-routing change and MMCX→MX corner equivalence are 
 
 The entire protected board DTS source blob (`e86c8707c413a9376b1e332a94e292b86acde3e2`) was reconstructed in a local temporary fixture and verified byte-for-byte with `git hash-object`. The repository's ROUND37 patch (`486654c8d0b1b785190253270f5e83f796f07362`) was also reconstructed and its hash matched. On this isolated exact-file fixture, `git apply --check`, `git apply`, and `git diff --check` all passed. The resulting temporary DTS contains the intended MMCX-first / GCC-GDSC-second ordering. This is a single-file exact-blob apply result, not a full ACK tree build or DT validation. The protected DTS branch remains untouched.
 
-## 10. ROUND39 — companion UFS supply lifetime gate
+## 10. ROUND40 — companion UFS supply lifetime gate
 
 Fixed ACK source shows `ufshcd_hba_exit()` calls the Qualcomm variant exit callback before it disables generic UFS VCC/VCCQ/VCCQ2. Therefore the current `patches/ufs-qcom-vccq-parent.patch.draft` must not be integrated unchanged if it directly disables VCCQ-parent in `ufs_qcom_exit()`: that would disable a possible parent before generic VCCQ teardown. Probe-failure cleanup inside `ufs_qcom_init()` can also happen before the core disables its generic rails.
 

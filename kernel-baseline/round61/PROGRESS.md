@@ -180,3 +180,10 @@ Corrected the include hunk with broader pinned-source context (including `linux/
 Run `45442605274` proves the corrected driver patch and ROUND58 Kleaf patch both apply to the fixed ACK tree. The next gate failed strict checkpatch on two raw commit hashes in the patch preamble, one long description line, one continuation alignment, and the upstream API field spelling `init_load_uA`. The branch-local patch now removes raw hashes from the preamble, wraps the line, aligns `qphy_clrbits()`, and the workflow ignores only the false-positive `CAMELCASE` check for this upstream field. Other strict checks remain enabled. A fresh hosted run is pending.
 
 The first manifest build run `45441246235` confirmed the official manifest branch resolved to the pinned manifest commit and initialized successfully, but `repo sync` failed because Repo v2.71 does not accept `--depth` on `repo sync`. The workflow now removes that unsupported flag (keeps `-c` branch-only sync) and retries the immutable ACK tag checkout. The result publisher is race-safe with latest-branch fetch/retry. Trigger commit `9934bf735a31c565456fd7a1c5c8d67121e8a541` starts the corrected manifest sync/build attempt.
+
+
+### ROUND63 real apply now confirmed; one final checkpatch warning fixed
+
+Hosted run `45443465025` confirms, on the exact ACK commit, the previous UFS series, ROUND63 binding patch, corrected ROUND63 driver patch (all hunks, no rejects), and ROUND58 Kleaf patch all apply; final `git diff --check` passes. Applied-diff SHA-256: `d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65`.
+
+That run stopped at checkpatch with only one remaining 75-column commit-description warning (0 errors, 0 CHECKs); the final description line was wrapped in commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`. Latest run `45443538190` is validating the warning-free patch. Phase A remains PARTIAL until that gate passes; Phase B has not yet run on this latest applied patch because checkpatch is an earlier gate.

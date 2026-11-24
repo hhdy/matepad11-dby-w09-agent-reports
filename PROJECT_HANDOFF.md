@@ -401,3 +401,37 @@ ROUND11 已完成 parent/proxy phandle 解析，ROUND24 明确记录 ARC provide
 - 该任务完成前，不再创建 ROUND15 或其他本地任务；GPT 仍可继续公开源码研究，但应优先使用 ROUND14 返回的 local facts 决定 ARC/S8 的最终方案。
 
 ROUND49/50 只完成固定 ACK / 公开 KONA 源码审查与设计报告。UFS driver patch 仍未 full-tree apply、checkpatch、dt-schema、Kconfig resolver、Kleaf 编译或设备测试；MMCX→MX parent equivalence 尚未建立。ROUND12 AVB 仍 BLOCKED，ramdisk / EROFS 仍 BLOCKED，memory handoff、physical PMIC input network、UFS teardown/runtime power gates 仍独立开放。PR #1 保持 Draft，保护分支未修改。Stage A ACK 6.18.33 仍是唯一主线，Stage B DerpFest 继续等待真实启动与 UFS/基础硬件验收。
+
+
+## 最新状态更正 — ROUND14 / ROUND51（2026-11-24）
+
+### ROUND14 已完成并上传
+
+本地 Agent 已按任务书完成并上传：
+- firmware-audit-v1 / firmware-analysis/round14/round14_arc_mmcx_mx_power_properties.txt
+- SHA-256 与本地一致；Git blob SHA：2a1cf742ec45b1b17c98c006da241fb7737f6fcd
+- 仅复用 ROUND3 原有 base-FDT work copy、审核 parser 与 ROUND9 phandle/path index；没有重新跑 ROUND11、ROUND13 或 DTBO，也没有触碰设备、EROFS、AVB、protected DTS branch 或 PR #1。
+
+### ROUND51 已完成公开源码语义复核并更新主分支草案
+
+报告：kernel-baseline/round51/round14-arc-value-semantics-proxy-vote-and-round11-edge-reconciliation.md
+
+- ARC corner: 16=RETENTION、64=LOW_SVS、384=TURBO、65535=MAX；qcom,set 1/2/3 分别为 ACTIVE/SLEEP/ALL。它们都是逻辑角点，不是物理微伏。
+- min-dropout: KONA ARC parser 将 qcom,min-dropout-voltage-level 读入 int min_dropout_uV；ARC list_voltage 返回 Command DB 逻辑 level；regulator core 直接相加。原始 0xffffffff 在 ARM64 two's-complement 构建中是 -1，不是 no-dropout sentinel；不得改成 0。
+- Parent graph: ROUND11 只报告了四条；ROUND14 新发现 MX MMCX-supply child -> CX MMCX-supply child 的第五条合法 parent-supply。现在能确认至少五条，完整总数仍 UNKNOWN，不能宣称已完成全图盘点。
+- MMCX ALL proxy: 本机有 self-target proxy-supply、proxy-consumer-enable、voltage <384 65535>，即临时 TURBO..MAX boot request。公开 KONA proxy-consumer 在 late_initcall_sync 撤销；不能翻译成 permanent system-load 或 always-on。ACK 目前没有等价 helper。
+- ARC/GenPD: ACK SM8250 OPP 表拥有相同 corner 名称/数字，但 ACK 选中的 MMCX GenPD 没有 MX parent，且 GenPD 模型无法自然表达所有 HOS per-child parent-supply、ALL/AO/SO 与临时 proxy 请求。不要给共享 qcom,sm8250-rpmhpd descriptor 加父边；完整 ARC 等价性仍是独立 gate。
+- S8: ROUND14 未发现 qcom,init-enable / regulator-boot-on / regulator-always-on；qcom,set=3 是集合选择，init-mode RET 是模式，不是 enable。ACK pmic5_hfsmps510 无 get_optimum_mode/set_load，210mA load-only 调用是 no-op。不要强制 enable，不加 boot-on/always-on，不保留无意义 S8 set_load；runtime enable state UNKNOWN。
+- S8 DTS initial mode 从先前 ROUND48 的 AUTO fallback 更正回有 HOS 静态证据的 RET；RET/AUTO 仍列为 allowed modes，未加 enable policy。
+- VDDP/L6 方案不变：set-load 100µA + enable；在 generic UFS VCCQ teardown 后 deferred cleanup。S8 optional get/load/enable/disable 不纳入第一版 ACK UFS 补丁。
+
+已更新 main：
+- dts/dby-w09-ack18-board.dts.draft（blob SHA: dd9035083458ea6ccdb5fdd852b7a1860509fbaf）
+- kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md（附 ROUND51 S8 correction）
+- kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md（附 S8 no-op correction）
+- kernel-baseline/round50/ack-sm8250-mmcx-mx-arc-parent-semantics-and-remaining-local-gate.md（附 ROUND14 corner/edge update）
+- dts/README.md（更新边数、S8、proxy 与 ROUND14 状态）
+
+**本地 Agent 当前队列为空；没有创建 ROUND15。** ROUND14 已足以支持当前的保守决策；完整 ARC 全图统计以后若成为实现所需门槛，再另发一个只使用现有解析结果的独立任务，不重跑 FDT parser。
+
+阶段 A 仍未进入完整内核构建：完整工作树 apply、checkpatch、dt-schema、dtc/dtbs_check、最终 Kconfig/.config、Kleaf 构建、镜像打包、实机启动、UFS 识别/读写和基础硬件验收均 NOT_RUN。ROUND12 AVB、ramdisk、EROFS、最终 memory/reserved-memory handoff、selected DTBO 与物理 PMIC 输入树仍有独立 gate。Stage B DerpFest 暂不开始。PR #1 保持 Draft，ack18-dby-w09-dts-draft protected branch 未修改。

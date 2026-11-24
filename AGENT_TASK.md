@@ -426,3 +426,18 @@ ROUND58 产物已经完成主 AI 的源码设计审查（ROUND60），但没有�
 这是同型号交叉参考，不是用户当前 HOS4.3 ABL 和 AVB footer 的实测。不得复制外部项目的固件版本、hash、分区尺寸、偏移、cmdline、RAM map 或 footer offset。它提示不能假设 `fastboot boot` 可以用于非持久化测试；任何实际分区写入都必须有用户 HOS4.3 本机证据、回滚计划和单独明确授权。
 
 ROUND62 已同步给 ROUND61 二号 AI长期任务，作为后续 board DTS / packaging gate 上下文；不得阻断其真实补丁、schema、Kconfig 和 Image 编译阶段。
+
+
+## 最新进展 — ROUND63 UFS PHY always-on 适配缺口（2026-11-24）
+
+报告：`kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`。
+
+ROUND8 HOS4.3 stock DTBO entry 8 的 UFS PHY fragment 明确含 `vdda-phy-always-on`。固定 ACK .33_r00 QMP UFS PHY 不读取该属性，而是在 power_off 对 vdda-phy / vdda-pll 做 bulk disable；绑定 schema 也因 `additionalProperties: false` 不接受该属性。类似的 downstream Qualcomm UFS PHY 驱动将该属性解释为：PHY power-off 时 vdda-phy regulator 只清零 load vote、不真正 disable。
+
+main 新增两个 candidate patch：
+- `kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft`
+- `kernel-baseline/round63/0002-dt-bindings-phy-qmp-ufs-vdda-phy-always-on.patch.draft`
+
+主 DTS review-only draft 已同步 `vdda-phy-always-on;`，并删除 ACK static config 已固定的 max-microamp 重复属性。DTS blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`。这些仍是草案，不能声称真实 patch apply/schema/build 已通过。
+
+二号 AI ROUND61 长期任务已加入 ROUND63 要求：把 QMP PHY binding/driver 补丁纳入真实 patch apply、checkpatch、dt_binding_check、Kleaf 编译；必须验证带/不带 property 两条路径、第一次 power-on、power-off 后 vdda-phy 保持 enabled 且负载为 0、再次 power-on 恢复 load、driver unbind cleanup 平衡 regulator enable。不能把未验证的 DTBO entry8 说成当前启动必选。

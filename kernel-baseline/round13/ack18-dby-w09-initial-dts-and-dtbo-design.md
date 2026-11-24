@@ -1,13 +1,13 @@
 # ROUND13 — DBY-W09 ACK 6.18 initial DTS draft and DTBO compatibility decision
 
 Date: 2026-11-24
-Status: source-side draft only; partially superseded by ROUND15 on rootparam sentinel handling and PMIC parent-supply modeling. No source sync, dtc, schema validation, compile, image packaging, boot, flash or hardware test.
+Status: source-side draft only; superseded/clarified by ROUND15 (rootparam sentinel) and ROUND16 (HOS4.3 ARC parent graph vs ACK RPMhPD mapping). No source sync, dtc, schema validation, compile, image packaging, boot, flash or hardware test.
 
 ## 1. Result of this design pass
 
 A minimal DBY-W09 ACK-derived board DTS is now drafted on a dedicated review branch. It enables only the verified SM8250 UFS Host and QMP UFS PHY path plus the PM8150 rails they consume. A separate minimal DBY-W09 rootparam DTBO is drafted to preserve the ABL board-identity contract.
 
-These files are deliberately marked draft and are not declared buildable. PMIC parent-source details, exact ABL semantics / DTBO packaging, memory reservations and stock ABL acceptance still need review. ROUND15 restores the huawei,modem_id stock sentinel after confirming it is present in all nine local stock DTBO entries.
+These files are deliberately marked draft and are not declared buildable. Exact ABL semantics / DTBO packaging, memory reservations, and full MMCX/CX/MX voltage-corner equivalence still need review. ROUND15 restores the huawei,modem_id stock sentinel after confirming it is present in all nine local stock DTBO entries; ROUND16 resolves the local PMIC ARC parent links without copying unsupported vendor ARC properties into ACK.
 
 ## 2. Critical DTBO finding: do not reuse stock entry 8 against a minimal ACK DTS
 
@@ -80,7 +80,7 @@ ACK `android17-6.18` SoC DTSI defines:
 Source view:
 https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/arch/arm64/boot/dts/qcom/sm8250.dtsi
 
-The first draft enables the existing SoC UFS nodes by label and supplies board-specific regulators. The board draft does not model the regulators' upstream input-supply links yet: ROUND7's CSV inventory confirms the regulator outputs and voltage constraints but does not contain those parent links, so their presence/absence in the raw base FDT remains unverified. It does not rewrite SoC register/clock/reset definitions.
+The first draft enables the existing SoC UFS nodes by label and supplies board-specific VRM regulators. ROUND11's complete base-FDT scan found four parent-supply properties only on legacy ARC level groups and six ARC proxy-supply properties. It found no vdd-s1..s10-supply, vin-supply or vph-pwr-supply in the full base FDT. The ARC links are not physical PM8150 VRM input parents; ACK's upstream RPMh regulator path does not accept the vendor ARC compatible. See ROUND16 for the translation boundary. The board draft intentionally leaves PM8150 physical input links unspecified.
 
 ## 6. Files created on review branch
 
@@ -112,6 +112,7 @@ The DTS files are intentionally suffixed `.draft` so they cannot be mistaken for
 | Reviewed against ACK SM8250 topology | SOURCE REVIEW ONLY |
 | Reviewed original DTBO fragment-target compatibility | YES — original DTBO is incompatible with minimal base strategy |
 | Stock huawei,modem_id sentinel reproduced | YES — ROUND7 inventory shows same value in all nine entries |
+| ROUND11 HOS4.3 PMIC parent-supply check | COMPLETE — four ARC-level parent links, six ARC proxy links; no vdd-s / vin / vph supply link in base FDT |
 | Fresh minimal DTBO ABL acceptance | UNKNOWN / NOT_TESTED |
 | dtc compile | NOT_RUN |
 | dt-schema validation | NOT_RUN |
@@ -122,4 +123,4 @@ The DTS files are intentionally suffixed `.draft` so they cannot be mistaken for
 
 ## 9. Next engineering step
 
-ROUND15 records the source-side corrections and creates a narrowly scoped local read-only check for PMIC input-supply parent links in the existing HOS4.3 base FDT. After that result, resume the console/remaining early-boot dependency review. No compile or static build validation is claimed.
+ROUND16 records the completed ROUND11 findings and the correct ACK translation boundary. Continue next with the early-boot console/GENI UART and any remaining source-side dependency audit. No compile or static build validation is claimed.

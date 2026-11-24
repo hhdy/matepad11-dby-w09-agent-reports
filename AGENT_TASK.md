@@ -415,3 +415,14 @@ ROUND58 产物已经完成主 AI 的源码设计审查（ROUND60），但没有�
 本地 WorkBuddy 的 ROUND17 权限/部署路径由本地 Agent 自己处理；不再要求用户寻找未经证实的 Windows 安全菜单。二号 AI不应等待 WorkBuddy 才继续其自身可完成的源码/测试任务。
 
 主 AI 继续处理独立技术问题、审查二号 AI阶段提交并维护 main 交接。PR #1 保持 Draft/Open/unmerged；保护 DTS branch 不修改；Stage A 未完成前不开始 Stage B。
+
+
+## ROUND62 — 同型号启动链交叉核验（2026-11-24）
+
+报告：`kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md`。
+
+公开 DBY-W09 Linux 7.0 项目（固定 commit `116cb1fe06110543ce03217e8bd8f35c12ca89c3`）补充了同型号 ABL 参考：boot header v2 + 独立 ramdisk、ABL 必需 /rootparam DTBO；该项目报告 `fastboot boot` RAM boot 被 ABL 拒绝，并采用从精确 stock boot image unpack metadata、重建 header-v2 boot、独立 ramdisk payload / footer-preservation 的方法。
+
+这是同型号交叉参考，不是用户当前 HOS4.3 ABL 和 AVB footer 的实测。不得复制外部项目的固件版本、hash、分区尺寸、偏移、cmdline、RAM map 或 footer offset。它提示不能假设 `fastboot boot` 可以用于非持久化测试；任何实际分区写入都必须有用户 HOS4.3 本机证据、回滚计划和单独明确授权。
+
+ROUND62 已同步给 ROUND61 二号 AI长期任务，作为后续 board DTS / packaging gate 上下文；不得阻断其真实补丁、schema、Kconfig 和 Image 编译阶段。

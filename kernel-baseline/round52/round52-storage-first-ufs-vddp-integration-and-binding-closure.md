@@ -18,10 +18,10 @@ Fixed ACK qcom,ufs.yaml explicitly sets unevaluatedProperties: false. Its refere
 - qcom,vccq-parent-supply and qcom,vccq-parent-max-microamp.
 
 Patch: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft
-- Blob SHA: 9dd8c2b92b852f0841b70422a8a1a781b6330754
+- Blob SHA: 949798446f6135844f5e2d841fca06a0d25ea6d6
 - Depends on ROUND32 adding qcom,sm8250-ufshc to the qcom,ufs.yaml compatible list.
 - Exact pristine source blob reviewed: qcom,ufs.yaml = 1dd41f6d5258014d59c8c8005bc54f7994351a52.
-- Its unified-diff hunk line counts were checked against the patch text; no full-tree apply or dt_binding_check was run.
+- Its two unified-diff hunks were checked against the patch text (5/26 and 3/16 context/new-line counts); no full-tree apply or dt_binding_check was run.
 
 ## 3. VDDP lifecycle driver patch draft
 

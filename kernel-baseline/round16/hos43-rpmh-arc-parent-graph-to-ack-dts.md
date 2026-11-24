@@ -138,3 +138,26 @@ Keep every file suffixed .draft. Keep PR #1 Draft. No device connection, flash, 
 ## ROUND27 follow-up — UFS OPP vote route is not established
 
 ACK SM8250 UFS declares required-opps referencing RPMHPD, but OPP core sends the level through the currently attached GenPD. UFS Host currently attaches to GCC UFS_PHY_GDSC. The inspected GCC node has no RPMHPD parent, the GDSC definition has no explicit parent or set_performance_state callback, and GCC registers it standalone in this source topology. Therefore the required-opps declaration is not proof that UFS emits an MMCX/MX ARC vote. Keep the physical UFS GDSC and design a targeted second domain/parent route if required. See ROUND27.
+
+
+## ROUND51 erratum — ROUND14 confirms a fifth parent-supply edge (2026-11-24)
+
+ROUND11 originally enumerated four parent-supply edges. ROUND14 later observed an additional property on the MX ARC provider:
+
+- Source provider: /soc/rsc@18200000/rpmh-regulator-mxlvl (resource mx.lvl)
+- Property: pm8150a_s3_mmcx_sup_level-parent-supply = <122>
+- Target phandle 122: /soc/rsc@18200000/rpmh-regulator-cxlvl/regulator-pm8150-s3-mmcx-sup-level
+
+This is a real logical regulator supply edge under the public Qualcomm KONA driver contract: rpmh_regulator_init_vreg_supply() builds the exact property name from each child regulator's regulator-name and resolves it on the provider node. The newly resolved child name is pm8150a_s3_mmcx_sup_level, matching the MX child's regulator-name. Therefore the ROUND11 four-edge enumeration is incomplete; at least five base-FDT parent-supply edges are now confirmed:
+
+1. CX ALL -> MX ordinary ALL.
+2. CX AO -> MX AO.
+3. MMCX ALL -> MX MMCX-supply ALL.
+4. MMCX AO -> MX AO (shared target with CX AO).
+5. MX MMCX-supply ALL -> CX MMCX-supply child (newly confirmed).
+
+Do not claim that the graph has exactly five edges or that its full total is complete: ROUND14 intentionally did not rescan/re-enumerate the whole graph. The six ROUND11 proxy-supply links remain a separate mechanism. ROUND14 also resolves the MMCX ALL/AO min-dropout raw value as 0xffffffff; ROUND51's source review explains why KONA consumes it as signed -1 in the ARC logical-level parent request path rather than as a no-dropout sentinel.
+
+ROUND51 report: ../round51/round14-arc-value-semantics-proxy-vote-and-round11-edge-reconciliation.md
+
+No new local scan was performed, no vendor ARC driver was implemented, and no protected branch / PR was modified.

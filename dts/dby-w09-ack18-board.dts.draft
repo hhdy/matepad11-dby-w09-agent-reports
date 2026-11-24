@@ -179,10 +179,11 @@
 
 /*
  * Later stages, intentionally not enabled in this minimal draft:
- *   &uart6 / GENI console
+ *   &uart2 / GENI debug console (qcom,geni-debug-uart)
+ *   &uart6 / normal GENI UART (qcom,geni-uart; possible BT serdev)
  *   &qupv3_id_2 / &spi14 / Huawei THP
  *   panel / dual DSI / backlight
- *   PCIe / QCA6391 WLAN + UART Bluetooth
+ *   PCIe / WLAN + Bluetooth (UART6 binding not yet verified for HOS4.3)
  *   ADSP / audio / camera / USB-C / DP
  *
  * Do not select a panel profile here: ACTIVE_PROFILE remains UNKNOWN.

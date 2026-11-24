@@ -106,7 +106,7 @@ All 12 runs of workflow 429302330 **[OBSERVED]**:
 
 | Run | head_sha | status | conclusion | duration |
 |---|---|---|---|---|
-| 45455279898 | 4877a6d2 | in_progress at 18:16 (still at 18:35) | — | — |
+| 45455279898 | 4877a6d2 | in_progress at 18:16, still in_progress at 18:29:36 | — | — |
 | **45453412267** | 1b833dd7 | **completed** | **success** | **1796 s (29 m 56 s)** |
 | 45452267778 | 4a2db766 | completed | failure | 336 s |
 | 45450833773 | a9606778 | completed | failure | 423 s |
@@ -322,10 +322,9 @@ One hosted-side advantage worth recording: `go install github.com/bazelbuild/bui
 | **18:24:28Z** | **run 45453412267: steps 3, 4, 5, 10 all `completed/success`; artifacts = 1** |
 | **18:25:33Z** | **run 45453412267: `completed` / `success`, `updated_at 18:22:49Z`** |
 | 18:26:38Z | poller `SAME` — run B unchanged (step 3 building) |
-| 18:27Z | completed job log retrieved: 200, 66 898 B; build `1348.097s`, `775 total actions`; config validation `PASS 31/31`; Image `44 820 992 B`; artifact 210 436 545 B |
-| 18:28Z | branch HEAD advanced to `019463c350` "ROUND61: publish hosted manifest and Image build result"; `hosted-build-latest.md` → `Last stage: complete`, `Exit code: 0`, `BUILD_PASS` |
-| 18:30Z | `.config` SHA-256 `5f7fd8b3…` matched against the independent local ROUND18 build — identical |
-| 18:35Z | run 45455279898 still `in_progress` in step 3 (duplicate of the same source tree) |
+| ≈18:27Z | completed job log retrieved: 200, 66 898 B; build `1348.097s`, `775 total actions`; config validation `PASS 31/31`; Image `44 820 992 B`; artifact 210 436 545 B |
+| ≈18:28Z | branch HEAD advanced to `019463c350` "ROUND61: publish hosted manifest and Image build result"; `hosted-build-latest.md` → `Last stage: complete`, `Exit code: 0`, `BUILD_PASS` |
 | 18:29:36Z | run 45455279898 step 3 elapsed **26 min** — still below the successful run A's 28 m 44 s, `in_progress`, artifacts 0, no failure signal |
+| ≈18:31Z | `.config` SHA-256 `5f7fd8b3…` matched against the independent local ROUND18 build — identical |
 
 **Net result of the verification: the run suspected of being orphaned finished successfully 29 m 56 s after it started, published the Image, and uploaded its evidence. No intervention was needed and none was performed.**

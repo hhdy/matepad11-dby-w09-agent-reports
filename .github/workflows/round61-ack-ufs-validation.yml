@@ -286,6 +286,8 @@ jobs:
             echo "Report checkout unavailable; cannot publish validation summary."
             exit 0
           fi
+          git -C "$report" fetch origin "$GITHUB_REF_NAME"
+          git -C "$report" reset --hard FETCH_HEAD
           out="$report/kernel-baseline/round61/hosted-ufs-validation-latest.md"
           {
             echo "# ROUND61 hosted UFS / ROUND63 PHY validation"

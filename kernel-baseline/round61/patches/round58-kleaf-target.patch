@@ -15,15 +15,15 @@ BUILD.bazel blob: 3c8178ebce1f27f2c417e4aeaa00fc7001a96be6
 Fragment source blob: ae8675357e2f5c57c9ec38e7574b00590b558c63
 
 ---
- BUILD.bazel | 18 ++++++++++++++++++
+ BUILD.bazel | 19 +++++++++++++++++++
  arch/arm64/configs/dby_w09_storage_first.fragment | 132 +++++++++++++++++++++++++++++
- 2 files changed, 150 insertions(+)
+ 2 files changed, 151 insertions(+)
 
 diff --git a/BUILD.bazel b/BUILD.bazel
 index 3c8178eb..00000000 100644
 --- a/BUILD.bazel
 +++ b/BUILD.bazel
-@@ -1351,5 +1351,23 @@
+@@ -1351,5 +1351,24 @@
      destdir = "out/yukawa/dist",
  )
  
@@ -45,6 +45,7 @@ index 3c8178eb..00000000 100644
 +    post_defconfig_fragments = ["arch/arm64/configs/dby_w09_storage_first.fragment"],
 +    visibility = ["//visibility:private"],
 +)
++
  kernel_build(
      name = "fips140",
 

@@ -124,6 +124,6 @@ Main branch:
 
 ## 6. Next engineering step
 
-ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. Continue GPT-side review of the remaining storage-first DTS/Kconfig and legacy boot packaging path. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
+ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. ROUND18 reviews the same-device legacy boot packaging flow and assigns ROUND12 to check the HOS4.3 AVB footer / vbmeta descriptor scope. Continue GPT-side review of the remaining storage-first DTS/Kconfig and boot packaging plan. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
 
 Keep every file suffixed .draft. Keep PR #1 Draft. No device connection, flash, write, root, compile or image packaging.

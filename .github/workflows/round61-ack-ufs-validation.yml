@@ -101,8 +101,17 @@ jobs:
           set -euo pipefail
           ack="$RUNNER_TEMP/ack"
           report="$RUNNER_TEMP/report"
-          perl "$ack/scripts/checkpatch.pl" --no-tree --strict < "$report/kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft"
-          perl "$ack/scripts/checkpatch.pl" --no-tree --strict < "$report/kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft"
+          set +e
+          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft" > "$RUNNER_TEMP/round33-checkpatch.log" 2>&1
+          rc33=$?
+          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft" > "$RUNNER_TEMP/round52-0002-checkpatch.log" 2>&1
+          rc52=$?
+          cat "$RUNNER_TEMP/round33-checkpatch.log"
+          cat "$RUNNER_TEMP/round52-0002-checkpatch.log"
+          printf 'ROUND33_CHECKPATCH_RC=%s\nROUND52_0002_CHECKPATCH_RC=%s\n' "$rc33" "$rc52"
+          if [ "$rc33" -ne 0 ] || [ "$rc52" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Install device-tree schema prerequisites
         shell: bash

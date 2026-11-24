@@ -83,6 +83,18 @@ The key simplification is therefore:
 
 No change to generic `ufshcd-pltfrm.c`, the UFS HBA structure, or `ufs_hba_variant_ops` is required by this design.
 
+### Required-OPP target table readiness — checked
+
+A potential race was explicitly checked. The OPP table for the UFS Host records its required-OPP count and target-table references when `_allocate_opp_table()` calls `_of_init_opp_table()`, even before individual UFS OPP entries are initialized. If the target RPMHPD OPP table were missing at that moment, `_opp_set_required_dev()` would return `-ENODEV` for an unresolved target table.
+
+The exact .33 RPMHPD/GenPD provider ordering closes this concern for the proposed probe sequence:
+- `rpmhpd_probe()` initializes each RPMHPD domain's `set_performance_state` callback and calls `of_genpd_add_provider_onecell()`;
+- `of_genpd_add_provider_onecell()` first registers each provider GenPD's indexed OPP table using `dev_pm_opp_of_add_table_indexed()`, and only after that calls `genpd_add_provider()` to expose the provider;
+- `dev_pm_domain_attach_list()` can attach the MMCX domain only after the provider is exposed;
+- therefore, if the list attach succeeds, the MMCX OPP table has already been registered when QCOM probe subsequently calls `devm_pm_opp_set_config(required_dev=pd_list->pd_devs[0], index=0)`.
+
+This is a source-order argument, not runtime proof. It should be retained as a hard static/probe-order validation in the patch review.
+
 ## 3. Candidate patch shape — not implemented
 
 The following is pseudocode, not a ready-to-apply patch. It omits the final compatibility guard and error-message details until the device-tree and driver binding checks are complete.
@@ -183,6 +195,8 @@ The device-link active reference keeps the supplier runtime-active during consum
 | GenPD attach-list API available in exact .33 source | SOURCE REVIEWED |
 | `PD_FLAG_DEV_LINK_ON` adds RPM-active runtime supplier link | SOURCE REVIEWED |
 | OPP config supports multiple config calls before table initialization | SOURCE REVIEWED |
+| RPMHPD provider registers its indexed GenPD OPP tables before exposing the GenPD provider | SOURCE REVIEWED |
+| Attach-list success implies MMCX target OPP table is available before explicit required-dev mapping | SOURCE-ORDER VERIFIED; NOT RUNTIME TESTED |
 | OPP required-dev index 0 maps to the one existing required-opps entry | SOURCE REVIEWED |
 | `PD_FLAG_REQUIRED_OPP` for both domains | REJECTED — second index exceeds the single required-OPP slot |
 | QCOM probe pre-attach + explicit OPP required-dev mapping | DESIGN CANDIDATE |

@@ -1,0 +1,252 @@
+From: DBY-W09 Stage-A primary-source review
+Subject: [PATCH DRAFT] phy: qcom-qmp-ufs: preserve always-on vdda-phy supply votes
+
+The DBY-W09 HOS4.3 UFS PHY DTBO inventory records vdda-phy-always-on.
+The downstream Qualcomm UFS PHY consumer semantics retain the vdda-phy
+regulator enable while dropping its active load vote when the PHY is powered
+off.
+
+The ACK QMP UFS PHY driver currently bulk-disables every PHY regulator in
+qmp_ufs_power_off(), ignoring this consumer property. Preserve the existing
+bulk path for nodes without the property. When the property is present,
+enable vdda-phy on first PHY power-on, keep that consumer enable balanced
+across PHY power cycles while toggling its load between init_load_uA and
+zero, continue to enable/disable the remaining PHY regulators normally,
+and register a device-managed cleanup action to balance the retained enable
+before the managed regulator handles are released.
+
+The first configured regulator must remain vdda-phy, as in the current
+Qualcomm UFS PHY regulator lists. Reject an unexpected list rather than
+silently applying the special case to the wrong rail.
+
+Candidate only. No full-tree git apply, checkpatch, compile, dt_binding_check,
+regulator hardware test or device boot has run.
+
+Pinned source: ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Source blob: 8af777f7ddd0385a6bb9d9b9563f0e6329699cd3
+
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | candidate
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+@@ -1133,6 +1133,8 @@
+ 	struct clk_bulk_data *clks;
+ 	int num_clks;
+ 	struct regulator_bulk_data *vregs;
++	bool vdda_phy_always_on;
++	bool vdda_phy_enabled;
+ 	struct reset_control *ufs_reset;
+ 
+ 	struct phy *phy;
+@@ -1829,31 +1831,123 @@
+ 		qmp_ufs_init_all(qmp, &cfg->tbls_hs_b);
+ }
+ 
++static void qmp_ufs_vdda_phy_cleanup(void *data)
++{
++	struct qmp_ufs *qmp = data;
++	int ret;
++
++	if (!qmp->vdda_phy_enabled)
++		return;
++
++	ret = regulator_set_load(qmp->vregs[0].consumer, 0);
++	if (ret < 0)
++		dev_err(qmp->dev, "failed to clear vdda-phy load, err=%d\n", ret);
++
++	ret = regulator_disable(qmp->vregs[0].consumer);
++	if (ret)
++		dev_err(qmp->dev, "failed to disable vdda-phy, err=%d\n", ret);
++
++	qmp->vdda_phy_enabled = false;
++}
++
++static int qmp_ufs_regulators_enable(struct qmp_ufs *qmp)
++{
++	const struct qmp_phy_cfg *cfg = qmp->cfg;
++	int cleanup_ret;
++	int ret;
++
++	if (!qmp->vdda_phy_always_on)
++		return regulator_bulk_enable(cfg->num_vregs, qmp->vregs);
++
++	/* The SM8250 UFS PHY list orders vdda-phy before vdda-pll. */
++	if (cfg->num_vregs < 2 ||
++	    strcmp(cfg->vreg_list[0].supply, "vdda-phy"))
++		return -EINVAL;
++
++	ret = regulator_set_load(qmp->vregs[0].consumer,
++				 qmp->vregs[0].init_load_uA);
++	if (ret < 0)
++		return ret;
++
++	if (!qmp->vdda_phy_enabled) {
++		ret = regulator_enable(qmp->vregs[0].consumer);
++		if (ret)
++			goto err_clear_load;
++		qmp->vdda_phy_enabled = true;
++	}
++
++	/* Keep vdda-phy enabled across PHY power-off; toggle vdda-pll normally. */
++	ret = regulator_bulk_enable(cfg->num_vregs - 1, &qmp->vregs[1]);
++	if (ret)
++		goto err_clear_load;
++
++	return 0;
++
++err_clear_load:
++	cleanup_ret = regulator_set_load(qmp->vregs[0].consumer, 0);
++	if (cleanup_ret < 0)
++		dev_err(qmp->dev, "failed to clear vdda-phy load after error, err=%d\n",
++			cleanup_ret);
++	return ret;
++}
++
++static int qmp_ufs_regulators_disable(struct qmp_ufs *qmp)
++{
++	const struct qmp_phy_cfg *cfg = qmp->cfg;
++	int load_ret;
++	int ret;
++
++	if (!qmp->vdda_phy_always_on)
++		return regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
++
++	if (cfg->num_vregs < 2 ||
++	    strcmp(cfg->vreg_list[0].supply, "vdda-phy"))
++		return -EINVAL;
++
++	ret = regulator_bulk_disable(cfg->num_vregs - 1, &qmp->vregs[1]);
++	if (!qmp->vdda_phy_enabled)
++		return ret;
++
++	/* Drop the active load vote but retain the vdda-phy enable reference. */
++	load_ret = regulator_set_load(qmp->vregs[0].consumer, 0);
++	if (load_ret < 0) {
++		dev_err(qmp->dev, "failed to clear vdda-phy load, err=%d\n",
++			load_ret);
++		if (!ret)
++			ret = load_ret;
++	}
++
++	return ret;
++}
++
+-static int qmp_ufs_power_on(struct phy *phy)
+-{
+-	struct qmp_ufs *qmp = phy_get_drvdata(phy);
+-	const struct qmp_phy_cfg *cfg = qmp->cfg;
+-	void __iomem *pcs = qmp->pcs;
+-	int ret;
+-
+-	ret = regulator_bulk_enable(cfg->num_vregs, qmp->vregs);
+-	if (ret) {
+-		dev_err(qmp->dev, "failed to enable regulators, err=%d\n", ret);
+-		return ret;
+-	}
+-
+-	ret = clk_bulk_prepare_enable(qmp->num_clks, qmp->clks);
+-	if (ret)
+-		goto err_disable_regulators;
+-
+-	qphy_setbits(pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL], SW_PWRDN);
+-	return 0;
+-
+-err_disable_regulators:
+-	regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
+-	return ret;
+-}
+-
++static int qmp_ufs_power_on(struct phy *phy)
++{
++	struct qmp_ufs *qmp = phy_get_drvdata(phy);
++	const struct qmp_phy_cfg *cfg = qmp->cfg;
++	void __iomem *pcs = qmp->pcs;
++	int disable_ret;
++	int ret;
++
++	ret = qmp_ufs_regulators_enable(qmp);
++	if (ret) {
++		dev_err(qmp->dev, "failed to enable regulators, err=%d\n", ret);
++		return ret;
++	}
++
++	ret = clk_bulk_prepare_enable(qmp->num_clks, qmp->clks);
++	if (ret)
++		goto err_disable_regulators;
++
++	qphy_setbits(pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL], SW_PWRDN);
++	return 0;
++
++err_disable_regulators:
++	disable_ret = qmp_ufs_regulators_disable(qmp);
++	if (disable_ret)
++		dev_warn(qmp->dev, "failed to unwind PHY regulators, err=%d\n",
++			 disable_ret);
++	return ret;
++}
+ static int qmp_ufs_phy_calibrate(struct phy *phy)
+ {
+ 	struct qmp_ufs *qmp = phy_get_drvdata(phy);
+@@ -1891,22 +1985,24 @@
+ 	return 0;
+ }
+ 
+-static int qmp_ufs_power_off(struct phy *phy)
+-{
+-	struct qmp_ufs *qmp = phy_get_drvdata(phy);
+-	const struct qmp_phy_cfg *cfg = qmp->cfg;
+-
+-	/* Put PHY into POWER DOWN state: active low */
+-	qphy_clrbits(qmp->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
+-			SW_PWRDN);
+-
+-	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
+-
+-	regulator_bulk_disable(cfg->num_vregs, qmp->vregs);
+-
+-	return 0;
+-}
+-
++static int qmp_ufs_power_off(struct phy *phy)
++{
++	struct qmp_ufs *qmp = phy_get_drvdata(phy);
++	const struct qmp_phy_cfg *cfg = qmp->cfg;
++	int ret;
++
++	/* Put PHY into POWER DOWN state: active low */
++	qphy_clrbits(qmp->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
++			SW_PWRDN);
++
++	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
++
++	ret = qmp_ufs_regulators_disable(qmp);
++	if (ret)
++		dev_err(qmp->dev, "failed to disable PHY regulators, err=%d\n", ret);
++
++	return ret;
++}
+ static int qmp_ufs_set_mode(struct phy *phy, enum phy_mode mode, int submode)
+ {
+ 	struct qmp_ufs *qmp = phy_get_drvdata(phy);
+@@ -2139,6 +2235,20 @@
+ 	}
+ 	if (ret)
+ 		goto err_node_put;
++	qmp->vdda_phy_always_on = of_property_read_bool(np, "vdda-phy-always-on");
++	if (qmp->vdda_phy_always_on) {
++		if (qmp->cfg->num_vregs < 2 ||
++		    strcmp(qmp->cfg->vreg_list[0].supply, "vdda-phy")) {
++			ret = -EINVAL;
++			goto err_node_put;
++		}
++
++		/* This action runs before the managed regulator bulk release. */
++		ret = devm_add_action_or_reset(dev, qmp_ufs_vdda_phy_cleanup, qmp);
++		if (ret)
++			goto err_node_put;
++	}
++
+ 
+ 	ret = qmp_ufs_register_clocks(qmp, np);
+ 	if (ret)

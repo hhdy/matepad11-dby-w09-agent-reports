@@ -71,3 +71,11 @@ The isolated environment currently lacks dtc, dt_binding_check / dtbs_check (dt-
 - ROUND12 remains the only local Agent task.
 
 Conclusion: the board-level two-domain delta is now specified and matches the pinned ACK provider names/domain IDs and ROUND33's order contract. It remains unapplied and uncompiled. It must be reviewed together with ROUND32, ROUND36 and ROUND33 before it becomes part of the protected DTS branch or a kernel build.
+
+## 6. Exact current-board-context verification
+
+- Current protected board DTS file blob SHA: `e86c8707c413a9376b1e332a94e292b86acde3e2`.
+- Current ROUND37 patch blob SHA: `486654c8d0b1b785190253270f5e83f796f07362`.
+- Unified-diff hunk 1 (`-19,6 +19,8`): old/new line counts match; all six old-side lines match the exact board file context.
+- Unified-diff hunk 2 (`-212,6 +214,8`): old/new line counts match; all six old-side lines match the exact board file context around `&ufs_mem_hc`.
+- This was an exact source-context comparison using the full current GitHub file text, not a full-file `git apply` test. The protected DTS branch remains unchanged.

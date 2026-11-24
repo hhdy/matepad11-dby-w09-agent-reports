@@ -99,9 +99,11 @@ CONFIG_EROFS_FS=y
 # are still unread, and DBY-W09's legacy ABL separate-ramdisk composition is
 # not yet proven to expose this exact layout. Therefore UFS/QMP stays built-in.
 #
-# AVB hashtree evidence and first-stage fstab options are pending ROUND12:
-# CONFIG_DM_VERITY=y
-# CONFIG_DM_VERITY_FEC=y     # only if the AVB descriptor/fstab requires FEC
+# The pinned ACK gki_defconfig already has CONFIG_DM_VERITY=y and
+# CONFIG_DM_VERITY_FEC=y, both built-in. Keep that inherited support.
+# This proves kernel capability only: ROUND12 AVB footer/vbmeta descriptor
+# inspection remains BLOCKED, so actual hashtree/FEC use and exact fstab
+# options are still UNKNOWN. Do not infer runtime AVB policy from config.
 #
 # Do not enable other filesystem drivers until the corresponding partition
 # signatures and first-stage fstab types are known:

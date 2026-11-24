@@ -124,3 +124,14 @@ Also inspect the already-existing S8 `qcom,init-enable` / standard boot-on / alw
 | Full-tree source/schema/Kconfig/build/DTB/boot/runtime validation | NOT_RUN |
 
 The next step requires a tightly scoped local, read-only property extraction using the previously approved ROUND3 parser and the existing FDT work copy. It must not repeat ROUND11's parent phandle extraction or ROUND13's mode scan, and must not create a new parser or touch the device.
+
+
+## ROUND51 correction — ROUND14 resolves corner names and a fifth edge (2026-11-24)
+
+ROUND14 is now complete. Local MMCX ALL/AO/SO min/init=64 maps to LOW_SVS; MX MMCX-supply/AO child min/init=16 maps to RETENTION; qcom,set values 3/1/2 are ALL/ACTIVE/SLEEP. MMCX ALL carries proxy-consumer-enable with voltage <384 65535> (TURBO..MAX). These values are logical ARC levels, not microvolts.
+
+The raw qcom,min-dropout-voltage-level=<0xffffffff> on MMCX ALL/AO is not a no-dropout sentinel in the public KONA implementation. The parser stores it in signed int min_dropout_uV and regulator core adds it directly to the ARC list_voltage value; on the ARM64 two's-complement target this is -1 in the logical level value path. Do not normalize to zero. Exact hardware margin remains unmeasured.
+
+ROUND14 also found mxlvl provider property pm8150a_s3_mmcx_sup_level-parent-supply=<122>, phandle 122 resolving to the CX MMCX-supply child. KONA rpmh_regulator_init_vreg_supply() constructs this exact property name from the child regulator-name, confirming it is a real parent edge. Thus ROUND11's four-edge set was incomplete: at least five base-FDT parent-supply edges are now proven. The full count is still not claimed because ROUND14 did not perform a full graph rescan. The six proxy-supply links remain a separate category.
+
+ACK's fixed SM8250 RPMHPD OPP table includes the same canonical corner labels, but this does not make its shared per-domain GenPD model fully equivalent to HOS's child-specific ARC parent-supply chain and MMCX boot proxy request. Do not add a shared MMCX->MX parent pointer. Full ARC equivalence remains a separate gate. See ROUND51 for details.

@@ -8,11 +8,12 @@ Status: ROUND7/ROUND9 local report review plus ACK and downstream Qualcomm sourc
 
 ROUND9 resolved the extra UFS Host property qcom,vccq-parent-supply to the PM8150A S8 resource, with an output range of 1.2–1.4 V and a maximum load request of 210 mA. This is distinct from the standard VCCQ supply, which remains PM8150 L6 at 1.2 V.
 
-ROUND7's local deterministic base-FDT property inventory identifies the RPMh VRM group and child:
+ROUND7's sanitized inventory identifies the same RPMh VRM group and child in all three valid boot-FDT candidates (the deterministic candidate plus two alternates):
 - Provider group: /soc/rsc@18200000/rpmh-regulator-smpc8
 - Child: regulator-pm8150a-s8
 - Regulator name: pm8150a_s8
 - Locally recorded output range: 1.2–1.4 V
+- The published ROUND7 inventory contains only the compatible, regulator-name and min/max-voltage properties for this child; it does not establish regulator-initial-mode, regulator-always-on, regulator-boot-on or DRMS mode permissions. Their absence from this filtered inventory must not be treated as proof of absence from the raw DTB.
 
 The property qcom,vccq-parent-supply is a UFS consumer extension. It is not the PMIC regulator's own input property vdd-s8-supply.
 
@@ -65,7 +66,7 @@ The patch file is a review sketch with source-context anchors, not an apply-veri
 
 | Item | Status |
 |---|---|
-| HOS4.3 UFS parent rail identity / output window | ROUND7/ROUND9 LOCAL EVIDENCE |
+| HOS4.3 UFS parent rail identity / output window | ROUND7/ROUND9 LOCAL EVIDENCE (same node in 3 boot-FDT candidates) |
 | HOS4.3 UFS maximum-load request | ROUND9 FOUND — 210000 uA |
 | Same-device mapping to PM8150L / PMIC ID c / SMPS8 | PUBLIC SAME-DEVICE SOURCE REVIEWED |
 | ACK PM8150L S8 VRM provider | SOURCE REVIEWED |

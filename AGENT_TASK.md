@@ -1,6 +1,6 @@
 # AGENT_TASK.md — DBY-W09 / Android 17 / ACK 6.18 内核移植总入口
 
-> **当前本地 Agent：ROUND11 唯一待办（只读）**。只核验 HOS4.3 base FDT 中 PM8150 RPMh regulator 的输入供电 parent links。GPT 已完成可通过公开 ACK 源码、同型号公开仓库和现有 ROUND7/9 报告完成的工作；不要重做 ROUND1–ROUND10，也不要重新上传固件。
+> **当前本地 Agent：暂无待执行任务。** ROUND11 已完成并上传。GPT 继续负责公开 ACK 源码审查、DTS/Kconfig 方案和文档更新；除非明确出现本机独有的验证需求，不要重复解析 ROUND1–ROUND11，也不需要重新上传固件。
 
 ## 当前项目目标
 
@@ -12,6 +12,7 @@
 
 ## 当前公开研究报告
 
+- [ROUND16：HOS4.3 RPMh ARC parent graph 与 ACK DTS 映射](./kernel-baseline/round16/hos43-rpmh-arc-parent-graph-to-ack-dts.md)
 - [ROUND15：UFS 启动依赖与 rootparam 修正](./kernel-baseline/round15/ack18-storage-bringup-dependency-and-rootparam-correction.md)
 - [ROUND14：ACK 6.18 UFS 早期启动 Kconfig 依赖审查](./kernel-baseline/round14/ack18-dby-w09-bootcritical-kconfig-review.md)
 - [ROUND13：第一版 ACK 板级 DTS / 最小 rootparam DTBO 设计](./kernel-baseline/round13/ack18-dby-w09-initial-dts-and-dtbo-design.md)
@@ -22,10 +23,10 @@
 ## 当前重点事实
 
 - UFS HOS4.3 supply closure 已在 ROUND9 完成 8/8：UFS Host VCC/L17、VCCQ/L6、VCCQ2/S4；QMP PHY VDDA-PHY/L5、VDDA-PLL/L9、VDDP-REF-CLK/L6；HBA 对应 GCC UFS_PHY_GDSC。
-- ROUND7 FDT property inventory 确认 PM8150 S4/L5/L6/L9/L17 的 regulator 节点名称和输出电压属性；但该 CSV 未记录 regulator 的 parent input-supply links。CSV 未记录不等于原始 FDT 一定没有。
+- ROUND7 确认 PM8150 S4/L5/L6/L9/L17 的 regulator 节点和输出电压；ROUND11 对完整 HOS4.3 base FDT 复核后发现四条 parent-supply 全属于 ARC level groups、六条 proxy-supply 属于 ARC proxy 机制，并全 FDT 确认 vdd-s1..s10/vin/vph-pwr 属性零命中。物理 PMIC 输入 supply 仍未确定。
 - 同型号公开 Linux 7.0 DTS 使用固定 3.7 V vph_pwr 和 PM8150 vdd-s1..s10-supply links；其头部说明该部分参考 HOS4.2，因此不能直接当作本设备 HOS4.3 已证实事实。当前 ACK DTS 草案已暂时移除这些未确认输入链接。
 - ROUND7 的本机脱敏 DTBO inventory 显示 9 个 stock DTBO entry 都有相同的通用哨兵 huawei,modem_id = <0xffffffff 0>；当前最小 rootparam overlay 已保留该字段。它不是设备唯一编号，但新 DTBO 的 ABL 接受性仍未知。
-- ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA 等。
+- ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect；其 OPP 表有 RPMhPD required-opps。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA、QCOM_RPMHPD 等。HOS4.3 ARC parent/proxy 不能照搬到 ACK VRM group，且完整 MMCX/CX/MX corner equivalence 尚未建立。
 - UFS 的直接 UFS_PHY_GDSC 由 GCC 提供；但 ACK 的 ufs_opp_table 通过 required-opps 引用 RPMhPD OPP，因此当前配置保留 QCOM_RPMHPD 以满足 UFS OPP 缩放路径。
 - Panel ACTIVE_PROFILE=UNKNOWN；ROUND10 ramdisk BLOCKED；EROFS 内容 BLOCKED；system/cust/hw_product filesystem 类型和完整 fstab 未明。
 

@@ -30,7 +30,7 @@ Draft only: not applied to a full kernel tree, compiled, checkpatched,
 schema-validated or tested on hardware.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 206 insertions(+)
+ drivers/ufs/host/ufs-qcom.c | 205 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c

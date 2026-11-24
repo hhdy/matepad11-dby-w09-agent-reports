@@ -40,6 +40,7 @@ This means UFS is not a stand-alone pair of drivers. It depends on Qualcomm cloc
 | RPMh clock | `QCOM_RPMH`, `QCOM_CLK_RPMH` | UFS node references `RPMH_CXO_CLK`; RPMh clock driver depends on `QCOM_RPMH` | built-in |
 | Command DB | `QCOM_COMMAND_DB` | RPMh resource address/metadata; required by RPMh provider / interconnect path | built-in |
 | RPMh regulator | `REGULATOR`, `REGULATOR_QCOM_RPMH` | PM8150 LDO/SMPS rails mapped in ROUND9 | built-in |
+| RPMh power-domain OPP provider | `QCOM_RPMHPD` | UFS OPP table has `required-opps` references to `rpmhpd_opp_low_svs` and `rpmhpd_opp_nom`; distinct from the Host's direct GCC GDSC domain | built-in |
 | Interconnect core | `INTERCONNECT`, `INTERCONNECT_QCOM` | Generic interconnect framework and Qualcomm provider | built-in |
 | SM8250 interconnect | `INTERCONNECT_QCOM_SM8250` | Provides the UFS `ufs-ddr` and `cpu-ufs` paths; selects Qualcomm RPMh/BCM voting backends | built-in |
 | Reset | `RESET_CONTROLLER` | Qualcomm UFS Host reset dependency | built-in |
@@ -88,14 +89,13 @@ These are not included as asserted final values in the storage-first fragment be
 | SPMI PMIC MFD / PMIC arbiter | deferred from UFS-only fragment | RPMh RSC regulators are not accessed through the SPMI arbiter; enable SPMI path only when PMIC SPMI GPIO/PON/IRQ consumers are added |
 | SM8250 pinctrl / TLMM | deferred from UFS-only fragment | Needed for board GPIO/pinctrl peripherals, but minimal UFS node has no board GPIO phandle |
 | GENI UART / console | deferred | Existing cmdline contains `androidboot.console=ttyMSM0`, but exact ACK UART node/console driver mapping has not been proven; same-device reference uses uart6 alias, but avoid prematurely assigning a Bluetooth UART as console |
-| `QCOM_RPMHPD` | deferred | ACK UFS Host references `UFS_PHY_GDSC` from `&gcc`, provided by `SM_GCC_8250` / `QCOM_GDSC`; it does not use an `&rpmhpd` domain in this DTS path |
 | IOMMU extras beyond ARM SMMU | deferred | only required SMMU v2 path is included for UFS |
 | Display / touch / WLAN / audio / camera | deferred | each subsystem has additional board/firmware/config dependencies; no need to widen the first UFS bring-up kernel |
 
 ## 7. Safety and verification status
 
 - Kconfig names reviewed against current public ACK source references, including the UFS RPMh XO clock and interconnect consumers.
-- ROUND15 removed the incorrect implication that `QCOM_RPMHPD` is required for `UFS_PHY_GDSC`; GCC GDSC is the path used by this UFS node.
+- ROUND15 distinguishes the direct GCC `UFS_PHY_GDSC` domain from the UFS OPP table's `required-opps` dependency on RPMh power-domain OPPs; `QCOM_RPMHPD` stays enabled for the latter.
 - Fragment written only as a draft.
 - No actual Kconfig resolution (`olddefconfig`) performed.
 - No build or module compile performed.

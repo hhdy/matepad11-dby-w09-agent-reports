@@ -19,6 +19,7 @@
 - ROUND32 确认 ACK .33 与当前上游 qcom,ufs.yaml 均遗漏 qcom,sm8250-ufshc；已准备独立 schema patch 草案，声明 SM8250 8 clocks / 单 reg-window 结构。补丁未应用，dt_binding_check / dtbs_check 均 NOT_RUN；它不包含双电源域 DTS 改动。
 - ROUND33 已准备独立 `ufs-qcom.c` driver patch 草案：仅对 SM8250 且精确双域 MMCX→UFS_PHY_GDSC 拓扑生效；检查 power-domain provider/ID、UFS required-opps 数量及目标 RPMhPD provider，再在通用 UFS init 前 attach 双域并把唯一 required_dev index 0 映射到 MMCX。单域 path 不变。patch hunk 行数已做静态一致性检查；未应用、未 checkpatch、未编译、未做 dt-schema 或实机验证。
 - ROUND34 对固定 ACK tag 的 `drivers/pmdomain/core.c`、`drivers/base/power/common.c`、`drivers/opp/core.c` / `of.c`、UFS QCOM 与平台 glue 做了源码级时序/生命周期审查：generic GenPD 确实跳过多 power-domains 设备；attach-list 返回已附着数量，`PD_FLAG_DEV_LINK_ON` 加入 `DL_FLAG_RPM_ACTIVE`；OPP allocator 在 required-dev config 前已解析 required-opps table metadata；UFS clock config 和 OPP table 的调用顺序适合该映射；devres 清理时先撤销 OPP 相关资源再拆 GenPD。未发现已核实的 API 顺序或资源生命周期缺陷。报告位于 round34；patch 仍未 `git apply`、checkpatch、编译、schema 验证或实机运行。
+- ROUND35 检查现有 `ack18-dby-w09-dts-draft` 的实际 board DTS：`&ufs_mem_hc` override 没有声明 `power-domains`，所以仍继承 ACK SM8250 UFS Host 的单域 GCC `UFS_PHY_GDSC`；ROUND33 helper 因 `num_domains == 1` 会返回并保留 generic path，MMCX 映射在当前 DTS 下不会启动。下一版集成必须把 MMCX 放 index 0、GCC GDSC 放 index 1，并检查 schema / final DTB。报告只写在 main，未改 protected DTS branch。ROUND35 report path: `kernel-baseline/round35/dby-w09-ufs-dual-genpd-dts-integration-gap.md`。未运行 dtc/schema/build/device test。
 - 阶段 C 才评估 ColorOS 或其他 ROM。
 - DerpFest Android 17 manifest 当前 `kernel-6.18.xml` 指向 June 2026 branch（6.18.21），不改变本项目 6.18.33 目标；Stage B 必须集成本项目已验证的 DBY-W09 内核和匹配模块。
 - 官方 Android 17 GKI release 页面列出的 September 2026 分支为 6.18.32；本项目的 6.18.33 ACK-derived build 不得未经 KMI/ABI/认证验证就宣称是官方 certified GKI。
@@ -31,6 +32,7 @@
 - [ROUND28：Android 17 ACK 6.18.33 源码基线与 Qualcomm 平台增量策略](./kernel-baseline/round28/android17-6.18.33-source-baseline-and-qcom-platform-delta.md)
 - [ROUND33：SM8250 UFS 双 GenPD driver patch 草案](./kernel-baseline/round33/sm8250-ufs-dual-genpd-patch-design.md)
 - [ROUND34：ROUND33 UFS 双 GenPD 固定 ACK 源码与生命周期审查](./kernel-baseline/round34/round33-pinned-source-lifecycle-review.md)
+- [ROUND35：DBY-W09 UFS 双 GenPD 的 DTS 集成缺口](./kernel-baseline/round35/dby-w09-ufs-dual-genpd-dts-integration-gap.md)
 - [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)
 - [ROUND31：ACK 6.18.33 存储优先 Kconfig 依赖闭环](./kernel-baseline/round31/ack-6.18.33-storage-first-kconfig-dependency-closure.md)
 - [ROUND30：ACK SM8250 MMCX→MX parent/corner 等价性门槛](./kernel-baseline/round30/sm8250-rpmhpd-mmcx-mx-parent-equivalence-gate.md)

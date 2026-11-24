@@ -16,6 +16,10 @@ CONFIG_OF=y
 CONFIG_OF_RESERVED_MEM=y
 
 # SCSI block layer / Qualcomm UFS host
+# ACK .33 Kconfig: SCSI_UFSHCD requires SCSI + SCSI_DMA and selects
+# PM_DEVFREQ; PM_DEVFREQ in turn selects hidden PM_OPP. The UFS OPP path
+# therefore depends on resolving this chain to built-in, not on manually
+# forcing the hidden CONFIG_PM_OPP symbol.
 CONFIG_BLOCK=y
 CONFIG_SCSI=y
 CONFIG_SCSI_DMA=y
@@ -30,6 +34,8 @@ CONFIG_PHY_QCOM_QMP=y
 CONFIG_PHY_QCOM_QMP_UFS=y
 
 # SM8250 GCC supplies UFS clocks and the UFS_PHY_GDSC power domain.
+# SM_GCC_8250 selects hidden QCOM_GDSC; QCOM_GDSC selects PM_GENERIC_DOMAINS
+# when PM=y, while PM_GENERIC_DOMAINS_OF is auto-enabled with OF.
 # RPMh clock controller supplies RPMH_CXO_CLK referenced by the UFS node.
 CONFIG_COMMON_CLK=y
 CONFIG_COMMON_CLK_QCOM=y
@@ -39,6 +45,8 @@ CONFIG_RESET_CONTROLLER=y
 CONFIG_PM=y
 
 # The ACK SM8250 UFS node declares two ICC paths (ufs-ddr, cpu-ufs).
+# INTERCONNECT_QCOM_SM8250 selects its RPMh and BCM-voter helpers; those
+# remain built-in because the UFS consumer must resolve them during probe.
 # The SM8250 interconnect driver selects its RPMh + BCM-voter backends.
 CONFIG_INTERCONNECT=y
 CONFIG_INTERCONNECT_QCOM=y
@@ -52,6 +60,8 @@ CONFIG_REGULATOR=y
 CONFIG_REGULATOR_QCOM_RPMH=y
 
 # UFS Host has apps_smmu stream IDs in the ACK SM8250 DTSI.
+# ARM_SMMU_QCOM is def_tristate y inside if ARM_SMMU when ARCH_QCOM=y and
+# selects QCOM_SCM; IOMMU_DMA and OF_IOMMU are architecture/OF-derived.
 CONFIG_GENERIC_MSI_IRQ=y
 CONFIG_IOMMU_SUPPORT=y
 CONFIG_ARM_SMMU=y

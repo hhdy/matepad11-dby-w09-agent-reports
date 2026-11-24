@@ -369,3 +369,6 @@ Primary AI has verified all 15 pinned ACK QMP UFS regulator lists put `vdda-phy`
 
 
 ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.
+
+
+ROUND63 scope clarification: the QMP `vdda-phy-always-on` candidate does **not** implement the separate HOS4.3 temporary 100mA ARC proxy-consumer votes on PM8150 L5/L9 recorded by ROUND48/51. It is not a substitute for the vendor `late_initcall_sync` proxy removal semantics, and must not be translated into a permanent `regulator-system-load` or always-on vote. The unresolved HOS ARC/proxy boot handoff and PM8150 L5 physical input supply remain separate Stage-A gates.

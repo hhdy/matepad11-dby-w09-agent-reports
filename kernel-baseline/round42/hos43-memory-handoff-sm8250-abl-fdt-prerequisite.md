@@ -82,6 +82,13 @@ Pinned source blob references:
 
 The same pinned `FdtRw.c` blob `8d7417003eb26ae4f5d5e7007982c00d5bfb0ba6` documents that `FdtPathOffset()` allows a path component to omit its unit-address portion. A call with `/memory` can therefore resolve a unique `/memory@...` node. The documentation warns that results are undefined if multiple nodes at that level differ only by unit address and the requested path omits it. The safe criterion is a single unambiguous root memory node that the helper can resolve, not the literal node string alone.
 
+
+## 2.3 Missing memory node propagates as a Linux boot-path failure in this reference
+
+The exact outer caller in `BootLinux.c` receives the return status from `LoadAddrAndDTUpdate()`. If it is not `EFI_SUCCESS` and `BoardPlatformType() != EFI_PLATFORMINFO_TYPE_RUMI`, it returns the error instead of proceeding to the later kernel handoff. `LoadAddrAndDTUpdate()` itself returns the error from `UpdateDeviceTree()`. Therefore, in this reference's normal non-RUMI SM8250 path, a missing/unresolvable memory node is not merely a warning: it prevents the normal Linux boot path from continuing. The source has a RUMI-specific exception, but this does not describe ordinary tablet hardware.
+
+This is still not proof that Huawei's HOS4.3 ABL has the same call chain. It makes the unresolved target-specific final-FDT condition a hard pre-build / pre-boot gate rather than a cosmetic concern.
+
 ## 3. Where the memory ranges come from in this reference
 
 The same FreeABL code obtains RAM entries through the UEFI EFI_RAMPARTITION_PROTOCOL:

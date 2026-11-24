@@ -163,3 +163,26 @@ ROUND46 已对固定 ACK `android17-6.18.33_r00` commit `8ad08f75ddf056e1ee600e1
 以上仅为固定源码静态审查；full-tree git apply、checkpatch、编译、最终 Kconfig/.config、dt-schema、DTB、Kleaf、运行时 MMCX vote、UFS 启动和设备实机启动均仍 NOT_RUN。ROUND12 仍是唯一活动本地 Agent 任务，尚未在 `firmware-audit-v1` 看到其结果。ROUND30 MMCX-to-MX、ROUND42/43 memory handoff、ROUND40 VCCQ-parent/VDDP teardown 仍是独立门槛。
 
 Stage A 仍是唯一当前主线：先让 DBY-W09 实际启动 ACK 6.18.33 并通过存储/基础硬件验收；未通过前不开始完整 Android 17 DerpFest Stage B。
+
+
+## 最新公开源码研究：ROUND47（2026-11-24）
+
+ROUND47 已完成 ACK .33_r00 PM8150 regulator mode / DRMS 能力审查。固定源码结果：
+
+- `regulator-initial-mode`：只在 regulator 注册初始化阶段设置一次，不代表动态 DRMS。
+- `regulator-allowed-modes`：映射到 valid_modes_mask，并开放 regulator mode change。
+- `regulator-allow-set-load`：只开放 REGULATOR_CHANGE_DRMS 权限；不会为硬件驱动凭空增加 get_optimum_mode 或 set_load callback。ACK binding 要求它与 allowed-modes 配套。
+- PMIC5 LDO：HPM→REGULATOR_MODE_NORMAL，LPM→REGULATOR_MODE_IDLE。
+- PMIC5 SMPS：HPM→FAST/PWM，AUTO→NORMAL，LPM→IDLE/PFM，映射不同，不能把 LDO 模式枚举套到 SMPS。
+- DBY-W09 UFS PM8150 L5/L6/L9 为 `pmic5_nldo`，有 `get_optimum_mode + set_mode` DRMS 路径，HPM threshold=30 mA。
+- PM8150 L17 为 `pmic5_pldo`，有 DRMS 路径，HPM threshold=10 mA。
+- PM8150 S4 与 PM8150L S8 为 `pmic5_hfsmps510`，有手动 set_mode/get_mode，但没有 get_optimum_mode 或 set_load。即使打开 allow-set-load，regulator core 也会以 success no-op 返回，不会自动切换模式。
+- DRMS 聚合 enabled consumers 的 load votes + regulator-system-load；LDO 根据阈值选 HPM/LPM，再由 allowed-modes 约束。allowed-modes 不能排除高负载时可能需要的 HPM，否则可能在 mode constrain 阶段失败。
+
+当前 board DTS draft 对 PM8150 S4/L5/L6/L9/L17 设置了 HPM initial mode，但没有 allow-set-load / allowed-modes；PM8150L S8 目前没有 mode/DRMS 属性。这是 draft state，不代表 HOS4.3 原始值。
+
+同设备公开 Linux DTS 属 HOS4.2 交叉参考：PM8150 UFS rails 写 HPM initial mode；LPM/HPM + allow-set-load 是在 PM8150L L6/L9 microSD rail 上出现。不得据此假定 HOS4.3 相同，也不得机械复制到 PM8150 UFS L6 或 S8。
+
+**ROUND13 local evidence 仍待查：** ROUND7 过滤报告不含 `regulator-initial-mode`、`regulator-allowed-modes`、`regulator-allow-set-load`。ROUND13 应在 ROUND12 完成后，只读扫描已存在 HOS4.3 base boot FDT 与适用 stock DTBO fragment，定向查 PM8150 S4/L5/L6/L9/L17 和 PM8150L S8 的 initial-mode、allowed-modes、allow-set-load、system-load 与 suspend-state mode/on-off properties；须保留节点路径和 overlay fragment→target 关系。ROUND47 报告：`kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`。
+
+ROUND47 仅为固定 ACK 源码和公开 HOS4.2 交叉参考审查，不代表 HOS4.3 本机字段结果或运行时 mode 读数。ROUND12 仍是唯一活动本地 Agent 任务；未创建/派发另一个 Agent 任务。Stage A 6.18.33 内核仍是唯一当前主线，Stage A 实际启动和存储验收前不开始 DerpFest Stage B。

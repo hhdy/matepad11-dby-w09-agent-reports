@@ -36,7 +36,7 @@ This means UFS is not a stand-alone pair of drivers. It depends on Qualcomm cloc
 | Qualcomm UFS glue | `SCSI_UFS_QCOM` | Requires platform UFS, ARCH_QCOM, GENERIC_MSI_IRQ and RESET_CONTROLLER | built-in |
 | QMP PHY framework | `PHY_QCOM_QMP`, `PHY_QCOM_QMP_UFS` | UFS transceiver PHY | built-in |
 | Generic PHY | `GENERIC_PHY` | Consumed by QMP UFS PHY | built-in |
-| SM8250 GCC | `COMMON_CLK_QCOM`, `SM_GCC_8250` | UFS GCC clocks and `UFS_PHY_GDSC`; `SM_GCC_8250` selects `QCOM_GDSC` | built-in |
+| SM8250 GCC | `COMMON_CLK_QCOM`, `SM_GCC_8250` | UFS GCC clocks and `UFS_PHY_GDSC`; `SM_GCC_8250` selects `QCOM_GDSC`, which selects `PM_GENERIC_DOMAINS` when `PM=y` | built-in |
 | RPMh clock | `QCOM_RPMH`, `QCOM_CLK_RPMH` | UFS node references `RPMH_CXO_CLK`; RPMh clock driver depends on `QCOM_RPMH` | built-in |
 | Command DB | `QCOM_COMMAND_DB` | RPMh resource address/metadata; required by RPMh provider / interconnect path | built-in |
 | RPMh regulator | `REGULATOR`, `REGULATOR_QCOM_RPMH` | PM8150 LDO/SMPS rails mapped in ROUND9 | built-in |
@@ -46,7 +46,7 @@ This means UFS is not a stand-alone pair of drivers. It depends on Qualcomm cloc
 | Reset | `RESET_CONTROLLER` | Qualcomm UFS Host reset dependency | built-in |
 | Generic MSI IRQ | `GENERIC_MSI_IRQ` | Explicit dependency of `SCSI_UFS_QCOM` in current Kconfig | built-in |
 | ARM SMMU | `IOMMU_SUPPORT`, `ARM_SMMU` | UFS Host node contains `iommus = <&apps_smmu ...>` | built-in |
-| SMMU Qualcomm variant | `ARM_SMMU_QCOM` | Kconfig defaults it on when ARM_SMMU and ARCH_QCOM are enabled | automatic from dependencies |
+| SMMU Qualcomm variant | `ARM_SMMU_QCOM` | `def_tristate y` within `if ARM_SMMU`, depends on `ARCH_QCOM`, and selects `QCOM_SCM` | automatic; do not set explicitly in the fragment |
 
 Key Kconfig/source references:
 - UFS Host Kconfig and Qualcomm dependency: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/ufs/host/Kconfig

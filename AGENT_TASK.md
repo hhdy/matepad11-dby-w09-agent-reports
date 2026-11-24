@@ -26,7 +26,7 @@
 - 同型号公开 Linux 7.0 DTS 使用固定 3.7 V vph_pwr 和 PM8150 vdd-s1..s10-supply links；其头部说明该部分参考 HOS4.2，因此不能直接当作本设备 HOS4.3 已证实事实。当前 ACK DTS 草案已暂时移除这些未确认输入链接。
 - ROUND7 的本机脱敏 DTBO inventory 显示 9 个 stock DTBO entry 都有相同的通用哨兵 huawei,modem_id = <0xffffffff 0>；当前最小 rootparam overlay 已保留该字段。它不是设备唯一编号，但新 DTBO 的 ABL 接受性仍未知。
 - ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA 等。
-- QCOM_RPMHPD 不是当前 UFS GCC GDSC 路径的必需项；仅在后续节点真的引用 RPMh power-domain 时加入。
+- UFS 的直接 UFS_PHY_GDSC 由 GCC 提供；但 ACK 的 ufs_opp_table 通过 required-opps 引用 RPMhPD OPP，因此当前配置保留 QCOM_RPMHPD 以满足 UFS OPP 缩放路径。
 - Panel ACTIVE_PROFILE=UNKNOWN；ROUND10 ramdisk BLOCKED；EROFS 内容 BLOCKED；system/cust/hw_product filesystem 类型和完整 fstab 未明。
 
 ## ROUND11 — 本地 Agent 唯一任务

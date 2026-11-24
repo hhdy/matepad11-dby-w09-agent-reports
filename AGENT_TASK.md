@@ -204,3 +204,17 @@ ROUND12 已上传到 `firmware-audit-v1`：
 - 该 `firmware-analysis/round13` 与历史 `kernel-baseline/round13` ACK DTS 设计是不同命名空间，不应混淆。
 
 ROUND47 已提供 ACK 侧 regulator DRMS 解释；ROUND13 负责补充实际 HOS4.3 本机字段，不要把 HOS4.2 公共 DTS 当作 HOS4.3 证据。
+
+---
+
+## Latest queue update — 2026-11-24 (ROUND12/13 complete)
+
+This block supersedes historical statements above that described ROUND12 or ROUND13 as the active local task. Those are historical notes, not current instructions.
+
+- ROUND12 AVB metadata report is uploaded on `firmware-audit-v1` and BLOCKED at the trusted-tool gate. Do not repeat it and do not install or download AVB tools.
+- ROUND13 PM8150 UFS regulator mode/DRMS report is uploaded on `firmware-audit-v1` and complete. The local Agent complied with its stop-after-upload requirement. Do not re-run ROUND13 or perform another local FDT parsing pass.
+- GPT has completed public Qualcomm SM8250 source cross-check and updated only the review-only `main` DTS draft, the ROUND48 report, `PROJECT_HANDOFF.md`, and `dts/README.md`.
+- Current local Agent queue: **EMPTY**. No new task book is active. The next work should be performed by GPT from public/pinned sources where possible. Create another local task only when an unresolved question strictly requires an existing local artifact or a trusted local tool that is already available.
+- EROFS, AVB descriptors/footer, and ramdisk remain BLOCKED; no inference or workaround. No device interaction, unlock/root/flash/write, local compile, or protected-branch/PR modification is authorized.
+- `ack18-dby-w09-dts-draft` remains protected and untouched; PR #1 remains Draft. The updated DTS is on `main` and remains DRAFT ONLY.
+- Stage A ACK `android17-6.18.33_r00` remains the sole active project milestone. Do not begin Stage B DerpFest until Stage A actually boots and passes UFS/storage/basic-hardware checks.

@@ -5,11 +5,17 @@ on:
     branches:
       - ai-parallel/stagea-port-until-boot
     paths:
-      - "kernel-baseline/round61/**"
       - ".github/workflows/round61-ack-ufs-validation.yml"
+      - "kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft"
+      - "kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft"
+      - "kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft"
+      - "kernel-baseline/round61/patches/**"
+      - "kernel-baseline/round61/fixtures/**"
+      - "kernel-baseline/round61/tests/**"
+      - "kernel-baseline/round61/check_dby_w09_config.py"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   ack-ufs-validation:
@@ -230,3 +236,72 @@ jobs:
           if [ -f "$RUNNER_TEMP/round61-dt-binding-check.log" ]; then
             sha256sum "$RUNNER_TEMP/round61-dt-binding-check.log"
           fi
+
+      - name: Publish validation evidence to the dedicated branch
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/report"
+          if [ ! -d "$report/.git" ]; then
+            echo "Report checkout unavailable; cannot publish validation summary."
+            exit 0
+          fi
+          out="$report/kernel-baseline/round61/hosted-ufs-validation-latest.md"
+          {
+            echo "# ROUND61 hosted UFS / ROUND63 PHY validation"
+            echo
+            echo "- Workflow commit: $GITHUB_SHA"
+            echo "- Branch: $GITHUB_REF_NAME"
+            echo "- Job status: $JOB_STATUS"
+            echo "- Fixed ACK commit: $ACK_COMMIT"
+            echo
+            echo "## Patch application"
+            if [ -f "$RUNNER_TEMP/round61-ufs-applied.diff" ]; then
+              sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
+            else
+              echo "Applied diff not produced; inspect job log."
+            fi
+            if [ -d "$RUNNER_TEMP/ack/.git" ]; then
+              echo "ACK HEAD: $(git -C "$RUNNER_TEMP/ack" rev-parse HEAD)"
+              git -C "$RUNNER_TEMP/ack" status --short
+              git -C "$RUNNER_TEMP/ack" diff --stat
+            fi
+            for log in round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
+              if [ -f "$RUNNER_TEMP/$log" ]; then
+                echo
+                echo "## $log"
+                tail -n 100 "$RUNNER_TEMP/$log"
+              fi
+            done
+            if [ -f "$RUNNER_TEMP/round61-dt-binding-check.log" ]; then
+              echo
+              echo "## dt_binding_check log SHA-256"
+              sha256sum "$RUNNER_TEMP/round61-dt-binding-check.log"
+            fi
+          } > "$out"
+          git -C "$report" config user.name "github-actions[bot]"
+          git -C "$report" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$report" remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+          git -C "$report" add kernel-baseline/round61/hosted-ufs-validation-latest.md
+          if ! git -C "$report" diff --cached --quiet; then
+            git -C "$report" commit -m "ROUND61: publish hosted UFS and PHY validation evidence"
+            git -C "$report" push origin HEAD:ai-parallel/stagea-port-until-boot
+          fi
+
+      - name: Upload UFS and PHY validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: round61-ufs-phy-validation
+          path: |
+            ${{ runner.temp }}/round61-ufs-applied.diff
+            ${{ runner.temp }}/round61-dt-binding-check.log
+            ${{ runner.temp }}/round61-ufs-example-validation.log
+            ${{ runner.temp }}/round63-phy-negative-validation.log
+            ${{ runner.temp }}/*checkpatch.log
+          if-no-files-found: warn
+          retention-days: 14

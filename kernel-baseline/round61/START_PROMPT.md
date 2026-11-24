@@ -30,3 +30,6 @@ Hard boundaries:
 Start now. Do not respond with a plan alone.
 
 Primary AI has also added `kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md` on main. Read it for Phase E/F only. It is a same-device public Linux cross-reference, not proof of this user's HOS4.3 ABL behavior. It reports `fastboot boot` refusal on a tested setup, boot header v2 + separate ramdisk, and a required /rootparam overlay; do not copy its image hashes, sizes, offsets, HOS4.2 assumptions or AVB footer values. Continue Phase A–D compilation even while these packaging gates remain open.
+
+
+New mandatory item: read and integrate ROUND63 `vdda-phy-always-on` finding from main report `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`. Independently validate both ROUND63 patch drafts, apply them in the disposable pinned ACK worktree, run PHY dt_binding_check/checkpatch/compile, and test both property paths. Do not treat the primary draft as validated. See the full requirements appended to ROUND61_LONG_RUNNING_STAGEA_MISSION.md.

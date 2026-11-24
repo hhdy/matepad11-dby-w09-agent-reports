@@ -11,7 +11,7 @@
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PASS | Hosted run 45443538190: fixed ACK commit verified; UFS series, ROUND63 binding/driver and ROUND58 Kleaf patches applied; git diff --check and strict checkpatch passed. ROUND57 is superseded by ROUND32's fixed eight-item list because ACK dt-schema rejects redundant min/max constraints |
+| A — real Git patch application | PASS | Hosted run 45443538190: fixed ACK commit verified; UFS series, ROUND63 binding/driver and ROUND58 Kleaf patches applied; git diff --check and strict checkpatch passed. ROUND32 is superseded because pinned ACK qcom,sc7180-ufshc.yaml already selects SM8250 and defines its eight-clock branch; applying ROUND32 would duplicate schema selection. ROUND57 is superseded by that same fixed eight-item list because ACK dt-schema rejects redundant min/max constraints |
 | B — UFS binding validation | PARTIAL / BLOCKED | Schema docs and yamllint pass; generated example DTBs exist; qcom,ufs.example.dtb still reports power-domains too short and unevaluatedProperties errors. ACK Makefile returns success despite those example diagnostics; do not mark Phase B PASS |
 | C — Kleaf target validation | PARTIAL | ROUND58 patch applies; buildifier auto-format showed only one missing blank line, now fixed in branch-local patch; current workflow revision requires clean buildifier check. 9 config-validator unit tests pass. No Bazel query/cquery because full manifest workspace and locked build/kernel dependency are unavailable |
 | D — final Kconfig + Image build | NOT_RUN | No manifest-pinned Kleaf workspace, actual .config, or Image build |
@@ -209,3 +209,10 @@ Run `45443538190` passed source patch/checkpatch/buildifier/unit-test gates, the
 ### Manifest sync succeeded; toolchain preflight remains unresolved
 
 Hosted manifest run `45442933079` successfully initialized the pinned `common-android17-6.18` manifest and completed `repo sync`. It verified the exact ACK common HEAD `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, recorded `build/kernel` at `2bebe7c443d0e6d5d549fb2a2377dce980d1b15e`, and published `manifest-pinned.xml` (SHA-256 `6449879cd7081345cf0a2e7060a1e40b9edfe1b8b22629263c96f8e2141a1f11`). It failed after source identity capture and before Bazel target query; no Bazel query or Image build occurred. The coarse stage label did not identify which toolchain preflight command failed. The workflow now sets the manifest JDK explicitly and records granular Bazel/JDK/Clang/Rust stages and paths. Trigger commit `82f218ad5b042c89596d58b6fd9563c4f9fc3324` starts the next diagnostic attempt.
+
+
+### UFS schema ownership correction
+
+The exact ACK tree already selects `qcom,sm8250-ufshc` in `qcom,sc7180-ufshc.yaml` and defines the eight-clock SM8250 branch there. ROUND32's addition to `qcom,ufs.yaml` duplicates that selector, so both hosted workflows now skip ROUND32 (canonical draft untouched). ROUND57 is likewise redundant against the existing fixed eight-item tuple.
+
+Moved the four ROUND52-0001 supply/load property definitions and pair requirements into shared `qcom,ufs-common.yaml`, which is referenced by both Qualcomm UFS binding families. The branch-local patch still applies after ROUND36; canonical ROUND52 remains untouched. The schema workflow now directly validates generic `ufs-common.yaml` and the actual `qcom,sc7180-ufshc.yaml` binding as well.

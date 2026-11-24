@@ -2,7 +2,7 @@
 
 Date: 2026-11-24
 
-Status: BOARD DTS DELTA DRAFT CREATED; NOT APPLIED TO PROTECTED DTS BRANCH. The delta is designed to activate the conditional path in ROUND33 after ROUND32/ROUND36 schema integration.
+Status: BOARD DTS DELTA DRAFT CREATED; EXACT-SOURCE SINGLE-FILE APPLY TEST PASS; NOT APPLIED TO PROTECTED DTS BRANCH. The delta is designed to activate the conditional path in ROUND33 after ROUND32/ROUND36 schema integration.
 
 ## 1. Target and current condition
 
@@ -70,7 +70,7 @@ The isolated environment currently lacks dtc, dt_binding_check / dtbs_check (dt-
 - No device connection, flashing, partition write, firmware extraction, or local Agent task change occurred.
 - ROUND12 remains the only local Agent task.
 
-Conclusion: the board-level two-domain delta is now specified and matches the pinned ACK provider names/domain IDs and ROUND33's order contract. It remains unapplied and uncompiled. It must be reviewed together with ROUND32, ROUND36 and ROUND33 before it becomes part of the protected DTS branch or a kernel build.
+Conclusion: the board-level two-domain delta is specified, its patch applies cleanly to an exact local copy of the protected source file, and it matches the pinned ACK provider names/domain IDs and ROUND33's order contract. It remains unapplied to the protected GitHub branch and uncompiled. It must be reviewed together with ROUND32, ROUND36 and ROUND33 before it becomes part of the protected DTS branch or a kernel build.
 
 ## 6. Exact current-board-context verification
 

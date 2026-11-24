@@ -19,10 +19,15 @@ Draft only. Not applied, schema-validated or tested.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
-@@ -43,2 +43,2 @@
+@@ -41,7 +41,7 @@
+       - const: ufsphy
+ 
    power-domains:
 -    maxItems: 1
 +    maxItems: 2
+ 
+   required-opps:
+     maxItems: 1
 @@ -64,4 +64,20 @@
  allOf:
    - $ref: ufs-common.yaml

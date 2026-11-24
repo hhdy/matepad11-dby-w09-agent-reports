@@ -112,3 +112,16 @@ The archived self-contained fixture logs establish the expected matrix:
 Artifact: `round61-ufs-phy-validation`, GitHub Actions artifact ID `14947424627`, 1,607,562 bytes. Processed-schema SHA-256: `da083e8307d1f903d5784392b3cba29542343f49964482882b84f13a478447f6`. Applied-source diff SHA-256 remains `b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90`.
 
 The dt_binding_check log reports two unrelated malformed upstream YAML files ignored by the kernel schema scanner (`firmware/gunyah-cma-mem.yaml` and `iommu/pkvm,pviommu.yaml`); the modified UFS/PHY schemas and explicit fixture gates completed successfully. The upstream UFS example's standalone diagnostic log is empty in this run. This result closes Phase B for the current patch set; it does not prove board-DTS/DTB correctness or runtime regulator behavior.
+
+
+## ROUND63 regulator lifetime / remove-order source review
+
+A follow-up read of the exact pinned ACK source confirms the normal UFS consumer-first shutdown path:
+
+- `ufs_qcom_remove()` calls `ufshcd_pltfrm_remove()`; the latter calls `ufshcd_remove()`.
+- `ufshcd_remove()` reaches `ufshcd_hba_exit()`, which calls `ufshcd_variant_hba_exit()` while the UFS Host driver is still bound.
+- The Qualcomm variant exit callback `ufs_qcom_exit()` calls `phy_power_off()` and `phy_exit()`; the consumer's managed PHY reference is released later during its devres teardown.
+- `phy_get()` creates a `DL_FLAG_STATELESS` device link. The link gives ordering semantics but does not guarantee that manually unbinding the QMP PHY provider will first unbind every UFS consumer.
+- The ROUND63 cleanup action is registered after `devm_regulator_bulk_get_const()`, so devres LIFO ordering runs the action before the managed regulator handles are released.
+
+This supports normal consumer-first removal and regulator-handle cleanup ordering. It does **not** establish forced provider-unbind safety. Do not manually unbind the QMP PHY provider while the UFS Host remains bound; no forced-unbind test is required for initial bring-up. Runtime regulator measurements and actual PHY power-cycle/suspend-resume testing remain hardware gates.

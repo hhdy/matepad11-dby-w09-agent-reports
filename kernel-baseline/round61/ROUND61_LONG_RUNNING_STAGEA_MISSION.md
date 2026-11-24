@@ -322,3 +322,39 @@ It reviews a pinned public DBY-W09 Linux 7.0 reference commit and finds a same-d
 - a separate ramdisk payload path that preserves that other setup's AVB footer after validating its exact stock partition.
 
 This is cross-reference only, not proof of the user's HOS4.3 details. Do not copy its HOS4.2 assumptions, stock hashes, fixed 96 MiB / 2 MiB partition sizes, offsets, command line, DTB or AVB metadata. Phase A–D must continue regardless of this later packaging gate. Treat lack of `fastboot boot` as a significant potential safety constraint: no partition writes without separately reviewed inputs and explicit user authorization. 
+
+
+## ROUND63 supplemental task — close the HOS4.3 UFS PHY vdda-phy-always-on gap
+
+Primary AI has added a new source-backed finding on main:
+`kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`.
+
+Read it and independently validate its candidate patches and regulator lifetime design. Do not treat the primary candidate as approved merely because it exists.
+
+### Exact evidence
+
+- Local HOS4.3 ROUND8 report, firmware-audit-v1 blob `2e5eec1be7d1364d90de7a8a500b516fcdddf3e1`: stock DTBO entry 8 fragment@63 to `/soc/ufsphy_mem@1d87000` contains `vdda-phy-always-on`, `vdda-phy-max-microamp=89900`, and `vdda-pll-max-microamp=18800`. This is entry-8 inventory only; selected overlay/runtime state is not proven.
+- Pinned ACK QMP UFS PHY source `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`, blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: static SM8250 vreg list uses 89900/18800µA but power_off bulk-disables both; no always-on property parser.
+- Pinned ACK PHY binding `Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml`, blob `fba7b2549ddee7ee4e048277a11a7da053d52887`: strict additionalProperties false; lacks the boolean and max-microamp properties.
+- Pinned regulator core `drivers/regulator/core.c`, blob `39d317ad73a33c4aa27e179cc436d8bf4daf5bcc`: enabled-consumer load aggregation / set_load lifecycle details.
+- Downstream Qualcomm reference `LineageOS/android_kernel_oneplus_sm8150` commit `9f007fac27dce21d29d8230753b71d5634b8a00e`, `drivers/phy/qualcomm/phy-qcom-ufs.c` blob `f70871f45279ccb15f668ec7ce974c0f82d79004`: vdda-phy-always-on means retain regulator enable and withdraw its load vote on PHY power-off.
+
+### Candidate artifacts to verify
+
+On main:
+- Driver patch: `kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft`, blob `b0f6b5f72d773bf9797b527ff4d2ab71060b6d54`.
+- Binding patch: `kernel-baseline/round63/0002-dt-bindings-phy-qmp-ufs-vdda-phy-always-on.patch.draft`, blob `a6668eebe293f9a35e9c08d6be4f37c4340e7ddd`.
+- Board review draft: `dts/dby-w09-ack18-board.dts.draft`, blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; it now declares `vdda-phy-always-on;` and omits the max-uA DT properties because the ACK driver statically defines the same load values and the strict binding rejects those DTS properties.
+- The main DTS remains a .draft, not a source-tree build input. Protected DTS branch is still read-only.
+
+### Required work
+
+1. Independently review the driver patch for compiler/API correctness, array index assumptions, every failure path, managed cleanup ordering, driver unbind/device-link ordering and regulator enable-count balance. All current Qualcomm QMP UFS vreg lists must be checked for the vdda-phy-first assumption; fail clearly if the property is used with a different list shape.
+2. In a disposable exact ACK worktree, run real `git apply --check`, actual apply, `git diff --check` and checkpatch. Correct the candidate on this dedicated branch if tests expose defects.
+3. Run real `dt_binding_check` for the modified PHY schema. Validate positive/negative fixtures for the optional property and for nodes with no property.
+4. Compile the driver and target through the actual Kleaf target; inspect whether any provider/consumer lifetime or build dependency is missing.
+5. Test/prepare a runtime test matrix: first PHY power-on -> vdda-phy enabled + 89900µA active vote; PHY power-off -> vdda-phy remains enabled + load vote zero; second power-on -> 89900µA vote restored without duplicate enable count; other rail vdda-pll is still balanced; provider removal -> retained enable balanced before regulator put. Actual hardware tests require the local Agent/device and safe authorization.
+6. Include these two ROUND63 patches in the Stage-A exact-source patch series after the existing UFS binding/driver items and before board DTS schema/DTB validation. Do not omit the finding from the Stage-A integration.
+7. Keep the unresolved physical PM8150 L5 input-supply topology as an independent blocker. Do not invent a vdd/vin/vph parent.
+
+Do not block the Image-only source build on local AVB/memory gates; the QMP PHY driver candidate itself must be compiled before any boot candidate is considered. Keep working the next unblocked phases after this review; do not stop after writing a comment.

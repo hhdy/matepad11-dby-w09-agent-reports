@@ -299,3 +299,8 @@ Corrected `.github/workflows/round61-manifest-kleaf-build.yml` to pin `ubuntu-22
 - Phase E: BLOCKED — actual HOS4.3 final post-ABL memory handoff and PM8150 physical supply-parent evidence unavailable.
 - Phase F: BLOCKED — trusted AVB footer/descriptor and exact HOS4.3 packaging metadata unavailable.
 - Phase G: NOT RUN — no device operation or boot authorization.
+
+
+### Build retry 45452267778 — Clang runtime fixed; strict checkpatch false positive isolated
+
+The Ubuntu 22.04 runner successfully installed and executed the manifest toolchain: OpenJDK 11.0.15, Bazel 8.7.0 and Rust 1.91.1; Clang was located and executed far enough for the workflow to proceed. The run stopped at strict checkpatch on the ROUND63 patch's use of the existing kernel struct member `init_load_uA`: upstream checkpatch emitted one CAMELCASE CHECK (0 errors, 0 warnings). The independent UFS workflow already uses `--ignore CAMELCASE` for this exact known API-name false positive and still reports 0 errors / 0 warnings. Narrowly aligned the manifest build workflow to ignore only CAMELCASE for ROUND63; all other strict checks remain active. Retry trigger commit `1b833dd74ddb39dd90f7a691f62ce313e0dfe5d2`. No Bazel query, cquery, final .config or Image compile has yet run.

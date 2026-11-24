@@ -17,8 +17,8 @@ establishes that ACK S8 load-only is a no-op and no enable owner is proven.
 S8 is not enabled or mode-switched by this patch.
 
 Prerequisites: apply ROUND32 and ROUND36 schema drafts, ROUND37 board DTS
-delta, then ROUND33 dual-GenPD UFS driver draft before this patch. The driver
-include hunk is written against the post-ROUND33 include list.
+delta, then ROUND33 dual-GenPD UFS driver draft before this patch.
+The driver include hunk is written against the post-ROUND33 include list.
 
 Draft only: not applied to a full tree, checkpatched, compiled, or tested.
 

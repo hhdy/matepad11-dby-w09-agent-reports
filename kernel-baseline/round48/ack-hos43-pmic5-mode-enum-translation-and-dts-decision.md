@@ -71,15 +71,22 @@ The review-only main-branch draft `dts/dby-w09-ack18-board.dts.draft` has been u
 | Rail | HOS4.3 interpretation | ACK DTS decision |
 |---|---|---|
 | S4 | No type/mode/threshold/init-mode fields in inspected scope. | Remove the previous HPM initial-mode. Do not invent allowed-modes or DRMS. Leave mode untouched. |
-| L5 | PMIC5 LDO; init HPM; LPM/HPM supported; 30mA threshold; 100mA proxy consumer. | ACK HPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS; set `regulator-system-load=<100000>` as an explicit approximation of the persistent 100mA proxy vote. |
+| L5 | PMIC5 LDO; init HPM; LPM/HPM supported; 30mA threshold; 100mA boot-time proxy consumer. | ACK HPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS. Do not add a permanent system-load vote; the temporary proxy lifecycle is not implemented. |
 | L6 | PMIC5 LDO; init LPM; LPM/HPM supported; 30mA threshold; no proxy consumer. | ACK LPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS. |
-| L9 | PMIC5 LDO; init HPM; LPM/HPM supported; 30mA threshold; 100mA proxy consumer. | Same translation as L5, including 100mA `regulator-system-load` approximation. |
+| L9 | PMIC5 LDO; init HPM; LPM/HPM supported; 30mA threshold; 100mA boot-time proxy consumer. | Same as L5: preserve HPM initial / LPM-HPM DRMS, but do not synthesize permanent system load. |
 | L17 | PMIC5 LDO; init LPM; LPM/HPM supported; 10mA threshold. | ACK LPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS. Do not claim HOS established its PLDO subtype. |
 | S8 | PMIC5 HFSMPS; init RET; RET/AUTO supported; 200mA threshold. | ACK RET/AUTO allowed modes, but set initial AUTO instead of RET. ACK HFSMPS510 lacks load-based DRMS callbacks and the UFS parent advertises up to 210mA; fixed RET would not be dynamically promoted. AUTO uses the hardware's autonomous load response and is the safer static fallback. Do not add allow-set-load. |
 
-### Proxy-load caveat for L5/L9
+### Proxy-consumer lifecycle caveat for L5/L9
 
-ACK has no matching vendor `proxy-supply` / `proxy-consumer-enable` lifecycle helper. The draft maps only the measured 100mA proxy current into standard `regulator-system-load`, allowing ACK's existing LDO DRMS aggregation to keep the mode at HPM while that rail is enabled. This is a static-load approximation; it does not recreate the vendor proxy consumer's exact enable/disable timing. The self-referential vendor `proxy-supply` phandle is not copied into the upstream regulator input-supply graph.
+The public Qualcomm KONA `drivers/regulator/proxy-consumer.c` implementation makes this distinction explicit:
+- During regulator registration, regulator core calls `regulator_proxy_consumer_register()` for the output node. It reads `qcom,proxy-consumer-enable` / `qcom,proxy-consumer-current`, obtains the `proxy` supply, sets the load vote and optionally enables it.
+- The helper registers these temporary boot-time votes in a global list.
+- `regulator_proxy_consumer_remove_all()` removes the requests at `late_initcall_sync`, after devices have probed. Regulator core also unregisters an individual proxy consumer during regulator teardown.
+
+Sources: [proxy-consumer.c](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/proxy-consumer.c) and [regulator core registration call site](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/core.c).
+
+A permanent `regulator-system-load=<100000>` is therefore **not** an equivalent translation: standard system-load is persistent and does not disappear at `late_initcall_sync`. ROUND48 initially considered this static approximation, but the lifecycle review rejects it. The main DTS draft has been corrected to remove both system-load entries. Current ACK proposal retains HPM initial mode, allowed LPM/HPM and DRMS permission for L5/L9, while explicitly leaving the temporary proxy vote unimplemented. That leaves an early-boot behavior gap and is not claimed as full HOS equivalence. The vendor self-referential `proxy-supply` phandle is not copied into the upstream regulator input-supply graph.
 
 ### S8 deviation caveat
 
@@ -93,3 +100,11 @@ HOS4.3's initial RET and 200mA RET→AUTO threshold are direct local metadata, b
 - S4/S8 physical PMIC input supply paths remain unresolved; do not infer missing parent connections or add guessed `vdd-s*` / `vph_pwr` properties.
 - ROUND12 AVB remains BLOCKED by the trusted local tool gate; EROFS and ramdisk remain BLOCKED. These facts do not change.
 - Stage A ACK 6.18.33 remains the only active kernel-port milestone; Stage B DerpFest stays deferred until Stage A boot, UFS storage and baseline hardware checks pass.
+
+## ROUND48 erratum — temporary L5/L9 proxy-consumer lifecycle
+
+A final review of the public KONA source found that the L5/L9 100mA proxy request is temporary, not a persistent system load. `drivers/regulator/core.c` calls `regulator_proxy_consumer_register()` when registering each regulator; `drivers/regulator/proxy-consumer.c` applies its current/enable vote, tracks the request, and removes all proxy requests at `late_initcall_sync` after device probing. It also unregisters an individual proxy during regulator teardown.
+
+Therefore, mapping that 100mA to ACK `regulator-system-load` would be semantically incorrect: it would remain in ACK's DRMS aggregate rather than disappearing after the boot handoff. The previous static-load approximation was removed from the main DTS draft. L5/L9 now retain their HOS-derived HPM initial mode, ACK LPM/HPM allowed modes, and DRMS permission, but no synthetic `regulator-system-load`; the temporary proxy request remains an explicit not-yet-ported boot-time helper. The source links and rationale are included in the updated proxy caveat above.
+
+This correction is source review only; no runtime load/mode trace has been performed.

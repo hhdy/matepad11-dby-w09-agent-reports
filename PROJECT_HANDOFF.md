@@ -286,3 +286,29 @@ Report: `kernel-baseline/round46/ack-opp-required-opps-parser-contract-review.md
 **Decision:** no ROUND33 patch change is required from this parser-contract review. Keep ROUND45's all-entry validation. This remains static source review only: full-tree apply, checkpatch, compiler, final Kconfig, dt-schema, DTB, Kleaf build, runtime probe and device boot remain NOT_RUN.
 
 ROUND12 remains the only active local Agent task; its report is not yet present on `firmware-audit-v1`. ROUND30 MMCX-to-MX, ROUND42/43 actual memory handoff, and ROUND40 VCCQ-parent/VDDP teardown remain independent open gates. No protected branch, PR #1 or device was changed. Stage B DerpFest remains deferred until Stage A 6.18.33 boots and passes storage/basic-hardware acceptance.
+
+
+## 13. Latest progress — ROUND47 ACK PM8150 regulator mode / DRMS capability review
+
+Updated: 2026-11-24.
+
+ROUND47 reviewed the exact ACK `android17-6.18.33_r00` driver, regulator core, OF parser and binding against the current DBY-W09 UFS rail map.
+
+Key source conclusions:
+- `regulator-initial-mode` is mapped and applied once during regulator registration; it is not a dynamic load policy.
+- `regulator-allowed-modes` populates the valid mode mask and allows mode changes.
+- `regulator-allow-set-load` enables the DRMS permission bit, but cannot add callbacks unsupported by the selected PMIC HW-data ops. The binding requires it together with `regulator-allowed-modes`.
+- PMIC5 LDO HPM maps to `REGULATOR_MODE_NORMAL`, LPM to `REGULATOR_MODE_IDLE`. The PMIC5 SMPS mapping differs: HPM maps to FAST/PWM, AUTO to NORMAL, LPM to IDLE/PFM.
+- PM8150 L5/L6/L9 map to `pmic5_nldo` with `get_optimum_mode + set_mode` and a 30 mA HPM threshold.
+- PM8150 L17 maps to `pmic5_pldo` with `get_optimum_mode + set_mode` and a 10 mA HPM threshold.
+- PM8150 S4 and PM8150L S8 map to `pmic5_hfsmps510` using the non-DRMS `rpmh_regulator_vrm_ops`; they have manual set_mode/get_mode but no get_optimum_mode or set_load callback. A DRMS load request on these rails can return success without automatic mode switching.
+- For LDO DRMS, the core sums enabled consumer load votes plus `regulator-system-load`, selects HPM at/above the HW threshold and LPM below it, then constrains the requested mode against `regulator-allowed-modes`. The allow-list must accommodate the required HPM operating range; an LPM-only list can fail a high-load HPM request.
+
+Current DBY-W09 board DTS draft still has HPM initial mode on PM8150 S4/L5/L6/L9/L17, but no allow-set-load / allowed-modes on those nodes. PM8150L S8 currently has no mode/DRMS attributes. These are draft settings only.
+
+The public same-device Linux DTS used as a HOS4.2 cross-reference shows HPM initial mode on the PM8150 UFS rails, while LPM/HPM + allow-set-load appears on PM8150L L6/L9 for microSD. This is **not evidence of actual HOS4.3 settings** and must not be copied mechanically.
+
+HOS4.3 `regulator-initial-mode`, `regulator-allowed-modes`, `regulator-allow-set-load`, `regulator-system-load` and suspend-mode properties remain UNKNOWN because ROUND7's filtered inventory did not include them. The required local ROUND13 audit (base boot FDT plus applicable stock DTBO fragments) remains queued after the sole active local ROUND12 AVB task. ROUND47 report provides the exact property checklist and ACK-side interpretation:
+`kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`.
+
+ROUND47 is public-source review only. No local FDT/DTBO was re-parsed, and no regulator mode was read at runtime. Full-tree apply, DTS/schema, DTB, Kconfig, Kleaf build and device boot remain NOT_RUN. ROUND12 continues independently; no new Agent task was started. Stage A ACK 6.18.33 remains the only active project stage; DerpFest Stage B stays deferred.

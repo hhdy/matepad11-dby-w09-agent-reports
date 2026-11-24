@@ -64,7 +64,7 @@ The proposed UFS dual-GenPD branch can identify the specific SoC via of_device_i
 - Generic power-domains is not given a speculative per-controller name list.
 - The UFS Host's first-milestone single power domain remains GCC UFS_PHY_GDSC.
 - ROUND29's proposed dual-domain change (MMCX first, GCC GDSC second) remains unapplied and must be checked with the actual schema tool.
-- The draft does not claim successful validation; it is a patch candidate only.
+- The draft does not claim successful validation; it is a patch candidate only. The three unified-diff hunks have been compared line-by-line with the pinned ACK .33 qcom,ufs.yaml source; each hunk's declared old/new line counts and source context match. This is a manual context check, not a git apply or schema-tool run.
 
 ## 5. Required next checks
 

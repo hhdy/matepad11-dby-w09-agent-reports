@@ -1,0 +1,117 @@
+{
+  "task": "AGENT_TASK_ROUND5.md",
+  "status": "BLOCKED",
+  "stop_condition": "E",
+  "reason": "No trusted readable EROFS toolchain available on host and no verifiable official Windows binary release; Section 2 tool-source gate failed.",
+  "analysis_date": "2026-11-24",
+
+  "boundary_statement": {
+    "device_connected": false,
+    "flashed": false,
+    "rooted": false,
+    "wrote_partitions": false,
+    "writable_mount": false,
+    "image_repaired": false,
+    "kernel_compiled": false,
+    "modules_loaded": false,
+    "wsl_invoked": false,
+    "security_policy_changed": false,
+    "unknown_exe_downloaded_or_run": false,
+    "self_written_erofs_decoder": false
+  },
+
+  "local_input_recheck": {
+    "source": "round4 local working copy (D:/DBY-W09_FirmwareAnalysis_round4/partitions_v1)",
+    "reextracted_from_super": false,
+    "vendor_img": {
+      "bytes": 1022038016,
+      "length_match_round4": true,
+      "sha256_match_round4": true,
+      "signature": "EROFS magic 0xE0F5E1E2 @ offset 1024",
+      "note": "signature identification only; content NOT verified"
+    },
+    "odm_img": {
+      "bytes": 51593216,
+      "length_match_round4": true,
+      "sha256_match_round4": true,
+      "signature": "EROFS magic 0xE0F5E1E2 @ offset 1024",
+      "note": "signature identification only; content NOT verified"
+    }
+  },
+
+  "toolchain_provenance": {
+    "get_command_result": "NONE FOUND",
+    "where_check": {
+      "dump.erofs": "NOT_FOUND",
+      "fsck.erofs": "NOT_FOUND",
+      "erofsfuse": "NOT_FOUND",
+      "docker": "NOT_FOUND",
+      "git": "NOT_FOUND",
+      "gcc": "NOT_FOUND",
+      "clang": "NOT_FOUND",
+      "cmake": "NOT_FOUND",
+      "ninja": "NOT_FOUND",
+      "make": "NOT_FOUND",
+      "mingw32-make": "NOT_FOUND",
+      "7z": "NOT_FOUND"
+    },
+    "install_path_scan": {
+      "docker": "absent",
+      "msys2_mingw_cygwin": "absent",
+      "git_usr_bin_helpers": "absent",
+      "winrar_5_50": "present (general archiver, NOT an EROFS reader; unused)",
+      "local_erofs_utils_source": "absent"
+    },
+    "upstream_verification": {
+      "github_erofs_erofs_utils_releases": "no releases (zero; no official Windows binaries)",
+      "kernel_org_upstream_head": "v1.9.4",
+      "kernel_org_upstream_head_commit": "f36cadb5c563995ab3aa8572a60ed6b721b9557d",
+      "kernel_org_upstream_head_date": "2026-08-19",
+      "windows_minGW_commits_in_recent_log": false,
+      "aosp_mirror_fetch": "network-failed / 404; not used as evidence",
+      "mailing_list_windows_patches_status": "proposals only, not merged, not published binaries"
+    },
+    "priority_paths": {
+      "A_local_trusted_tool": "FAIL",
+      "B_official_windows_binaries_with_provenance": "FAIL",
+      "C_docker_with_trusted_image": "FAIL",
+      "D_upstream_merged_plus_local_mingw": "FAIL",
+      "E_stop_blocked": "SELECTED"
+    }
+  },
+
+  "content_layer": {
+    "vendor_superblock": "BLOCKED",
+    "odm_superblock": "BLOCKED",
+    "vendor_integrity_check": "BLOCKED",
+    "odm_integrity_check": "BLOCKED",
+    "vendor_directory_inventory": "BLOCKED",
+    "odm_directory_inventory": "BLOCKED",
+    "kernel_modules_inventory": "BLOCKED",
+    "module_vermagic_evidence": "BLOCKED",
+    "firmware_inventory": "BLOCKED",
+    "vintf_hal_matrix": "BLOCKED",
+    "text_config_extraction": "BLOCKED",
+    "gki_618_portability_assessment": "BLOCKED",
+    "note": "All above require a trusted EROFS reader. EROFS signature PASS is NOT filesystem content verification and does not unlock these items."
+  },
+
+  "gki_618_portability": {
+    "status": "UNKNOWN",
+    "reason": "No module list, no vermagic, no KMI/symbol data, no vendor interface or signature evidence obtainable without a trusted EROFS reader.",
+    "known_context_from_prior_rounds": {
+      "device_kernel": "4.19.157-perf+ (round1 read-only device check)",
+      "target_kernel": "GKI 6.18.33 (not downloaded, not built)",
+      "statement": "No 4.19 .ko may be claimed loadable on 6.18; Xiaomi elish package is same-platform reference only and cannot replace Huawei vendor data."
+    }
+  },
+
+  "upload_policy": {
+    "upload_to": "firmware-audit-v1 / firmware-analysis/round5/",
+    "files_uploaded": [
+      "erofs_toolchain_provenance.txt",
+      "round5_summary.json"
+    ],
+    "excluded": "EROFS images, modules, firmware, manifest originals, full local SHA-256 values, absolute paths, usernames, device serial, MAC, token/PAT"
+  }
+}

@@ -161,3 +161,26 @@ The latest ROUND52-0002 driver patch blob is fb34fbc9701bc7e7b56bb9078ee98c0cdd8
 The final strict in-memory application pass requires each hunk to match both its declared old-side context at the precise old line plus accumulated preceding deltas and its declared newStart equal to oldStart plus accumulated deltas. All 15 hunk applications pass without fuzz/nearest-match fallback. This is not a real git apply or full worktree test; full-tree apply, checkpatch, schemas, DTB, Kconfig and build remain NOT_RUN.
 
 The VDDP cleanup callback's host and host->hba pointers also remain valid during devres: the HBA release action and variant devm allocation are registered before the VDDP cleanup action, so reverse-order release runs cleanup first, after generic UFS VCCQ teardown but before either object storage is freed.
+
+
+## ROUND57 — independent-review schema correction (2026-11-24)
+
+ROUND54 independently identified that ROUND32's SM8250-specific branch sets exactly eight `clocks` but leaves the `clock-names` array count at the common schema's 7..9 range. The branch already enumerates exactly eight positional names, and the pinned SM8250 DTSI has exactly eight clocks/names.
+
+The primary AI accepted R54-001 as a valid P3 schema-hardening correction and created a separate follow-up draft, leaving the historical ROUND32 file and SHA unchanged:
+
+- `kernel-baseline/round57/0001-dt-bindings-ufs-sm8250-clock-names-exact-count.patch.draft`
+- Report: `kernel-baseline/round57/sm8250-ufs-clock-names-exact-count-follow-up.md`
+- Second-AI review report: `ai-parallel/round54/ROUND54_REVIEW.md` on branch `ai-parallel/round54-ufs-review`
+- Second-AI candidate reviewed: `ai-parallel/round54/candidates/0001-qcom-ufs-sm8250-clock-names-exact-count.patch`, blob `6f3715c8b068556baf2993477c2387df98f8a574`.
+
+**Corrected intended series order:**
+1. ROUND32 — SM8250 compatible / eight-clock base binding branch.
+2. ROUND57 — require exactly eight `clock-names`.
+3. ROUND36 — compatible-scoped dual-power-domain schema support.
+4. ROUND52-0001 — VDDP / VCCQ-parent binding properties.
+5. ROUND37 — board DTS delta, only after migration into a real kernel DTS source path.
+6. ROUND33 — UFS dual-GenPD / required-OPP driver.
+7. ROUND52-0002 — VDDP managed lifecycle.
+
+No full-tree apply or dt_binding_check/dtbs_check was performed for ROUND57. The follow-up is a draft, not a validation PASS. Full integration/build and device gates remain NOT_RUN.

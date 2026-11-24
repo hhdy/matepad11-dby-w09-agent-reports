@@ -108,3 +108,12 @@ A final review of the public KONA source found that the L5/L9 100mA proxy reques
 Therefore, mapping that 100mA to ACK `regulator-system-load` would be semantically incorrect: it would remain in ACK's DRMS aggregate rather than disappearing after the boot handoff. The previous static-load approximation was removed from the main DTS draft. L5/L9 now retain their HOS-derived HPM initial mode, ACK LPM/HPM allowed modes, and DRMS permission, but no synthetic `regulator-system-load`; the temporary proxy request remains an explicit not-yet-ported boot-time helper. The source links and rationale are included in the updated proxy caveat above.
 
 This correction is source review only; no runtime load/mode trace has been performed.
+
+
+## ROUND51 correction — S8 initial mode restored to RET (2026-11-24)
+
+ROUND14 supplied the missing S8 enable metadata: qcom,init-enable, regulator-boot-on and regulator-always-on are NOT_FOUND_IN_INSPECTED_SCOPE; qcom,set=<3> only selects active+sleep request sets; ROUND13 qcom,init-mode=<1> is vendor RET and qcom,init-voltage is 1.2 V. None of these is an enable request. Runtime S8 enable state remains UNKNOWN.
+
+ROUND51 rechecked fixed ACK .33_r00 pmic5_hfsmps510 ops and regulator core: there is no get_optimum_mode or set_load callback, and regulator_set_load only invokes DRMS update when that same consumer handle has enable_count != 0. The UFS VCCQ-parent path is load-only and has no enable reference. Therefore the previous AUTO fallback rationale (210mA load vote) was not supported by the actual ACK driver path. The main DTS draft has been corrected to RPMH_REGULATOR_MODE_RET to preserve the only proven HOS initial mode, while retaining RET/AUTO as allowed modes. No S8 boot-on/always-on or regulator_enable is added. This still does not prove runtime rail state or UFS functionality.
+
+See ROUND51 for full source evidence and decision. This is a source/draft correction only; no build or runtime test was run.

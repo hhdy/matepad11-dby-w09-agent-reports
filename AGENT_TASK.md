@@ -470,3 +470,9 @@ ROUND18 已明确授权：仅在现有 workspace 的独立副本中真实应用�
 ROUND18 不处理 board DTS / DTB / DTBO / boot packaging / AVB，不连接或操作平板，不刷写、不写分区。ROUND57 因真实 schema meta-schema 不兼容而不应用；ROUND37 因仍是 review-only DTS fixture 且 memory/PMIC gates 未关闭而不应用。ROUND12 AVB BLOCKED 不影响 Image-only compile。
 
 报告上传后停止本地执行，并由主 AI复核。二号 AI仍只写 ai-parallel/stagea-port-until-boot，PR #1 保持 Draft/Open/unmerged，ack18-dby-w09-dts-draft 不修改。Stage A 设备启动和 UFS/storage acceptance 前不开始 Stage B DerpFest。
+
+## 最新本地执行任务修订 — ROUND18 revision 1（2026-11-25）
+
+ROUND18 执行前必须读取 main 最新 `firmware-analysis/round18/AGENT_TASK.md`。任务书已废弃旧 ROUND32 patch blob `efe2d932da34716c631de22d89aba19730cc7f50`；二号 AI 的修正版候选 `fade9cb2bdfd544c6736c7595af8380726edf318` 也因真实 `git apply --check` 失败而不得原样应用。ROUND18 本地 Agent 必须在独立副本中基于固定 ACK 的 `qcom,sc7180-ufshc.yaml` 重新制作最小补丁，先真实通过 apply-check，再 apply/diff-check 与 schema 正反例验证。若该 gate 阻塞，仍继续 Kleaf/Bazel/Kconfig/Image-only 构建。
+
+二号 AI 的 `ai-parallel/stagea-port-until-boot` 分支严格保持它自己维护；不得修改或推送到该分支。ROUND18 最新启动提示和唯一报告位置见其专属目录。

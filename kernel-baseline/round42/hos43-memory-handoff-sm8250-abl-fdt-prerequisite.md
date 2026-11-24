@@ -49,6 +49,8 @@ The relevant source range is lines 1377–1442 in the pinned UpdateDeviceTree.c.
 
 This implementation does not create a missing /memory node in the standard path. It expects an existing node. This is materially different from the older Qualcomm SDM660 BDS LinuxLoader reference reviewed earlier, whose PrepareFdt() contains a missing-node fallback that creates /memory and writes device_type = "memory". The old SDM660 behavior cannot be generalized to the later SM8250 loader.
 
+Path-matching nuance: the same pinned source's FdtPathOffset() helper documents that each path component may omit its unit-address portion. Thus the call with `/memory` can resolve a uniquely present `/memory@...` node as well; it is not a literal-name-only test. The helper documentation says results are undefined when multiple child nodes differ only by unit-address and the requested component omits it. The operational requirement is therefore an existing, unambiguous root memory node resolvable by `/memory`, not necessarily the exact literal node name `memory`.
+
 ### Is this path reached for SM8250?
 
 The FreeABL README lists SM8250 as a supported build. Its build script selects the classic kernel handoff for sm8250 via DISABLE_KERNEL_PROTOCOL=1; the root Makefile normalizes AUTO_VIRT_ABL to 0 when it is not supplied. In that non-AUTO-VIRT configuration, the shown UpdateDeviceTree() memory-node lookup is active.
@@ -74,6 +76,11 @@ Thus the lookup in this reference is performed on the final device-tree buffer a
 Pinned source blob references:
 - `BootLinux.c`: `c51e41c42fd6d58240290fdba10c86ef81e2218a`, especially `DTBImgCheckAndAppendDT()` around lines 558–840, `LoadAddrAndDTUpdate()` around lines 1183–1368, and the caller around lines 1830–1865.
 - `UpdateDeviceTree.c`: `97ea961ffeecb9c24540ee0ab47c57afef2e1800`, `UpdateDeviceTree()` around lines 1377–1442.
+
+
+## 2.2 Memory path lookup accepts a unique unit-address node
+
+The same pinned `FdtRw.c` blob `8d7417003eb26ae4f5d5e7007982c00d5bfb0ba6` documents that `FdtPathOffset()` allows a path component to omit its unit-address portion. A call with `/memory` can therefore resolve a unique `/memory@...` node. The documentation warns that results are undefined if multiple nodes at that level differ only by unit address and the requested path omits it. The safe criterion is a single unambiguous root memory node that the helper can resolve, not the literal node string alone.
 
 ## 3. Where the memory ranges come from in this reference
 

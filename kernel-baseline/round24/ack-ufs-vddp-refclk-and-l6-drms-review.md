@@ -74,6 +74,8 @@ The file remains a source patch sketch with context anchors, not an apply-verifi
 | Board DTS property placement | UPDATED, DTS SOURCE DRAFT ONLY |
 | UFS Host VDDP + VCCQ-parent patch sketch | UPDATED, NOT APPLIED |
 | Schema validation / patch apply / Kconfig / compile | NOT_RUN |
+| UFS core standard rail enable before Qualcomm variant init | SOURCE REVIEWED |
+| UFS core HPM/LPM VCCQ load-vote integration | SOURCE REVIEWED |
 | Runtime current aggregation / rail transitions | NOT_RUN |
 
 ## 7. Next steps

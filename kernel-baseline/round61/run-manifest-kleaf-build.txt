@@ -4,3 +4,4 @@ Retry trigger after granular toolchain diagnostics and explicit manifest JDK act
 retry=fix-kleaf-wrapper-version-command
 retry=absolute-jdk-path-and-corrected-sm8250-schema-patch
 retry=explicit-power-domain-range-minitems
+retry=round52-before-power-domain-range-fix

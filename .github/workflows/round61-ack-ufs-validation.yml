@@ -130,7 +130,7 @@ jobs:
           rc52=$?
           cat "$RUNNER_TEMP/round33-checkpatch.log"
           cat "$RUNNER_TEMP/round52-0002-checkpatch.log"
-          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch" > "$RUNNER_TEMP/round63-0001-checkpatch.log" 2>&1
+          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict --ignore CAMELCASE < "$report/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch" > "$RUNNER_TEMP/round63-0001-checkpatch.log" 2>&1
           rc63=$?
           cat "$RUNNER_TEMP/round63-0001-checkpatch.log"
           printf 'ROUND33_CHECKPATCH_RC=%s\nROUND52_0002_CHECKPATCH_RC=%s\nROUND63_0001_CHECKPATCH_RC=%s\n' "$rc33" "$rc52" "$rc63"

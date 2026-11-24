@@ -770,3 +770,35 @@ Updated report: `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-com
 
 
 ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.
+
+
+## ROUND16 最终状态纠正 — 环境与 pinned ACK workspace 已就绪（2026-11-25）
+
+本节覆盖此前所有将 ROUND16 标为 BLOCKED_BY_HOST_SECURITY_POLICY、等待 ROUND17 或“尚未部署/尚未同步”的历史派发指针。不得再按旧状态安排部署。
+
+权威报告位于 firmware-audit-v1：
+- firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt
+- blob: c9516f20d3e13cb5d5ec42e41bec4c8a05b25123
+- firmware-audit-v1 branch tip: 99f93d2e81ccb88715bf47ed1aff167d4cd98c55
+- final status: **WSL_AND_PINNED_ACK_WORKSPACE_READY**
+
+报告已实测确认 WSL 2.7.3.0 / kernel 6.6.114.1-1、Ubuntu 24.04.5 LTS 安装在 D:\\WSL\\Ubuntu-24.04、WSL2、默认用户 kerneldev；官方 common-android17-6.18 manifest 58 projects / 约 41 GiB 已成功同步；common detached HEAD 精确为 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a；工作树 clean；Clang r584948c、Rust 1.91.1.p3、Bazel 8.7.0 与 ROUND39 对账一致。原 C: Ubuntu 未改动。
+
+**禁止重做：** 不重新部署 WSL/Ubuntu，不重装/迁移原发行版，不重新 repo init、repo sync 或下载 ACK 源码/工具链。现有 workspace 为 /home/kerneldev/work/matepad11/ack-6.18.33。
+
+### 当前本地执行任务：ROUND18
+
+- 任务书：firmware-analysis/round18/AGENT_TASK.md（main）
+- 启动指令：firmware-analysis/round18/START_PROMPT.md（main）
+- 报告目标：firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt（firmware-audit-v1）
+- 授权内容：在独立 ROUND18 workspace 副本中应用指定 ACK UFS/QMP PHY driver 与 binding patches、执行真实 Git/checkpatch、UFS/PHY dt_binding_check + fixtures、Kleaf BUILD patch、Bazel query/cquery、实际 Kconfig/.config 解析和首次 Image-only 编译。
+- ROUND18 不修改原始 ACK workspace；不修改 protected DTS branch、PR #1 或二号 AI分支；不连接或操作设备。
+- WSL 7.3 GiB 内存本轮先用低并发 jobs=2，不擅自修改 .wslconfig；如 OOM，保存证据并单独等待 memory 配置授权。
+- ROUND57 minItems/maxItems 补丁因真实 dt-schema meta-schema 不兼容，本轮跳过，改用正反例验证 8 项约束；ROUND37 board DTS delta 因真实 DTS path / RAM / PMIC gates 未关闭而排除。
+- ROUND12 AVB 仍 BLOCKED，但不阻断本轮 Image-only 编译；本轮不生成 board DTB/DTBO 或 boot package。
+
+### ROUND61 二号 AI独立工作
+
+二号 AI继续只写 ai-parallel/stagea-port-until-boot。其已完成真实 Git patch series application，但 UFS schema example validation 仍有 power-domains/unevaluatedProperties diagnostics；Kleaf query、Kconfig 和 Image build 尚未完成。ROUND18 的本地 WSL实测是独立交叉验证，不覆盖它的分支或结果。
+
+Stage A 仍未完成：没有设备启动和 UFS/storage acceptance 证据；Stage B Android 17 DerpFest 仍不得开始。

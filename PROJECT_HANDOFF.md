@@ -262,3 +262,27 @@ ROUND30 MMCX-to-MX, ROUND42/43 Huawei final memory handoff, ROUND12 AVB and ROUN
 
 
 ROUND45 supplemental Kconfig call-site review against the exact .33_r00 source confirmed the new helper's OPP/GenPD API dependencies are covered by the planned fragment chain: SCSI_UFSHCD → PM_DEVFREQ → PM_OPP; SM_GCC_8250 → QCOM_GDSC → PM_GENERIC_DOMAINS (when PM=y); PM_GENERIC_DOMAINS_OF is auto-enabled with OF; QCOM_RPMHPD depends on QCOM_RPMH + QCOM_COMMAND_DB, both already requested. drivers/Makefile also includes the pmdomain subtree under PM_GENERIC_DOMAINS. No additional direct config symbol was identified, but final Kleaf .config resolution remains NOT_RUN.
+
+
+## 12. Latest progress — ROUND46 ACK OPP parser contract cross-check
+
+Updated: 2026-11-24.
+
+ROUND46 rechecked the exact pinned ACK `drivers/opp/of.c` and `drivers/opp/core.c` source blobs against the current ROUND45 UFS dual-GenPD patch:
+
+- `dev_pm_opp_of_get_opp_desc_node()` resolves the device's first `operating-points-v2` phandle and returns a referenced descriptor node.
+- `_opp_table_alloc_required_tables()` uses the first available OPP child to determine the table-level `required_opp_count`; this is table-shape discovery, not a per-entry consistency check.
+- `_of_opp_alloc_required_opps()` subsequently processes every concrete OPP entry using that previously established count and links the corresponding `required-opps[i]` target. Missing or invalid per-entry targets therefore surface during per-entry parsing/linking.
+- ROUND45's current ROUND33 preflight is intentionally stricter: it iterates every available UFS OPP child and requires exactly one valid MMCX provider target for every entry before OPP table initialization. This is consistent with the parser's single-slot contract and catches malformed later entries before generic OPP setup.
+- `_opp_set_required_dev()` bounds-checks `required_dev_index` against `required_opp_count`; index 0 matches the one-slot preflight. The GCC UFS_PHY_GDSC remains attached as a separate power domain and is not mapped to a nonexistent second required-opps slot.
+- `devm_pm_opp_set_config()` returns 0 on successful managed-action registration; ROUND33's `if (ret)` handling is correct.
+
+Exact pinned source blobs:
+- `drivers/opp/of.c`: `505d79821584e28f454dae673cf85078762b2ec7`.
+- `drivers/opp/core.c`: `157c84b689feba9ae2c446083e42de63e94a38a6`.
+
+Report: `kernel-baseline/round46/ack-opp-required-opps-parser-contract-review.md`.
+
+**Decision:** no ROUND33 patch change is required from this parser-contract review. Keep ROUND45's all-entry validation. This remains static source review only: full-tree apply, checkpatch, compiler, final Kconfig, dt-schema, DTB, Kleaf build, runtime probe and device boot remain NOT_RUN.
+
+ROUND12 remains the only active local Agent task; its report is not yet present on `firmware-audit-v1`. ROUND30 MMCX-to-MX, ROUND42/43 actual memory handoff, and ROUND40 VCCQ-parent/VDDP teardown remain independent open gates. No protected branch, PR #1 or device was changed. Stage B DerpFest remains deferred until Stage A 6.18.33 boots and passes storage/basic-hardware acceptance.

@@ -149,3 +149,15 @@ No real `git apply --check`, `dt_binding_check`, `dtbs_check`, YAML/schema valid
 - **Finding:** one P3 schema exact-count gap in ROUND32 `clock-names`.
 - **Candidate:** `ai-parallel/round54/candidates/0001-qcom-ufs-sm8250-clock-names-exact-count.patch`
 - **Primary AI follow-up:** review R54-001 and decide whether to adopt the candidate into the canonical patch series. All integration/build/device gates remain outstanding.
+
+## 9. Post-review integration consistency check
+
+After the primary AI adopted R54-001 as ROUND57, I checked the downstream execution matrix against the new canonical patch order.
+
+- ROUND57 patch draft on `main`: blob `f282a695ed1201298f29a54ff0871084d995b3f2`; its hunk adds `minItems: 8` and `maxItems: 8` under the SM8250 `clock-names` branch and is intended immediately after ROUND32.
+- ROUND55 execution matrix on `main`: blob `3a9ae5b4b384815ed59fbdccf13b75f6383ce5de`; its Gate 2 ordered series still lists ROUND32 → ROUND36 → ROUND52-0001 → ROUND37 → ROUND33 → ROUND52-0002 and omits ROUND57.
+- ROUND57 follow-up report already records the updated order: ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 → ROUND33 → ROUND52-0002.
+
+**Documentation consistency note (P3):** the canonical execution matrix is now stale relative to ROUND57. Before the real disposable-worktree integration run, the primary AI should update ROUND55 Gate 2 (and any copied series-order references) to insert ROUND57 immediately after ROUND32. This is a documentation/order-control issue only; it does not change the UFS driver design or the ROUND54 verdict.
+
+No source-tree application or schema validation was run as part of this consistency check.

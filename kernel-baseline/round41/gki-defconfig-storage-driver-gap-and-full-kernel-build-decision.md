@@ -115,3 +115,25 @@ The full custom yukawa-style kernel_build is a different target. It does not aut
 6. Only after the kernel and storage path validate, close boot image/AVB layout and proceed to the Android 17 DerpFest system stage.
 
 **Conclusion:** the stock GKI defconfig is missing the Qualcomm-specific storage and power drivers required by this port. Because the current plan explicitly needs them built-in and early module loading is not yet proven, build the DBY-W09 image as a full ACK-derived custom kernel using the pinned no-base_kernel Kleaf pattern. A base_kernel mixed build is only a later alternative if early module loading is proven.
+
+
+## 11. Kleaf config fragment stage — exact manifest-branch rule
+
+The current manifest examined in ROUND39 uses the `build/kernel` project revision `main-kernel-2026`. Its Kleaf configuration documentation was checked on that same named branch:
+
+- `kleaf/docs/kernel_config.md`: https://android.git.googlesource.com/kernel/build/+/refs/heads/main-kernel-2026/kleaf/docs/kernel_config.md
+- `kleaf/docs/api_reference/kernel.md`: https://android.git.googlesource.com/kernel/build/+/refs/heads/main-kernel-2026/kleaf/docs/api_reference/kernel.md
+
+The documented configuration sequence is:
+
+1. Start from `kernel_build.defconfig`.
+2. Apply `pre_defconfig_fragments`.
+3. Run `make ..._defconfig`.
+4. Apply `post_defconfig_fragments`, then run `make olddefconfig`.
+5. Kleaf enforces that every requested option in `post_defconfig_fragments` is present in the final `.config` (unless deliberately marked `# nocheck`).
+
+The docs describe `pre_defconfig_fragments` as typically used for in-tree modules absent from the base kernel, e.g. `CONFIG_FOO=m`; they describe `post_defconfig_fragments` as being applied after defconfig and checked against the final config.
+
+**Decision for the full no-`base_kernel` DBY-W09 target:** put ROUND31's storage-first fragment as the single item in `post_defconfig_fragments`, not `pre_defconfig_fragments`. This makes the intended built-in options (`=y`) requests after the GKI defconfig is generated, allows Kconfig to resolve dependencies via `olddefconfig`, and makes Kleaf fail if a required option was silently dropped or downgraded. Do not add `# nocheck` to required storage-chain entries.
+
+This is a source-backed configuration design decision, but the fragment has not yet been run through Kleaf. The eventual target still needs to audit the generated final `.config` for every ROUND31 symbol, including selected/derived symbols such as `ARM_SMMU_QCOM` and hidden dependencies such as `PM_OPP`. A fragment request is not a resolver PASS.

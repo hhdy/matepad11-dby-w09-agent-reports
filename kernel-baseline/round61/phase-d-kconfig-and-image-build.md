@@ -55,3 +55,17 @@ A successful Bazel query or target analysis is not a successful Image compile. P
 ## Runner/toolchain progression
 
 Run `45452267778` on Ubuntu 22.04 resolved the previous `libtinfo.so.5` missing-library failure. The exact manifest JDK 11.0.15, Bazel 8.7.0, Clang path and Rust 1.91.1 were discovered successfully. The run then stopped before Bazel query at strict checkpatch: the kernel's existing `init_load_uA` API member triggered only the CAMELCASE check. The build workflow now ignores only CAMELCASE for the ROUND63 driver patch, matching the already-passing UFS validation workflow; all other strict checks remain enabled. New retry: run triggered by `1b833dd74ddb39dd90f7a691f62ce313e0dfe5d2`.
+
+
+## 5. Validator coverage correction — block layer dependency
+
+A static review of the storage-first fragment against the final-config acceptance script found one explicit fragment option that was not independently asserted: `CONFIG_BLOCK=y`. The fragment already enables it, and SCSI storage depends on the block layer, so relying only on `CONFIG_SCSI=y` obscured this foundational dependency in the acceptance report.
+
+The Second AI added `BLOCK` to `REQUIRED_SYMBOLS` and a regression test that changes the synthetic fixture to `# CONFIG_BLOCK is not set` and requires validator failure.
+
+- Validator update commit: `40000bc93ca3b0b480b85607b4d2ca3695c0bfdd`
+- Regression-test commit: `d6fac731e9f5b50ee3110873e5d0b365f5e9dd02`
+- Required explicit symbols: 32 (up from 31).
+- Unit tests: 10 (up from 9).
+
+This is a validator-coverage correction only. It is not evidence that a real Kleaf-resolved `.config` has `CONFIG_BLOCK=y`; the real config and Image build remain NOT RUN until the manifest-pinned build produces artifacts.

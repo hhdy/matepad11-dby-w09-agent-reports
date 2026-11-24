@@ -70,7 +70,7 @@ This snippet is a design delta only. It has not been applied to the protected DT
 Before integrating this topology:
 - Confirm the fixed ACK `.33_r00` labels and domain IDs resolve in the final combined DTS: `rpmhpd`, `RPMHPD_MMCX`, `gcc`, and `UFS_PHY_GDSC`.
 - Confirm no included board DTS, overlay, or later fragment replaces/reorders `power-domains`.
-- Review the UFS binding schema after ROUND32, specifically whether the two-entry property is accepted by the full schema path; ROUND32 intentionally did not change power-domain constraints.
+- ROUND32 adds SM8250 compatible/clock/reg coverage. ROUND36 separately drafts a compatible-scoped relaxation in qcom,ufs-common.yaml so only qcom,sm8250-ufshc may use up to two power-domains; isolated exact-blob patch application and conditional logic checks passed. Full dt_binding_check/dtbs_check is still required.
 - Apply the driver and schema changes in a full worktree at the fixed tag; run `dt_binding_check`, `dtbs_check`, `git apply --check`, `checkpatch.pl`, Kconfig resolution, and compile.
 - Inspect final DTB/DTBO output, not only source fragments, to confirm exactly two Host domains in the required order.
 - Only then perform controlled hardware testing and confirm an actual MMCX performance-state vote, UFS link startup, storage enumeration, and suspend/resume.
@@ -84,3 +84,7 @@ Before integrating this topology:
 - ROUND12 remains the only local Agent task for read-only AVB metadata inspection.
 
 **Conclusion:** the next necessary code-integration item is not another rewrite of the UFS driver patch; it is a carefully validated DBY-W09 DTS override adding MMCX first and GCC UFS_PHY_GDSC second. Until that is integrated and validated, ROUND33's MMCX route is dormant on the current board DTS draft.
+
+## 7. Schema status update (ROUND36)
+
+The schema-count blocker identified in this round now has a draft-level resolution in ROUND36. The Qualcomm UFS common binding's maxItems=1 is widened to 2 with a compatible conditional that keeps all non-SM8250 Qualcomm UFS nodes at maxItems=1. The ROUND32 + ROUND36 conditions pass isolated JSON Schema logic tests for the SM8250 dual-domain case and backward-compatible one-domain case. The full dt-schema meta-schema and final DBY-W09 DTB are still unvalidated.

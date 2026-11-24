@@ -203,3 +203,16 @@ Do not call this a no-WSL system. The older legacy WSL optional feature and Hype
 The first target must not invent DTB/DTBO/boot-image inputs because board DTS integration and memory handoff remain unresolved. It must work only on its dedicated branch.
 
 Primary AI will review ROUND58 and prepare the canonical integration path. The next actual local build round after ROUND17 is expected to apply the ordered series (ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 once a real DTS path is ready → ROUND33 → ROUND52-0002), validate schemas and Kconfig, then compile the full DBY-W09 Image using the custom Kleaf target. No kernel compile is claimed yet.
+
+## ROUND59 ordered patch integration result (2026-11-24)
+
+A stricter in-memory exact-source replay was completed for the full UFS patch series. Source blob identities were verified against the fixed ACK commit; all 16/16 patch hunks matched exact context and declared new line anchors in this order:
+ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 (review-only DTS fixture) → ROUND33 → ROUND52-0002.
+
+ROUND52-0002 was correctly applied across both `drivers/ufs/host/ufs-qcom.h` and `ufs-qcom.c`. Post-application text assertions passed for the SM8250 compatible, eight clocks/names, supply bindings, dual-domain schema, MMCX-first/GCC-second fixture, required-OPP mapping and VDDP lifecycle.
+
+ROUND59 found and corrected the ROUND57 patch's malformed hunk header. Current main blob is `3656f05ad01d54452b83591b762faaa71a16f592`, hunk `@@ -165,13 +165,15 @@`. The earlier blob `f282a695...` must not be used.
+
+**Boundary:** the replay was performed in memory from exact GitHub source blobs. It is not real `git apply --check`, `git diff --check`, checkpatch, dt_binding_check, dtbs_check, Kconfig, Bazel or a build. ROUND37 still targets the review-only .dts.draft fixture rather than a real ACK DTS path. Full detail: `kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`.
+
+The local Agent is WorkBuddy using DeepSeek V4.1 Flash. ROUND17 lets WorkBuddy itself identify its execution-policy/approval path; do not send the user to an unverified Windows menu and do not bypass or retry blocked commands. The second AI remains on ROUND58 Kleaf implementation.

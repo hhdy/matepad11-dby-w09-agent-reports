@@ -464,3 +464,18 @@ Purpose: inventory whether the user's existing computer already has (a) a comple
 The task is **READY FOR LOCAL AGENT — NOT DISPATCHED**. It is strictly read-only: no network fetch/clone/repo sync, tool installation, WSL/VM/container start, patch application, Kconfig, compilation, or device access. Its only allowed deliverable is a sanitized text inventory uploaded to `firmware-audit-v1`.
 
 This is not a repeat of ROUND12/13/14 firmware analysis and does not overlap ROUND54. ROUND54 remains the second GitHub-connected AI's independent UFS patch review on `ai-parallel/round54-ufs-review` only. Stage A ACK 6.18.33 remains the sole porting stage; DerpFest Stage B is still deferred until Stage A boots and passes storage/basic-hardware acceptance.
+
+
+## ROUND55 — Stage-A execution gate matrix (2026-11-24)
+
+Report: `kernel-baseline/round55/stage-a-execution-gate-matrix.md`.
+
+ROUND55 consolidates existing Stage-A evidence into an execution sequence and separates source/build validation from the later first-boot gates:
+
+- ROUND15 local inventory first checks whether the exact ACK source worktree and an already-existing Linux build environment are available.
+- Once a disposable full source workspace exists, validate the patch series in the documented order: ROUND32 → ROUND36 → ROUND52-0001 → ROUND37 → ROUND33 → ROUND52-0002.
+- Run real worktree `git apply --check` / apply / diff checks, dt_binding_check, DTB/schema validation where inputs are ready, actual Kleaf Kconfig resolution and final `.config`, then the full-image custom kernel build with no `base_kernel`.
+- AVB, ramdisk and trusted memory handoff remain first-boot/image-packaging gates. They do not need to block source-only patch application or kernel compilation, but no board DTB/boot candidate should be promoted without resolving trusted RAM / reserved-memory semantics and the actual boot path.
+- ROUND54 remains the second AI's independent UFS review; its branch currently has a report template only. ROUND15 currently has a taskbook only, no execution report.
+
+No source patch, BUILD target, .config, DTB, image, or device partition was changed or built. No device boot is claimed. The order remains ACK 6.18.33 Stage A first; DerpFest Stage B only after Stage-A boot and storage/basic-hardware acceptance.

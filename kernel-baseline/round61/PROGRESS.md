@@ -216,3 +216,29 @@ Hosted manifest run `45442933079` successfully initialized the pinned `common-an
 The exact ACK tree already selects `qcom,sm8250-ufshc` in `qcom,sc7180-ufshc.yaml` and defines the eight-clock SM8250 branch there. ROUND32's addition to `qcom,ufs.yaml` duplicates that selector, so both hosted workflows now skip ROUND32 (canonical draft untouched). ROUND57 is likewise redundant against the existing fixed eight-item tuple.
 
 Moved the four ROUND52-0001 supply/load property definitions and pair requirements into shared `qcom,ufs-common.yaml`, which is referenced by both Qualcomm UFS binding families. The branch-local patch still applies after ROUND36; canonical ROUND52 remains untouched. The schema workflow now directly validates generic `ufs-common.yaml` and the actual `qcom,sc7180-ufshc.yaml` binding as well.
+
+
+## 2026-11-25 follow-up — hosted failures converted into targeted fixes
+
+### Latest UFS / PHY validation (run 45445251142)
+
+- Exact ACK patch application, ROUND63 PHY binding/driver application, git diff --check, strict checkpatch, buildifier and the 9 config-helper tests all completed successfully.
+- The ten UFS fixtures reached their intended matrix: two positive cases passed and eight negative cases were rejected with the expected property diagnostics.
+- The three ROUND63 PHY fixtures were not reached in this run because the UFS fixture stage stopped first.
+- The remaining failure is now isolated: the positive SM8250 fixture is rejected by the separately selected qcom,sc7180-ufshc.yaml schema because its top-level unevaluatedProperties: false does not accept the two new VDDP/VCCQ-parent properties as currently composed through the nested Qualcomm common schema. Do not weaken unevaluatedProperties. Next step is to validate the schema composition against the ACK-supported dtschema minimum (2023.9) before changing the schema layout.
+- Workflow diagnostic commit f6e6894ed062d144ad992c5a43afd9d2782fc409 pins dtschema to the ACK Makefile's declared minimum version 2023.9 for a controlled compatibility comparison. Its hosted result is pending.
+
+### Manifest-pinned Kleaf/Image attempt (run 45444678133)
+
+- Official manifest sync succeeded and resolved the fixed ACK common commit and build/kernel commit exactly.
+- The runner then failed before Bazel query because it invoked tools/bazel --version; the manifest-provided Kleaf wrapper interprets this as an unsupported startup option and exits with Unknown startup option: '--version'.
+- Corrected the preflight to invoke the Bazel version subcommand (tools/bazel version) in workflow commit 6594582ddd6758ba59ba0ec8ed85869cf73a517f.
+- Triggered a fresh manifest-pinned build in commit 17fc9603ce29f0dbaa270fd1c0cfe8922fd4e5e7. Await its actual result; no Bazel query, cquery, Kconfig resolution or Image build is claimed yet.
+
+### Current gate summary
+
+- Phase A: PASS (hosted exact-source patch apply, diff-check and strict style gates).
+- Phase B: BLOCKED on schema composition / dtschema compatibility; new controlled-version run pending.
+- Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.
+- Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
+- Phase F/G: NOT RUN; no boot image or device write/boot operation performed.

@@ -105,7 +105,8 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/round61-sync.log"
 
           stage="record pinned manifest and verify fixed ACK source"
-          git -C common fetch --depth=1 aosp "$ACK_COMMIT"
+          git -C common fetch --depth=1 aosp refs/tags/android17-6.18.33_r00:refs/tags/android17-6.18.33_r00
+          test "$(git -C common rev-parse refs/tags/android17-6.18.33_r00^{})" = "$ACK_COMMIT"
           git -C common checkout --detach "$ACK_COMMIT"
           test "$(git -C common rev-parse HEAD)" = "$ACK_COMMIT"
           test -z "$(git -C common status --porcelain)"

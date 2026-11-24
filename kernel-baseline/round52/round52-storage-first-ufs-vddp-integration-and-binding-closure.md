@@ -26,7 +26,7 @@ Patch: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.pa
 ## 3. VDDP lifecycle driver patch draft
 
 Patch: kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
-- Blob SHA: 79cb9d9e7372835d8f68fa2269dfb317b6c1d98c.
+- Blob SHA: e288413af5648575c5d53140f6b248425e5a0af6.
 - Fixed ACK source blobs reviewed: ufs-qcom.c = a80c6998406dbc88c25dbd9977699ba481207efe; ufs-qcom.h = 5f979daabd5323184eeee137cc8ecc076193979e.
 - Intended patch order: ROUND33 dual-GenPD UFS driver draft first, then ROUND52-0002. Its include hunk expects the post-ROUND33 pm_domain/pm_opp include lines; header fields do not conflict with ROUND33.
 - It reads qcom,vddp-ref-clk-max-microamp, uses devm_regulator_get(dev, "qcom,vddp-ref-clk") when the qcom,vddp-ref-clk-supply property exists, sets the load, and enables the supply before ufs_qcom_setup_clocks() powers up the Qualcomm PHY.
@@ -106,3 +106,6 @@ Board sequence:
 - ROUND37 -> pristine protected-branch board DTS draft: 2/2 hunks matched. This was an in-memory simulation only; the protected branch was not changed.
 
 Result: **all 15 hunks across the seven patch applications matched**. This establishes patch-context/order consistency for these exact source blobs. It is not the Git `git apply` implementation, not an actual disposable Git worktree, and does not substitute for full-tree `git apply --check`, dt-schema, dtc/dtbs_check, checkpatch or compilation. Those remain NOT_RUN.
+
+
+ROUND52 lifetime addendum: fixed ACK `ufshcd_alloc_host()` registers `ufshcd_devres_release()` (scsi_host_put) before `ufshcd_init()` invokes the Qualcomm variant. The variant then devm-allocates `ufs_qcom_host` and registers VDDP cleanup afterwards. Since ACK devres is LIFO, the VDDP cleanup action runs before both the variant host storage and HBA SCSI-host release actions, so `host` and `host->hba` remain valid while cleanup uses them. The callback also runs after `ufshcd_remove()` has shut down generic VCCQ. This closes the UAF concern for the chosen action placement; it remains source review only.

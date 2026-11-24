@@ -20,7 +20,7 @@ The kernel Makefile's `dt_binding_check` recipe can swallow some example-validat
 
 ## UFS fixtures
 
-Generator: `tests/generate_round61_ufs_fixtures.py`.
+Generator: `tests/generate_round61_ufs_fixtures.py` (10 DTS cases: two positive, eight negative).
 
 The workflow compiles each generated DTS with the pinned ACK `dtc` and validates:
 - SM8250 with one power domain — expected PASS.
@@ -32,6 +32,7 @@ The workflow compiles each generated DTS with the pinned ACK `dtc` and validates
 - VDDP supply without its max-microamp property — expected FAIL.
 - VCCQ-parent supply without its max-microamp property — expected FAIL.
 - VDDP max-microamp set to zero — expected FAIL.
+- VCCQ-parent max-microamp set to zero — expected FAIL.
 - VCCQ-parent max-microamp set to zero — expected FAIL.
 
 The SM8150 negative fixture uses its valid nine-clock/two-register layout so the expected failure isolates the non-SM8250 two-domain restriction. The SM8250 nine-clock fixture has nine clock names, including the extra `ice_core_clk`, and nine clock phandles.

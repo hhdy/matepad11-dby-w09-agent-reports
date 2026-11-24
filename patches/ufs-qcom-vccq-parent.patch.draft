@@ -1,7 +1,7 @@
 From: OpenAI GPT-6
 Subject: [DRAFT] ufs: qcom: add optional VCCQ parent regulator handling
 
-DRAFT ONLY — illustrative source patch against ACK android17-6.18.
+DRAFT ONLY — source patch sketch for ACK android17-6.18; not a directly applicable git diff.
 It has NOT been applied, compiled, schema-validated or runtime-tested.
 Review against the exact pinned ACK checkout before use.
 
@@ -20,7 +20,7 @@ load-to-mode policy.
 
 --- a/drivers/ufs/host/ufs-qcom.h
 +++ b/drivers/ufs/host/ufs-qcom.h
-@@
+@@ [source-context anchor]
  struct gpio_desc;
 +struct regulator;
  
@@ -40,11 +40,9 @@ load-to-mode policy.
 +#include <linux/regulator/consumer.h>
  #include <linux/reset-controller.h>
 
-@@
- static int ufs_qcom_icc_init(struct ufs_qcom_host *host)
- {
-     /* existing function unchanged */
- }
+@@ insertion point: after the existing ufs_qcom_icc_init() definition and
+@@ immediately before the ufs_qcom_init() documentation comment (around
+@@ ACK android17-6.18 drivers/ufs/host/ufs-qcom.c line 1310)
 
 +/*
 + * HOS downstream Qualcomm UFS trees expose qcom,vccq-parent-supply.

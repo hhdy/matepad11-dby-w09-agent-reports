@@ -67,3 +67,22 @@ NOT_RUN:
 No new Local Agent task is justified for ROUND52: these changes use already-known public ACK source and the existing ROUND13/14 local properties. Do not rescan FDT, EROFS or AVB. A future local task is justified only if a concrete implementation step requires a distinct fact unavailable from the existing reports.
 
 Stage A ACK 6.18.33 remains the only milestone. Stage B DerpFest stays deferred until actual Stage A device boot and UFS/storage/basic-hardware acceptance. Protected ack18-dby-w09-dts-draft remains untouched; PR #1 remains Draft.
+
+
+## ROUND52 source-contract addendum — regulator ID, DRMS trigger and cleanup ordering
+
+A final fixed-ACK source pass confirms the custom regulator ID in the driver draft is exact:
+- ACK drivers/regulator/of_regulator.c implements of_get_regulator() by constructing `<id>-supply` and parsing that property from the consumer node.
+- Therefore `devm_regulator_get_optional(dev, "qcom,vddp-ref-clk")` resolves the existing board property `qcom,vddp-ref-clk-supply`, matching KONA's use of `devm_regulator_get(dev, vreg->name)` with vreg->name set to `qcom,vddp-ref-clk`.
+
+The VDDP load-before-enable sequence also has the required ACK DRMS trigger:
+- ACK drivers/regulator/core.c regulator_enable path increments the same handle's enable_count; when it becomes 1 and that handle has a nonzero uA_load, it calls drms_uA_update().
+- regulator_set_load() by itself only updates DRMS when the handle is already enabled.
+- Thus ROUND52's set_load(100) then regulator_enable() sequence is materially different from S8's load-only call: VDDP's first enable triggers the L6 DRMS aggregate, while S8 remains a no-op on fixed ACK due to no HFSMPS510 DRMS callback and no enable reference.
+
+Source anchors:
+- [ACK OF regulator consumer lookup](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/of_regulator.c#L615-L634)
+- [ACK regulator enable / DRMS transition](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c#L2857-L2868)
+- [ACK regulator_set_load handle enable-count gate](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c#L4955-L4964)
+
+This addendum is still source review, not a compiled or runtime validation.

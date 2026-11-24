@@ -135,7 +135,7 @@ Binding candidate:
 
 Board draft correction:
 - `dts/dby-w09-ack18-board.dts.draft`
-- updated Git blob SHA: `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`
+- updated Git blob SHA: `c209d519614fb0ff89b042ce274191b20120a09a`
 - now carries `vdda-phy-always-on;`
 - removes `vdda-phy-max-microamp` and `vdda-pll-max-microamp`, because the ACK SM8250 QMP UFS configuration already provides those exact current loads and the binding/driver do not consume the board-side properties.
 
@@ -192,3 +192,8 @@ A deterministic in-memory exact-context replay of the final candidate against th
 - Source blobs were `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3` (driver) and `fba7b2549ddee7ee4e048277a11a7da053d52887` (binding).
 
 This replay is not Git's `git apply --check` or an actual disposable-worktree application. It proves only that the candidate hunk contexts and line anchors match the fetched pinned text. No checkpatch, dt_binding_check, compile or hardware test has run.
+
+
+### Board draft metadata refresh
+
+After the initial ROUND63 board update, the explanatory comment was refined to say the pinned ACK SM8250 vreg list supplies the 89900/18800µA votes. Current review-only board DTS blob is `c209d519614fb0ff89b042ce274191b20120a09a`. No change was made to the protected DTS branch.

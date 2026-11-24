@@ -104,6 +104,11 @@ CASES = {
         False,
         "qcom,vddp-ref-clk-max-microamp",
     ),
+    "ufs-sm8250-vccq-parent-zero-load-invalid": (
+        dict(vccq_supply=True, vccq_load=0),
+        False,
+        "qcom,vccq-parent-max-microamp",
+    ),
 }
 
 

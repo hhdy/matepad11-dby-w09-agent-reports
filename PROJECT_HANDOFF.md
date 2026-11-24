@@ -453,3 +453,14 @@ ROUND53 confirms the static source dependency route for UFS/QMP/GCC/RPMh/SM8250 
 
 
 ROUND53 follow-up: the storage-first fragment now removes direct assignments of hidden `GENERIC_MSI_IRQ`, `SCSI_DMA`, and `OF_RESERVED_MEM`; `PM_OPP` also remains selection-derived from PM_DEVFREQ. The fixed ACK arm64/GICv3-ITS, SCSI/HAS_DMA and OF_EARLY_FLATTREE chains derive these requirements. Current fragment blob: `ae8675357e2f5c57c9ec38e7574b00590b558c63`; current ROUND53 report blob: `b471500b33e987453e4492c80113457f8a34e92e`. These are static-source corrections only; no final `.config` or Kleaf build has run.
+
+
+## ROUND15 — Stage-A build environment inventory taskbook prepared (2026-11-24)
+
+A narrowly scoped local-only taskbook is now present at `firmware-analysis/round15/AGENT_TASK.md`.
+
+Purpose: inventory whether the user's existing computer already has (a) a complete ACK `android17-6.18.33_r00` source worktree containing pinned commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, and (b) an existing Linux-capable build environment/toolchain. This is the next practical gate after ROUND53 static Kconfig closure.
+
+The task is **READY FOR LOCAL AGENT — NOT DISPATCHED**. It is strictly read-only: no network fetch/clone/repo sync, tool installation, WSL/VM/container start, patch application, Kconfig, compilation, or device access. Its only allowed deliverable is a sanitized text inventory uploaded to `firmware-audit-v1`.
+
+This is not a repeat of ROUND12/13/14 firmware analysis and does not overlap ROUND54. ROUND54 remains the second GitHub-connected AI's independent UFS patch review on `ai-parallel/round54-ufs-review` only. Stage A ACK 6.18.33 remains the sole porting stage; DerpFest Stage B is still deferred until Stage A boots and passes storage/basic-hardware acceptance.

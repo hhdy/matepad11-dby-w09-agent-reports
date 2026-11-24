@@ -12,6 +12,7 @@
 
 ## 当前公开研究报告
 
+- [ROUND14：ACK 6.18 UFS 早期启动 Kconfig 依赖审查](./kernel-baseline/round14/ack18-dby-w09-bootcritical-kconfig-review.md)
 - [ROUND13：第一版 ACK 板级 DTS / 最小 rootparam DTBO 设计](./kernel-baseline/round13/ack18-dby-w09-initial-dts-and-dtbo-design.md)
 - [ROUND12：ROUND10 boot-chain 证据更新与 ACK DTS 基础](./kernel-baseline/round12/round10-boot-chain-update-and-ack18-dts-foundation.md)
 - [ACK 6.18 DTS 草案分支](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ack18-dby-w09-dts-draft/dts)
@@ -45,9 +46,10 @@
 ## 下一阶段由 GPT 负责
 
 1. ROUND13 已形成第一版 minimal board DTS 和单 fragment rootparam DTBO 草案，位于 `ack18-dby-w09-dts-draft` 分支 `dts/` 目录；文件后缀 `.draft`，不供构建或刷写。
-2. 关键架构决定：原 HOS4.3 stock DTBO entry 8 有 145 个 fragment target，引用大量 vendor-only path / symbol，不能直接用于 minimal ACK base DTS。新 DTS 必须搭配单独的最小 DBY-W09 rootparam overlay，ABL 接受性仍 UNKNOWN。
-3. GPT 下一步先完成 PMIC regulator 输入供电、UFS DRMS、rootparam 字段/ABL 选择语义和 ACK 6.18 pinctrl/console 的源码审查，然后补完 DTS；panel、THP、WLAN、audio、camera 等暂不启用。
-4. 只有在 source review 完成后才考虑允许的离线构建环境与静态校验。未真正 dtc/dt-schema/Kleaf 编译、image packaging 或 device boot 时，不得声称验证通过或可启动。
+2. ROUND14 已完成 UFS early-boot Kconfig 依赖审查；对应的 built-in storage-first fragment 位于实现草案分支 `config/dby-w09-ack18-storage-first.fragment.draft`，仍未运行 Kconfig resolution。
+3. 关键架构决定：原 HOS4.3 stock DTBO entry 8 有 145 个 fragment target，引用大量 vendor-only path / symbol，不能直接用于 minimal ACK base DTS。新 DTS 必须搭配单独的最小 DBY-W09 rootparam overlay，ABL 接受性仍 UNKNOWN。
+4. GPT 下一步继续审查 PMIC 输入供电和 rootparam/ABL 契约，并补齐早期 DTS 的 clock / SMMU / PMIC / console 节点依赖；panel、THP、WLAN、audio、camera 等暂不启用。
+5. 只有在 source review 完成后才考虑允许的离线构建环境与静态校验。未真正 dtc/dt-schema/Kconfig/Kleaf 编译、image packaging 或 device boot 时，不得声称验证通过或可启动。
 
 ## 何时需要重新下发本地任务
 

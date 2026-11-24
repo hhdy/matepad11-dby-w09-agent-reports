@@ -3,7 +3,7 @@ Subject: [PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle
 
 The DBY-W09 HOS4.3 UFS PHY DTBO inventory records vdda-phy-always-on.
 The downstream Qualcomm UFS PHY consumer semantics retain the vdda-phy
-regulator enable while dropping its active load vote when the PHY is powered
+regulator enable while dropping its active load vote when the PHY is
 off.
 
 The ACK QMP UFS PHY driver currently bulk-disables every PHY regulator in

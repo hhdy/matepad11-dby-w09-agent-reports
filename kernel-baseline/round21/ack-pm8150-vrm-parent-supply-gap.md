@@ -66,6 +66,12 @@ The draft will therefore:
 - not convert ARC parent-supply or proxy-supply into generic regulator supply phandles;
 - explicitly record that regulator parent-path / electrical validation remains a pre-boot gate.
 
+## 4.5 ARC parent links are a separate vendor accelerator graph (ROUND22)
+
+ROUND22 confirmed the four HOS4.3 parent-supply edges belong to qcom,rpmh-arc-regulator providers. An older Qualcomm downstream driver has a dedicated ARC path that reads each resource's voltage-level map from Command DB AUX data and implements each ARC child as a regulator. It dynamically maps a child regulator-name to a regulator-name-parent-supply property and a regulator-name-parent supply name. This is the correct semantic class for those four CX/MMCX-to-MX edges; it is not a way to manufacture PM8150 VRM LDO/SMPS input parents.
+
+An ACK ARC port may help reproduce the HOS4.3 shared voltage-level hierarchy and make this generic regulator tree explicit, but it does not establish the physical PM8150 input source by itself. See ROUND22.
+
 ## 5. Potential future resolution paths (not implemented)
 
 1. Find an authoritative HOS4.3 board/PMIC source or a documented rail-power schematic that resolves the true PM8150 input network and voltage ranges.
@@ -91,4 +97,4 @@ No further local FDT parse is required; ROUND11 completed the relevant scope. Do
 
 ## 7. Next step
 
-Continue GPT-side source review for an authoritative SM8250/PM8150 power-tree mapping or vendor ARC implementation. Do not restore guessed vph_pwr wiring. ROUND12 AVB metadata is still the only local Agent task. PR #1 remains Draft; no flash, unlock, root, device connection, compile or writes.
+ROUND22 defines an ACK ARC-provider port as a separate compatibility task; this does not close the physical PM8150 input-parent question. Continue looking for authoritative PMIC electrical source material and keep guessed vph_pwr wiring removed. ROUND12 AVB metadata is still the only local Agent task. PR #1 remains Draft; no flash, unlock, root, device connection, compile or writes.

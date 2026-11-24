@@ -285,7 +285,7 @@ Report: `kernel-baseline/round46/ack-opp-required-opps-parser-contract-review.md
 
 **Decision:** no ROUND33 patch change is required from this parser-contract review. Keep ROUND45's all-entry validation. This remains static source review only: full-tree apply, checkpatch, compiler, final Kconfig, dt-schema, DTB, Kleaf build, runtime probe and device boot remain NOT_RUN.
 
-ROUND12 remains the only active local Agent task; its report is not yet present on `firmware-audit-v1`. ROUND30 MMCX-to-MX, ROUND42/43 actual memory handoff, and ROUND40 VCCQ-parent/VDDP teardown remain independent open gates. No protected branch, PR #1 or device was changed. Stage B DerpFest remains deferred until Stage A 6.18.33 boots and passes storage/basic-hardware acceptance.
+ROUND12 AVB report is uploaded but BLOCKED at the trusted-tool gate; ROUND13 and ROUND14 local audits are complete and the Local Agent queue is empty. ROUND30/51 MMCX-to-MX equivalence and ROUND42/43 actual memory handoff remain independent open gates; the UFS VDDP/VCCQ-parent lifecycle design is now documented in ROUND49/51/52. No protected branch, PR #1 or device was changed. Stage B DerpFest remains deferred until Stage A 6.18.33 boots and passes storage/basic-hardware acceptance.
 
 
 ## 13. Latest progress — ROUND47 ACK PM8150 regulator mode / DRMS capability review

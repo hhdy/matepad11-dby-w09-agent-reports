@@ -1,47 +1,45 @@
 # AGENT_TASK.md — DBY-W09 GKI / ACK 内核移植调研总入口
 
-> **当前本地 Agent 唯一优先任务：阅读 AGENT_TASK_ROUND7.md。** ROUND6 的公开上游研究已由 ChatGPT 完成；本轮真正需要本地 Agent 的是读取本机 HOS 4.3 DTB / DTBO 工作副本并生成脱敏属性清单。
+> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND8.md。** ChatGPT 已完成 ROUND7 的公开项目/上游驱动对照；本轮只需解析本机现有 DTBO8 的 fragment target 与关键硬件子树，解决本地 FDT 报告未保留的 phandle 目标映射。
 
 ## 当前任务
 
-- [AGENT_TASK_ROUND7.md](./AGENT_TASK_ROUND7.md)：只读解析 ROUND3 已有的 13 个本地 FDT 工作副本，输出 DTB 属性 inventory 和 9 个 DTBO board/rootparam matrix。
-- [同型号主线 Linux 研究报告](./kernel-baseline/round7/same-device-mainline-port-audit.md)：ChatGPT 已经完成公开项目和 Linux v6.18 上游源码对照，Agent 不要重复做网页搜索或 GitHub 调研。
-- [ROUND6 上游 GKI 基线研究](./kernel-baseline/round6/upstream-baseline-research.md)：已区分 6.18.33 活跃源码分支和 6.18.32 已发布 GKI release，并列出 Android 12 / Android 17 兼容风险、Kleaf 和 KMI 规则。
-- [AGENT_TASK_ROUND6.md](./AGENT_TASK_ROUND6.md)：Windows PATH 工具探测任务仍可执行，但不是 ROUND7 的前置条件，不要为了它重复检查固件或上游文档。
+- [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：只读分析 ROUND3 已有的 base FDT candidate 0 和 DTBO entry 8，解析 fragment target -> base node path，确认 rootparam、UFS、panel、THP、wireless、audio、camera、USB/DP 的目标节点及关键 GPIO/pinctrl。只上传三份脱敏文本报告。
+- [ROUND8 ChatGPT 独立硬件对照报告](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)：已将 HOS 4.3 与同型号 svesnav/youzjuzi 项目、Linux v6.18 驱动逐项比较；不要重复公开资料研究。
+- [ROUND7 本地 FDT 属性清单](./AGENT_TASK_ROUND7.md)：已完成，13/13 FDT VALID，9 个 DTBO entries 已有属性清单。
+- [ROUND6 上游 GKI 基线报告](./kernel-baseline/round6/upstream-baseline-research.md)：由 ChatGPT 完成，区分 6.18.33 活跃源码分支和 6.18.32 已发布 GKI release；Android 12 / Android 17 兼容风险、Kleaf/KMI 已调查。ROUND6 PATH 工具探测不是 ROUND8 前置条件，暂时不阻塞。
 
-## 项目现状
+## 已完成阶段
 
-- 设备：Huawei MatePad 11 DBY-W09，Qualcomm KONA / SM8250，当前原系统 Android 12 / API 31，内核 4.19.157-perf+。
-- 原厂启动结构：Android boot header v2，单独 ramdisk 分区，无 vendor_boot / init_boot。
-- ROUND3 已确认 boot DTB 的 msm-id 为 [356, 131073]，9 个 DTBO entry 全部 FDT VALID，其中一个 board-id 为 8298（0x206a）。
-- ROUND4 已将 vendor / odm 提取到本地工作副本，文件系统签名为 EROFS。
-- ROUND5 因缺少可信 EROFS 只读工具而 BLOCKED；模块、firmware、VINTF 和供应商 KMI 信息仍 UNKNOWN。
-- 小米 Pad 5 Pro ZIP 审计只确认一套 elish 分卷包，无 kernel source / DTS / defconfig；仅保留参考价值。
+- ROUND1：Android 12 / API 31、原内核 4.19.157-perf+、KONA / SM8250、传统 boot + 独立 ramdisk；固件 43 项清单。
+- ROUND2：DTBO 头修复验证和 9 个 entries；super.img sparse 结构识别。
+- ROUND3：sparse / LP metadata / DTBO / boot DTB 只读解析；确认 vendor、odm 等逻辑分区。
+- ROUND4：vendor / odm 已在本地独立提取；两者 EROFS 签名识别通过。
+- ROUND5：可信 EROFS 工具链不可用，内容枚举 BLOCKED；模块、firmware、VINTF、KMI 兼容性 UNKNOWN。
+- ROUND7：读取现成的 13 个 FDT 工作副本，13/13 结构有效；7937 行属性 inventory；9 个 DTBO board-id 已校验。
+- 同型号主线 Linux 公开参考项目：svesnav Linux 7.0.14、youzjuzi Linux 7.2.10、CoWave Linux 7.3.4；只作硬件资料/bring-up 参考，不是可直接复用的 Android GKI 包。
 
-## ChatGPT 已完成的公开研究
+## 当前关键技术判断
 
-- 同型号 DBY-W09 主线 Linux 项目已经公开：svesnav Linux 7.0.14、youzjuzi Linux 7.2.10、CoWave Linux 7.3.4。
-- 同型号 DTS / rootparam overlay 显示 Huawei board-id 0x206a，与 ROUND3 的 HOS 4.3 DTBO board-id 列表交叉吻合。
-- Linux v6.18 已有 Qualcomm UFS host / QMP UFS PHY、SM8250 SoC DTS、MSM DRM、ath11k、WCD938x SoundWire、OV13B10 / Hi846 / DW9714 等基础支持。
-- 主要风险在 Huawei 板级 DTS、panel 初始化/供电、THP 触摸协议、固件/校准数据、音频路由和旧启动链；不能因为 generic driver 存在就推断设备已经适配。
-- 详细内容见 round6 / round7 research reports。
+- Huawei board-id 0x206a / DBY_W09_VG 与本机 HOS 4.3 DTBO entry 8 对应。
+- Linux v6.18 已有 SM8250 UFS host / QMP UFS PHY；HOS 4.3 boot FDT 默认 disabled，而同型号 Linux board DTS 会启用并补齐 rails。需要确认实际 overlay/最终 FDT 状态，不能断言缺少 UFS driver。
+- HOS 4.3 DTBO 包含 Debussy/NT36523 C-PHY panel profiles、Huawei THP、QCA6390-compatible wireless、WCD938x/WSA881x 与 SmartPA、camera、USB-C/DP 节点。具体选中 profile / fragment targets 需要 ROUND8 本地核验。
+- EROFS 内容层仍 BLOCKED；没有 vendor/odm 模块清单、vermagic、firmware、VINTF 或供应商 KMI 证据。
+- Android 12 userspace + android17-6.18 不在 Google 官方支持矩阵中；项目最终 platform target 仍需后续产品决策。
+- 详细对照见 ROUND6 / ROUND7 / ROUND8 ChatGPT research reports。
 
-## 仓库与协作边界
+## 仓库和安全边界
 
 - 仓库：hhdy/matepad11-dby-w09-agent-reports
 - 本地 Agent 历史分析分支：firmware-audit-v1
 - ChatGPT 公开研究和任务书放在 main。
-- PR #1 仍为 Draft；未经用户明确授权不得合并。
-- 不要求用户重新上传已存在固件或重复提供路径。
-
-## 严格边界
-
-1. 优先由 ChatGPT 完成公开资料、GitHub、源码阅读、对照、架构分析和任务规划。
-2. 只有本机文件系统、本地固件内容、本机工具环境和本地只读测试交给 Agent。
-3. 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统。
-4. 不上传任何固件/分区/boot/DTB/DTBO/内核/模块/firmware 二进制、manifest 原件、完整本地 SHA-256、设备序列号/MAC、token/PAT 或私人完整路径。
-5. 不绕过 Windows 命令安全策略、不修改执行策略、不关闭安全软件、不调用 WSL、不下载来源不明的 EXE。
-6. 未实际执行的操作标记 NOT_RUN / BLOCKED / UNKNOWN，不得虚报成功。
+- PR #1 仍 Draft；未经用户明确授权不得合并。
+- 优先由 ChatGPT 完成公开资料、GitHub、源码阅读、对照、架构分析和任务规划。
+- 只有本机文件系统、本地固件内容、本机工具环境和本地只读测试交给 Agent。
+- 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统。
+- 不上传固件/分区/boot/DTB/DTBO/FDT/内核/模块/firmware 二进制、manifest 原件、完整本地 SHA-256、设备序列号/MAC、token/PAT 或私人完整路径。
+- 不绕过 Windows 命令安全策略、不修改执行策略、不关闭安全软件、不调用 WSL、不下载来源不明的 EXE。
+- 未实际执行的操作标记 NOT_RUN / BLOCKED / UNKNOWN，不得虚报成功。
 
 ## 历史任务书
 
@@ -51,5 +49,6 @@
 - [ROUND4](./AGENT_TASK_ROUND4.md)
 - [ROUND5](./AGENT_TASK_ROUND5.md)
 - [ROUND6 本机工具探测](./AGENT_TASK_ROUND6.md)
+- [ROUND7 FDT 属性 inventory](./AGENT_TASK_ROUND7.md)
 
-本地 Agent 完成 ROUND7 后，只回传本机 HOS 4.3 设备树事实。之后的逐项源码差异审查、GKI 驱动复用判断与移植策略由 ChatGPT 继续独立完成。
+本地 Agent 完成 ROUND8 后，只回传 DTBO8 fragment target 和必要硬件属性摘要。随后由 ChatGPT 继续完成最终字段对照与 ACK 6.18.33 移植方案；不重复进行已完成的公开研究。

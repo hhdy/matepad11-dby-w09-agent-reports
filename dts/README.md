@@ -77,3 +77,12 @@ The nine stock DTBO entries do not target the relevant RSC regulator subtree, bu
 ### ROUND52 final ordered source-context simulation
 
 The intended patch order is recorded in kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. A source-backed in-memory simulation matched all 15 hunks across ROUND32, ROUND36, ROUND52-0001, ROUND37, ROUND33 and ROUND52-0002 in dependency order. This did not modify the protected branch and is not equivalent to git apply in a full kernel worktree. Full-tree apply, checkpatch, schema validation, dtc/dtbs_check and Kleaf build remain NOT_RUN.
+
+
+## ROUND63 — UFS PHY vdda-phy always-on compatibility
+
+The HOS4.3 DTBO inventory reports `vdda-phy-always-on` on the UFS PHY node. ACK 6.18.33's QMP UFS PHY currently bulk-disables both PHY supplies on `power_off` and its schema does not declare this property. The ROUND63 driver/binding candidates on main preserve the policy by retaining one consumer enable reference for `vdda-phy`, toggling its load vote between the pinned SM8250 init load and zero, and releasing the retained enable only on provider removal. Nodes without the property retain the original bulk behavior.
+
+The board DTS draft now declares `vdda-phy-always-on`. It no longer duplicates `vdda-phy-max-microamp=89900` / `vdda-pll-max-microamp=18800`: ACK's pinned `sm8250_ufsphy_vreg_l[]` already sets these exact values. The properties are not accepted by the current QMP UFS PHY binding and are not read by the ACK driver. The stock HOS DTBO entry 8 also contains them, but this project must not apply that 145-fragment stock entry to the minimal ACK base; the planned minimal DTBO is rootparam-only.
+
+**Still a candidate only:** the driver and binding patches have not been full-tree applied, checkpatch/schema checked, compiled or hardware-tested. See `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`. The board DTS remains `.draft`, not a source-tree build input.

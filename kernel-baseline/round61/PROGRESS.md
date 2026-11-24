@@ -113,3 +113,12 @@ The workflow now compiles the fixtures with `dtc`, validates the first two with 
 Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report update commit: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
+
+
+### ROUND63 regulator-list cross-check (2026-11-25)
+
+Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.
+
+Report update commit: `ff816f9665876200a5df63f14aa42f10385b1c77`.
+
+The first outstanding gate remains the actual hosted Actions result for the updated workflow; the local container cannot run dtc/dtschema or the manifest-pinned Bazel toolchain.

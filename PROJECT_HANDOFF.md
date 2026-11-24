@@ -215,3 +215,26 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 ---
 
 **新会话的正确起点：读取 `AGENT_TASK.md`，确认 ROUND12 状态，随后继续阶段 A 的 ACK 6.18.33 内核移植。不要重新讨论 Android 12L，不要提前跳到 DerpFest 全系统适配，也不要改动 PR #1 或 ACK DTS 草案分支，除非当前任务明确授权。**
+
+
+## 10. Latest progress — ROUND44 UFS dual-GenPD probe contract review
+
+Updated: 2026-11-24.
+
+ROUND44 re-read the exact immutable ACK source commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a and verified the proposed ROUND33 UFS probe sequence against the fixed APIs:
+
+- Generic genpd_dev_pm_attach() skips consumers with multiple power-domains entries; it does not bind one domain to the original UFS device. A driver-level devm_pm_domain_attach_list() call in the Qualcomm UFS probe is therefore compatible with the generic core path.
+- dev_pm_domain_attach_list() creates indexed virtual-domain devices, returns the attached count, and PD_FLAG_DEV_LINK_ON adds runtime-active device-link behavior. Two attached domains is the expected success count.
+- ufs_qcom_probe() invokes ufshcd_pltfrm_init(). The generic UFS OPP setup configures clocks and then adds the OPP table, so ROUND33's required_dev mapping before ufshcd_pltfrm_init() is correctly ordered.
+- The pinned SM8250 UFS OPP table currently has two available entries, both with exactly one required-opps reference. The proposed slot-0 mapping to MMCX matches this fixed-source shape.
+- The existing ROUND33 exact required-OPP target / provider operating-points-v2 table identity check is useful and must remain.
+
+ROUND44 found two ROUND33 hardening requirements before full-tree application:
+1. The helper checks only the first available UFS OPP entry. Revise it to iterate all available OPP children and validate exactly one required-opps entry, RPMhPD provider compatible, and exact provider OPP-table identity for every entry; also handle an empty table and OF reference cleanup.
+2. The current compatible/count guard applies to every qcom,sm8250-ufshc with two domains, not just DBY-W09. Decide whether this exact MMCX-then-GCC two-domain contract is intentionally driver-wide, or add a deliberate board opt-in mechanism. Do not silently accept an unknown two-domain layout, because generic GenPD skips attaching both domains.
+
+ROUND30's MMCX-to-MX parent/corner equivalence remains a separate unresolved power-tree gate. ROUND42/43 final memory handoff and ROUND12 AVB inspection remain open. No full kernel tree was applied, no checkpatch/dt-schema/Kconfig/Kleaf build was run, and no device was tested.
+
+Full report: kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
+
+Next sequence: harden ROUND33, maintain the ROUND38 patch order (ROUND32 schema → ROUND36 common binding → ROUND37 board DTS → ROUND33 driver), then run complete disposable-tree patch/schema/DTB/Kconfig/build checks only after the AVB and memory/boot-chain gates are addressed. ROUND12 remains the only active local Agent task. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware validation.

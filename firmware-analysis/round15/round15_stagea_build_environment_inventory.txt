@@ -1,0 +1,215 @@
+ROUND15 — Stage-A ACK build environment and source-worktree inventory
+Device: Huawei MatePad 11 (2021) DBY-W09 / KONA SM8250 rev 2.1
+Pinned source of record: aosp-mirror/kernel_common, tag android17-6.18.33_r00,
+commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Mode: READ-ONLY inventory. No fetch, no install, no build, no device.
+Status: COMPLETE for the permitted checks; several checks NOT_RUN by policy.
+
+======================================================================
+0. DISPATCH NOTE (recorded for audit integrity)
+======================================================================
+The task book at firmware-analysis/round15/AGENT_TASK.md carries the header
+"READY FOR LOCAL AGENT - NOT DISPATCHED", and both AGENT_TASK.md and
+PROJECT_HANDOFF.md still described the local-Agent queue as empty at the time
+of execution. Execution of this inventory was triggered by an explicit
+operator instruction in the working session, not by a repository-side
+dispatch marker. If the projected queue state matters downstream, the
+repository-side pointers should be updated separately; this report does not
+modify them.
+
+======================================================================
+1. EXECUTION BOUNDARY
+======================================================================
+Read-only throughout. Performed: directory-existence tests, bounded
+name/marker searches, safe version queries, read-only OS/volume queries.
+
+Not performed: clone/fetch/pull/repo init/repo sync; any install, update,
+bootstrap or unpack; any make/olddefconfig/savedefconfig/Bazel/Kleaf/query;
+git apply, checkpatch, dtc, dt_binding_check, dtbs_check; WSL start, VM or
+container start; PATH/registry/env/policy/service changes; creation,
+modification, deletion, rename or move of any existing user file or
+directory; device/ADB/fastboot access; firmware, AVB, FDT, EROFS or ramdisk
+work; any ROUND54 work.
+
+No candidate Git checkout was found, so no Git metadata query (remote/branch/
+HEAD/status/cat-file/tag) was executed. Those columns are NOT_APPLICABLE,
+not "clean" or "absent commit".
+
+Checks skipped or partially completed:
+  - WSL registered-distribution listing: NOT_RUN. wsl.exe is present but the
+    program is on the host security program blacklist, so the query was
+    refused. This is a policy block, NOT evidence that no distribution exists.
+  - One bounded home-directory traversal returned a security-policy block
+    notice and was not retried. Home-directory coverage is therefore PARTIAL,
+    not exhaustive.
+  - No full-drive recursive scan was attempted, by design.
+
+======================================================================
+2. HOST SUMMARY
+======================================================================
+  OS family / version : Windows 11 Pro for Workstations, 10.0.26200, x64
+  Native Linux host   : NO
+  Linux-capable build environment already present : NOT EVIDENCED
+    - native Linux: absent
+    - WSL: executable present, distribution list NOT_RUN (policy block)
+    - Docker / Podman executables: absent
+    - any Linux build-workspace marker found in permitted scope: none
+  Non-Linux toolchain present on the Windows side: partial only (see 4)
+
+Machine identifiers, account names and full personal paths are deliberately
+omitted.
+
+======================================================================
+3. SOURCE-WORKTREE TABLE
+======================================================================
+Search model: bounded candidate roots only (user home directory and the top
+level of fixed drives C:, D:, E:), maximum depth 3 beneath a candidate root.
+Identification was by project markers only: .git, .repo, build/kernel/kleaf,
+arch/arm64/configs/gki_defconfig, drivers/ufs/host/ufs-qcom.c, kernel
+top-level Makefile, and the kernel_common tree name.
+
+Result: NO ACK / kernel source worktree was found in the permitted scope.
+
+  Label                     Type                              Fully qualified?
+  ------------------------  --------------------------------  ----------------
+  (none)                    kernel_common git checkout        NO - not present
+  (none)                    Android repo manifest workspace   NO - not present
+  (none)                    partial kernel source archive     NO - not present
+  (none)                    local clone of the reports repo   NO - not present
+
+Candidate directories that WERE found, and why each is not a kernel source:
+
+  Sanitized label                    Classified as                    Kernel markers
+  ---------------------------------  -------------------------------  --------------
+  Drive D: / SDK build-tools cand.1   Android SDK build-tools           none
+  Drive D: / SDK build-tools cand.2   Android SDK build-tools           none
+  Drive D: / SDK platform cand.1      Android SDK platform (android.jar, build.prop)  none
+  Drive D: / agent workspace cand.1   Maven/Java web service project (pom.xml, nginx.conf)  none
+  Drive C: / agent tool workspace     agent session data                none
+  Drive C: / home documents cand.1    dated session folders             none
+  Drive E: / tool source cand.1       single UI source file, unrelated  none
+  Drive E: / tool source cand.2       single UI source file, unrelated  none
+
+  No candidate contained .git or .repo, arch/arm64, drivers/ufs, a Kleaf
+  directory, or a kernel top-level Makefile.
+
+Bounded marker searches that returned zero hits:
+  - Drive D:, depth <= 5: gki_defconfig, ufs-qcom.c, .repo, build.config.gki*,
+    kernel_common -> 0 hits.
+  - Drive E:, depth <= 5: same marker set -> 0 hits.
+  - Home directory, depth <= 4: same marker set -> 0 hits (coverage PARTIAL,
+    see section 1).
+
+Consequence for the pinned-commit questions: because no checkout exists, the
+questions "does commit 8ad08f75... exist locally" and "does tag
+android17-6.18.33_r00 exist locally" are NOT_APPLICABLE rather than "absent
+from an otherwise valid repository". Commit/tag availability remains UNKNOWN
+until a real checkout exists.
+
+======================================================================
+4. TOOL TABLE
+======================================================================
+  Tool                     Present   Version (safe query)        Usable for ACK build?
+  -----------------------  --------  --------------------------  ----------------------
+  git                      YES       2.55.0.windows.3            Windows-only as found
+  git-lfs                  NO        -                           NO
+  repo                     NO        -                           NO
+  bazel                    NO        -                           NO
+  bazelisk                 NO        -                           NO
+  java / javac (JDK)       NO        -                           NO
+  python                   YES       3.13.14                     helper scripts only,
+                                                                 not a kernel toolchain
+  clang                    NO        -                           NO
+  ld.lld / lld             NO        -                           NO
+  GNU make                 NO        -                           NO
+  ninja                    NO        -                           NO
+  dtc                      NO        -                           NO
+  dt-validate              NO        -                           NO
+  dt-doc-validate          NO        -                           NO
+  checkpatch.pl            NO        - (also no enclosing kernel tree)  NO
+  docker                   NO        -                           NO
+  podman                   NO        -                           NO
+  wsl (executable)         YES       version NOT_RUN (policy)    NOT EVIDENCED
+
+Supplementary presence check (not part of the required list):
+  gcc NO, cc NO, cmake NO, 7z NO, tar YES, curl YES, unzip YES,
+  node YES (22.22.2), npm YES.
+
+Interpretation: the Windows side has only a source-control client, a Python
+runtime and a Node runtime. No C compiler, no linker, no make/ninja, no JDK,
+no Bazel/Kleaf front end, no device-tree tooling, and no LFS/repo front end
+were found. Nothing observed is a kernel build toolchain.
+
+======================================================================
+5. STORAGE TABLE
+======================================================================
+  Volume label   Total GiB   Free GiB   Free %
+  -------------  ----------  ---------  --------
+  Drive C:          199.1       64.3      32%
+  Drive D:          731.2      325.4      45%
+  Drive E:          953.9      299.2      31%
+
+Volume serial numbers, partition GUIDs and hardware identifiers are omitted.
+No test files were created and no storage benchmark was run.
+
+======================================================================
+6. STAGE-A READINESS VERDICT
+======================================================================
+  NO_EXISTING_BUILD_WORKSPACE_FOUND
+
+Rationale, restricted to observed facts:
+  - No ACK kernel source worktree and no repo manifest workspace exists in the
+    permitted search scope (section 3).
+  - No Linux-capable build environment is evidenced: no native Linux, WSL
+    distribution list NOT_RUN, no Docker/Podman (section 2).
+  - No kernel build toolchain is present on the Windows side either
+    (section 4).
+  - Storage capacity is ample on all volumes, so capacity is not a limiting
+    factor (section 5).
+
+The other verdict options do not apply: SOURCE_TREE_PRESENT_BUT_ENVIRONMENT_
+INCOMPLETE and BUILD_ENVIRONMENT_PRESENT_BUT_SOURCE_TREE_MISSING both require
+one of the two halves to be evidenced, and neither is. BLOCKED /
+INSUFFICIENT_EVIDENCE was not selected because the absence findings above are
+positive observations from completed checks, not unresolved evidence gaps -
+except for the explicitly NOT_RUN WSL distribution listing, which is called out
+separately and does not by itself create a build environment.
+
+======================================================================
+7. EXACT NEXT BLOCKER
+======================================================================
+Two independent facts are missing before any real Stage-A build gate can run:
+
+  1. Source: there is no local ACK 6.18.33 worktree. Neither the pinned commit
+     8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a nor tag android17-6.18.33_r00
+     can be verified locally, because no repository object store exists to
+     query.
+  2. Environment: there is no evidenced Linux build host and no kernel
+     toolchain (clang/lld, make or ninja, JDK, Bazel/Kleaf, dtc/dt-schema,
+     git-lfs, repo). The WSL distribution state is NOT_RUN due to a host
+     security program block, so even the WSL option is unmeasured rather than
+     known-absent.
+
+Per the task boundary, this report does not recommend or perform any
+installation, download, clone or environment change. The decision on how to
+provide a suitable build host and source tree belongs to the operator.
+
+Residual gates unchanged and untouched by this inventory: ROUND12 AVB
+(BLOCKED at trusted-tool gate), ROUND10 ramdisk (BLOCKED), EROFS content
+(BLOCKED), final memory/reserved-memory handoff, selected DTBO entry and the
+physical PMIC input tree. ROUND54 belongs to the separate second AI branch and
+was not inspected.
+
+======================================================================
+8. NOT TESTED
+======================================================================
+No Kconfig resolution, olddefconfig, savedefconfig, final .config, patch
+application (git apply / --check), checkpatch, dt-schema, dt_binding_check,
+dtbs_check, dtc, kernel compile, Kleaf/Bazel target, image packaging, boot
+chain assembly or device boot was performed. No device was connected,
+unlocked, rooted, flashed or written. No firmware, AVB, FDT, EROFS or ramdisk
+artifact was parsed in this round.
+
+Redaction: no account names, no full local absolute paths, no machine or
+volume serial numbers, no device identifiers beyond the public model/SoC, and
+no tokens, keys, digests, signatures or credentials were included.

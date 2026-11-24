@@ -292,7 +292,7 @@
 
 	vdda-pll-supply = <&vreg_l9a_1p2>;
 
-	/* ACK SM8250 QMP UFS PHY's pinned config already sets 89900/18800uA. */
+	/* Pinned ACK SM8250 vreg_list supplies the 89900/18800uA load votes. */
 	status = "okay";
 };
 

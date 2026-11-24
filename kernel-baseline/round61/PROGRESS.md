@@ -309,3 +309,15 @@ The Ubuntu 22.04 runner successfully installed and executed the manifest toolcha
 ### Watchdog recovery — hosted build run 45453412267 stopped reporting progress
 
 The GitHub Actions API continued to report run `45453412267` as `in_progress`, but its `updated_at` remained `2026-11-24T17:52:57Z` and its sole manifest/build step never advanced to the publish or artifact-upload steps. Its job log endpoint returned BlobNotFound, so there is no trustworthy output proving whether it was syncing, querying Bazel or compiling. To avoid treating a stale status as progress, a new trigger was committed: `4877a6d2afb643e69e1ac68685983c4495e20936`. Recovery run `45455279898` has started and is currently at the same manifest/build step. The older run is left untouched; no claim is made that it completed or timed out. Monitor the recovery run for a fresh terminal result and artifact upload.
+
+
+## 2026-11-25 independent runner verification handoff
+
+**Second AI issued a read-only verification taskbook:** `kernel-baseline/round61/AGENT_VERIFICATION_TASKBOOK_SECOND_AI.md`.
+
+Latest GitHub Actions inspection found two unresolved runs:
+- `45455279898` / job `138662922161`: API says in_progress; last update `2026-11-24T18:03:18Z`; manifest sync/build step remains in_progress; publish/artifact steps pending.
+- `45453412267` / job `138656311747`: API says in_progress; last update `2026-11-24T17:52:57Z`; same step state.
+- Both job-log retrieval attempts return HTTP 404 `BlobNotFound`.
+
+The Second AI did not start another duplicate build and did not cancel either run. Because the hosted runner state cannot be reliably diagnosed from the available metadata/log endpoint, an independent agent must verify whether these are live, orphaned, or stale runs before build orchestration resumes. No Bazel query/cquery, final .config, or Image artifact is claimed. **Phase C remains open; Phase D remains not run.**

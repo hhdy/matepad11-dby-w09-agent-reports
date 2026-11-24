@@ -72,15 +72,19 @@ Sources:
 - ACK Command DB API: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/cmd-db.h
 - ACK RPMh API: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/rpmh.h
 - ACK TCS state definitions: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/tcs.h
+- ACK SM8250 apps_rsc TCS configuration: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/arch/arm64/boot/dts/qcom/sm8250.dtsi
+- ACK RSC ACTIVE_ONLY -> ACTIVE_TCS / AMC handling: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh-rsc.c
 
 ### 3.2 Required RPMh adaptation
 
 The old downstream implementation stores a struct rpmh_client pointer, calls rpmh_get_byindex() / rpmh_release(), and submits writes with the client handle. ACK uses the newer device-based RPMh interface (rpmh_write(struct device *, ...)) and does not expose those old client-handle functions in its public header.
 
-The old driver also has an optional RPMH_AWAKE_STATE path for controllers without an AMC. ACK enum rpmh_state currently exposes SLEEP, WAKE_ONLY and ACTIVE_ONLY; it does not expose that AWAKE enumerant. The ARC port must therefore:
+The old driver also has an optional RPMH_AWAKE_STATE path for controllers without an AMC. ACK enum rpmh_state exposes SLEEP, WAKE_ONLY and ACTIVE_ONLY; it does not expose that AWAKE enumerant. However, the ACK SM8250 apps_rsc SoC node declares ACTIVE_TCS=2, SLEEP_TCS=3, WAKE_TCS=3 and CONTROL_TCS=1. ACK's rpmh-rsc driver maps ACTIVE_ONLY requests to ACTIVE_TCS and triggers the AMC path. For an ACK SM8250 board based on this SoC DTSI, the initial ARC implementation should therefore use ACTIVE_ONLY / SLEEP / WAKE_ONLY; it should not blindly copy the old optional AWAKE branch. The actual HOS4.3 base-FDT property inventory did not capture qcom,tcs-config, so the runtime vendor RSC configuration is still not independently established.
+
+The ARC port must therefore:
 - use the correct ACK resource-controller device context;
 - adapt the old client lifetime to the current device-based API;
-- explicitly decide whether this SM8250 path uses ACTIVE_ONLY / WAKE_ONLY / SLEEP or needs a carefully designed equivalent of the old AWAKE path;
+- use the ACK ACTIVE_ONLY/SLEEP/WAKE_ONLY flow for the upstream SM8250 RSC layout, then verify no HOS-specific RSC override is needed;
 - retain request aggregation, acknowledgement, rollback and error handling.
 
 No safe one-line API rename is sufficient.
@@ -141,11 +145,13 @@ This is a source feasibility plan, not an implemented driver. No code or DTS ARC
 | Legacy ARC parent-supply property mapping | SOURCE REVIEWED |
 | ACK Command DB ARC ID / AUX data interfaces | SOURCE REVIEWED / AVAILABLE |
 | ACK device-based RPMh write interfaces | SOURCE REVIEWED / AVAILABLE |
-| Old rpmh_client / RPMH_AWAKE_STATE compatibility | ADAPTATION REQUIRED |
+| Old rpmh_client API | ADAPTATION REQUIRED |
+| Old RPMH_AWAKE_STATE branch | NOT IN ACK enum; upstream SM8250 apps_rsc has ACTIVE_TCS=2 and AMC path, so use ACTIVE_ONLY unless HOS-specific RSC evidence differs |
 | ACK upstream PMIC regulator has ARC match/provider | NO |
 | Legacy boot proxy-consumer helper | SOURCE REVIEWED |
 | ACK proxy-consumer source/Kconfig/core hook | ABSENT IN ACK SOURCE REVIEW |
 | ROUND11 six proxy-supply phandles | COMPLETE / RESOLVED |
+| HOS4.3 qcom,tcs-config / RSC awake-mode override | NOT_CAPTURED in ROUND7 partial property inventory |
 | HOS4.3 qcom,proxy-consumer-* request flags | UNKNOWN (not in ROUND11 scope) |
 | Whether UFS depends on a boot proxy vote | UNKNOWN |
 | ARC driver port / new DT binding / Kconfig / schema | NOT_IMPLEMENTED |

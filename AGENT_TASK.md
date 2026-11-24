@@ -316,3 +316,39 @@ ROUND15 is complete. The user authorized environment deployment. The current loc
 Execute WSL2 + Ubuntu 24.04 deployment, minimal official host packages, official kernel Repo manifest sync, and pin ACK common to `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`. Stop before patch application and kernel compilation. Never bypass a Windows security block, disable security software, force a reboot, change BIOS/UEFI, or operate the tablet. Upload only the sanitized report to `firmware-audit-v1`, then stop.
 
 Current status: **READY FOR LOCAL AGENT — deployment result not yet uploaded.** Do not claim environment readiness until the report verifies it.
+
+
+## 最新派发指针校正 — ROUND16 BLOCKED；ROUND17 + ROUND58 并行（2026-11-24）
+
+本节覆盖此前“ROUND16 READY FOR LOCAL AGENT / deployment result not yet uploaded”的旧状态。
+
+**ROUND16 已上传终态报告：BLOCKED_BY_HOST_SECURITY_POLICY。** 不是部署成功，也不是源同步部分成功。未安装 distro、未 apt、未 repo sync、未 pin、未编译。
+
+已确认 Store WSL 2.7.3.0 与注册在 C: 的既有 WSL2 distro Ubuntu；VirtualMachinePlatform 已 Enabled。ROUND15 的“无 WSL”结论应修正为“ROUND15 未能查询 WSL”；ROUND16 才确认已安装。wsl.exe 被 Command Security Program Blacklist 阻止，Agent 非提升上下文。
+
+### 当前本地 Agent 任务：ROUND17（等待用户人工前置动作）
+
+- Task: `firmware-analysis/round17/AGENT_TASK.md`
+- Start prompt: `firmware-analysis/round17/START_PROMPT.md`
+- User action required: 手动在 Security Center → Command Security → Program Blacklist 移除/允许 `C:\Windows\System32\wsl.exe`；随后以管理员身份重新启动 local Agent。
+- Agent 不得编辑黑名单、绕过安全策略、关闭安全软件或重试其他执行路径。
+- 主 AI 决策：保留现有 C: Ubuntu，不迁移/不注销/不覆盖；在 D: 新装独立 Ubuntu-24.04 到 `D:\WSL\Ubuntu-24.04`。
+- Store WSL 2.7.3.0 先做 CLI 验证，不盲目全量重装；VMP 已启用，不预启用 legacy WSL 或 HypervisorPlatform。省略 `--no-launch`，正常首次启动并由用户亲自创建 Linux 账户，再验证发行版 Version=2、Ubuntu 24.04 noble、D: BasePath。
+- ROUND17 后续同步 official kernel manifest、pin ACK common 到 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`，采集 manifest/toolchain；本轮仍不编译。
+
+### 当前第二 AI 任务：ROUND58（实现而非复审）
+
+- Branch: `ai-parallel/round58-kleaf-target-audit`
+- Task: `kernel-baseline/round58/ROUND58_TASK.md`
+- Start prompt: `kernel-baseline/round58/START_PROMPT.md`
+- Deliverables: concrete no-`base_kernel` full-image Kleaf BUILD patch candidate; deterministic final .config validation Python helper and tests; exact post-ROUND17 integration/build runbook.
+- 必须只写它的专属分支，不修改 main / firmware-audit-v1 / protected DTS / PR #1。
+- 不可声称实际 Bazel/build 已运行；第一版目标聚焦 Image，不臆造 DTB/boot packaging。
+
+当前并行队列：
+1. 用户处理 WSL blacklist 和 elevated Agent 前置条件。
+2. 本地 Agent 等待后执行 ROUND17。
+3. 第二 AI 执行 ROUND58。
+4. 主 AI 独立准备并审核实际 patch/build 集成。
+
+PR #1 保持 Draft/Open/unmerged；Stage A ACK 6.18.33 先于 Stage B Android 17 DerpFest。

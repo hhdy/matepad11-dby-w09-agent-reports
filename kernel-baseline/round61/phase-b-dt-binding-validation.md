@@ -85,3 +85,8 @@ ROUND52-0001's four optional supply/load properties and pairing conditions have 
 ### ROUND36 cardinality correction discovered from processed schema
 
 The hosted run 45448394286 successfully applied the patch series and passed all pre-schema gates, but the one-domain SM8250 fixture failed. Inspection of the retained processed-schema.json showed that dtschema 2023.9 expands maxItems: 2 without an explicit minItems into minItems: 2, maxItems: 2. This contradicted ROUND36's stated intent to allow either one or two domains. Added round61/patches/round36-corrected-power-domain-range.patch to set minItems: 1 on the shared power-domains property; the SM8250 conditional then caps it at two, while the non-SM8250 else branch caps it at one. Both UFS validation and manifest-pinned build workflows apply this correction immediately after ROUND36. Latest UFS run is pending.
+
+
+### Patch order note
+
+The shared-schema patch ROUND52-0001 replaces the common binding file as a full-file hunk. Therefore the explicit minItems: 1 correction for ROUND36 must be applied after ROUND52-0001, not before it. Both hosted workflows now use: ROUND36 → ROUND52-0001 → round36-corrected-power-domain-range.patch → round32-corrected-sc7180-clock-names.patch. The failed run 45449480649 stopped at the next ROUND52 patch because the correction had initially been applied before that replacement; the sequence has been corrected and a fresh run is pending.

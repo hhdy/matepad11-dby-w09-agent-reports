@@ -164,6 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/ack"
+          report="$RUNNER_TEMP/report"
           export PATH="$RUNNER_TEMP/dtschema-venv/bin:$PATH"
           export PYTHON="$RUNNER_TEMP/dtschema-venv/bin/python"
           set -o pipefail

@@ -1,9 +1,9 @@
 # ROUND61 hosted manifest/Kleaf build result
 
-- Date UTC: 2026-11-24T17:31:35Z
+- Date UTC: 2026-11-24T17:36:44Z
 - Branch: ai-parallel/stagea-port-until-boot
-- Trigger commit: 1f62f80cd87461c59f068598344eb5057e88b28b
-- Workflow run ID: 45448441783
+- Trigger commit: 558c2d2deb1c8d5bd6eaea29db6766cf7e04af64
+- Workflow run ID: 45449517911
 - Manifest commit: 46a1a5274ff0b40419952c861a8958bba5f28cfc
 - ACK required commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 - Last stage: locate manifest-provided Clang

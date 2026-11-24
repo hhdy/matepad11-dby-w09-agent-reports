@@ -114,7 +114,7 @@ This is intentionally later than kernel bring-up.
 | Item | Status | Impact |
 |---|---|---|
 | EROFS vendor/odm file content | BLOCKED | Cannot inventory proprietary .ko, firmware, VINTF, init or vendor KMI |
-| Local ramdisk contents | ROUND10 pending | Early boot/init/module sequencing remains partially unknown |
+| Local ramdisk contents | ROUND10 complete with BLOCKED subitems | Cmdline only: no selector found; ramdisk contents, fstab and module sequence remain NOT_READ_BLOCKED |
 | ACK source sync / Kleaf | NOT_RUN / WSL blocked | No build performed |
 | Android17 + old HOS4.3 vendor compatibility | UNKNOWN | Full Android17 system bring-up remains separate risk |
 | Exact Coolapk kernel source | NOT_PUBLIC | Cannot reproduce that maintainer's patch set |
@@ -124,7 +124,7 @@ This is intentionally later than kernel bring-up.
 
 ## 7. Immediate next actions
 
-1. Keep local Agent ROUND10 as the sole pending local task because it inspects existing boot/ramdisk startup data relevant to kernel image integration. No repeated FDT/DTBO parser work.
-2. GPT continues source-side work: construct a file-by-file ACK 6.18 vs same-device Linux DTS/driver backport matrix, then prepare the initial DBY-W09 DTS draft from proven HOS4.3 facts.
-3. After that review, create a dedicated implementation branch on the project repository for source patches. Do not edit the upstream Android Common Kernel directly or claim a build until a build is actually executed.
-4. Preserve read-only boundaries: no flashing, unlocking, device connection, root, write operations, module loading, writable mounts or compilation until the user explicitly changes the operating boundary.
+1. ROUND10 is complete with blocked subitems. Its ramdisk scan is BLOCKED; its cmdline finding is limited to the reviewed cmdline scope. Do not state globally that no panel selector exists.
+2. GPT continues source-side work: build the minimal DBY-W09 ACK 6.18 DTS foundation and verify the legacy boot-v2 / separate-ramdisk integration model. ROUND12 records the current evidence and DTS mapping.
+3. No new local Agent task is pending. A follow-up ramdisk task requires both a trusted boot unpack tool and explicit user authorization. Do not repeat FDT/DTBO parsing.
+4. Preserve read-only boundaries: no flashing, unlocking, device connection, root, partition writes, module loading, writable mounts or compilation until the user explicitly changes the operating boundary.

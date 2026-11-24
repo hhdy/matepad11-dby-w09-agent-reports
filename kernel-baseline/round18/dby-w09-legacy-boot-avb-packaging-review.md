@@ -109,8 +109,23 @@ The public Linux 7.0 port's README says fastboot boot is refused. Thus an eventu
 | DTS / DTBO compile, Kconfig resolution, kernel build | NOT_RUN |
 | Any partition write / fastboot / device boot | NO |
 
-## 7. Next steps
+## 7. Android first-stage compatibility and module-loading boundary
 
-1. Wait only for ROUND12's read-only AVB footer / vbmeta descriptor report.
-2. GPT continues with source-side ACK storage-first and Android 17 initramfs / boot integration research; do not copy the Linux SD-root initramfs.
+AOSP first-stage init loads eligible kernel modules from /lib/modules before it performs first-stage device creation and partition mounting. It selects a module directory matching the running kernel release and page-size suffix, reads modules.dep / soft dependencies and a mode-specific modules.load list, and then proceeds to first-stage mount. The official Android module-support guide documents these files and their role.
+
+However, the published Android documentation's standard layout puts vendor modules in vendor ramdisk (vendor_boot), while this DBY-W09 layout has legacy header-v2 boot plus a separate ramdisk partition. It is not yet proven that the HOS4.3 ABL-combined first-stage initramfs exposes the same /lib/modules tree in a way compatible with DerpFest Android 17. ROUND10 ramdisk contents are BLOCKED. Therefore UFS/QMP modules remain built-in in the first storage-first plan until this path is established; this is conservative, not a hard Android requirement.
+
+AOSP first-stage mount sees logical fstab entries, initializes device-mapper, reads LP metadata from super, and creates dm-linear logical devices. In this ACK kernel, dm-linear is part of dm-mod; there is no CONFIG_DM_LINEAR Kconfig option. The local HOS4.3 vendor/odm EROFS signatures justify EROFS_FS=y. DM_VERITY / FEC still depend on ROUND12 AVB metadata and the actual fstab.
+
+Sources:
+- First-stage module support: https://source.android.com/docs/core/architecture/kernel/kernel-module-support
+- First-stage init: https://android.googlesource.com/platform/system/core/+/refs/heads/main/init/first_stage_init.cpp
+- First-stage logical partition creation: https://github.com/aosp-mirror/platform_system_core/blob/main/init/first_stage_mount.cpp
+- ACK dm target composition: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/md/Makefile
+- ACK EROFS Kconfig: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/fs/erofs/Kconfig
+
+## 8. Next steps
+
+1. Await ROUND12's read-only AVB footer / vbmeta descriptor report.
+2. GPT continues source-side ACK storage-first and Android 17 initramfs / boot integration research; do not copy the Linux SD-root initramfs.
 3. Do not repack, sign, flash, boot or write any device image under the current boundary.

@@ -1,0 +1,142 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] scsi: ufs: qcom: manage SM8250 VDDP REF_CLK supply
+
+Use qcom,vddp-ref-clk-supply to acquire the UFS device REF_CLK pad supply,
+submit its configured load, and enable it before the Qualcomm PHY is powered
+up. Keep it enabled for the initial storage-first milestone; do not add
+suspend/resume rail switching yet.
+
+Register a devm cleanup action after the managed regulator get. On device
+unbind, driver-core devres release occurs after the UFS remove callback has
+completed generic VCCQ shutdown, so this action disables VDDP and then clears
+its load before the managed regulator handle is put. It also handles failed
+variant initialization after the generic HBA unwind.
+
+Intentionally do not acquire qcom,vccq-parent-supply: ROUND14/51 establishes
+that ACK S8 load-only is a no-op and no enable owner is proven. S8 is not
+enabled or mode-switched by this patch.
+
+Prerequisites: apply ROUND32 and ROUND36 schema drafts, ROUND37 board DTS
+delta, then ROUND33 dual-GenPD UFS driver draft before this patch. The driver
+include hunk is written against the post-ROUND33 include list.
+
+Draft only: not applied to a full tree, checkpatched, compiled, or tested.
+
+---
+ drivers/ufs/host/ufs-qcom.c | 57 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.h | 5 +++++
+ 2 files changed, 62 insertions(+)
+
+diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
+--- a/drivers/ufs/host/ufs-qcom.h
++++ b/drivers/ufs/host/ufs-qcom.h
+@@ -316,9 +316,13 @@
+ struct gpio_desc;
+ 
+ struct ufs_qcom_host {
+ 	struct phy *generic_phy;
+ 	struct ufs_hba *hba;
+ 	struct ufs_pa_layer_attr dev_req_params;
+ 	struct clk_bulk_data *clks;
+ 	u32 num_clks;
+ 	bool is_lane_clks_enabled;
++	struct ufs_pa_layer_attr dev_req_params;
++	struct clk_bulk_data *clks;
++	u32 num_clks;
++	bool is_lane_clks_enabled;
+diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
+--- a/drivers/ufs/host/ufs-qcom.c
++++ b/drivers/ufs/host/ufs-qcom.c
+@@ -16,4 +16,5 @@
+ #include <linux/platform_device.h>
+ #include <linux/pm_domain.h>
+ #include <linux/pm_opp.h>
+ #include <linux/reset-controller.h>
++#include <linux/reset-controller.h>
+@@ -1497,6 +1497,75 @@
+ 	return 0;
+ }
+ 
+ /**
+  * ufs_qcom_init - bind phy with controller
+  * @hba: host controller instance
++	struct device *dev = host->hba->dev;
++	int ret;
++
++	if (host->vddp_ref_clk_enabled) {
++		ret = regulator_disable(host->vddp_ref_clk);
++		if (ret) {
++			dev_err(dev, "failed to disable VDDP REF_CLK supply: %d\n", ret);
++			return;
++		}
++		host->vddp_ref_clk_enabled = false;
++	}
++
++	if (host->vddp_ref_clk_load_set) {
++		ret = regulator_set_load(host->vddp_ref_clk, 0);
++		if (ret)
++			dev_err(dev, "failed to clear VDDP REF_CLK load: %d\n", ret);
++		else
++			host->vddp_ref_clk_load_set = false;
++	}
++}
++
++static int ufs_qcom_init_vddp_ref_clk(struct ufs_qcom_host *host)
++{
++	struct device *dev = host->hba->dev;
++	u32 load_uA;
++	int ret;
++
++	if (!dev->of_node ||
++	    !of_device_is_compatible(dev->of_node, "qcom,sm8250-ufshc") ||
++	    !of_find_property(dev->of_node, "qcom,vddp-ref-clk-supply", NULL))
++		return 0;
++
++	ret = of_property_read_u32(dev->of_node,
++				    "qcom,vddp-ref-clk-max-microamp", &load_uA);
++	if (ret)
++		return dev_err_probe(dev, ret, "missing VDDP REF_CLK load\n");
++	if (!load_uA)
++		return dev_err_probe(dev, -EINVAL, "invalid zero VDDP REF_CLK load\n");
++
++	host->vddp_ref_clk = devm_regulator_get_optional(dev,
++							 "qcom,vddp-ref-clk");
++	if (IS_ERR(host->vddp_ref_clk))
++		return dev_err_probe(dev, PTR_ERR(host->vddp_ref_clk),
++				     "failed to get VDDP REF_CLK supply\n");
++
++	/*
++	 * Register after the managed regulator get. The action runs before
++	 * regulator_put() and after ufshcd_remove() has shut down generic VCCQ.
++	 */
++	ret = devm_add_action_or_reset(dev, ufs_qcom_vddp_ref_clk_cleanup, host);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to register VDDP cleanup\n");
++
++	ret = regulator_set_load(host->vddp_ref_clk, load_uA);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to set VDDP REF_CLK load\n");
++	host->vddp_ref_clk_load_set = true;
++
++	ret = regulator_enable(host->vddp_ref_clk);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to enable VDDP REF_CLK supply\n");
++	host->vddp_ref_clk_enabled = true;
++
++	return 0;
++}
++
++/**
++ * ufs_qcom_init - bind phy with controller
++ * @hba: host controller instance
+@@ -1578,5 +1647,9 @@
+ 	err = ufs_qcom_ice_init(host);
+ 	if (err)
+ 		goto out_variant_clear;
+ 
+ 	ufs_qcom_setup_clocks(hba, true, POST_CHANGE);
++	if (err)
++		goto out_variant_clear;
++
++	ufs_qcom_setup_clocks(hba, true, POST_CHANGE);
+--

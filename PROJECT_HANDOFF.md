@@ -812,3 +812,14 @@ ROUND18 原始任务书第 5 节曾把 ROUND32 的旧 patch blob `efe2d932da3471
 二号 AI 修正版候选 `round32-corrected-sc7180-clock-names.patch`（当时 blob `fade9cb2bdfd544c6736c7595af8380726edf318`）在真实 GitHub Actions Run `45448025597` 的 `git apply --check` 中仍然失败；此前 Run `45447645008` 同样失败。它不能视为可用补丁。ROUND18 本地 Agent 必须在独立 ACK 副本中基于准确上下文重制最小补丁，先单独通过真实 `git apply --check`，再 apply + diff-check，然后执行 ACK 版本 dt-schema 和 7/8/9 clocks 正反例。
 
 当前二号 AI 专属分支仍由它独立维护；本地 ROUND18 仅读取它的候选补丁和报告，不得向该分支写入。ROUND18 其它可独立推进的 Kleaf/Bazel/Kconfig/Image-only 工作不得因 clock schema gate 阻断而停止。主线授权以 `firmware-analysis/round18/AGENT_TASK.md` revision 1 和 `START_PROMPT.md` 为准。
+
+---
+
+## ROUND18 revision 2 — ROUND61 patch sequencing correction（2026-11-25）
+
+二号 AI 最新 ROUND61 进展发现两个必须反映到本地 ROUND18 的点：
+1. `round32-corrected-sc7180-clock-names.patch` 当前观察 blob `2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb` 已修正 hunk count（3 old / 4 new），但仍须本地真实 `git apply --check`；旧 blob `fade9cb2...` 是失败版本，不再采用。
+2. 新增 `round36-corrected-power-domain-range.patch` blob `a6e8eeaf9303e428e644245749e6daec4d0e38ac`，必须在 ROUND52-0001 之后应用，因为 ROUND52-0001 会整体替换 `qcom,ufs-common.yaml`。顺序为 ROUND36 → ROUND52-0001 → ROUND36 corrected range → ROUND32 corrected clock count → ROUND33 → ROUND52-0002 → ROUND63 PHY binding/driver。
+
+二号 AI 当时 branch HEAD `faae6c044369c24afbdc270eb53fd2e0d31ad451` / PROGRESS blob `2a4c91b9e7a74e3021783bde3b2221d84ea63aee` 报告工作流顺序已修复，新验证仍 pending。必须读取最新分支而不是沿用快照。`dt_binding_check` / `dt-doc-validate` 要覆盖 qcom,ufs.yaml、qcom,sc7180-ufshc.yaml、qcom,ufs-common.yaml 和 QMP UFS PHY schema。
+

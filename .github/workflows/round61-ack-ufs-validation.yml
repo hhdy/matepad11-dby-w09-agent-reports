@@ -95,6 +95,15 @@ jobs:
           sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
           git -C "$ack" diff --binary
 
+      - name: Run strict checkpatch on driver patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          ack="$RUNNER_TEMP/ack"
+          report="$RUNNER_TEMP/report"
+          perl "$ack/scripts/checkpatch.pl" --no-tree --strict < "$report/kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft"
+          perl "$ack/scripts/checkpatch.pl" --no-tree --strict < "$report/kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft"
+
       - name: Install device-tree schema prerequisites
         shell: bash
         run: |

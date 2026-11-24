@@ -29,10 +29,11 @@
 			hardware_version = "SH1DBSLM";
 
 			/*
-			 * huawei,modem_id is omitted intentionally. Before adding
-			 * it, verify whether ABL requires the property itself and
-			 * determine an approved non-sensitive value/representation.
+			 * All nine local stock DTBO entries carry this same generic
+			 * sentinel. Preserve it in the new minimal ABL rootparam
+			 * overlay; it is not a per-device identifier.
 			 */
+			huawei,modem_id = <0xffffffff 0x00>;
 		};
 	};
 };

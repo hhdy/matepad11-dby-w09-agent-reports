@@ -201,6 +201,37 @@ jobs:
           printf 'ROUND61_UFS_EXAMPLE_DT_VALIDATE_RC=%s (nonzero remains a Phase-B blocker)\n' "$ufs_example_rc"
           printf '\n=== dt-validate CLI ===\n'
           dt-validate --help
+          ufs_fixture_dir="$RUNNER_TEMP/round61-ufs-fixtures"
+          python3 "$report/kernel-baseline/round61/tests/generate_round61_ufs_fixtures.py" --out "$ufs_fixture_dir"
+          for source in "$ufs_fixture_dir"/*.dts; do
+            name="$(basename "$source" .dts)"
+            dtc -Wno-unit_address_vs_reg -I dts -O dtb -o "$ufs_fixture_dir/$name.dtb" "$source"
+          done
+          dt_validate_expected_failure() {
+            name="$1"
+            expected="$2"
+            log="$RUNNER_TEMP/$name-validation.log"
+            set +e
+            dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+              "$ufs_fixture_dir/$name.dtb" > "$log" 2>&1
+            rc=$?
+            set -e
+            cat "$log"
+            test "$rc" -ne 0
+            grep -Fqi "$expected" "$log"
+          }
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            "$ufs_fixture_dir/ufs-sm8250-1-domain-valid.dtb"
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            "$ufs_fixture_dir/ufs-sm8250-2-domains-valid.dtb"
+          dt_validate_expected_failure ufs-sm8250-7-clock-names-invalid clock-names
+          dt_validate_expected_failure ufs-sm8250-9-clock-names-invalid clock-names
+          dt_validate_expected_failure ufs-sm8250-3-domains-invalid power-domains
+          dt_validate_expected_failure ufs-sm8150-2-domains-invalid power-domains
+          dt_validate_expected_failure ufs-sm8250-vddp-missing-load-invalid qcom,vddp-ref-clk-max-microamp
+          dt_validate_expected_failure ufs-sm8250-vccq-parent-missing-load-invalid qcom,vccq-parent-max-microamp
+          dt_validate_expected_failure ufs-sm8250-vddp-zero-load-invalid qcom,vddp-ref-clk-max-microamp
+          printf 'ROUND61_UFS_FIXTURES=PASS (SM8250 1/2 domains; 7/9 clocks, 3 domains, non-SM8250 dual domain, supply/load pair and zero load rejected)\n'
           fixture_dir="$report/kernel-baseline/round61/fixtures"
           for fixture in round63-phy-legacy-no-property round63-phy-always-on-valid round63-phy-always-on-invalid-type; do
             dtc -Wno-unit_address_vs_reg -I dts -O dtb \
@@ -302,6 +333,7 @@ jobs:
             ${{ runner.temp }}/round61-dt-binding-check.log
             ${{ runner.temp }}/round61-ufs-example-validation.log
             ${{ runner.temp }}/round63-phy-negative-validation.log
+            ${{ runner.temp }}/*-validation.log
             ${{ runner.temp }}/*checkpatch.log
           if-no-files-found: warn
           retention-days: 14

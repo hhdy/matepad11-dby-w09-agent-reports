@@ -154,7 +154,7 @@ jobs:
             git -C common diff --check
           }
           echo "ROUND32 superseded: fixed ACK qcom,sc7180-ufshc.yaml already selects qcom,sm8250-ufshc and defines its eight-clock branch; avoid duplicate schema selection."
-          echo "ROUND57 intentionally superseded: ROUND32 already has a fixed eight-item clock-names list; ACK dt-schema meta-schema rejects redundant minItems/maxItems alongside that items array."
+          echo "ROUND57 intentionally superseded: pinned ACK qcom,sc7180-ufshc.yaml already has the fixed eight-item SM8250 clock-names list; ACK dt-schema rejects redundant minItems/maxItems beside that tuple."
           apply_patch "$REPORT/kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft"
           apply_patch "$REPORT/kernel-baseline/round61/patches/round52-0001-context-corrected.patch"
           apply_patch "$REPORT/kernel-baseline/round61/patches/round33-checkpatch-clean.patch"

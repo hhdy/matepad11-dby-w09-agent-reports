@@ -65,18 +65,19 @@
  * integers directly.
  *
  * HOS4.3 initial modes: L5/L9=HPM, L6/L17=LPM; S4 has no mode metadata.
- * L5/L9 each carry a 100mA vendor proxy-consumer vote. ACK has no equivalent
- * vendor proxy helper, so regulator-system-load=100000 approximates that
- * persistent load for standard DRMS aggregation; this is not an exact
- * proxy-consumer lifecycle translation. LDO allowed modes and set-load
- * permission are enabled only where the ACK hardware ops implement DRMS.
+ * L5/L9 each carry a 100mA vendor proxy-consumer vote. Public KONA
+ * proxy-consumer code removes these boot-time requests at late_initcall_sync;
+ * a permanent regulator-system-load would be semantically wrong. ACK lacks
+ * that temporary proxy helper, so the boot handoff remains an explicit gap.
+ * LDO allowed modes and set-load permission are enabled only where ACK
+ * hardware ops implement DRMS.
  *
- * S8's HOS4.3 policy is RET below 200mA and AUTO at/above 200mA. ACK's
- * PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, while the UFS parent
- * rail advertises up to 210mA. To avoid pinning this rail in RET when a
- * higher load is requested, this draft selects hardware AUTO as the
- * conservative ACK fallback. This intentionally differs from HOS initial
- * RET and does not claim software-equivalent threshold switching.
+ * S8's HOS4.3 policy is RET initial with RET/AUTO support and a 200mA
+ * threshold. ACK's PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, while
+ * the UFS parent rail advertises up to 210mA. To avoid pinning this rail in
+ * fixed RET, this draft selects hardware AUTO as the conservative ACK
+ * fallback. This differs from HOS initial RET and does not reproduce its
+ * mode-threshold policy.
  */
 
 /*
@@ -164,7 +165,6 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
 						   RPMH_REGULATOR_MODE_HPM>;
-			regulator-system-load = <100000>; /* HOS proxy-consumer-current */
 			regulator-allow-set-load;
 		};
 
@@ -187,7 +187,6 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
 						   RPMH_REGULATOR_MODE_HPM>;
-			regulator-system-load = <100000>; /* HOS proxy-consumer-current */
 			regulator-allow-set-load;
 		};
 

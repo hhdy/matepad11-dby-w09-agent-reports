@@ -28,7 +28,7 @@ def render(
     vccq_supply: bool = True,
     vccq_load: int | None = 210000,
 ) -> str:
-    names = SM8150_NAMES if compatible == "qcom,sm8150-ufshc" else SM8250_NAMES
+    names = SM8150_NAMES if compatible == "qcom,sm8150-ufshc" else SM8250_NAMES + ["ice_core_clk"]
     names = names[:clock_count]
     clocks = ", ".join(f"<&clk{i}>" for i in range(clock_count))
     clock_names = ", ".join(f'"{name}"' for name in names)
@@ -58,8 +58,8 @@ def render(
         interrupt-controller;
         #interrupt-cells = <3>;
     }};
-{''.join(f'    clk{i}: clock-controller-{i} {{ #clock-cells = <0>; }};\\n' for i in range(9))}
-{''.join(f'    pd{i}: power-domain-{i} {{ #power-domain-cells = <0>; }};\\n' for i in range(3))}
+{''.join(f'    clk{i}: clock-controller-{i} {{ #clock-cells = <0>; }};\n' for i in range(9))}
+{''.join(f'    pd{i}: power-domain-{i} {{ #power-domain-cells = <0>; }};\n' for i in range(3))}
     vddp_reg: vddp-regulator {{ }};
     vccq_reg: vccq-regulator {{ }};
 
@@ -72,7 +72,7 @@ def render(
         clocks = {clocks};
         clock-names = {clock_names};
         power-domains = {domains};
-{''.join(f'        {line}\\n' for line in supplies)}
+{''.join(f'        {line}\n' for line in supplies)}
     }};
 }};
 """

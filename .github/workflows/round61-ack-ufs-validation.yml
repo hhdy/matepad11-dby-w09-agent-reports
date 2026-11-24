@@ -68,6 +68,10 @@ jobs:
             if ! git -C "$ack" apply --check "$report/$patch"; then
               printf '\n=== failure diagnostics for %s ===\n' "$patch"
               nl -ba "$ack/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml" | sed -n '35,125p' || true
+              printf '\n=== exact whitespace around allOf ===\n'
+              sed -n '62,68l' "$ack/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml" || true
+              printf '\n=== patch hunk bytes ===\n'
+              grep -n -A4 '^@@ -64,3 +85,16 @@' "$report/$patch" | od -An -tx1c || true
               git -C "$ack" apply --reject --verbose "$report/$patch" || true
               find "$ack" -name '*.rej' -type f -print -exec cat {} \; || true
               exit 1

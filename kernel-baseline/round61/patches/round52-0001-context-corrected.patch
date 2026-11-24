@@ -15,12 +15,12 @@ Apply after ROUND32 has added qcom,sm8250-ufshc to the schema compatible list.
 Draft only; dt_binding_check has not been run.
 
 ---
- Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 34 ++++++++++++++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 @@ -47,5 +47,22 @@ properties:
    qcom,ice:
       description: phandle to the Inline Crypto Engine node

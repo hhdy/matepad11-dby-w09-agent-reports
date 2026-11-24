@@ -1,15 +1,15 @@
 From: DBY-W09 Stage-A implementation
 Subject: [PATCH DRAFT] dt-bindings: ufs: allow one or two SM8250 power domains
 
-The generic dt-schema converter treats maxItems without minItems as an
-exact-length tuple. ROUND36 raises the shared maxItems to two for SM8250,
-which unintentionally turns the existing one-domain SM8250 topology into
-an invalid fixture. State the lower bound explicitly; the SM8250 conditional
-then permits one or two domains while the non-SM8250 branch remains exactly one.
+The generic dt-schema converter treats maxItems without an explicit
+minItems as an exact-length tuple. ROUND36 raises the shared ceiling to
+two, and its SM8250 conditional also needs an explicit lower bound.
+Set both the shared property and the SM8250 then-branch to minItems: 1;
+the non-SM8250 else-branch remains exactly one.
 
 ---
- Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml | 1 +
- 1 file changed, 1 insertion(+)
+ Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
@@ -18,5 +18,12 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml b/Docume
    power-domains:
 +    minItems: 1
      maxItems: 2
+
+@@ -92,4 +93,5 @@
+     then:
+       properties:
+         power-domains:
++          minItems: 1
+           maxItems: 2
 
 --

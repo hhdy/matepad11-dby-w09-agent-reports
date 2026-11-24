@@ -125,8 +125,14 @@ jobs:
           export PYTHON="$RUNNER_TEMP/dtschema-venv/bin/python"
           set -o pipefail
           make ARCH=arm64 dt_binding_check \
-            DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml" \
+            DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml:Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml" \
             2>&1 | tee "$RUNNER_TEMP/round61-dt-binding-check.log"
+          dt-doc-validate -u Documentation/devicetree/bindings \
+            Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
+            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+          test -f Documentation/devicetree/bindings/processed-schema.json
+          find Documentation/devicetree/bindings/ufs -maxdepth 1 \
+            -name 'qcom,ufs*.example.dtb' -print
 
       - name: Summarize validation evidence
         if: always()

@@ -361,3 +361,12 @@ Hosted run `45457083961` at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` comp
 - rejection when `CONFIG_ARM_SMMU_QCOM=m`.
 
 At last poll, the run had advanced to installing device-tree schema prerequisites; schema validation remained pending. This is source/validator CI only, not a Kleaf .config or Image build.
+
+
+### Latest UFS / PHY source and schema validation — PASS
+
+Hosted run `45457083961` at `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` published `hosted-ufs-validation-latest.md` with Job status success. It revalidated exact ACK source identity, real ordered patch application, diff-check, strict checkpatch, buildifier, the updated 11-test config helper, and the authoritative `make ARCH=arm64 dt_binding_check` step. UFS positive fixtures (2/2), UFS negative fixtures (8/8), PHY positive fixtures (2/2) and PHY negative fixture (1/1) all behaved as expected.
+
+Artifact ID `14951770706`; processed-schema SHA-256 `da994937d63cca2176a5065e8119be7ecd8b45c4939729f1810a8a8f5cc8dc50`; applied diff SHA-256 `b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90`.
+
+The schema scanner reports two unrelated malformed upstream YAML files ignored by its scanner; all modified UFS/PHY schema and explicit fixture gates passed. Phase B remains PASS for the current patch set. No actual Kleaf Kconfig resolution or Image compile is implied.

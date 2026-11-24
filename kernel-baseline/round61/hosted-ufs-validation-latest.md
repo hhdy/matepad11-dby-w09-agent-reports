@@ -1,36 +1,40 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 3c0b7e40caa062d3b6d683791d75eceb62f4e2dc
-- Workflow run ID: 45445251142
+- Workflow commit: 887b0ec369e4e3e532f159525a1f90cd8f6de8f7
+- Workflow run ID: 45445379732
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-8a8b8f685e8a74ba04745ac7d4127eab89e8ce646e897ec96d56955d95e8b288  /home/runner/work/_temp/round61-processed-schema.json
+3576f11655c1f2c831ca1a6896e41d05c57553c7b0f0f0cf7b84cec1ccfd62da  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
-5f67eaeb5769f3a756cfa1f6e8ae3655bf55de69687342e39481b8768000ff30  /home/runner/work/_temp/round61-ufs-applied.diff
+3e46b9a47922243671eb49883a767a857ac2ff0edd32fc8f6a04f98ae9914438  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  M BUILD.bazel
  M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
  M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
- M Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
  M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
  M drivers/ufs/host/ufs-qcom.c
  M drivers/ufs/host/ufs-qcom.h
 ?? arch/arm64/configs/dby_w09_storage_first.fragment
  BUILD.bazel                                        |  19 ++
  .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml    |   5 +
- .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  18 +-
- .../devicetree/bindings/ufs/qcom,ufs.yaml          |  30 +++
+ .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  49 +++-
  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c            | 123 ++++++++-
  drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
  drivers/ufs/host/ufs-qcom.h                        |   4 +
- 7 files changed, 473 insertions(+), 7 deletions(-)
+ 6 files changed, 474 insertions(+), 7 deletions(-)
 
 ## ufs-sm8250-1-domain-valid-validation.log
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
+
+## ufs-sm8250-2-domains-valid-validation.log
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10], [0], [11], [0]] is too long
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10], [0], [11], [0]] is too long
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
 
 ## round33-checkpatch.log

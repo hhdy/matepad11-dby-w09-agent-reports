@@ -55,6 +55,7 @@ jobs:
           check_blob Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml 962dffcd28b44b3489be5615c75e7270a0c45dc4
           check_blob drivers/ufs/host/ufs-qcom.c a80c6998406dbc88c25dbd9977699ba481207efe
           check_blob drivers/ufs/host/ufs-qcom.h 5f979daabd5323184eeee137cc8ecc076193979e
+          check_blob BUILD.bazel 3c8178ebce1f27f2c417e4aeaa00fc7001a96be6
 
       - name: Apply ordered UFS patches with real git apply
         shell: bash
@@ -95,6 +96,19 @@ jobs:
           sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
           git -C "$ack" diff --binary
 
+      - name: Apply ROUND58 Kleaf target patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/report"
+          ack="$RUNNER_TEMP/ack"
+          patch="$report/kernel-baseline/round61/patches/round58-kleaf-target.patch"
+          git -C "$ack" apply --check "$patch"
+          git -C "$ack" apply "$patch"
+          git -C "$ack" diff --check
+          git -C "$ack" status --short
+          git -C "$ack" diff --stat
+
       - name: Run strict checkpatch on driver patches
         shell: bash
         run: |
@@ -112,6 +126,21 @@ jobs:
           if [ "$rc33" -ne 0 ] || [ "$rc52" -ne 0 ]; then
             exit 1
           fi
+
+      - name: Validate Kleaf BUILD syntax and config helper tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/ack"
+          go version
+          go install github.com/bazelbuild/buildtools/buildifier@latest
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          buildifier -version
+          buildifier -mode=check BUILD.bazel
+          report="$RUNNER_TEMP/report"
+          PYTHONPATH="$report/kernel-baseline/round61" \
+            python3 -m unittest discover \
+              -s "$report/kernel-baseline/round61/tests" -v
 
       - name: Install device-tree schema prerequisites
         shell: bash

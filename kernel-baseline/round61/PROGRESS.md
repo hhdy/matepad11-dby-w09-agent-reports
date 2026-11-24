@@ -342,3 +342,12 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - Regression tests: `4f5adaf6d22f5bf1eca5e30cd711cf545cce7d86`; test newline correction: `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf`.
 - Acceptance scope: 33 explicit required symbols; 11 unit tests.
 - The current hosted UFS/PHY validation runs were triggered by these checker/test changes. Their terminal results are pending. These edits do not trigger a full Kleaf/Image build.
+
+
+### Hosted validation after block-layer checker correction
+
+- Run `45456839358` reached and completed the `Validate Kleaf BUILD syntax and config helper tests` step successfully. This run includes the `CONFIG_BLOCK` required-symbol assertion and its regression test (10-test suite at that revision).
+- The run then advanced to `Run authoritative UFS dt_binding_check`; its final result is still pending.
+- The subsequent Qualcomm-SMMU validator/test edits are newer than this completed unit-test step. Runs `45457024349`, `45457059231`, and `45457083961` were triggered by those edits; at last inspection they were still fetching the pinned ACK source. Do not claim the new 11-test suite passed until one of those newer runs completes its unit-test step.
+- Five UFS/PHY validation runs were created by sequential checker/test commits before this issue was noticed. No run was cancelled. Avoid further pushes touching the workflow's path filters until the current set drains; group any future checker changes into one commit.
+- The manifest/Kleaf runner verification remains separately in progress with the independent Agent. No new full Image build was started.

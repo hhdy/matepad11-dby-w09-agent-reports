@@ -321,3 +321,14 @@ Latest GitHub Actions inspection found two unresolved runs:
 - Both job-log retrieval attempts return HTTP 404 `BlobNotFound`.
 
 The Second AI did not start another duplicate build and did not cancel either run. Because the hosted runner state cannot be reliably diagnosed from the available metadata/log endpoint, an independent agent must verify whether these are live, orphaned, or stale runs before build orchestration resumes. No Bazel query/cquery, final .config, or Image artifact is claimed. **Phase C remains open; Phase D remains not run.**
+
+
+### Phase D acceptance-script hardening — block-layer assertion
+
+A static comparison of the storage-first fragment and resolved-config checker found that the fragment explicitly sets `CONFIG_BLOCK=y`, but the checker did not assert it. The Second AI added `BLOCK` to the required symbol list and added a regression test that must fail when the synthetic config disables it.
+
+- Validator commit: `40000bc93ca3b0b480b85607b4d2ca3695c0bfdd`.
+- Regression test commit: `d6fac731e9f5b50ee3110873e5d0b365f5e9dd02`.
+- Reported acceptance scope is now 32 explicit required symbols and 10 unit tests.
+- The test has not yet been re-run by hosted CI after this edit; do not count it as passed until the new validation workflow reports success.
+- This edit does not trigger another full Kleaf/Image build. It triggers the lightweight ACK UFS/PHY validation workflow because its test/checker paths changed.

@@ -114,3 +114,12 @@
 - 不要求重新上传固件；不重复 ROUND1–ROUND10。
 - 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统、不编译。
 - 未实际执行的动作必须标记 NOT_RUN / BLOCKED / UNKNOWN。
+
+
+## 最新公开源码核验补充：ROUND44（2026-11-24）
+
+GPT 已完成 ROUND44：在固定 ACK android17-6.18.33_r00 commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a 上复核 UFS 双 GenPD probe / required-OPP 映射顺序。核心 API 顺序符合设计，固定 SM8250 UFS OPP 表的两个条目均为单 required-opps；但 ROUND33 补丁在完整工作树 apply 前必须补上“遍历所有可用 OPP 条目”的验证，并明确该双域规则是 DBY-W09 专用还是对所有 SM8250 UFS 生效。MMCX-to-MX、内存 handoff、AVB 等独立 gate 仍未关闭。报告详见：
+
+- kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
+
+本轮没有改变本地 Agent 队列：ROUND12 仍是唯一活动任务；没有修改 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1；没有运行完整内核构建或设备测试。

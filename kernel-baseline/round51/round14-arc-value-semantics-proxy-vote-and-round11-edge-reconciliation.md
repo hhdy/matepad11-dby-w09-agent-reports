@@ -44,6 +44,8 @@ Sources:
 - [KONA ARC level and set definitions](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/include/dt-bindings/regulator/qcom%2Crpmh-regulator-levels.h)
 - [KONA rpmh-regulator ARC parser and list_voltage](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/rpmh-regulator.c)
 - [ACK SM8250 RPMHPD OPP table](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/arch/arm64/boot/dts/qcom/sm8250.dtsi#L6193-L6243)
+- [ACK SM8250 selected RPMHPD descriptor map](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/pmdomain/qcom/rpmhpd.c#L460-L480)
+- [ACK RPMHPD performance-state / Command DB level mapping](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/pmdomain/qcom/rpmhpd.c#L927-L970)
 
 ACK's shared SM8250 RPMHPD OPP table contains the same named numeric performance levels, including RETENTION=16, LOW_SVS=64 and TURBO=384. This establishes common corner vocabulary, not full vendor ARC equivalence: ACK RPMHPD resolves each resource's Command DB level map independently and uses a domain/OPP abstraction, while HOS has multiple logical regulator child interfaces per shared resource.
 
@@ -63,7 +65,7 @@ This looks counterintuitive beside the binding prose, which describes the proper
 ROUND14 confirms that both MMCX ALL and AO carry raw 0xffffffff, matching the public KONA board DTS convention of writing <(-1)> on these two ARC children.
 
 Sources:
-- [KONA ARC property parser and supply setup](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/rpmh-regulator.c#L1195-L1230)
+- [KONA ARC property parser and supply setup](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/rpmh-regulator.c#L1550-L1595)
 - [KONA regulator descriptor field](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/include/linux/regulator/driver.h#L268-L340)
 - [KONA regulator parent voltage propagation](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/core.c#L3075-L3110)
 - [RPMh regulator binding definition](https://android.googlesource.com/kernel/msm/%2B/c054c528cf8c53a74354cdace8507b9edd559005/Documentation/devicetree/bindings/regulator/rpmh-regulator.txt)

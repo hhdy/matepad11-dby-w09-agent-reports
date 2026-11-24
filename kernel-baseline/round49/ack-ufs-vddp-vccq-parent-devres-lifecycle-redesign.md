@@ -145,3 +145,8 @@ ROUND14 confirms the HOS4.3 S8 base-FDT child has qcom,set=<3>, init voltage 1.2
 Fixed ACK pmic5_hfsmps510 uses rpmh_regulator_vrm_ops, which has no get_optimum_mode/set_load callback. Fixed ACK regulator_set_load() stores a per-consumer load value but only invokes drms_uA_update() when that same consumer's enable_count is nonzero. The KONA UFS VCCQ-parent handle is not explicitly enabled. Consequently the 210mA load-only vote is not a reliable mode vote, and in ACK it is a successful no-op. ROUND51 therefore supersedes any reading of the storage-first design as requiring an S8 load call: omit the S8 get/load/enable/disable path from the initial ACK UFS patch. Do not add an enable reference or boot-on/always-on constraint without new evidence. Keep runtime S8 enable state UNKNOWN and leave the VCCQ-parent DTS mapping as unused topology metadata only if the custom binding allows it.
 
 The VDDP/L6 lifecycle conclusion is unchanged: acquire, set 100µA, enable; release with deferred cleanup after generic UFS VCCQ teardown. See ROUND51 for full source proof and exact links. No patch was applied or compiled.
+
+
+## ROUND52 refinement — VDDP uses mandatory devm regulator get when its DTS property exists
+
+The first ROUND52 driver helper explicitly checks for qcom,vddp-ref-clk-supply and then uses `devm_regulator_get(dev, "qcom,vddp-ref-clk")`, matching KONA's required get semantics. If the property is absent on another SM8250 board the feature is skipped; if it is present but the provider is unavailable, probe defers/fails instead of silently treating the rail as absent. This refinement does not change the delayed cleanup ordering. See ROUND52 patch 0002.

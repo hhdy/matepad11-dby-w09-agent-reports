@@ -197,3 +197,10 @@ This replay is not Git's `git apply --check` or an actual disposable-worktree ap
 ### Board draft metadata refresh
 
 After the initial ROUND63 board update, the explanatory comment was refined to say the pinned ACK SM8250 vreg list supplies the 89900/18800µA votes. Current review-only board DTS blob is `c209d519614fb0ff89b042ce274191b20120a09a`. No change was made to the protected DTS branch.
+
+
+### Separate HOS4.3 boot-time proxy-vote gap remains open
+
+ROUND63 does **not** implement the HOS4.3 temporary 100mA ARC proxy-consumer requests previously documented for PM8150 L5/L9 in ROUND48/51. The local evidence indicates those temporary votes are removed by the vendor `late_initcall_sync` path; ACK has no equivalent generic proxy-consumer helper. The new QMP PHY logic manages only the PHY consumer's own 89900µA active load and retained vdda-phy enable after first use. It does not create a 100mA boot-time proxy vote, does not reconstruct the HOS ARC parent/proxy graph, and does not claim full HOS4.3 power-policy equivalence.
+
+This remains a separate boot sequencing / regulator-policy gate. Do not translate it into `regulator-system-load`, `regulator-always-on`, or a permanent load vote without evidence. The physical PM8150 L5 parent input is also unresolved.

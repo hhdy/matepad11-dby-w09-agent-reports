@@ -3,3 +3,4 @@ One-shot trigger refresh after correcting Repo v2.71 sync syntax (no unsupported
 Retry trigger after granular toolchain diagnostics and explicit manifest JDK activation; record exact failing stage if Bazel wrapper or toolchain is unavailable.
 retry=fix-kleaf-wrapper-version-command
 retry=absolute-jdk-path-and-corrected-sm8250-schema-patch
+retry=explicit-power-domain-range-minitems

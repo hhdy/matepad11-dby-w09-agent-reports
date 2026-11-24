@@ -482,3 +482,12 @@ ROUND18 执行前必须读取 main 最新 `firmware-analysis/round18/AGENT_TASK.
 本地 Agent 执行 ROUND18 时，必须以 main 最新 `firmware-analysis/round18/AGENT_TASK.md` revision 2 为唯一补丁序列。旧 ROUND32 blob `efe2d932...` 永久废弃；二号 AI 当前 clock 修正版候选为 `2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb`，仍须先在 ROUND18 副本真实 apply-check。新增 ROUND36 corrected range patch `a6e8eeaf9303e428e644245749e6daec4d0e38ac`，须在 ROUND52-0001 full-file schema patch 之后应用。准确次序和四个 schema 验证目标见 ROUND18 revision 2。
 
 二号 AI 分支保持独立维护，不向该分支写入。ROUND18 的其余 Kleaf/Bazel/Kconfig/Image-only 工作不得因 schema gate 阻断而停止。
+
+
+## 2026-11-25 重要覆盖：同设备 DerpFest 先例与 ROUND18 已完成
+
+- 用户已明确确认：另一位开发者在同一 Huawei MatePad 11 DBY-W09、同一 ACK/GKI 6.18.33 内核基线上进入 Android 17 DerpFest；用户报告约两天首次进入系统、约一周完善剩余功能。该成功先例是本项目选择此路线的直接依据。**不得再向用户重复询问同设备、同内核或是否存在成功案例。** 这是用户提供的先例基准；在找到原始仓库/帖子前，不得冒称已独立复核来源。优先从公开资料和项目已有链接中定位并复用其 DTS、boot/ramdisk/DTBO、vendor/HAL/VINTF 和启动方案。
+- 用户定下的实施顺序继续有效：先适配 ACK/GKI 6.18.33，再移植 Android 17 DerpFest。首要可见目标是尽快进入 DerpFest 桌面；非启动关键硬件功能后续完善。
+- ROUND18 最终报告已上传至 `firmware-audit-v1/firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt`，blob `9d756587c675387d676a53eae3dcca181bde0f26`。结果：9/9 补丁真实 apply/diff-check 通过；4 schema/4 examples、15 fixtures 通过；Kleaf query/cquery 通过；31/31 Kconfig 必需项为 y；首次真实 Image build exit 0，Image 44,820,992 bytes，SHA-256 `983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884`。
+- 当前状态是 `IMAGE_BUILD_PASS / STAGE_A_BUILD_READY`，并非设备已启动：没有板级 DTB/DTBO、boot image、刷机包或实机验证。下一步应优先复用同设备成功方案并解决必要的 board memory/boot packaging/AVB 差异，不要重复部署环境或重跑已经通过的 Round18 验证。
+- 详细固定前提、范围边界和下一步优先级见 `PROJECT_HANDOFF.md` 的同名章节及 ROUND18 最终报告。任何设备分区写入仍须用户单独明确授权。

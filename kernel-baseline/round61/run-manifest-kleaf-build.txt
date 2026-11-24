@@ -9,3 +9,4 @@ retry=sm8250-conditional-minitems-in-both-schema-layers
 retry=single-file-multi-hunk-power-domain-patch
 retry=ubuntu-22.04-libtinfo5-compat-for-manifest-clang
 retry=ignore-only-upstream-CAMELCASE-init_load_uA-checkpatch
+retry=watchdog-recovery-after-stalled-run-45453412267

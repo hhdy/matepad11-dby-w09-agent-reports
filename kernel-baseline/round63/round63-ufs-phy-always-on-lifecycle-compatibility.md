@@ -204,3 +204,15 @@ After the initial ROUND63 board update, the explanatory comment was refined to s
 ROUND63 does **not** implement the HOS4.3 temporary 100mA ARC proxy-consumer requests previously documented for PM8150 L5/L9 in ROUND48/51. The local evidence indicates those temporary votes are removed by the vendor `late_initcall_sync` path; ACK has no equivalent generic proxy-consumer helper. The new QMP PHY logic manages only the PHY consumer's own 89900µA active load and retained vdda-phy enable after first use. It does not create a 100mA boot-time proxy vote, does not reconstruct the HOS ARC parent/proxy graph, and does not claim full HOS4.3 power-policy equivalence.
 
 This remains a separate boot sequencing / regulator-policy gate. Do not translate it into `regulator-system-load`, `regulator-always-on`, or a permanent load vote without evidence. The physical PM8150 L5 parent input is also unresolved.
+
+
+### L5 DRMS intent and candidate text hygiene
+
+The existing ROUND47/48 source review establishes that PM8150 L5 is a PMIC5 NLDO with `get_optimum_mode` and `set_mode` support, HPM threshold 30mA, and the board draft allows LPM/HPM with DRMS. Therefore the candidate's 89900µA active vote is above the HPM threshold, while a zero load vote can select LPM without disabling the output. This is source-contract reasoning only; no physical mode readback has been made.
+
+A lightweight scan of the final driver patch's added lines found:
+- 152 added lines;
+- zero added lines longer than 100 characters;
+- zero added lines with trailing whitespace.
+
+This is only text hygiene, **not** `checkpatch.pl` or `git diff --check`.

@@ -47,6 +47,17 @@
 };
 
 /*
+ * Mode-policy evidence boundary:
+ * ROUND7's filtered property inventory exports regulator names and voltage
+ * constraints but not regulator-initial-mode / allowed-modes / allow-set-load.
+ * The same-device HOS4.2 public Linux DTS uses HPM initial mode on the PM8150
+ * S4/L5/L6/L9/L17 rails and does not expose DRMS permissions for this group.
+ * This storage-first draft retains HPM as a conservative cross-reference,
+ * but does not enable DRMS on L5/L6/L9 until ROUND13 confirms HOS4.3 mode
+ * properties in the original base FDT + stock DTBO entry 8.
+ */
+
+/*
  * HOS4.3 ROUND11 parent/proxy topology result:
  *
  * The local base FDT contains four *-parent-supply links under the legacy
@@ -127,9 +138,6 @@
 			regulator-min-microvolt = <880000>;
 			regulator-max-microvolt = <880000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
-						   RPMH_REGULATOR_MODE_HPM>;
-			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L6, fixed 1.2 V; shared by VCCQ and PHY refclk. */
@@ -138,9 +146,6 @@
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
-						   RPMH_REGULATOR_MODE_HPM>;
-			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L9, fixed 1.2 V. */
@@ -149,9 +154,6 @@
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
-						   RPMH_REGULATOR_MODE_HPM>;
-			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L17, 2.496–3.008 V. */

@@ -2,7 +2,7 @@
 
 Date: 2026-11-24
 
-Status: source-side review and text-draft corrections completed. The targeted HOS4.3 raw base-FDT parent-supply verification is assigned to the local read-only Agent as ROUND11. No dtc, dt-schema, Kconfig resolution, kernel/DTB build, packaging, ABL acceptance test or device boot was run.
+Status: source-side review and text-draft corrections completed. ROUND11 local read-only HOS4.3 base-FDT parent-supply verification is complete; ROUND16 documents the result and ACK translation boundary. No dtc, dt-schema, Kconfig resolution, kernel/DTB build, packaging, ABL acceptance test or device boot was run.
 
 ## 1. Main corrections
 
@@ -45,7 +45,7 @@ Therefore the current ACK DTS draft has removed:
 - the provisional fixed 3.7 V vph_pwr regulator node;
 - the speculative vdd-s1-supply ... vdd-s10-supply parent links.
 
-The draft keeps only the PM8150 output rails used by UFS, whose voltages and UFS consumer references are locally resolved. This is intentionally incomplete until the local ROUND11 check confirms the parent input topology or marks it BLOCKED.
+The draft keeps only the PM8150 VRM output rails used by UFS, whose voltages and UFS consumer references are locally resolved. ROUND11 is now complete: it found four parent links only inside legacy ARC voltage-level groups, six ARC proxy links, and no vdd-s, vin or vph-pwr input properties anywhere in the base FDT. The physical PM8150 input topology remains unspecified rather than guessed. See ROUND16 for the distinction and the upstream ACK mapping limit.
 
 ### 1.3 Complete the UFS source-level Kconfig consumers
 
@@ -98,7 +98,7 @@ Branch: ack18-dby-w09-dts-draft
 - config/dby-w09-ack18-storage-first.fragment.draft — added SCSI DMA, RPMh XO clock, SM8250 interconnect support and explicit SMMU variant; retained QCOM_RPMHPD for UFS OPP required-opps (separate from the direct GCC GDSC).
 - dts/README.md — updated limitations and evidence boundary.
 
-ROUND15 follow-up note: a closer check found that the UFS OPP table includes required-opps references to RPMh power-domain OPP states. The config fragment and ROUND14 table therefore retain QCOM_RPMHPD for OPP scaling; this is separate from the direct GCC UFS_PHY_GDSC reference.
+ROUND15 follow-up note: the UFS OPP table includes required-opps references to RPMh power-domain OPP states. The config fragment and ROUND14 table retain QCOM_RPMHPD for OPP scaling; this is separate from the direct GCC UFS_PHY_GDSC reference. ROUND16 additionally establishes that HOS4.3's ARC *-parent-supply graph must not be copied into the ACK VRM regulator node.
 
 These remain .draft files, not build inputs.
 
@@ -110,7 +110,7 @@ These remain .draft files, not build inputs.
 | ROUND9 UFS phandle supply closure | PREVIOUSLY COMPLETE |
 | All nine stock DTBO rootparam sentinel values compared | SOURCE INVENTORY REVIEWED |
 | Public same-device minimal overlay compared | SOURCE REVIEWED |
-| PMIC upstream input-supply parent links in raw HOS4.3 base FDT | AGENT ROUND11 REQUIRED |
+| PMIC input/parent properties in HOS4.3 base FDT | ROUND11 COMPLETE — four ARC level parents, six ARC proxy links; no vdd-s / vin / vph-pwr input properties |
 | Exact ABL acceptance of a new minimal DTBO | UNKNOWN / NOT_TESTED |
 | UFS clock/interconnect source-level consumer mapping | SOURCE REVIEWED |
 | UFS OPP required-opps RPMhPD dependency | SOURCE REVIEWED; QCOM_RPMHPD RETAINED |

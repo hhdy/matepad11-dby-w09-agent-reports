@@ -80,7 +80,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 主仓库：https://github.com/hhdy/matepad11-dby-w09-agent-reports
 
 - `main`：GPT 可公开完成的上游源码研究、交接文档、脱敏分析报告。
-- `firmware-audit-v1`：本地 Agent 的只读固件报告分支；截至 2026-11-24 的仓库核验，该分支目前只有 ROUND11 报告，ROUND12 尚未上传，不能标记完成。
+- `firmware-audit-v1`：本地 Agent 的只读固件报告分支；截至 2026-11-24，ROUND11 与 ROUND12 报告均已上传。ROUND12 在可信 AVB 工具门槛 BLOCKED：没有解析 footer / vbmeta descriptor，AVB 覆盖关系仍 UNKNOWN。firmware-analysis ROUND13 模式/DRMS 只读任务书已放在 main，等待 Agent 执行。
 - `ack18-dby-w09-dts-draft`：ACK 6.18 板级 DTS / rootparam DTBO 草案分支。
 - PR #1：保持 Draft，不得擅自合并。
 
@@ -88,7 +88,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - GPT 优先自行完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给本地 Agent。
 - 只有必须访问用户本机文件、检查已有工具/环境、对本地固件执行只读提取或读取设备状态时，才编写本地 Agent 任务书。
 - 本地 Agent 只读；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件、不编译内核。任务书要求的工具不存在时必须 BLOCKED 并停止。
-- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。当前 ROUND12 已是唯一活动本地任务。
+- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED 停止；当前唯一活动本地任务为 firmware-analysis/round13/AGENT_TASK.md。注意它与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
 - 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY。不能把源代码推理写成设备运行结论。
 
 ## 6. 已完成的内核移植研究（无需从零重做）
@@ -165,7 +165,7 @@ ROUND11 找到 4 条 ARC level parent-supply 边和 6 条 ARC proxy-supply 边�
 
 ### 7.4 PM8150 电源输入与 DRMS
 
-完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。HOS4.3 L5/L6/L9 的 DRMS/allowed-modes 约束仍需 ROUND13 定向核验。不得根据 HOS4.2 参考树臆造供电或模式属性。
+完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。HOS4.3 L5/L6/L9 的 DRMS/allowed-modes 约束由 firmware-analysis ROUND13 定向核验；ROUND47 已完成 ACK 侧解释，但 HOS4.3 实际字段仍 UNKNOWN。不得根据 HOS4.2 参考树臆造供电或模式属性。
 
 ### 7.5 Memory / reserved-memory
 
@@ -173,16 +173,16 @@ HOS4.3 base FDT 未发现普通 `/memory` 节点，但有 34 个 reserved-memory
 
 ### 7.6 Legacy boot / AVB / ramdisk
 
-ROUND12 正在检查现有 boot / ramdisk / dtbo / vbmeta 的 AVB footer 和 descriptor 覆盖关系。该任务完成前，不要确定最终镜像重打包策略、dm-verity/FEC 配置或启动测试写入方案。
+ROUND12 已上传但在工具门槛 BLOCKED：本机没有可信已安装 avbtool / 已审查 AVB helper，boot / ramdisk / dtbo footer 与 vbmeta descriptor 覆盖关系均 UNKNOWN。不得从 `AVB0` magic 或文件大小推断。最终镜像重打包策略、dm-verity/FEC 配置和任何启动测试写入方案仍受 AVB gate 阻塞。
 ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块目录是否可用尚未确认。UFS/QMP 因此在当前 storage-first 设计中倾向内建，但最终要以构建与启动设计审查为准。
 
 ## 8. 当前任务队列
 
 ### 本地 Agent（唯一活动任务）
 
-- **ROUND12：只读 AVB 元数据核验**，任务书：`firmware-analysis/round12/AGENT_TASK.md`。
-- 只检查现有 HOS4.3 boot / ramdisk / dtbo / vbmeta 的 footer 与 descriptor 范围。
-- 仅使用本机已安装、可信、已审查工具；工具缺失则 BLOCKED。不得安装、下载、写 parser、调用 WSL 或更改安全策略。
+- **ROUND12：已交付 / BLOCKED**。报告：`firmware-analysis/round12/round12_avb_metadata_findings.txt`。无可信已安装 AVB 工具，未做 footer / descriptor 解析；不重复执行，AVB gate 保持 UNKNOWN。
+- **firmware-analysis ROUND13：当前唯一活动任务**，任务书：`firmware-analysis/round13/AGENT_TASK.md`。只读核验 HOS4.3 PM8150 S4/L5/L6/L9/L17 和 PM8150L S8 的 mode / DRMS 属性及适用 DTBO fragment。
+- 只使用 ROUND3 已审查 FDT parser、ROUND9 resolution pattern 和 ROUND7/8 已有工作副本；缺少输入/工具则 BLOCKED。不得安装、下载、写 parser、调用 WSL 或更改安全策略。
 - 报告只放脱敏文本在 `firmware-audit-v1`，完成后停止；不更新 `main`、ACK DTS 草案分支或 PR #1。
 
 ### GPT 侧（当前继续工作）
@@ -191,7 +191,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 - 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
-- ROUND12 完成后，再按既有队列审查 ROUND13 的 HOS4.3 regulator mode/DRMS 属性。
+- ROUND12 已在工具门槛 BLOCKED 并上传；当前按既定次序执行 firmware-analysis ROUND13 的 HOS4.3 regulator mode/DRMS 属性核验。ACK 侧解释见 ROUND47。
 - 每一轮先读本文件和已有报告，再开展新工作；不要重新做 Android 12L 的泛化调研。
 
 ## 9. 阶段验收定义
@@ -312,3 +312,27 @@ HOS4.3 `regulator-initial-mode`, `regulator-allowed-modes`, `regulator-allow-set
 `kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`.
 
 ROUND47 is public-source review only. No local FDT/DTBO was re-parsed, and no regulator mode was read at runtime. Full-tree apply, DTS/schema, DTB, Kconfig, Kleaf build and device boot remain NOT_RUN. ROUND12 continues independently; no new Agent task was started. Stage A ACK 6.18.33 remains the only active project stage; DerpFest Stage B stays deferred.
+
+
+## 14. Latest local evidence status — ROUND12 blocked; firmware-analysis ROUND13 queued
+
+Updated: 2026-11-24.
+
+The Local Agent uploaded `firmware-analysis/round12/round12_avb_metadata_findings.txt` to `firmware-audit-v1`. Outcome: **BLOCKED at the trusted-tool gate**:
+- `avbtool` / `avbtool.py` and candidate Python modules were not present.
+- Previously reviewed ROUND2/3 scripts do not parse AVB footer metadata or vbmeta descriptors.
+- The bounded search stopped at the local command safety policy and was not retried.
+- No footer check, original-image-size extraction, hash/hashtree descriptor listing or chain-descriptor mapping was performed.
+- No tool was installed/downloaded; no WSL, security policy, device or partition action occurred.
+
+Therefore:
+- boot.img / ramdisk.img / dtbo.img file sizes are COMPLETE only as previously reported in ROUND2.
+- AVB footer presence and original-image-size remain BLOCKED.
+- vbmeta descriptor coverage / chained vbmeta relations remain UNKNOWN.
+- Do not infer footer/descriptor state from AVB0 magic or image size; keep boot packaging and dm-verity/FEC decisions blocked.
+
+The next local task is now `firmware-analysis/round13/AGENT_TASK.md` on `main`, distinct from the historical `kernel-baseline/round13` ACK DTS design. It reuses only the previously reviewed ROUND3 FDT parser, ROUND9 indexing approach and existing ROUND7/8 FDT/DTBO work copies. It inspects mode/DRMS/suspend properties for PM8150 S4/L5/L6/L9/L17 and PM8150L S8, retaining DTBO fragment-to-target relationships. No new parser/tool is allowed. Only a sanitized text report may be uploaded to `firmware-audit-v1`; the Local Agent must stop after upload.
+
+GPT-side ROUND47 already records the pinned ACK 6.18.33 regulator semantics. ROUND13 will supply the missing HOS4.3 property values; it is not allowed to assume the HOS4.2 public DTS settings are HOS4.3 facts.
+
+ROUND12 remains an unresolved AVB gate. ROUND13 does not close AVB, MMCX-to-MX, Huawei final memory handoff or VCCQ-parent/VDDP teardown gates. Stage A ACK 6.18.33 remains the only project stage; DerpFest Stage B is deferred until actual kernel boot and storage/basic-hardware acceptance.

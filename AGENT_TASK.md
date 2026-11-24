@@ -397,3 +397,21 @@ Candidate source context and 132-line copied fragment match exact pinned source/
 ROUND59 complete UFS series exact-context replay remains in `kernel-baseline/round59`; corrected ROUND57 hunk blob is `3656f05ad01d54452b83591b762faaa71a16f592`.
 
 No build/boot has yet occurred. Next real gate remains a disposable exact ACK .33_r00 worktree, real Git patch application, schema/Kconfig validation, Kleaf target query/config and custom Image build after the local environment becomes available.
+
+
+## 最新派发指针 — ROUND61 持续式二号 AI 移植任务（2026-11-24）
+
+当前长期二号 AI 任务已从 ROUND58 的 BUILD target 候选工作升级为持续式 Stage A 实施任务：
+
+- 分支：`ai-parallel/stagea-port-until-boot`
+- 长期任务：`kernel-baseline/round61/ROUND61_LONG_RUNNING_STAGEA_MISSION.md`
+- 启动指令：`kernel-baseline/round61/START_PROMPT.md`
+- 持续日志：`kernel-baseline/round61/PROGRESS.md`
+
+二号 AI必须持续推进真实 ACK worktree 补丁应用、UFS dt_binding_check、Kleaf/Bazel 校验、最终 Kconfig/.config 和实际 Image 编译；编译失败需定位修复并重跑。随后处理真实 board DTS / memory / PMIC supply / AVB / ramdisk / legacy boot v2，最终在用户明确批准后进入设备启动和存储验收。它不得只交报告就停止；每个里程碑在专属分支提交并更新 PROGRESS.md。
+
+ROUND58 产物已经完成主 AI 的源码设计审查（ROUND60），但没有任何实际 Bazel/Kconfig/编译证据。ROUND59 的 16/16 是 in-memory hunk-context replay，不是真实 Git patch apply。不得将这些结果说成编译成功。
+
+本地 WorkBuddy 的 ROUND17 权限/部署路径由本地 Agent 自己处理；不再要求用户寻找未经证实的 Windows 安全菜单。二号 AI不应等待 WorkBuddy 才继续其自身可完成的源码/测试任务。
+
+主 AI 继续处理独立技术问题、审查二号 AI阶段提交并维护 main 交接。PR #1 保持 Draft/Open/unmerged；保护 DTS branch 不修改；Stage A 未完成前不开始 Stage B。

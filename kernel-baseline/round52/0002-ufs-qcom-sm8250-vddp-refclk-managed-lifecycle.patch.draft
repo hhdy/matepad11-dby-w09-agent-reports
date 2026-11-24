@@ -23,9 +23,9 @@ include hunk is written against the post-ROUND33 include list.
 Draft only: not applied to a full tree, checkpatched, compiled, or tested.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 74 ++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.c | 76 ++++++++++++++++++++++++++++++++++++++++++++++++
  drivers/ufs/host/ufs-qcom.h | 4 ++++
- 2 files changed, 78 insertions(+)
+ 2 files changed, 80 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
 --- a/drivers/ufs/host/ufs-qcom.h
@@ -54,7 +54,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
  #include <linux/pm_opp.h>
 +#include <linux/regulator/consumer.h>
  #include <linux/reset-controller.h>
-@@ -1497,6 +1498,75 @@
+@@ -1497,6 +1498,77 @@
  	return 0;
  }
  
@@ -109,6 +109,8 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +	/*
 +	 * Register after the managed regulator get. The action runs before
 +	 * regulator_put() and after ufshcd_remove() has shut down generic VCCQ.
++	 * ufshcd_alloc_host() and this variant's devm_kzalloc() registered their
++	 * release actions earlier; devres LIFO keeps hba and host alive here.
 +	 */
 +	ret = devm_add_action_or_reset(dev, ufs_qcom_vddp_ref_clk_cleanup, host);
 +	if (ret)

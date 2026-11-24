@@ -102,6 +102,8 @@ The public Linux 7.0 port's README says fastboot boot is refused. Thus an eventu
 | HOS4.3 ramdisk.img AVB footer and original image size | UNKNOWN / ROUND12 |
 | HOS4.3 dtbo.img AVB footer | UNKNOWN / ROUND12 |
 | vbmeta descriptor coverage for boot/ramdisk/dtbo | UNKNOWN / ROUND12 |
+| HOS4.3 /memory / live ABL memory injection into a replacement DTB | NOT_ESTABLISHED; base FDT inventory has no /memory node |
+| HOS4.3 reserved-memory handoff / exact region recreation in ACK | NOT_ESTABLISHED; 34 local child nodes, values redacted |
 | ABL accepts the newly built minimal ACK DTBO | UNKNOWN / NOT_TESTED |
 | Android 17 ramdisk/fstab/module ordering | BLOCKED (ROUND10) |
 | DTS / DTBO compile, Kconfig resolution, kernel build | NOT_RUN |

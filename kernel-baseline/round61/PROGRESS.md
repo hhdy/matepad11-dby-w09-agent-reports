@@ -351,3 +351,13 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - The subsequent Qualcomm-SMMU validator/test edits are newer than this completed unit-test step. Runs `45457024349`, `45457059231`, and `45457083961` were triggered by those edits; at last inspection they were still fetching the pinned ACK source. Do not claim the new 11-test suite passed until one of those newer runs completes its unit-test step.
 - Five UFS/PHY validation runs were created by sequential checker/test commits before this issue was noticed. No run was cancelled. Avoid further pushes touching the workflow's path filters until the current set drains; group any future checker changes into one commit.
 - The manifest/Kleaf runner verification remains separately in progress with the independent Agent. No new full Image build was started.
+
+
+### Updated Phase D validator result
+
+Hosted run `45457083961` at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` completed the source fetch, immutable identity checks, ordered patch application, strict checkpatch, buildifier and config-helper test steps successfully. The updated **11-test** suite includes:
+- rejection when `CONFIG_BLOCK` is unset;
+- rejection when `CONFIG_ARM_SMMU_QCOM` is absent;
+- rejection when `CONFIG_ARM_SMMU_QCOM=m`.
+
+At last poll, the run had advanced to installing device-tree schema prerequisites; schema validation remained pending. This is source/validator CI only, not a Kleaf .config or Image build.

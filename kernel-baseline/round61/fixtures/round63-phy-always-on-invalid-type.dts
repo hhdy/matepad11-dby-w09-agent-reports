@@ -1,6 +1,8 @@
 /dts-v1/;
 
 / {
+    compatible = "test,round63-phy-fixture";
+    model = "ROUND63 UFS PHY schema fixture";
     #address-cells = <1>;
     #size-cells = <1>;
 

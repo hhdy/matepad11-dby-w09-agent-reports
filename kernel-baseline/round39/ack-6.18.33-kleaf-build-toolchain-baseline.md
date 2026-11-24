@@ -121,13 +121,13 @@ Use the exact patched/unpatched ACK source workspace and build the stock arm64 t
 
 This verifies only that the pinned source + manifest toolchain can build the stock GKI target. It does not produce a board-ready DBY-W09 kernel.
 
-### Step B — select the correct DBY-W09 target type (superseded by ROUND40)
+### Step B — select the correct DBY-W09 target type (superseded by ROUND41)
 
-The initial suggestion to use base_kernel = ":kernel_aarch64" as the default DBY-W09 target is now superseded. ROUND40 inspected the exact gki_defconfig and found that the Qualcomm UFS / QMP PHY / SM8250 GCC / RPMhPD / interconnect / SMMU components required by the current storage-first plan are not enabled by the stock GKI config. ROUND31 explicitly requires this chain built-in because early ramdisk module loading is still unproven.
+The initial suggestion to use base_kernel = ":kernel_aarch64" as the default DBY-W09 target is now superseded. ROUND41 inspected the exact gki_defconfig and found that the Qualcomm UFS / QMP PHY / SM8250 GCC / RPMhPD / interconnect / SMMU components required by the current storage-first plan are not enabled by the stock GKI config. ROUND31 explicitly requires this chain built-in because early ramdisk module loading is still unproven.
 
 The exact pinned BUILD.bazel provides a better full-image example named yukawa: kernel_build with srcs = [":kernel_aarch64_sources"], GKI defconfig, Image/modules/device-DTB make goals, full kernel outputs, and a board GKI fragment, **without base_kernel**. This is the current preferred DBY-W09 target pattern.
 
-A base_kernel = ":kernel_aarch64" target is a mixed build (KBUILD_MIXED_TREE) used for additional modules and device DTB outputs; it may be considered only if the complete matching module set is proven loadable from the actual separate ramdisk before root-storage enumeration. See ROUND40.
+A base_kernel = ":kernel_aarch64" target is a mixed build (KBUILD_MIXED_TREE) used for additional modules and device DTB outputs; it may be considered only if the complete matching module set is proven loadable from the actual separate ramdisk before root-storage enumeration. See ROUND41.
 
 The DBY-W09 full target design therefore needs:
 - a full-image kernel_build in the common package, without base_kernel;
@@ -170,7 +170,7 @@ This matters for DBY-W09's legacy boot header v2 + separate ramdisk + DTBO topol
 2. Pin the complete repo manifest -r for the official toolchain workspace and verify the actual compiler/Rust/Bazel versions.
 3. Add a review-only full-image DBY-W09 kernel_build target following the pinned yukawa example without base_kernel, so required Qualcomm storage/power drivers can be built into Image; keep base_kernel mixed build as a conditional module-loading alternative only.
 4. Define dedicated Kleaf DTB/DTBO rules from the final real kernel DTS/DTBO source files; do not treat repository .dts.draft files as build inputs until migrated into a proper source tree.
-5. Build stock GKI baseline first, then the DBY-W09 mixed target and its matching modules/artifacts.
+5. Build the stock GKI baseline as a toolchain sanity check, then build the DBY-W09 full custom kernel target and its matching modules/artifacts.
 6. Keep ROUND30 MMCX→MX corner equivalence and ROUND12 AVB/legacy boot layout as separate pre-boot gates.
 
 ## 10. Safety / branch boundaries
@@ -180,8 +180,8 @@ This matters for DBY-W09's legacy boot header v2 + separate ramdisk + DTBO topol
 - ROUND12 remains the only local Agent task.
 - No local tool installation, firmware extraction, device connection, flashing, partition writing or kernel compilation occurred.
 
-**Conclusion:** ACK .33_r00 is a Kleaf/Bazel kernel source. The pinned source specifies Clang r584948c, Rust 1.91.1.p3, KMI generation 5, and an arm64 GKI base target with KMI enforcement. DBY-W09 should be built as a GKI-derived mixed kernel_build target plus explicit rules_devicetree targets, with a revision-pinned manifest. The workspace has not been synced and no build has been run.
+**Conclusion:** ACK .33_r00 is a Kleaf/Bazel kernel source. The pinned source specifies Clang r584948c, Rust 1.91.1.p3, KMI generation 5, and an arm64 GKI base target with KMI enforcement. DBY-W09 should use a full ACK-derived custom kernel_build target (no base_kernel) while the early storage-driver chain must be built-in; a mixed build is only a conditional alternative after early ramdisk module loading is proven. The workspace has not been synced and no build has been run.
 
-## 11. ROUND40 correction
+## 11. ROUND41 correction
 
-ROUND40 supersedes the provisional base_kernel mixed-build recommendation in §6. The exact gki_defconfig does not enable the Qualcomm-specific UFS/QMP/GCC/RPMhPD/interconnect/SMMU chain required by the current built-in storage-first plan. The preferred target is therefore a full custom kernel_build with no base_kernel, following the exact pinned yukawa example in BUILD.bazel. Mixed build remains conditional on proving early initramfs module loading. See kernel-baseline/round40/gki-defconfig-storage-driver-gap-and-full-kernel-build-decision.md.
+ROUND41 supersedes the provisional base_kernel mixed-build recommendation in §6. The exact gki_defconfig does not enable the Qualcomm-specific UFS/QMP/GCC/RPMhPD/interconnect/SMMU chain required by the current built-in storage-first plan. The preferred target is therefore a full custom kernel_build with no base_kernel, following the exact pinned yukawa example in BUILD.bazel. Mixed build remains conditional on proving early initramfs module loading. See kernel-baseline/round41/gki-defconfig-storage-driver-gap-and-full-kernel-build-decision.md.

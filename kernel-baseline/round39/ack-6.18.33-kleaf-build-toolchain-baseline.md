@@ -193,10 +193,13 @@ The current build/kernel Kleaf documentation on the `main-kernel-2026` line also
 
 For DBY-W09, the candidate graph is:
 1. Optional stock `//common:kernel_aarch64_dist` sanity build to validate the synced ACK/Kleaf toolchain; it is not the device kernel.
-2. Full-image DBY-W09 `kernel_build`, no `base_kernel`, based on `gki_defconfig` plus the storage-first device fragment, with Image/System.map/vmlinux/symvers/built-in metadata outputs.
+2. Full-image DBY-W09 `kernel_build`, no `base_kernel`, based on `gki_defconfig` plus the storage-first device fragment in `post_defconfig_fragments`, with Image/System.map/vmlinux/symvers/built-in metadata outputs.
 3. Separate `rules_devicetree` `dtb()` / `dtbo()` targets for source files migrated into proper kernel-tree paths; use the common DTC include dependency.
 4. A separate `dtbo_image` target only after ROUND12/ABL/AVB checks prove the correct DTBO partition format. Do not define a `vendor_boot_image` target by assumption: DBY-W09 evidence is boot header v2 plus a separate ramdisk, with no vendor_boot found so far.
 5. A distribution target that collects the exact custom Image, matching modules (if any), DTB, DTBO image and revision/config metadata together.
+
+
+For the full custom target, ROUND41's exact Kleaf configuration review further selects `post_defconfig_fragments` for the storage-first fragment: Kleaf runs the base `defconfig`, applies post fragments, then runs `olddefconfig` and checks the requested values against the final `.config`. Do not add `# nocheck` for required storage-chain entries. The final `.config` still must be produced and audited; the fragment request itself is not a config PASS.
 
 No BUILD target was created or queried. No workspace sync, Kconfig resolution, dtc/dt-schema, kernel build, DTBO image, or device operation was performed. Board source files remain `.draft` artifacts outside the kernel source tree and cannot be used as direct Kleaf build inputs yet.
 

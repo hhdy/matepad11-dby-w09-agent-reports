@@ -71,12 +71,12 @@ References:
 
 ### 2.3 Important non-equivalence: preserve as a porting risk
 
-The local HOS4.3 mx/cx/mmcx ARC relationship is not automatically identical to the upstream SM8250 RPMhPD descriptor. The public upstream SM8250 RPMhPD mapping uses cx_w_mx_parent for CX/CX_AO, but maps MMCX to the plain mmcx / mmcx_ao descriptor (without an explicit parent pointer in that SM8250 table). Other later SoCs use a different MMCX-with-CX-parent descriptor.
+The local HOS4.3 mx/cx/mmcx ARC relationship is not automatically identical to the upstream SM8250 RPMhPD descriptor. The public upstream SM8250 RPMhPD mapping uses cx_w_mx_parent for CX/CX_AO, but maps MMCX to the plain mmcx / mmcx_ao descriptor (without an explicit parent pointer in that SM8250 table). Other later SoCs use a different MMCX-with-CX-parent descriptor. ROUND22 adds an important nuance: the legacy HOS nodes are handled by the vendor RPMh ARC accelerator regulator driver, while upstream RPMhPD is a separate power-domain framework. rpmhpd is not a one-to-one driver replacement for qcom,rpmh-arc-regulator.
 
 Therefore:
 - Keep the UFS OPP required-opps configuration and the SoC's upstream rpmhpd model.
 - Do not claim every vendor ARC parent edge has been reproduced one-for-one.
-- Do not add legacy qcom,rpmh-arc-regulator nodes to this upstream ACK DTS.
+- Do not add legacy qcom,rpmh-arc-regulator nodes to this upstream ACK DTS until an ARC-capable ACK driver and binding have been deliberately ported. ROUND22 documents the feasibility and API gap; the current storage-only board draft remains on upstream VRM + rpmhpd/OPP.
 - Keep full MMCX/CX/MX corner behavior as a later per-subsystem voltage/OPP compatibility audit before enabling more hardware (display, GPU, multimedia, etc.).
 
 This distinction is important: the UFS storage-first draft is an upstream-oriented design direction, not proof that the complete HOS4.3 ARC graph is already equivalent at runtime.
@@ -130,6 +130,6 @@ Main branch:
 
 ## 6. Next engineering step
 
-ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. ROUND18 reviews the same-device legacy boot packaging flow and assigns ROUND12 to check the HOS4.3 AVB footer / vbmeta descriptor scope. Continue GPT-side review of the remaining storage-first DTS/Kconfig and boot packaging plan. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
+ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. ROUND22 further documents the potential ARC-provider and boot-proxy support port. ROUND18 reviews the same-device legacy boot packaging flow and assigns ROUND12 to check the HOS4.3 AVB footer / vbmeta descriptor scope. Continue GPT-side review of the remaining storage-first DTS/Kconfig and boot packaging plan. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
 
 Keep every file suffixed .draft. Keep PR #1 Draft. No device connection, flash, write, root, compile or image packaging.

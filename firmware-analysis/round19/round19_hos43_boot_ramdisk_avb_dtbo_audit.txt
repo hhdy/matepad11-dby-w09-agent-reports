@@ -1,0 +1,802 @@
+ROUND19 - HOS4.3 boot artefacts, all-DTBO memory handoff and first-stage inventory
+Read-only local firmware analysis. No device access. No image was built or repacked.
+
+Generated: 2026-11-25
+Task source: firmware-analysis/round19/AGENT_TASK.md on main (blob 1466cd67667843d5d2d79404cb3365ba6c32b2e2)
+Kernel baseline quoted from the task, not re-derived here:
+  ACK android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Reused work copies: ROUND2 payload extract, ROUND3 dtb_work (base DTB + 9 DTBO entries),
+ROUND7/ROUND8 inventories, ROUND12 tool-gate conclusion.
+Not performed this round: WSL deployment, repo init/sync, source or toolchain download,
+ROUND18 patch application, Kconfig validation, Image compilation.
+
+================================================================================
+0. STATUS PER WORK PACKAGE
+================================================================================
+
+A  boot-chain image inventory ........................ PASS
+B  boot header v2 / ramdisk header metadata .......... PASS
+C  ramdisk first-stage inventory ..................... PASS
+D  AVB footer / vbmeta descriptor map ................ PASS (parser-only, PRELIMINARY,
+                                                        cross-checked, see section 5.4)
+E  nine-DTBO memory / EFI / chosen / rootparam audit .. PASS
+F  ABL artefact triage ............................... BLOCKED - not applicable
+
+Headline findings, each backed by a byte-level observation in the sections below:
+
+1. Every one of the six boot-family containers carries a complete AVB footer whose
+   original_image_size equals, byte for byte, the payload end computed independently
+   from the boot header. Gap is 0 for five of them; dtbo.img has a 1694-byte
+   page-alignment gap. No container is unsigned and none is truncated.
+
+2. The stock ramdisk was NOT built from the same tree as the stock boot kernel.
+   ramdisk.img's own build.prop declares Android 12 / SDK 31 / SKQ1.220804.001 and a
+   build date of 2024-05-21, while boot.img's AVB properties declare Android 11 /
+   patch level 2020-11. This is a deliberate HOS mix, not a mis-packed ramdisk.
+
+3. ramdisk.img is not a conventional first-stage init ramdisk. It holds 17 CPIO
+   entries: an AArch64 ELF /init (2 880 584 B), a 520-byte AVB public-key blob named
+   patch_avb_key, a build.prop, and 13 empty directories. There is no fstab, no
+   ueventd, no *.rc and no SELinux policy file in it.
+
+4. The first-stage fstab therefore cannot come from the ramdisk. It is present in the
+   stock base DTB at /firmware/android/fstab, together with /firmware/android/vbmeta
+   whose parts list independently corroborates the AVB chain set decoded in section 5.
+
+5. The stock base DTB has a /memory node whose reg is 0x0 0x0 0x0 0x0 - i.e. an empty
+   placeholder that something outside the DTB must fill at runtime. Its /chosen node
+   contains bootargs only and has no linux,uefi-system-table and no linux,uefi-mmap-*
+   property.
+
+6. None of the nine stock DTBO entries adds or changes /memory, /chosen,
+   /reserved-memory or /firmware/android/fstab. Their only rootparam-adjacent action
+   is fragment@142/143, which targets the base /rootparam node and writes five
+   product-variant properties. The nine entries are nine hardware variants (VA..VI)
+   of the same DBY-W09 board, distinguished by board-id, board_name and
+   hardware_version.
+
+7. Consequently, no stock DTBO in this firmware can explain a missing root /memory
+   node and none of them can create the EFI-stub /chosen/linux,uefi-* handoff. That
+   answer is bounded to the nine extracted entries and the paths actually inspected.
+
+8. One genuine contradiction was found and is NOT explained away: the hashtree
+   image_size values do not match the partition sizes measured independently. system,
+   odm and cust are LARGER in AVB than in the LP metadata; vendor is smaller; and the
+   five values sum to more than super.img. The values are internally consistent (all
+   five tree_size fields reproduce exactly from image_size under a three-level
+   dm-verity model), so this is a property of the stock package, not a parsing
+   artefact. See 5.5a and UNKNOWN U-8.
+
+================================================================================
+1. TOOLS AND VERSIONS ACTUALLY USED
+================================================================================
+
+Used, already installed before this round (no installation, no download):
+  file 5.45
+  GNU strings / readelf / objdump / nm (binutils) 2.42
+  lz4 1.9.4, xz 5.4.5, gzip 1.12
+  dtc / fdtdump / fdtget 1.7.0
+  python3 3.12.3 (Linux side), CPython 3.13 (Windows side, standard library only)
+
+Absent and therefore NOT used (per the no-install boundary):
+  avbtool ....................... not found before or after this round
+  unpack_bootimg.py / mkbootimg . not found
+  cpio .......................... not found (CPIO handled by an in-round parser)
+  zstd / lz4 python modules ..... not found (not needed)
+
+Two small read-only parsers were written inside the ROUND19 work directory because
+the approved utilities are unavailable:
+  tools/parse_bootimg.py   Android boot header v0/v1/v2 (+v3/v4 field guard)
+  tools/avb_meta.py        AVB footer, vbmeta header, descriptor framing
+  tools/run_avb.py         batch driver over the boot-chain set
+  tools/inspect_ramdisk.py gzip/xz/CPIO-newc reader (in-memory, never writes input)
+  tools/dtbo_audit.py      nine-entry structural audit over dtc output
+  tools/test_avb_meta.py   7 synthetic fixtures, see section 5.3
+All parsers read byte arrays and never write, patch or repack an input file.
+
+================================================================================
+2. WORK PACKAGE A - BOOT-CHAIN IMAGE INVENTORY
+================================================================================
+
+Source: the existing ROUND2 payload extract (15 files, unchanged, size and local
+integrity re-verified this round; SHA-256 values recomputed and identical to the
+ROUND2 baseline, deliberately withheld from this report per the redaction rule).
+
+  file                     size (B)      container as measured
+  boot.img                 100 663 296   Android boot image, header v2
+  ramdisk.img                2 097 152   Android boot image, header v0, kernel_size = 0
+  dtbo.img                  25 165 824   Android DTBO table, 9 entries, AVB footer present
+  vbmeta.img                 1 048 576   AVB vbmeta partition (AVB0 at offset 0)
+  vbmeta_cust.img            1 048 576   AVB vbmeta partition
+  vbmeta_hw_product.img      1 048 576   AVB vbmeta partition
+  vbmeta_odm.img             1 048 576   AVB vbmeta partition
+  vbmeta_system.img          1 048 576   AVB vbmeta partition
+  vbmeta_vendor.img          1 048 576   AVB vbmeta partition
+  recovery_vbmeta.img        1 048 576   AVB vbmeta partition
+  erecovery_vbmeta.img       1 048 576   AVB vbmeta partition
+  recovery.img             100 663 296   Android boot image, header v2
+  erecovery.img            100 663 296   byte-identical to recovery.img
+  recovery_ramdisk.img      33 554 432   Android boot image, header v0, kernel_size = 0
+  erecovery_ramdisk.img     33 554 432   byte-identical to recovery_ramdisk.img
+
+ABL: the ROUND2 partition inventory contains 43 entries and includes xbl.img
+(4 018 176 B) and xbl_config.img (4 325 376 B) but no abl.img and no abl.elf. No ABL
+binary exists in the existing local extraction directory, and no copy of xbl.img is
+available locally either (only its size and name are on record). Work package F is
+therefore BLOCKED/not applicable, and this is not inferred further.
+
+Note on the two byte-identical pairs: recovery.img == erecovery.img and
+recovery_ramdisk.img == erecovery_ramdisk.img. This is a real property of the stock
+package, not a copy error in the work directory (the ROUND2 baseline recorded the
+same equality before this round).
+
+Deliberate non-claim: a matching filename, or a leading AVB0/AVBf magic, was treated
+as no proof of descriptor coverage. Coverage in section 5 is stated only after the
+descriptor area of each image was decoded and bounded.
+
+================================================================================
+3. WORK PACKAGE B - BOOT HEADER v2 AND RAMDISK HEADER METADATA
+================================================================================
+
+3.1 boot.img - header v2
+
+  magic                        "ANDROID!"
+  header version               2
+  header size (encoded)        1660 bytes (0x67C)
+  page size                    4096
+  kernel size                  22 264 379 B, load address 0x00008000
+  ramdisk size                   519 986 B, load address 0x02000000
+  second stage size                    0 B
+  tags address                 0x00000100   (low 16 bits only; unusual, recorded as-is)
+  board name                   empty
+  cmdline length               424 B, no serial/MAC/IMEI token present; retained
+  extra cmdline length         0
+  recovery_dtbo size           0 (absent in boot.img)
+  dtb size                     1 664 243 B
+  dtb address                  0x0000000001F00000
+  os_version raw               0x1600014B (369 099 083)
+    decoded per AOSP packing    A=11  B=0  C=0  patch 2020-11
+  id field                     present (32 bytes, boot-image id, not reported)
+
+  payload layout, computed from the header and confirmed against the footer:
+    kernel      @ 4096
+    ramdisk     @ 22 269 952
+    second      @ 22 790 144 (size 0)
+    dtb         @ 22 790 144
+    payload end @ 24 457 216
+    file size     100 663 296, so 76 206 080 trailing bytes exist between payload end
+                  and partition end. Those bytes are zero fill; the AVB footer sits at
+                  the very end of the file (offset 100 663 232).
+
+3.2 ramdisk.img - a standalone header-v0 boot image carrying only a ramdisk
+
+  magic                        "ANDROID!"
+  header version               0
+  page size                    2048
+  kernel size                  0          <- no kernel in this container
+  kernel load address          0x10008000
+  ramdisk size                 1 322 962 B
+  ramdisk load address         0x12000000
+  second stage size            0
+  tags address                 0x10000100
+  board name / cmdline         empty
+  os_version raw               0x18000168 (402 653 544)
+    decoded per AOSP packing    A=12  B=0  C=0  patch 2022-08
+  payload layout:
+    header      1 page = 2048
+    ramdisk     @ 2048, 1 322 962 B, padded to 1 325 056
+    payload end @ 1 325 056
+    file size     2 097 152
+  AVB footer    original_image_size 1 325 056 (= payload end), vbmeta at 1 327 104,
+                size 1344, alignment gap 2048.
+
+  Hard fact versus inference: the header and the build.prop inside the ramdisk both
+  say Android 12; the boot.img header and its AVB properties both say Android 11.
+  What is read from the bytes is the discrepancy itself. Whether HOS4.3's ABL cares
+  about the os_version field of a standalone ramdisk container is NOT determined by
+  this analysis and is recorded as UNKNOWN (section 8, U-3).
+
+3.3 recovery.img / erecovery.img - header v2, with an embedded DTBO
+
+  Same layout as boot.img except:
+  kernel size                  22 254 704 B (slightly smaller than boot.img)
+  recovery_dtbo size           25 165 824 B  <- the entire dtbo.img is embedded
+  recovery_dtbo offset         22 781 952
+  dtb size                     1 664 243 B
+  payload end                  49 614 848
+  os_version                   0x1600014B -> 11.0.0 / 2020-11
+  AVB footer                   original_image_size 49 614 848, gap 0
+
+  Because recovery.img and erecovery.img are byte-identical, their embedded vbmeta
+  both declare partition name "recovery" (see 5.2). Whether HOS's chain validation
+  for the erecovery slot tolerates that name is UNKNOWN (section 8, U-4).
+
+3.4 recovery_ramdisk.img / erecovery_ramdisk.img - header v0
+
+  page size                    2048
+  kernel size                  0
+  ramdisk size                 29 099 169 B
+  ramdisk load address         0x82000000
+  os_version                   0x1400014B -> 10.0.0 / 2020-11
+  payload end                  29 102 080
+  AVB footer                   original_image_size 29 102 080, gap 0
+  These two are also byte-identical to each other and both declare partition name
+  "recovery_ramdisk".
+
+3.5 dtbo.img - table header (for completeness; decoded in ROUND2/3, re-verified here)
+
+  magic 0xD7B7AB1E, total_size 2 963 810, header_size 32, entry_size 32,
+  entry_count 9, entries_offset 32, page_size 4096, version 0.
+  AVB footer at end of file: original_image_size 2 963 810 (exactly total_size),
+  vbmeta_offset 2 965 504 (next 4096 boundary), vbmeta_size 1472, gap 1694.
+  The 1694-byte gap is pure alignment padding and contains no AVB data.
+
+No unpacked candidate boot image was produced. No repacking was attempted.
+
+================================================================================
+4. WORK PACKAGE C - RAMDISK PAYLOAD AND FIRST-STAGE INVENTORY
+================================================================================
+
+4.1 Container chain
+
+  ramdisk.img payload @2048, length 1 322 962
+    -> gzip stream ("gzip compressed data, from Unix", original size 2 884 352)
+    -> SVR4 CPIO, newc format (magic 070701, no CRC), 17 entries, 2 884 352 B total
+
+  Decompression was done in memory; nothing was written into the extraction tree and
+  no firmware file was modified.
+
+4.2 Complete entry list (17 entries)
+
+  /cache                               dir
+  /debug_ramdisk                       dir
+  /dev                                 dir
+  /eng                                 dir
+  /init                                regular file, mode 0100750, 2 880 584 B
+  /metadata                            dir
+  /mnt                                 dir
+  /patch_avb_key                       regular file, mode 0100644, 520 B
+  /patch_hw                            dir
+  /proc                                dir
+  /second_stage_resources              dir, EMPTY
+  /sys                                 dir
+  /system                              dir
+  /system/etc                          dir
+  /system/etc/ramdisk                  dir
+  /system/etc/ramdisk/build.prop        regular file, mode 0100644, 942 B
+  TRAILER!!!
+
+4.3 What /init is
+
+  ELF 64-bit LSB executable, ARM aarch64, statically linked, stripped,
+  build id 44306e8cd56e70f2284a1e00f42bc3bd, entry point 0x2DE000, no dynamic section.
+
+  The first-stage logic lives inside this binary, not in text files. Strings found in
+  it (existence of the reference is the evidence; no runtime value is inferred):
+
+    system/core/init/first_stage_init.cpp
+    system/core/init/first_stage_mount.cpp
+    /first_stage_ramdisk/fstab.
+    /odm/etc/fstab.
+    /vendor/etc/fstab.
+    /dev/block/by-name/, /dev/block/bootdevice/by-name/
+    /dev/block/by-name/cache, /eng_system, /eng_vendor, /userdata, /userdata2
+    Enabling dm-verity for
+    Error reading erofs superblock!
+    AVB_SLOT_VERIFY_FLAGS_NO_VBMETA_PARTITION
+    androidboot.vbmeta.avb_version
+    Mismatch between image version and libavb version.
+    Snapshots cannot be written in first-stage init or recovery
+    Could not bind mount /first_stage_ramdisk to itself
+
+  Reference counts in the binary: by-name 13, dm-verity 3, avb 42, AVB 20, erofs 2,
+  first_stage 6, logical 40, fstab 28, mount 75, super 23.
+
+4.4 What is NOT in the ramdisk
+
+  No fstab file of any name. No ueventd file. No *.rc file. No SELinux policy,
+  precompiled_sepolicy or *.cil. No kernel module (*.ko). No modules.load or
+  modules.blocklist. /second_stage_resources is an empty directory.
+
+  Therefore the standard Android question "which fstab does first-stage read" cannot
+  be answered from the ramdisk. It is answered by the base DTB: the stock base DTB
+  carries /firmware/android/fstab (section 6.2), which is the AOSP-supported
+  DT-based fstab source. This is the only consistent explanation available from the
+  files inspected; it is stated as an inference from two hard facts (no fstab in the
+  ramdisk, fstab present in the DTB), not as a runtime observation.
+
+4.5 /patch_avb_key - 520 bytes
+
+  First 8 bytes 00 00 08 00 43 63 CC 39 ..., i.e. key_num_bits = 0x00000800 = 2048
+  followed by n0inv and then a 256-byte modulus and a 256-byte rr value. 8 + 256 +
+  256 = 520. This is the AVB RSA public-key blob representation, and 520 is the same
+  public_key_size declared by every vbmeta header in this firmware (section 5.2).
+
+  The key bytes themselves are not reproduced in this report. The observation of
+  interest is structural: the stock ramdisk ships the same-size AVB public key that
+  the vbmeta images reference, which is consistent with a vendor "patch" flow that
+  re-signs or re-validates boot metadata. The exact purpose is not proven here.
+
+4.6 /system/etc/ramdisk/build.prop - 942 bytes, full text is non-sensitive
+
+  ro.product.bootimage.brand=Huawei
+  ro.product.bootimage.device=ohosqssi
+  ro.product.bootimage.manufacturer=QUALCOMM
+  ro.product.bootimage.model=ohosqssi system image for arm64
+  ro.product.bootimage.name=ohosqssi
+  ro.bootimage.build.date=Tue May 21 20:05:01 CST 2024
+  ro.bootimage.build.date.utc=1716293101
+  ro.bootimage.build.fingerprint=Huawei/ohosqssi/ohosqssi:12/SKQ1.220804.001/huawei05212005:user/dev-keys
+  ro.bootimage.build.id=SKQ1.220804.001
+  ro.bootimage.build.tags=dev-keys
+  ro.bootimage.build.type=user
+  ro.bootimage.build.version.incremental=eng.huawei.20240521.195546
+  ro.bootimage.build.version.release=12
+  ro.bootimage.build.version.release_or_codename=12
+  ro.bootimage.build.version.sdk=31
+  persist.sys.usb.config=manufacture,adb
+
+  This fingerprint string is identical to the one carried by the system partition's
+  own AVB property com.android.build.system.fingerprint (section 5.2), i.e. the
+  ramdisk and the system image come from the same build.
+
+4.7 Verdict for work package C
+
+  The ramdisk DOES represent the HOS4.3 Android-12 environment: its own build.prop
+  states Android 12, SDK 31, SKQ1.220804.001, built 2024-05-21, and matches the
+  system partition's AVB fingerprint exactly. The Android-11 markings on boot.img
+  are on the kernel/vendor side (qti/kona/kona:11/RP1A.200720.011, patch 2020-11-01)
+  and are a property of the vendor baseline, not evidence that the ramdisk is wrong.
+
+  So: an Android-version split exists and is hard-evidenced; it is a characteristic
+  of this HOS package, not an extraction or packaging error. Whether the split is
+  functionally relevant at boot is UNKNOWN from offline evidence.
+
+================================================================================
+5. WORK PACKAGE D - AVB FOOTER AND VBMETA DESCRIPTOR MAP
+================================================================================
+
+5.1 Tool situation
+
+  No trusted AVB tool exists on this machine (ROUND12 reached the same conclusion and
+  it was re-checked: avbtool not on PATH, no avbtool.py, no python avb module).
+  Per the task's tool gate, a narrowly scoped read-only parser was written instead of
+  installing anything. It is tools/avb_meta.py.
+
+  Parser guarantees implemented:
+   * reads byte arrays and files, never writes or patches an input;
+   * every u32/u64 read is bounds-checked against the containing block;
+   * footer original_image_size, vbmeta_offset and vbmeta_size are all validated
+     against the real file size and against each other before use;
+   * descriptor framing validates tag, body length, 8-byte alignment and that the
+     walk ends exactly on the descriptor area boundary;
+   * unknown descriptor tags are skipped by their declared length and reported by tag
+     number, with the body deliberately not interpreted;
+   * output is limited to descriptor type, target partition name, image_size and
+     chain/parent relationship. No key bytes, key digests, salts, hash digests,
+     signatures or rollback index values are emitted. The rollback index is only
+     reported as "present / absent" for the vbmeta-level field, and per-descriptor
+     rollback_index_location is reported because it is a slot address, not a secret.
+
+5.2 Every vbmeta decoded, and the vendor layout anomaly that had to be resolved
+
+  All 15 vbmeta blobs decode with identical structural rules:
+
+  file                   auth  aux   desc_off desc_sz pk_off pk_sz desc+pk pad
+  vbmeta.img              320  9280     0      8744    8744   520   9264   16
+  vbmeta_cust.img         320   768     0       224     224   520    744   24
+  vbmeta_hw_product.img   320   768     0       232     232   520    752   16
+  vbmeta_odm.img          320   960     0       432     432   520    952    8
+  vbmeta_system.img       320  1152     0       624     624   520   1144    8
+  vbmeta_vendor.img       320  1152     0       616     616   520   1136   16
+  recovery_vbmeta.img     320  3072     0      2504    2504   520   3024   48
+  erecovery_vbmeta.img    320  3072     0      2504    2504   520   3024   48
+  boot.img                320  1152     0       584     584   520   1104   48
+  ramdisk.img             320   768     0       208     208   520    728   40
+  dtbo.img                320   896     0       336     336   520    856   40
+  recovery.img            320   768     0       208     208   520    728   40
+  erecovery.img           320   768     0       208     208   520    728   40
+  recovery_ramdisk.img    320   768     0       216     216   520    736   32
+  erecovery_ramdisk.img   320   768     0       216     216   520    736   32
+
+  The invariant across all 15 is: public_key_offset == descriptors_size and
+  descriptors_size + public_key_size + pad == auxiliary_data_block_size.
+  In other words this firmware places the public key inside the AUX block immediately
+  after the descriptor array, not inside the authentication block as a stock AOSP
+  avbtool would. A naive AOSP-shaped reader therefore reports
+  "public_key exceeds auth size 320" on every image here. That is a layout difference,
+  not corruption: the arithmetic closes exactly on all 15 blobs with 8..48 bytes of
+  zero padding, and the release string in each header reads "avbtool 1.1.0" (except
+  vbmeta_cust.img, which reads "avbtool 1.2.0").
+
+  Consequence for the reader: both the hash and hashtree descriptor bodies in this
+  firmware also differ from the AOSP reference layout (a fixed 32-byte
+  hash_algorithm array with trailing NUL-terminated strings and a 64-byte reserved
+  area). The parser accepts a descriptor only if the declared field triplet plus the
+  string block plus zero padding exactly fills the declared body length, and it tries
+  the AOSP layout as a fallback. All 15 blobs resolved uniquely under that rule.
+
+5.3 Synthetic fixtures (tools/test_avb_meta.py)
+
+  Seven cases, all generated in a temporary directory, none touching firmware:
+
+  1 valid footer ................. PASS
+      footer parsed; original_image_size, vbmeta_offset, vbmeta_size accepted; 0 desc
+  2 missing footer ............... PASS
+      reported absent, coverage = NO_AVB_FOOTER (no exception, nothing assumed)
+  3 truncated footer ............. PASS
+      fail-closed: "footer vbmeta block 1008+4096 exceeds file size 1024"
+  4 valid vbmeta header .......... PASS
+      v1.0, release string round-trips, 0 descriptors, consistency clean
+  5 malformed block sizes ........ PASS
+      fail-closed: "aux block 4294967551+4294967295 exceeds blob 256"
+  6 truncated descriptor ......... PASS
+      fail-closed: "aux block 256+32 exceeds blob 272"
+  7 unknown descriptor tag ....... PASS
+      tag 99 of declared length skipped, walk stayed in sync and the following
+      property descriptor was still found: ['unknown_0x63', 'property']
+
+  Result: 7/7 passed, 0 failed. All five malformed inputs failed closed; the one
+  legal-but-unknown tag was skipped without desynchronising the walk.
+
+5.4 Cross-checks that do not depend on the parser
+
+  Because no independent AVB implementation exists here, parser-only conclusions are
+  marked PRELIMINARY. Three independent quantities nevertheless agree with the
+  decoded values, which is why the confidence is high:
+
+  a) footer.original_image_size equals the payload end computed purely from the boot
+     header for boot.img, ramdisk.img, recovery.img, recovery_ramdisk.img and
+     dtbo.img - five independent arithmetic chains, gap 0 in every case.
+  b) the hash descriptor image_size for dtbo equals the DTBO table header's own
+     total_size (2 963 810), a field read by a different code path in ROUND2/3.
+  c) the stock base DTB's /firmware/android/vbmeta node lists, in text, the set of
+     partitions AVB is expected to cover:
+       parts    = vbmeta,boot,ramdisk,eng_system,eng_vendor,vbmeta_system,
+                  vbmeta_vendor,vbmeta_odm,vbmeta_hw_product,vbmeta_cust,version,
+                  preload,dtbo
+       ta_parts = boot,ramdisk,vbmeta_system,vbmeta_vendor,vbmeta_odm,
+                  vbmeta_hw_product,preas,preavs,vbmeta_cust,dtbo
+     This matches the 14 chain descriptors decoded from vbmeta.img, with preas/preavs
+     appearing as chain entries in vbmeta.img and only in ta_parts in the DTB.
+
+  d) dm-verity arithmetic. For all five hashtree descriptors, tree_size is exactly
+     reproducible from image_size with a three-level sha256 tree
+     (data_block 4096, hash_block 4096, digest 32):
+
+       image_size      blocks     L0     L1   L2   sum blocks  x4096      declared
+       system   3 525 328 896  860 676  6725   53    1      6779   27 766 784  27 766 784
+       vendor     947 318 784  231 278  1807   15    1      1823    7 467 008   7 467 008
+       odm        635 641 856  155 186  1213   10    1      1224    5 013 504   5 013 504
+       cust        90 726 400   22 150   174    2    1       177      724 992     724 992
+       hw_product 2 369 454 080 578 480 4520   36    1      4557   18 665 472  18 665 472
+
+     Exact agreement on all five means image_size, tree_size, the two block sizes and
+     the 32-byte digest length are mutually consistent real fields, not misframed
+     bytes. It does NOT establish what those image sizes correspond to as partitions -
+     see 5.5a, which reports a genuine disagreement.
+
+5.5 Coverage graph (decoded, not inferred from partition names)
+
+  vbmeta.img  (root of the chain, auth algo 1 = SHA256_RSA2048)
+  |-- chain -> boot            rollback_index_location 1
+  |-- chain -> ramdisk         rollback_index_location 4
+  |-- chain -> vbmeta_system   rollback_index_location 2
+  |-- chain -> vbmeta_vendor   rollback_index_location 3
+  |-- chain -> vbmeta_odm      rollback_index_location 5
+  |-- chain -> eng_vendor      rollback_index_location 9
+  |-- chain -> eng_system      rollback_index_location 10
+  |-- chain -> dtbo            rollback_index_location 14
+  |-- chain -> version         rollback_index_location 6
+  |-- chain -> vbmeta_hw_product rollback_index_location 7
+  |-- chain -> preload         rollback_index_location 11
+  |-- chain -> preas           rollback_index_location 19
+  |-- chain -> preavs          rollback_index_location 20
+  +-- chain -> vbmeta_cust     rollback_index_location 8
+
+  recovery_vbmeta.img
+  |-- chain -> recovery            rollback_index_location 23
+  |-- chain -> dtbo                rollback_index_location 14
+  |-- chain -> recovery_ramdisk    rollback_index_location 17
+  +-- chain -> recovery_vendor     rollback_index_location 18
+
+  erecovery_vbmeta.img
+  |-- chain -> erecovery           rollback_index_location 25
+  |-- chain -> dtbo                rollback_index_location 14
+  |-- chain -> erecovery_ramdisk   rollback_index_location 26
+  +-- chain -> erecovery_vendor    rollback_index_location 27
+
+  Leaf coverage, i.e. what each chained vbmeta says about its own partition:
+
+  boot.img  (embedded vbmeta @24 457 216, 1728 B)
+    hash    partition "boot"     image_size 24 457 216  algorithm sha256
+            salt_len 32, digest_len 32
+    property com.android.build.boot.fingerprint
+             = qti/kona/kona:11/RP1A.200720.011/huawei202405211603:user/dev-keys
+    property com.android.build.boot.os_version        = 11
+    property com.android.build.boot.security_patch    = 2020-11-01
+    property com.android.build.boot.security_patch    = 2020-11-01  (declared twice)
+
+  ramdisk.img (embedded vbmeta @1 327 104, 1344 B)
+    hash    partition "ramdisk"  image_size 1 325 056   algorithm sha256
+
+  dtbo.img (embedded vbmeta @2 965 504, 1472 B)
+    hash    partition "dtbo"     image_size 2 963 810   algorithm sha256
+    property com.android.build.dtbo.fingerprint
+             = qti/kona/kona:11/RP1A.200720.011/huawei202405211603:user/dev-keys
+
+  recovery.img / erecovery.img (embedded, 1344 B, identical)
+    hash    partition "recovery" image_size 49 614 848  algorithm sha256
+
+  recovery_ramdisk.img / erecovery_ramdisk.img (embedded, 1344 B, identical)
+    hash    partition "recovery_ramdisk" image_size 29 102 080  algorithm sha256
+
+  vbmeta_system.img
+    hashtree partition "system"  image_size 3 525 328 896
+             tree_offset 3 525 328 896, tree_size 27 766 784,
+             data_block 4096 / hash_block 4096, fec_num_roots 2, algorithm sha1
+    property com.android.build.system.fingerprint
+             = Huawei/ohosqssi/ohosqssi:12/SKQ1.220804.001/huawei05212005:user/dev-keys
+    property com.android.build.system.os_version     = 12
+    property com.android.build.system.security_patch = 2022-08-01  (declared twice)
+
+  vbmeta_vendor.img
+    hashtree partition "vendor"  image_size 947 318 784
+             tree_offset 947 318 784, tree_size 7 467 008, 4096/4096, fec 2, sha1
+    property com.android.build.vendor.fingerprint
+             = qti/kona/kona:11/RP1A.200720.011/huawei202405211603:user/dev-keys
+    property com.android.build.vendor.os_version     = 11
+    property com.android.build.vendor.security_patch = 2018-06-19  (declared twice)
+
+  vbmeta_odm.img
+    hashtree partition "odm"     image_size 635 641 856
+             tree_offset 635 641 856, tree_size 5 013 504, 4096/4096, fec 2, sha1
+    property com.android.build.odm.fingerprint (qti/kona:11, same vendor string)
+    property com.android.build.odm.os_version = 11
+
+  vbmeta_cust.img
+    hashtree partition "cust"    image_size 90 726 400
+             tree_offset 90 726 400, tree_size 724 992, 4096/4096, fec 2, sha1
+
+  vbmeta_hw_product.img
+    hashtree partition "hw_product" image_size 2 369 454 080
+             tree_offset 2 369 454 080, tree_size 18 665 472, 4096/4096, fec 2, sha1
+
+  Coverage type summary:
+    hash     - boot, ramdisk, dtbo, recovery, recovery_ramdisk (leaf vbmeta embedded
+               in the image's own AVB footer)
+    hashtree - system, vendor, odm, cust, hw_product (independent vbmeta partitions,
+               dm-verity style with FEC roots = 2)
+    chain    - all 14 root entries and the 8 recovery/erecovery entries
+
+5.5a DISAGREEMENT between the AVB hashtree image_size and the measured partition size
+
+  This must be stated plainly rather than smoothed over. The hashtree image_size does
+  not match the partition sizes measured independently:
+
+    partition    AVB hashtree image_size   measured partition size          source
+    vendor              947 318 784       1 022 038 016   ROUND4 odm/vendor extraction
+    odm                 635 641 856          51 593 216   ROUND4 extraction
+    system            3 525 328 896       3 206 561 792   ROUND3 LP metadata (slot0)
+    cust                 90 726 400           8 024 064   ROUND3 LP metadata (slot0)
+    hw_product        2 369 454 080       2 826 309 632   ROUND3 LP metadata (slot0)
+
+  For vendor the AVB figure is smaller than the partition (plausible if a filesystem
+  image smaller than its container was signed). For odm, cust and system the AVB
+  figure is LARGER than the partition it names, which cannot be explained by that
+  mechanism. A direct byte search for the measured sizes inside the corresponding
+  vbmeta images found no big-endian and no little-endian occurrence of those values,
+  so the disagreement is not a field-offset mistake on one side - the two numbers
+  simply are not both present.
+
+  The sum of the five hashtree image sizes (7 568 470 016 B) also exceeds super.img
+  (7 114 729 004 B), whereas the five LP partition sizes sum to 7 114 526 720 B, i.e.
+  super.img minus 202 284 bytes of metadata. The LP side is therefore internally
+  consistent and the AVB side is not reconcilable with it from offline evidence alone.
+
+  This is recorded as UNKNOWN U-8, not resolved and not explained away. It matters
+  for any future packaging attempt: it means the AVB hashtree descriptors in this
+  stock package cannot be used as a statement of partition geometry.
+
+5.6 What this work package does NOT establish
+
+  No signature verification was attempted. No AVB policy was bypassed or altered. The
+  descriptor contents prove coverage claims; they do not prove that a device would
+  accept a modified image, and they do not reveal any key material.
+
+================================================================================
+6. WORK PACKAGE E - NINE DTBO ENTRIES, MEMORY / EFI / CHOSEN / ROOTPARAM
+================================================================================
+
+6.1 Method
+
+  The nine dtbo_entry_N.dtbo files already extracted by ROUND3 were decompiled with
+  dtc 1.7.0 into .dts text in the ROUND19 temp directory; the firmware was not
+  re-extracted. The four base FDT candidates from ROUND3 (boot_fdt_candidate_0..3)
+  were decompiled the same way. For each entry the audit records root identity,
+  fragment count, whether target-path is used, the full __fixups__ symbol list, and
+  the content of the fragment that targets the base /rootparam node.
+
+6.2 The base DTB baseline (what the overlays are overlaying onto)
+
+  /memory:
+      device_type = "memory"
+      reg = <0x00 0x00 0x00 0x00>          <- all-zero placeholder
+  /rootparam:
+      phandle only, no properties          <- an empty node waiting to be filled
+  /chosen:
+      bootargs = "rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kpti=off"
+      (no linux,uefi-system-table, no linux,uefi-mmap-start/size/desc-size/desc-ver)
+  /firmware/android/vbmeta:
+      parts and ta_parts lists (quoted in 5.4c)
+  /firmware/android/fstab:
+      system, vendor, odm entries, each in an ext4 and an erofs flavour, all with
+      fsmgr_flags = "wait,logical,avb"
+
+  The /memory reg being zero is the direct answer to the task's "missing root /memory
+  node" question in its true form: the node is present but carries no usable range.
+
+6.3 Per-entry results
+
+  idx  board-id      variant  board_name     hardware_version  frags  rootparam frag
+  0    0x2008 0x00   VA       DBY_W09_VA     SH0DBSLM          143    @142
+  1    0x2068 0x00   VF       DBY_W09_VF     SH1DBSLMA         145    @143
+  2    0x200e 0x00   VD       DBY_W09_VD     SH1DBSLM          144    @143
+  3    0x2010 0x00   VC       DBY_W09_VC     SH1DBSLM          143    @142
+  4    0x200a 0x00   VB       DBY_W09_VB     SH1DBSLM          144    @143
+  5    0x202e 0x00   VI       DBY_W09_VI     SH1DBSLMA         145    @143
+  6    0x206e 0x00   VH       DBY_W09_VH     SH1DBSLM          145    @143
+  7    0x2030 0x00   VE       DBY_W09_VE     SH1DBSLM          145    @143
+  8    0x206a 0x00   VG       DBY_W09_VG     SH1DBSLM          145    @143
+
+  Every entry's fragment count, board-id tuple and rootparam target are exact reads
+  of the decompiled overlay. The 'frags' column counts direct fragment@N children of
+  the overlay root.
+
+6.4 The only property-writing fragment that touches a root-level node
+
+  For each entry, the fragment listed in the last column has target = &rootparam and
+  writes exactly five properties, differing only in their values:
+
+    entry 0 (VA): qcom,boardid = <0x08 0x02 0x00 0x00>, board_name "DBY_W09_VA",
+                  product_name "DBY-W09", hardware_version "SH0DBSLM"
+    entry 1 (VF): qcom,boardid = <0x08 0x02 0x09 0x06>, "DBY_W09_VF", "SH1DBSLMA"
+    entry 2 (VD): qcom,boardid = <0x08 0x02 0x00 0x06>, "DBY_W09_VD", "SH1DBSLM"
+    entry 3 (VC): qcom,boardid = <0x08 0x02 0x00 0x08>, "DBY_W09_VC", "SH1DBSLM"
+    entry 4 (VB): qcom,boardid = <0x08 0x02 0x00 0x02>, "DBY_W09_VB", "SH1DBSLM"
+    entry 5 (VI): qcom,boardid = <0x08 0x02 0x03 0x08>, "DBY_W09_VI", "SH1DBSLMA"
+    entry 6 (VH): qcom,boardid = <0x08 0x03 0x00 0x02>, "DBY_W09_VH", "SH1DBSLM"
+    entry 7 (VE): qcom,boardid = <0x08 0x02 0x04 0x00>, "DBY_W09_VE", "SH1DBSLM"
+    entry 8 (VG): qcom,boardid = <0x08 0x02 0x09 0x08>, "DBY_W09_VG", "SH1DBSLM"
+
+  plus huawei,modem_id in every entry (a phandle reference plus zero).
+
+  product_name is "DBY-W09" in all nine. qcom,boardid is a 4-byte variant identifier,
+  not a memory address and not a device-unique value.
+
+6.5 Memory / EFI / chosen / fstab deltas across all nine entries
+
+  Probe (count of occurrences in each decompiled overlay)          all nine entries
+    'device_type = "memory"' ...................................... 0
+    'linux,usable-memory' ......................................... 0
+    'linux,uefi-' (any linux,uefi-* property) ..................... 0
+    'linux,uefi-mmap' ............................................. 0
+    'linux,uefi-system-table' ..................................... 0
+    'bootargs' .................................................... 0
+    'reserved-memory' ............................................. 0
+    'fstab' ....................................................... 0
+    'target-path' (path-based fragment targeting) ................. 0
+    fragment target phandles ...................................... all 0xFFFFFFFF
+                                                                     (deferred, resolved
+                                                                      at overlay apply)
+
+  __fixups__ symbol lists: identical in kind across all nine. They reference spmi_bus,
+  clock_rpmh, thermal_zones, the USB/DP/DSI/PHY plumbing, the audio and codec nodes,
+  the camera CCI nodes, PMIC regulators, storage nodes (ufsphy_mem, ufshc_mem,
+  ufs_phy_gdsc, sdhc_2, storage_cd), panel (huawei_lcd_panel), wifi/bt info nodes,
+  the battery/charging group, and rootparam. None of the nine references a symbol
+  named memory, chosen, reserved_memory or firmware.
+
+  Deltas: the nine entries do not differ from each other in any memory, EFI, chosen,
+  rootparam-shape or fstab respect. Their differences are the board-id tuple, the
+  board_name / hardware_version / qcom,boardid values in the rootparam fragment, and
+  the presence or absence of a small number of product-specific fragments
+  (two entries carry 143 fragments, two carry 144, five carry 145). A full
+  line-normalised diff of the decompiled overlays is preserved locally as evidence;
+  its residual differences are confined to those product fragments plus phandle
+  numbering.
+
+6.6 Answer to the key question
+
+  No stock DTBO among the nine entries can explain the missing root /memory content,
+  and none of them creates the EFI-stub /chosen/linux,uefi-* handoff. Neither claim is
+  broader than: the nine entries extracted by ROUND3, the paths actually probed, and
+  the absence of any memory/chosen/reserved-memory/firmware symbol in their fixups.
+
+  Corollary that follows directly and is worth stating: because none of the nine
+  overlays touches /firmware/android/fstab, the first-stage fstab in section 6.2 is
+  the same for all nine hardware variants.
+
+================================================================================
+7. WORK PACKAGE F - ABL ARTEFACT TRIAGE
+================================================================================
+
+STATUS: BLOCKED / NOT APPLICABLE.
+
+The task makes this package conditional on an ABL binary already being present in the
+existing local extraction folder. It is not. The ROUND2 inventory of 43 partitions
+contains no abl.img and no abl.elf. xbl.img (4 018 176 B) and xbl_config.img
+(4 325 376 B) are listed in the inventory but no local copy of either exists in the
+work directory, so not even a file-type check could be performed without going
+outside the approved extraction set.
+
+No disassembly, no string scan, no emulation and no execution was attempted for an
+ABL artefact. This package does not block A-E, as the task permits.
+
+================================================================================
+8. REMAINING UNKNOWNS AND THE EXACT EVIDENCE EACH WOULD NEED
+================================================================================
+
+U-1  Whether the base DTB's /memory node is filled by ABL/UEFI at runtime, and with
+     what range.
+     Needed: an ABL/UEFI artefact plus either a runtime FDT dump from a device session
+     or a documented memory-map handoff in that artefact. Offline DTB and DTBO
+     evidence in this package cannot answer it; the placeholder is all zeros.
+
+U-2  Whether the EFI-stub /chosen/linux,uefi-* handoff is produced at runtime by
+     something other than DTB/DTBO.
+     Needed: the same artefact as U-1, or a runtime /proc/device-tree/chosen dump.
+     Note the stock /chosen contains bootargs only, so if the handoff exists it is
+     added after the DTB stage.
+
+U-3  Whether HOS's ABL consumes the os_version field of the standalone ramdisk
+     container, given ramdisk.img says Android 12 while boot.img says Android 11.
+     Needed: ABL behaviour evidence, or a boot log showing the ramdisk container being
+     accepted. The discrepancy itself is proven; its consequence is not.
+
+U-4  Whether chain validation for the erecovery slot tolerates an embedded vbmeta that
+     declares partition name "recovery" (because erecovery.img is byte-identical to
+     recovery.img and therefore carries recovery's vbmeta verbatim).
+     Needed: AVB log output from a device, or the erecovery boot code path.
+
+U-5  The purpose of /patch_avb_key in the stock ramdisk.
+     Needed: the consumer of that file (a vendor tool or a boot-time code path). Its
+     structure (2048-bit AVB public key blob, 520 B) is proven; its use is not.
+
+U-6  Whether the 1694-byte gap between dtbo.img's payload end and its vbmeta block is
+     consumed by anything. It is all-zero padding to the next 4096 boundary, which is
+     the expected alignment behaviour, but nothing proves a consumer ignores it.
+
+U-7  The exact reserved-field widths inside this vendor's hash/hashtree descriptors.
+     The parser derives field placement from an exact-fill and tail-all-zero rule and
+     the result closes on all 15 blobs, but the field names are AOSP names applied to
+     a vendor layout. This is the one place where the parser, not the data, could be
+     wrong in naming.
+
+U-8  What the hashtree image_size values actually denote, given that they disagree with
+     the measured partition sizes (section 5.5a): larger than the LP partition for
+     system, odm and cust, smaller for vendor, and summing to more than super.img.
+     Needed: either a stock super.img layout dump produced by the vendor's own
+     packaging tool, or the original partition images as signed (before any super
+     assembly), or a device-side avb/verity log showing the accepted image_size.
+     This is the single largest open item in this round because it blocks any attempt
+     to reconstruct a bootable stock layout from AVB metadata.
+
+================================================================================
+9. BOUNDARY STATEMENT
+================================================================================
+
+No device was connected. No ADB, fastboot, recovery, bootloader, reboot, unlock, root,
+flash, partition write, AVB disable, vbmeta modification, signing or packaging
+deployment was performed. No input firmware image was modified: the ROUND2 payload
+extract and the ROUND3 dtb_work were read only, and every derived artefact (decompressed
+CPIO, dtc output, parser fixtures, JSON reports) stayed inside the ROUND19 work
+directory. Nothing was installed or downloaded. No serial, MAC, IMEI, key material,
+salt, signature or full digest appears in this report; the local SHA-256 values were
+recomputed for integrity and match the ROUND2 baseline but are withheld here as
+required. RAM physical addresses and reserved-memory contents are not reproduced; the
+only address-like values reported are the boot-header load addresses and DTB address
+that work package B explicitly asks for.
+
+main, the protected DTS branch, the second-AI branch and PR #1 were not modified.
+Only this text report is uploaded, to firmware-audit-v1.

@@ -97,3 +97,19 @@ The workflow's earlier UFS example diagnostics remain unresolved. Phase B is sti
 2. Add direct QMP PHY example validation with positive/negative fixtures after confirming the installed `dt-validate` CLI and generated example paths.
 3. Resolve UFS schema-composition diagnostics and add the mission-required clock/domain/supply negative fixtures.
 4. Continue to the next unblocked build/source work; do not wait for the local memory/AVB/device gates.
+
+
+### ROUND63 fixture and diagnostic-gate update (2026-11-25)
+
+Branch HEAD before this log update: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
+
+Added three DTS fixtures under `kernel-baseline/round61/fixtures/`:
+- `round63-phy-legacy-no-property.dts`: optional property absent; expected PASS.
+- `round63-phy-always-on-valid.dts`: empty boolean present; expected PASS.
+- `round63-phy-always-on-invalid-type.dts`: property encoded as a cell value; expected FAIL.
+
+The workflow now compiles the fixtures with `dtc`, validates the first two with the processed ACK schema, and asserts that the malformed-type fixture is rejected with a diagnostic naming the property. It also runs explicit `dt-validate` on the UFS example and prints the actual return code/output while keeping the known UFS failure distinct from the PHY fixture gate.
+
+Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report update commit: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
+
+**Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.

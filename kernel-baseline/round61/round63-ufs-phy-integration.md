@@ -56,3 +56,16 @@ The hosted run must still establish the actual apply/checkpatch/schema results. 
 ## 5. Evidence boundary
 
 The hosted runner is a disposable source-validation environment, not the user's manifest-pinned Repo/Kleaf workspace. No Bazel query/cquery, actual Kconfig resolution, kernel Image build, board DTB/DTBO, boot image, AVB validation or device boot is claimed here.
+
+
+## 6. Positive/negative schema fixtures added
+
+Three minimal, self-contained DTS fixtures now exercise the optional property against the processed ACK schema:
+
+- `fixtures/round63-phy-legacy-no-property.dts` — SM8250 PHY node without the optional property; must validate.
+- `fixtures/round63-phy-always-on-valid.dts` — same valid node with the empty boolean property; must validate.
+- `fixtures/round63-phy-always-on-invalid-type.dts` — property incorrectly encoded as `<1>`; must be rejected.
+
+The hosted workflow compiles these with `dtc`, runs `dt-validate -s processed-schema.json` on the first two, and asserts that the malformed-type fixture fails with a diagnostic naming `vdda-phy-always-on`. It also captures the explicit UFS example `dt-validate` return code separately, because the current UFS composition errors remain a known Phase-B blocker and must not prevent the independent PHY fixture gate from running.
+
+Workflow updates through commit `de431840a025a3f66ff8bb3de74eae4e59edb863`. These fixtures are committed but their hosted execution result is not yet available in this session.

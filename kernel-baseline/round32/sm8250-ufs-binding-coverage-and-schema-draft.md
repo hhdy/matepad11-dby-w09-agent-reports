@@ -64,7 +64,7 @@ The proposed UFS dual-GenPD branch can identify the specific SoC via of_device_i
 - Generic power-domains is not given a speculative per-controller name list.
 - The UFS Host's first-milestone single power domain remains GCC UFS_PHY_GDSC.
 - ROUND29's proposed dual-domain change (MMCX first, GCC GDSC second) remains unapplied and must be checked with the actual schema tool.
-- The draft does not claim successful validation; it is a patch candidate only. The three unified-diff hunks have been compared line-by-line with the pinned ACK .33 qcom,ufs.yaml source; each hunk's declared old/new line counts and source context match. This is a manual context check, not a git apply or schema-tool run.
+- The draft does not claim dt-schema validation. A one-file isolated apply test has now been run against the exact pinned ACK `.33_r00` `qcom,ufs.yaml`: the source fixture's `git hash-object` matched the GitHub blob SHA exactly (`1dd41f6d5258014d59c8c8005bc54f7994351a52`), and the local patch file SHA matched the repository patch blob SHA (`efe2d932da34716c631de22d89aba19730cc7f50`). On that exact file fixture, `git apply --check`, `git apply`, and `git diff --check` all passed. This is not a full ACK source-tree patch-application test and does not validate schema semantics or DTB output.
 
 ## 5. Required next checks
 
@@ -81,3 +81,13 @@ The proposed UFS dual-GenPD branch can identify the specific SoC via of_device_i
 - Pinned ACK UFS QCOM match table: https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18.33_r00/drivers/ufs/host/ufs-qcom.c
 - Current Linux master UFS binding: https://github.com/torvalds/linux/blob/master/Documentation/devicetree/bindings/ufs/qcom%2Cufs.yaml
 - Current Linux master SM8250 UFS node: https://github.com/torvalds/linux/blob/master/arch/arm64/boot/dts/qcom/sm8250.dtsi
+
+## 7. Isolated exact-blob patch verification
+
+- Exact source file: `Documentation/devicetree/bindings/ufs/qcom,ufs.yaml` at commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`.
+- GitHub source blob SHA: `1dd41f6d5258014d59c8c8005bc54f7994351a52`; the reconstructed local test fixture matched this value before application.
+- ROUND32 patch blob SHA: `efe2d932da34716c631de22d89aba19730cc7f50`; local test patch matched it exactly.
+- `git apply --check`: **PASS** against the exact source file fixture.
+- `git apply`: **PASS** against the isolated fixture.
+- `git diff --check`: **PASS** after application.
+- `dt_binding_check`, `dtbs_check`, `dtc`, and full-tree integration remain **NOT_RUN** because the required dt-schema/device-tree toolchain and full source tree were not available in this environment.

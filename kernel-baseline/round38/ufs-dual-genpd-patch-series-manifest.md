@@ -96,7 +96,7 @@ The dual-domain UFS request-routing change and MMCX→MX corner equivalence are 
 - `ack18-dby-w09-dts-draft` remains unchanged; ROUND37 was applied only to a local exact-blob fixture, not to the protected branch.
 - PR #1 remains open / Draft / unmerged.
 - `firmware-audit-v1` remains unchanged; ROUND12 AVB metadata report has not appeared.
-- ROUND12 remains the only local Agent task. Do not start more local tasks or change device state.
+- ROUND12 AVB report is uploaded but BLOCKED; ROUND13 and ROUND14 local audits are complete. The Local Agent queue is empty. Do not repeat FDT scans or create another local task unless a new, distinct local-only fact becomes necessary. Do not change device state.
 - No device connection, unlocking, flashing, partition writing, or boot testing was performed.
 
 **Conclusion:** the schema patch pair is now a viable exact-source candidate and the UFS dual-domain integration has a precise patch order and validation matrix. This is not yet a compiled kernel, validated DTB, working MMCX vote, or bootable DBY-W09 image.

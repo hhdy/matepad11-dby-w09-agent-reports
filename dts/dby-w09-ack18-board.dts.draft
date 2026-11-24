@@ -77,8 +77,12 @@
  * ACK's upstream qcom-rpmh-regulator binding/driver handles PMIC VRM/XOB
  * regulators, not the vendor qcom,rpmh-arc-regulator provider. SM8250's
  * upstream SoC DTSI instead exposes rpmhpd performance levels/OPPs; the
- * UFS OPP table uses required-opps against that provider. Keep this board
- * file on that upstream model and do not copy vendor ARC nodes/properties.
+ * UFS OPP table references those OPPs through required-opps. However, the
+ * UFS Host is attached to GCC UFS_PHY_GDSC, and the inspected GCC/GDSC
+ * topology has no established RPMHPD parent or performance-state callback.
+ * Therefore required-opps alone does NOT prove an MMCX RPMh vote. Preserve
+ * UFS_PHY_GDSC and treat the UFS-to-RPMHPD route as an integration gap
+ * (ROUND27). Do not copy vendor ARC nodes/properties as a shortcut.
  *
  * Important porting limit: the upstream SM8250 rpmhpd descriptor has a
  * CX->MX parent relationship, while its MMCX descriptor does not mirror

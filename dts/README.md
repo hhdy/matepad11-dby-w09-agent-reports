@@ -18,8 +18,8 @@ The draft now preserves that known stock value. This is stronger evidence than o
 
 ## Current limits
 
-- No source sync, dtc invocation, dt-schema validation, Kconfig resolution, compile, boot-image packing or hardware test has been done.
-- PM8150 UFS output regulators are mapped from local HOS4.3 data. Their upstream input-supply topology is **not modeled yet**: ROUND7's property inventory does not contain the PMIC parent-supply properties. The same-device 3.7 V `vph_pwr` arrangement is a HOS4.2/public-reference clue only, not a verified HOS4.3 fact.
+- ROUND11 is complete; its sanitized findings are documented in ROUND16. No source sync, dtc invocation, dt-schema validation, Kconfig resolution, compile, boot-image packing or hardware test has been done.
+- PM8150 UFS output regulators are mapped from local HOS4.3 data. ROUND11 completely scanned the base FDT and found four internal ARC *-parent-supply edges plus six ARC proxy-supply links, but no vdd-s1..s10-supply, vin-supply or vph-pwr-supply anywhere in the FDT. The ARC edges are virtual level dependencies, not physical PM8150 VRM input-supply links. Do not restore the HOS4.2 public-reference vph_pwr=3.7 V wiring.
 - SPMI PMIC GPIO/PON/arbiter nodes are intentionally absent from this minimal UFS-only base.
 - No UART console, reserved-memory, panel, THP, WLAN, BT, audio, camera, USB-C or DP nodes are enabled.
 - Panel `ACTIVE_PROFILE=UNKNOWN`.
@@ -30,6 +30,7 @@ The draft now preserves that known stock value. This is stronger evidence than o
 ## Source and evidence basis
 
 - Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC GDSC, RPMh XO clock and RPMh OPP references, IOMMU and interconnect topology.
+- ACK does not use the legacy vendor qcom,rpmh-arc-regulator graph in its upstream PMIC regulator driver. Its SM8250 power-level representation uses the SoC rpmhpd provider and OPP table. The upstream SM8250 RPMhPD domain descriptor does not mirror every HOS4.3 MMCX ARC edge, so full corner equivalence remains a later subsystem validation item.
 - Local ROUND7/ROUND9 HOS4.3 facts: stock DTBO rootparam values and UFS rail closure.
 - Local ROUND8 overlay target map: stock entry 8 has 145 fragments and is incompatible with a minimal ACK base.
 - Public same-device Linux DTS / rootparam overlay, used as a cross-reference only, not copied as a complete Android/ACK solution.

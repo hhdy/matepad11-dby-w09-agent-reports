@@ -90,3 +90,8 @@ The hosted run 45448394286 successfully applied the patch series and passed all 
 ### Patch order note
 
 The shared-schema patch ROUND52-0001 replaces the common binding file as a full-file hunk. Therefore the explicit minItems: 1 correction for ROUND36 must be applied after ROUND52-0001, not before it. Both hosted workflows now use: ROUND36 → ROUND52-0001 → round36-corrected-power-domain-range.patch → round32-corrected-sc7180-clock-names.patch. The failed run 45449480649 stopped at the next ROUND52 patch because the correction had initially been applied before that replacement; the sequence has been corrected and a fresh run is pending.
+
+
+### Conditional minItems correction
+
+Run 45449803857's retained processed-schema.json confirmed that dtschema 2023.9 converts the SM8250 conditional then-branch's maxItems: 2 into minItems: 2 independently of the shared property's minItems: 1. The branch-local correction now sets minItems: 1 in both the shared power-domains property and the SM8250 then-branch, leaving the non-SM8250 else branch exactly one. This preserves the intended SM8250 cardinality range of one or two domains. A fresh hosted run is pending.

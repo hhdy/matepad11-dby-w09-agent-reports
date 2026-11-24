@@ -68,3 +68,8 @@ Do not mark Phase C PASS from patch application, buildifier or Bazel version out
 Run `45452267778` on Ubuntu 22.04 successfully resolved the previous Clang ABI blocker: manifest JDK 11.0.15, Bazel 8.7.0, Clang path and Rust 1.91.1 were located. It applied the full ordered UFS/ROUND63/Kleaf patch set and passed both prior code-patch checks, then stopped in strict checkpatch because the ROUND63 patch references the existing kernel API member `regulator_bulk_data.init_load_uA`, which upstream checkpatch labels CAMELCASE. The independent UFS validation workflow already narrowly ignores only this known CAMELCASE false positive for the same patch; it reports 0 errors / 0 warnings after that ignore.
 
 Aligned the manifest build workflow with the same narrow `--ignore CAMELCASE` handling for ROUND63 only. No other checkpatch category is ignored. Retry trigger commit: `1b833dd74ddb39dd90f7a691f62ce313e0dfe5d2`. Await new run before claiming target query/cquery.
+
+
+## Watchdog recovery for non-reporting runner
+
+After the narrow CAMELCASE adjustment, run `45453412267` remained API-reported `in_progress` with no `updated_at` movement after `2026-11-24T17:52:57Z`; its job log endpoint returned BlobNotFound and its manifest/build step never advanced. No target-query result can be inferred from that state. Recovery trigger commit `4877a6d2afb643e69e1ac68685983c4495e20936` started run `45455279898`, which is now the active monitored attempt. The previous run is left untouched. Await fresh query/cquery and terminal artifact evidence.

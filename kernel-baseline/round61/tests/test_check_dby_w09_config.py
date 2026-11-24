@@ -33,11 +33,19 @@ class ConfigCheckerTests(unittest.TestCase):
             code = checker.main([str(self.config), *args])
         return code, output.getvalue()
 
-    def test_valid_config_passes_and_reports_derived_symbol(self) -> None:
+    def test_valid_config_passes_with_qcom_smmu_driver(self) -> None:
         code, output = self.invoke()
         self.assertEqual(code, 0)
         self.assertIn("RESULT: PASS", output)
-        self.assertIn("CONFIG_ARM_SMMU_QCOM is absent", output)
+
+    def test_missing_qcom_smmu_driver_fails(self) -> None:
+        text = self.config.read_text(encoding="utf-8").replace(
+            "CONFIG_ARM_SMMU_QCOM=y\\n", ""
+        )
+        self.config.write_text(text, encoding="utf-8")
+        code, output = self.invoke()
+        self.assertEqual(code, 1)
+        self.assertIn("CONFIG_ARM_SMMU_QCOM is missing", output)
 
     def test_missing_required_symbol_fails(self) -> None:
         text = self.config.read_text(encoding="utf-8").replace("CONFIG_SCSI_UFS_QCOM=y\n", "")
@@ -103,13 +111,14 @@ class ConfigCheckerTests(unittest.TestCase):
         self.assertTrue(parsed["ok"])
         self.assertEqual(parsed["checked_required"], len(checker.REQUIRED_SYMBOLS))
 
-    def test_optional_derived_symbol_if_present_must_be_y(self) -> None:
-        with self.config.open("a", encoding="utf-8") as stream:
-            stream.write("CONFIG_ARM_SMMU_QCOM=m\n")
+    def test_qcom_smmu_driver_module_value_fails(self) -> None:
+        text = self.config.read_text(encoding="utf-8").replace(
+            "CONFIG_ARM_SMMU_QCOM=y", "CONFIG_ARM_SMMU_QCOM=m"
+        )
+        self.config.write_text(text, encoding="utf-8")
         code, output = self.invoke()
         self.assertEqual(code, 1)
         self.assertIn("CONFIG_ARM_SMMU_QCOM is =m", output)
-
 
 if __name__ == "__main__":
     unittest.main()

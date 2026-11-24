@@ -358,3 +358,11 @@ On main:
 7. Keep the unresolved physical PM8150 L5 input-supply topology as an independent blocker. Do not invent a vdd/vin/vph parent.
 
 Do not block the Image-only source build on local AVB/memory gates; the QMP PHY driver candidate itself must be compiled before any boot candidate is considered. Keep working the next unblocked phases after this review; do not stop after writing a comment.
+
+
+### ROUND63 primary candidate revision note
+
+The final primary candidate driver patch on main is now Git blob `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5` (includes explicit `linux/string.h` and corrected new-file hunk anchors). Do not use the earlier candidate blob `b0f6b5...` or `7092ef...`. The binding patch remains `a6668eebe293f9a35e9c08d6be4f37c4340e7ddd`.
+
+Primary AI has verified all 15 pinned ACK QMP UFS regulator lists put `vdda-phy` first and `vdda-pll` second, and a deterministic in-memory replay now matches 5/5 driver hunks + 1/1 binding hunk. This remains NOT a real Git apply. Re-fetch the exact main artifacts and run real `git apply --check` / apply / diff / checkpatch / dt_binding_check / compile on the disposable pinned worktree.
+

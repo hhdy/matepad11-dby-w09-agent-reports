@@ -82,6 +82,7 @@ In a complete worktree at the immutable ACK tag:
 - `git apply`: **PASS** on the isolated fixture.
 - `git diff --check`: **PASS** after application.
 - YAML parse of the patched exact-source fixture with PyYAML: **PASS**.
+- Combined ROUND32 + ROUND36 isolated JSON Schema Draft 7 logic test: **PASS** for an SM8250 UFS node with the exact eight clock names, one reg window and two power domains; the prior one-domain SM8250 layout also passes. Three domains, nine clocks, an incorrect eighth clock name, two reg windows, and two power domains on non-SM8250 Qualcomm UFS are rejected as expected. This validates only the relevant conditional combination, not the full dt-schema binding graph.
 - Isolated JSON Schema Draft 7 validation of the actual compatible conditional: **PASS** for SM8250 one-domain and two-domain cases, **PASS** for rejecting SM8250 three-domain and non-SM8250 two-domain cases, and **PASS** for retaining non-SM8250 one-domain support. This checks the conditional's JSON Schema behavior only; it is not `dt_binding_check` / dt-schema validation.
 - Current patch blob SHA on `main`: `dad87ef8dfefee6141b8a7949982c007c4a03b4a` (at the time of the apply run; re-fetch before future use).
 

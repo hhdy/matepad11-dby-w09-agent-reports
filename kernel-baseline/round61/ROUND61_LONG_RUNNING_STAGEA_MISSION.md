@@ -307,3 +307,18 @@ Until #8–#9 have real evidence, status must remain **STAGE_A_BUILD_READY** or 
 After Stage A completion, do not automatically begin Stage B. Submit a handoff for explicit approval to start the Android 17 DerpFest device/vendor/HAL work.
 
 **The mission remains active until Stage A is genuinely accepted or a specific externally controlled gate requires user action.**
+ 
+
+## Primary-AI supplemental evidence — ROUND62 boot-chain reference
+
+Before starting Phase E/F, read the primary-AI report on main:
+`kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md`.
+
+It reviews a pinned public DBY-W09 Linux 7.0 reference commit and finds a same-device report of:
+- Huawei ABL booting header-v2 `boot` with a separate `ramdisk` partition;
+- `fastboot boot` refused on that tested setup;
+- an ABL-accepted DTBO that fills `/rootparam`;
+- a method that unpacks the exact local stock boot image to preserve header-v2 metadata;
+- a separate ramdisk payload path that preserves that other setup's AVB footer after validating its exact stock partition.
+
+This is cross-reference only, not proof of the user's HOS4.3 details. Do not copy its HOS4.2 assumptions, stock hashes, fixed 96 MiB / 2 MiB partition sizes, offsets, command line, DTB or AVB metadata. Phase A–D must continue regardless of this later packaging gate. Treat lack of `fastboot boot` as a significant potential safety constraint: no partition writes without separately reviewed inputs and explicit user authorization. 

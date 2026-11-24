@@ -8,17 +8,20 @@ retained as source-topology metadata for now; the initial ACK driver patch
 does not acquire it or submit its 210mA load-only vote because ACK S8 has no
 DRMS callback and no proven enable policy.
 
+Both maximum-load properties are required when their corresponding supply
+phandle is present. The VDDP driver rejects a zero load.
+
 Apply after ROUND32 has added qcom,sm8250-ufshc to the schema compatible list.
 Draft only; dt_binding_check has not been run.
 
 ---
- Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 34 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-@@ -45,5 +45,24 @@ properties:
+@@ -45,5 +45,26 @@ properties:
    qcom,ice:
      $ref: /schemas/types.yaml#/definitions/phandle
      description: phandle to the Inline Crypto Engine node
@@ -31,6 +34,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +
 +  qcom,vddp-ref-clk-max-microamp:
 +    $ref: /schemas/types.yaml#/definitions/uint32
++    minimum: 1
 +    description: Maximum load requested from the UFS device reference-clock supply.
 +
 +  qcom,vccq-parent-supply:
@@ -41,6 +45,24 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +
 +  qcom,vccq-parent-max-microamp:
 +    $ref: /schemas/types.yaml#/definitions/uint32
++    minimum: 1
 +    description: Maximum load associated with the VCCQ-parent host consumer.
    reg:
+@@ -83,3 +104,16 @@
+ allOf:
+   - $ref: qcom,ufs-common.yaml
+ 
++  - if:
++      required:
++        - qcom,vddp-ref-clk-supply
++    then:
++      required:
++        - qcom,vddp-ref-clk-max-microamp
++
++  - if:
++      required:
++        - qcom,vccq-parent-supply
++    then:
++      required:
++        - qcom,vccq-parent-max-microamp
 --

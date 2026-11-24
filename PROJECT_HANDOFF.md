@@ -259,3 +259,6 @@ Updated ROUND33 patch:
 This is not full-tree git apply, checkpatch, C compilation, dt-schema, DTB, Kconfig, Kleaf or device validation. ROUND45 report: kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md.
 
 ROUND30 MMCX-to-MX, ROUND42/43 Huawei final memory handoff, ROUND12 AVB and ROUND40 UFS companion-supply teardown remain separate open gates. ROUND12 remains the only active local Agent task. No protected DTS branch, firmware audit branch or PR #1 was modified. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware acceptance.
+
+
+ROUND45 supplemental Kconfig call-site review against the exact .33_r00 source confirmed the new helper's OPP/GenPD API dependencies are covered by the planned fragment chain: SCSI_UFSHCD → PM_DEVFREQ → PM_OPP; SM_GCC_8250 → QCOM_GDSC → PM_GENERIC_DOMAINS (when PM=y); PM_GENERIC_DOMAINS_OF is auto-enabled with OF; QCOM_RPMHPD depends on QCOM_RPMH + QCOM_COMMAND_DB, both already requested. drivers/Makefile also includes the pmdomain subtree under PM_GENERIC_DOMAINS. No additional direct config symbol was identified, but final Kleaf .config resolution remains NOT_RUN.

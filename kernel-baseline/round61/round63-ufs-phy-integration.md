@@ -86,3 +86,12 @@ These contracts support the candidate's remaining-rail failure unwind and load-v
 ## 8. ROUND63 patch-format correction before hosted checkpatch
 
 A local line-length scan found the copied driver patch's Subject line was 82 columns. The branch-local copy's subject was shortened to `[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle`; the actual source diff/hunks are unchanged. The canonical main candidate remains untouched. A repeat line scan now finds no over-80-column added source/message lines; the only >80 line is the standard 94-column `diff --git` header. Hosted strict checkpatch remains the authoritative result.
+
+
+## 9. First hosted apply failure and correction
+
+Hosted run `45441391557` reached the exact fixed ACK commit and applied the UFS patch series plus the ROUND63 PHY binding patch. The ROUND63 driver patch then failed only its first include hunk at `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c:16`; its later four source hunks applied cleanly under diagnostic `--reject` mode. The cause was insufficient include-block context in the candidate patch. The source body itself was not changed by this failed validation attempt.
+
+Corrected the branch-local include hunk to anchor on the preceding `linux/of_address.h` include and the following blank line, with updated hunk counts. The driver implementation hunks are unchanged. A new hosted run on commit `4f8eaacf045b1179d099ba2307175193c651884c` is executing this corrected patch.
+
+The same failed run also exposed a race in result publication: the branch advanced after the report checkout, so the bot's push was non-fast-forward rejected. The publisher now fetches and resets to the latest branch head immediately before writing and pushing its result. Run `45442645017` is queued with that publisher fix. These are validation/workflow corrections, not evidence of a passing patch yet.

@@ -93,6 +93,8 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 
 ## 6. 已完成的内核移植研究（无需从零重做）
 
+- ROUND31：ACK .33_r00 UFS/QMP/SM8250 GCC/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig 依赖闭环；storage-first fragment 的隐藏依赖注释已更新，最终 Kconfig 解析仍 NOT_RUN。
+
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
 
 - ROUND13：第一版 ACK 板级 DTS / 最小 rootparam overlay 设计。
@@ -169,6 +171,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 ### GPT 侧（当前继续工作）
 
 - 以 ROUND28 锁定的 `android17-6.18.33_r00` 和 ROUND29 方案继续完成 UFS 双 GenPD patch 草案、DTS binding/order 检查和 probe defer/runtime-PM 生命周期审查；方案未经编译和实机验证，不能标为完成。
+- 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
 - ROUND12 完成后，再按既有队列审查 ROUND13 的 HOS4.3 regulator mode/DRMS 属性。

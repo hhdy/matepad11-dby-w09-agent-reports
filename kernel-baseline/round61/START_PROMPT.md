@@ -28,3 +28,5 @@ Hard boundaries:
 - Keep committing to your dedicated branch, maintain PROGRESS.md, and continue to the next unblocked phase until Stage A is genuinely accepted or only user-controlled hardware/host action remains.
 
 Start now. Do not respond with a plan alone.
+
+Primary AI has also added `kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md` on main. Read it for Phase E/F only. It is a same-device public Linux cross-reference, not proof of this user's HOS4.3 ABL behavior. It reports `fastboot boot` refusal on a tested setup, boot header v2 + separate ramdisk, and a required /rootparam overlay; do not copy its image hashes, sizes, offsets, HOS4.2 assumptions or AVB footer values. Continue Phase A–D compilation even while these packaging gates remain open.

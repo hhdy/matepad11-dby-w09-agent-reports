@@ -398,7 +398,7 @@ Reports: ROUND49, ROUND50 and ROUND51 under `kernel-baseline/round49`, `round50`
 
 ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查，并在 main 新增两份设计草案；binding 补丁最终增加了 positive-load 与 supply/max-load 配对约束：
 
-- 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md（最新报告内容 SHA bf957c3b66a541bc149822310440a8c923db20f3）
+- 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md（最新报告内容 SHA 07965112ffc81617bf2e1343ae72e9c00dcfe368）
 - Binding patch：kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft（blob 949798446f6135844f5e2d841fca06a0d25ea6d6；34 insertions；两处 hunk 均完成文本行数复核）
 - Driver patch：kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft（blob bf60bdda7cf0c679b35a4f8dac1676c63a9e3ce0；4 处 hunk 均完成文本行数复核）
 

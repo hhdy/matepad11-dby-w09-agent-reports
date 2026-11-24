@@ -767,3 +767,6 @@ Primary AI checked every QMP UFS `vreg_list` in the exact ACK source: all 15 lis
 Final driver patch blob: `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`. A deterministic in-memory exact-context replay against the exact pinned source blobs verified 5/5 driver hunks and 1/1 binding hunk with declared counts and anchors. This is **not** `git apply`, checkpatch, dt_binding_check or compilation.
 
 Updated report: `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md` (commit `2bfe3e0d2d4f6b17e057a8e9e5ffc7b4d4bab2d6`). The second AI ROUND61 task must use the final driver patch blob above and independently run the real worktree checks.
+
+
+ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.

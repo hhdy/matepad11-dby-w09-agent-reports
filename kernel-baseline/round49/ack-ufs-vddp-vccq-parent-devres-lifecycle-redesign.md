@@ -136,3 +136,12 @@ The protected branch remains untouched. This report and any future replacement s
 - L6 input parent remains electrically unresolved; a regulator-core dummy supply does not establish the physical power tree.
 - Full-tree apply, checkpatch, binding schema, dtc/dtbs_check, Kconfig resolution, Kleaf build, UFS boot, suspend/resume, and runtime regulator traces are all NOT_RUN.
 - Stage A ACK 6.18.33 remains the only project milestone. Stage B DerpFest is deferred.
+
+
+## ROUND51 correction — VCCQ-parent/S8 load-only path is not an implementation requirement (2026-11-24)
+
+ROUND14 confirms the HOS4.3 S8 base-FDT child has qcom,set=<3>, init voltage 1.2 V and vendor init-mode RET, but no qcom,init-enable, regulator-boot-on or regulator-always-on property in the inspected scope. qcom,set chooses active/sleep request sets; it is not enable. No runtime S8 enable read was performed.
+
+Fixed ACK pmic5_hfsmps510 uses rpmh_regulator_vrm_ops, which has no get_optimum_mode/set_load callback. Fixed ACK regulator_set_load() stores a per-consumer load value but only invokes drms_uA_update() when that same consumer's enable_count is nonzero. The KONA UFS VCCQ-parent handle is not explicitly enabled. Consequently the 210mA load-only vote is not a reliable mode vote, and in ACK it is a successful no-op. ROUND51 therefore supersedes any reading of the storage-first design as requiring an S8 load call: omit the S8 get/load/enable/disable path from the initial ACK UFS patch. Do not add an enable reference or boot-on/always-on constraint without new evidence. Keep runtime S8 enable state UNKNOWN and leave the VCCQ-parent DTS mapping as unused topology metadata only if the custom binding allows it.
+
+The VDDP/L6 lifecycle conclusion is unchanged: acquire, set 100µA, enable; release with deferred cleanup after generic UFS VCCQ teardown. See ROUND51 for full source proof and exact links. No patch was applied or compiled.

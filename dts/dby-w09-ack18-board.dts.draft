@@ -76,9 +76,24 @@
  * Revisit per subsystem if later consumers need MMCX/CX/MX corner behavior.
  *
  * The PM8150 VRM regulators below are only the HOS4.3 UFS output rails,
- * with their locally resolved output constraints. Their PMIC input parent
- * supply is intentionally omitted because none is exposed in the inspected
- * HOS4.3 base FDT.
+ * with their locally resolved output constraints. Their input-parent links
+ * are NOT locally resolved. ROUND11's complete apps_rsc supply-property scan
+ * found only the four ARC level parent-supply edges and six proxy-supply
+ * edges; it did not find the upstream VRM driver's expected vdd-s4 or grouped
+ * vdd-l3-l4-l5-l18 / vdd-l6-l9 / vdd-l13-l16-l17 properties.
+ *
+ * ACK's upstream PM8150 VRM table assigns those supply_name strings to S4,
+ * L5, L6, L9 and L17. On a populated Device Tree, regulator core treats
+ * constraints as complete and can fall back to a dummy parent regulator
+ * when no real parent can be resolved. That fallback assumes the real
+ * physical supply is already present and enabled; it does NOT establish
+ * the board's actual electrical supply path or turn the ARC graph into a
+ * supported VRM parent. Therefore consumer supply phandles below are mapped,
+ * but the complete PMIC input / power-tree relationship is NOT_ESTABLISHED.
+ *
+ * Do not add vph_pwr=3.7 V, fake fixed regulators, vendor ARC properties or
+ * proxy-supply translations to silence the gap. Treat regulator parent-path
+ * verification as an electrical/bring-up gate before any boot test.
  */
 &apps_rsc {
 	regulators-0 {

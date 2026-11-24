@@ -1,14 +1,116 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 54989ae675a55de81c8413b2f089083a7eef4991
-- Workflow run ID: 45450571890
+- Workflow commit: b40ca25751a918ebfbc51b9e9ca513f1cfc5faec
+- Workflow run ID: 45450813746
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
+
+## Processed schema SHA-256
+7c26e1ff9ad0387faeda8114c2dbdb16797dd5aba2c2a2e3410f97c2b2318ee8  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
-Applied diff not produced; inspect job log.
+b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
  M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
- .../devicetree/bindings/ufs/qcom,ufs-common.yaml   | 49 +++++++++++++++++++++-
- 1 file changed, 48 insertions(+), 1 deletion(-)
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+ BUILD.bazel                                        |  19 ++
+ .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml    |   5 +
+ .../devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml |   1 +
+ .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  51 +++-
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c            | 123 ++++++++-
+ drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.h                        |   4 +
+ 7 files changed, 477 insertions(+), 7 deletions(-)
+
+## round63-phy-legacy-validation.log
+/home/runner/work/_temp/round63-phy-legacy-no-property.dtb: /: 'compatible' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml#
+/home/runner/work/_temp/round63-phy-legacy-no-property.dtb: /: 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml#
+
+## ufs-sm8250-1-domain-valid-validation.log
+
+## ufs-sm8250-2-domains-valid-validation.log
+
+## round33-checkpatch.log
+total: 0 errors, 0 warnings, 0 checks, 232 lines checked
+
+"[PATCH DRAFT] scsi: ufs: qcom: route SM8250 UFS OPP to RPMhPD" has no obvious style problems and is ready for submission.
+
+## round52-0002-checkpatch.log
+total: 0 errors, 0 warnings, 0 checks, 104 lines checked
+
+"[PATCH DRAFT] scsi: ufs: qcom: manage SM8250 VDDP REF_CLK supply" has no obvious style problems and is ready for submission.
+
+## round63-0001-checkpatch.log
+Use of uninitialized value $root in concatenation (.) or string at /home/runner/work/_temp/ack/scripts/checkpatch.pl line 1191.
+find: ‘/include’: No such file or directory
+total: 0 errors, 0 warnings, 0 checks, 224 lines checked
+
+"[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle" has no obvious style problems and is ready for submission.
+
+NOTE: Ignored message types: CAMELCASE
+
+## round61-dt-binding-check.log
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml: ignoring, error parsing file
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/iommu/pkvm,pviommu.yaml: ignoring, error parsing file
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/dtc
+  CHKDT   ./Documentation/devicetree/bindings
+  LINT    ./Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
+
+## round61-ufs-example-validation.log
+
+## dt_binding_check log SHA-256
+a87faad1f06f6db6839b141aeeec6dffd241e8e3444a39c21cbe687af053cb2e  /home/runner/work/_temp/round61-dt-binding-check.log

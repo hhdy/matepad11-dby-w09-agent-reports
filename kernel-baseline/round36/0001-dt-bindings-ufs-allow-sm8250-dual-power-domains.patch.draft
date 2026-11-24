@@ -1,0 +1,47 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] dt-bindings: ufs: allow dual power domains on SM8250
+
+The pinned ACK qcom,ufs-common.yaml limits power-domains to one entry.
+The DBY-W09 SM8250 UFS Host integration needs two independent domains:
+RPMHPD MMCX followed by GCC UFS_PHY_GDSC.
+
+Raise the shared ceiling to two, then use the compatible-specific condition
+to keep all non-SM8250 Qualcomm UFS hosts at one. This intentionally allows
+SM8250 hosts to use either the existing one-domain topology or the proposed
+two-domain topology; it does not require two domains on every SM8250 board.
+
+Draft only. Not applied, schema-validated or tested.
+
+---
+ Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+--- a/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+@@ -43,3 +43,3 @@
+   power-domains:
+-    maxItems: 1
++    maxItems: 2
+@@ -64,4 +64,19 @@
+ allOf:
+   - $ref: ufs-common.yaml
+ 
++  - if:
++      properties:
++        compatible:
++          contains:
++            const: qcom,sm8250-ufshc
++      required:
++        - compatible
++    then:
++      properties:
++        power-domains:
++          maxItems: 2
++    else:
++      properties:
++        power-domains:
++          maxItems: 1
++
+ additionalProperties: true
+--

@@ -75,21 +75,24 @@
  * not claim a one-to-one translation of the complete vendor ARC graph.
  * Revisit per subsystem if later consumers need MMCX/CX/MX corner behavior.
  *
- * The PM8150 VRM regulators below are only the HOS4.3 UFS output rails,
- * with their locally resolved output constraints. Their input-parent links
- * are NOT locally resolved. ROUND11's complete apps_rsc supply-property scan
- * found only the four ARC level parent-supply edges and six proxy-supply
- * edges; it did not find the upstream VRM driver's expected vdd-s4 or grouped
- * vdd-l3-l4-l5-l18 / vdd-l6-l9 / vdd-l13-l16-l17 properties.
+ * The PM8150 VRM outputs below include the UFS main rails (S4/L5/L6/L9/L17)
+ * plus the independent VCCQ parent rail (PM8150L S8). Their output windows
+ * and consumer links are mapped from HOS4.3 evidence; their own physical
+ * input-parent paths are NOT locally resolved. ROUND11 found four ARC level
+ * parent-supply edges and six proxy-supply edges, but no vdd-s1..s10-supply,
+ * vin-supply or vph-pwr-supply in the complete base FDT.
  *
- * ACK's upstream PM8150 VRM table assigns those supply_name strings to S4,
- * L5, L6, L9 and L17. On a populated Device Tree, regulator core treats
- * constraints as complete and can fall back to a dummy parent regulator
- * when no real parent can be resolved. That fallback assumes the real
- * physical supply is already present and enabled; it does NOT establish
- * the board's actual electrical supply path or turn the ARC graph into a
- * supported VRM parent. Therefore consumer supply phandles below are mapped,
- * but the complete PMIC input / power-tree relationship is NOT_ESTABLISHED.
+ * ACK's upstream PM8150 VRM table assigns vdd-s4, grouped LDO supply names,
+ * and vdd-s8 as each regulator's physical input requirements. On a populated
+ * Device Tree, regulator core may fall back to a dummy parent when no real
+ * input is resolved. That fallback assumes the physical input is already
+ * present and enabled; it does NOT establish the board's electrical supply
+ * path. The UFS-level qcom,vccq-parent-supply is a separate consumer link
+ * from the host to PM8150L S8 and does not resolve S8's own vdd-s8 input.
+ *
+ * Do not add vph_pwr=3.7 V, vdd-s*-supply, fake fixed regulators or ARC
+ * properties as a substitute. Treat the missing physical input network as
+ * a power-tree validation gate before any boot test.
  *
  * Do not add vph_pwr=3.7 V, fake fixed regulators, vendor ARC properties or
  * proxy-supply translations to silence the gap. Treat regulator parent-path

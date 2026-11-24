@@ -12,7 +12,9 @@
 
 ## 当前公开研究报告
 
+- [ROUND13：第一版 ACK 板级 DTS / 最小 rootparam DTBO 设计](./kernel-baseline/round13/ack18-dby-w09-initial-dts-and-dtbo-design.md)
 - [ROUND12：ROUND10 boot-chain 证据更新与 ACK DTS 基础](./kernel-baseline/round12/round10-boot-chain-update-and-ack18-dts-foundation.md)
+- [ACK 6.18 DTS 草案分支](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ack18-dby-w09-dts-draft/dts)
 - [ROUND11：Android 17 / ACK 6.18 内核优先移植方案](./kernel-baseline/round11/android17-6.18-dby-w09-kernel-port-plan.md)
 - [ROUND10：ACK 6.18 板级 DTS 兼容性评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)
 - [ROUND9：ACK 6.18 驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)
@@ -42,10 +44,10 @@
 
 ## 下一阶段由 GPT 负责
 
-1. 从 ACK `android17-6.18` 及公开同型号 Linux 资料，形成 minimal DBY-W09 board DTS 草案。
-2. 以 ROUND9 已确认 rails 和 ROUND7/8 overlay/rootparam 事实为准；panel、THP、WLAN、audio、camera 等未闭环设备先禁用/隔离。
-3. 针对原厂 DTBO 目标和 `__symbols__` / `__fixups__`，说明新 DTS 必须满足的兼容条件；不假定旧 DTBO 自动适用于新 DTB。
-4. 再决定是否建立独立实现分支。未真正同步源码/编译/启动测试时，不得声称 build pass 或 bootable。
+1. ROUND13 已形成第一版 minimal board DTS 和单 fragment rootparam DTBO 草案，位于 `ack18-dby-w09-dts-draft` 分支 `dts/` 目录；文件后缀 `.draft`，不供构建或刷写。
+2. 关键架构决定：原 HOS4.3 stock DTBO entry 8 有 145 个 fragment target，引用大量 vendor-only path / symbol，不能直接用于 minimal ACK base DTS。新 DTS 必须搭配单独的最小 DBY-W09 rootparam overlay，ABL 接受性仍 UNKNOWN。
+3. GPT 下一步先完成 PMIC regulator 输入供电、UFS DRMS、rootparam 字段/ABL 选择语义和 ACK 6.18 pinctrl/console 的源码审查，然后补完 DTS；panel、THP、WLAN、audio、camera 等暂不启用。
+4. 只有在 source review 完成后才考虑允许的离线构建环境与静态校验。未真正 dtc/dt-schema/Kleaf 编译、image packaging 或 device boot 时，不得声称验证通过或可启动。
 
 ## 何时需要重新下发本地任务
 

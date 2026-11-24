@@ -450,3 +450,6 @@ ROUND53 confirms the static source dependency route for UFS/QMP/GCC/RPMh/SM8250 
 - Current storage-first config fragment blob: `e441d042418667ca6d5d58ca4a53bcd8ccd708c3`.
 - Current ROUND53 report blob: `e31686d79bfbcd31ccdfa346d8e738a9f12440ff`.
 - Actual Kconfig resolution, olddefconfig/final .config, Kleaf build and runtime remain NOT_RUN.
+
+
+ROUND53 follow-up: the storage-first fragment now removes direct assignments of hidden `GENERIC_MSI_IRQ`, `SCSI_DMA`, and `OF_RESERVED_MEM`; `PM_OPP` also remains selection-derived from PM_DEVFREQ. The fixed ACK arm64/GICv3-ITS, SCSI/HAS_DMA and OF_EARLY_FLATTREE chains derive these requirements. Current fragment blob: `ae8675357e2f5c57c9ec38e7574b00590b558c63`; current ROUND53 report blob: `b471500b33e987453e4492c80113457f8a34e92e`. These are static-source corrections only; no final `.config` or Kleaf build has run.

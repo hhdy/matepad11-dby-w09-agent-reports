@@ -110,8 +110,8 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - ROUND25：UFS core 电源顺序与 VCCQ/L6 DRMS 聚合。
 - ROUND26：HOS4.3 PM8150 regulator mode / DRMS 属性证据边界。
 - ROUND27：ACK SM8250 UFS required-OPP 到 RPMHPD 的 GenPD 路由缺口。
-- ROUND29：以精确 ACK .33 源码细化 UFS Host 双 GenPD 方案：QCOM probe 先 attach MMCX + UFS_PHY_GDSC，显式把仅有的 required-opps index 0 映射到 MMCX；使用 `PD_FLAG_DEV_LINK_ON`，禁止对两个域使用 `PD_FLAG_REQUIRED_OPP`。另已确认 attach-list 成功前 RPMHPD provider 的 indexed OPP table 已注册。尚未实现/编译/测试。
 - ROUND28：ACK `android17-6.18.33_r00` 源码基线、DerpFest manifest 版本冲突、Qualcomm 6.12 SoC driver delta 的借鉴边界。
+- [ROUND29：ACK .33 UFS 双 GenPD / required-OPP probe 接入设计](./kernel-baseline/round29/ack-qcom-ufs-dual-genpd-required-opp-probe-integration.md)：QCOM probe 在通用 UFS init 前 attach MMCX + UFS_PHY_GDSC，显式把唯一 required-opps index 0 映射到 MMCX；只使用 `PD_FLAG_DEV_LINK_ON`，禁止对两个域使用 `PD_FLAG_REQUIRED_OPP`。已核实 RPMHPD provider 在可 attach 前先注册 indexed GenPD OPP table。方案仍未实现/编译/测试。
 
 现有草案：
 - `dts/dby-w09-ack18-board.dts.draft`
@@ -133,7 +133,9 @@ SM7325 Android 17 / 6.18 参考项目展示 ACK + Qualcomm 6.12 SoC driver delta
 
 ROUND27 已确认：SM8250 UFS OPP 表存在 RPMHPD required-opps，但 UFS Host 当前附着 GCC UFS_PHY_GDSC。已审查的 GCC/GDSC 路径没有建立到 RPMHPD MMCX 的性能状态传播关系。因此不能把已有 required-opps 属性当成实际 MMCX vote。
 
-候选设计是 UFS Host 双 GenPD：保留 GCC UFS_PHY_GDSC，同时显式附着 RPMHPD MMCX，并在 OPP table 初始化前映射 required_dev/index。尚未实现、编译或测试；必须审查 PM/runtime-PM、probe 次序、错误 unwind、remove 和实际 vote。
+ROUND29 已将设计缩小并精确到 ACK `.33_r00`：在 `ufs_qcom_probe()` 中、`ufshcd_pltfrm_init()` 之前，用 `devm_pm_domain_attach_list()` 附着 MMCX（index 0）和 GCC UFS_PHY_GDSC（index 1），仅使用 `PD_FLAG_DEV_LINK_ON`；再用 `devm_pm_opp_set_config()` 将唯一 required-opps index 0 指向第一个虚拟 GenPD 设备。通用 UFS 后续仍按原样设置 clock OPP config 并初始化 OPP table，不需要改通用 `ufshcd-pltfrm.c` 或 `ufs_hba_variant_ops`。
+
+ROUND29 另确认 `of_genpd_add_provider_onecell()` 在注册 GenPD provider 之前先为 RPMHPD 域注册 indexed OPP table，因此 attach-list 成功后再绑定 required_dev，不会因 RPMHPD OPP table 尚未注册而触发 `-ENODEV`。这只是源码顺序证明，运行时未验证。不能对两个域使用 `PD_FLAG_REQUIRED_OPP`，因为它会把 index 1 映射到不存在的第二个 required-opps 槽位。设计报告列出剩余的 DTS order、probe defer、runtime-PM、错误 unwind、实际 vote、HOS corner 对等验证。尚未实现、编译或测试。
 
 ### 7.3 HOS4.3 ARC / proxy
 
@@ -163,7 +165,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### GPT 侧（当前继续工作）
 
-- 以 ROUND28 锁定的 `android17-6.18.33_r00` 继续完成 SM8250 源码对照、设备 DTS / Kconfig、UFS 双 GenPD / required-OPP patch 设计审查。
+- 以 ROUND28 锁定的 `android17-6.18.33_r00` 和 ROUND29 方案继续完成 UFS 双 GenPD patch 草案、DTS binding/order 检查和 probe defer/runtime-PM 生命周期审查；方案未经编译和实机验证，不能标为完成。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
 - ROUND12 完成后，再按既有队列审查 ROUND13 的 HOS4.3 regulator mode/DRMS 属性。

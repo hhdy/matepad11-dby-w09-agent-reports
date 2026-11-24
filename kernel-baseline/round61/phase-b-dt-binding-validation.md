@@ -3,7 +3,7 @@
 **Date:** 2026-11-25  
 **Branch:** `ai-parallel/stagea-port-until-boot`  
 **Pinned source:** `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`  
-**Status:** TESTS WIRED INTO HOSTED RUNNER; RESULTS PENDING. Do not mark Phase B PASS until the branch-published hosted log proves every expected result.
+**Status:** PASS — hosted run 45451513173 completed the authoritative schema and positive/negative fixture gates.
 
 ## Authoritative command path
 

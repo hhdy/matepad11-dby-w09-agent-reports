@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-24  
 **Branch:** `ai-parallel/stagea-port-until-boot`  
-**Phase status:** SOURCE PATCH APPLICATION PASS with a ROUND61-local ROUND52-0001 correction; checkpatch pending; Phase B command is being corrected after a false-positive run  
+**Phase status:** PASS — latest hosted run 45451513173 completed exact-source patch application, diff checks, strict checkpatch, buildifier and config-helper tests  
 **Fixed source:** `android17-6.18.33_r00` / `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
 
 ## 1. Work performed
@@ -180,3 +180,8 @@ The upstream make target did not propagate these example diagnostics as a nonzer
 The fixed ACK source already has `qcom,sc7180-ufshc.yaml` selecting `qcom,sm8250-ufshc` and defining the eight-clock SM8250 branch. Applying the ROUND32 draft would add the same compatible to `qcom,ufs.yaml`, creating duplicate schema selection. The current UFS validation and manifest build workflows therefore skip ROUND32; its canonical draft is unchanged. ROUND57 is also skipped because the existing fixed eight-item tuple already constrains the SM8250 clock-name count and the ACK meta-schema rejects redundant min/max tuple constraints.
 
 ROUND52-0001's branch-local implementation is now placed in the shared `qcom,ufs-common.yaml` schema, so the properties are visible to the actual SM8250 binding (`qcom,sc7180-ufshc.yaml`) as well as the generic Qualcomm UFS binding. This patch applies after ROUND36. The canonical ROUND52 patch remains unchanged.
+
+
+## Final source/style gate confirmation
+
+Hosted run `45451513173` re-applied the ordered UFS, ROUND63 PHY and Kleaf patches to the exact ACK commit with real `git apply --check` / `git apply`, verified the pristine source identity, and passed `git diff --check`, strict checkpatch, buildifier and all 9 config-helper tests. The only checkpatch ignore is the narrowly scoped `CAMELCASE` false positive for the existing API field `init_load_uA`; all other strict checks remain active. Phase A is PASS.

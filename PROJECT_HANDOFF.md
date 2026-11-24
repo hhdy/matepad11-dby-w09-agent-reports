@@ -435,3 +435,20 @@ ROUND49/50 只完成固定 ACK / 公开 KONA 源码审查与设计报告。UFS d
 **本地 Agent 当前队列为空；没有创建 ROUND15。** ROUND14 已足以支持当前的保守决策；完整 ARC 全图统计以后若成为实现所需门槛，再另发一个只使用现有解析结果的独立任务，不重跑 FDT parser。
 
 阶段 A 仍未进入完整内核构建：完整工作树 apply、checkpatch、dt-schema、dtc/dtbs_check、最终 Kconfig/.config、Kleaf 构建、镜像打包、实机启动、UFS 识别/读写和基础硬件验收均 NOT_RUN。ROUND12 AVB、ramdisk、EROFS、最终 memory/reserved-memory handoff、selected DTBO 与物理 PMIC 输入树仍有独立 gate。Stage B DerpFest 暂不开始。PR #1 保持 Draft，ack18-dby-w09-dts-draft protected branch 未修改。
+
+
+## 最新公开源码集成草案 — ROUND52（2026-11-24）
+
+ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查，并在 main 新增两份设计草案：
+
+- 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md
+- Binding patch：kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft（blob 9dd8c2b92b852f0841b70422a8a1a781b6330754）
+- Driver patch：kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft（blob 6bd32efec93bec52fe19746c116f6f0b613141e6）
+
+核心决策：
+- ACK qcom,ufs.yaml 没有显式文档化 qcom,vddp-ref-clk-supply/max-microamp 和 qcom,vccq-parent-supply/max-microamp；ROUND52-0001 将四个扩展属性显式加入 schema。
+- VDDP/L6：ROUND52-0002 在 ufs_qcom_init() PHY 上电前获取 qcom,vddp-ref-clk，按 DTS max-microamp 设置负载并 enable；devm cleanup 在 ufshcd_remove() 完成通用 VCCQ 关闭后、regulator_put 前 disable 并清零负载。
+- S8/VCCQ-parent：不 acquire、不 set_load、不 enable/disable、不 set_voltage。qcom,vccq-parent-supply 仅是已定义的源拓扑属性；首版 ACK UFS driver 不消费它。
+- ROUND52 patch series 预期排在 ROUND32/36 schema、ROUND37 board DTS、ROUND33 dual-GenPD driver 之后。该顺序和 patch hunk 行数已经静态复核，但 combined full-tree apply / checkpatch / dt-schema / build 均 NOT_RUN。
+
+当前无本地 Agent 任务。ROUND52 使用已知 ACK 源码和 ROUND13/14 数据，不需要重跑 FDT。需要真实完整 ACK worktree 才能完成下一阶段 combined git apply、checkpatch、dt-schema、最终 Kconfig 和 Kleaf build；本地 Agent 当前的只读限制并不授权它编译或修改源码。

@@ -1,0 +1,126 @@
+name: ROUND61 ACK UFS source and binding validation
+
+on:
+  push:
+    branches:
+      - ai-parallel/stagea-port-until-boot
+    paths:
+      - "kernel-baseline/round61/**"
+      - ".github/workflows/round61-ack-ufs-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ack-ufs-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ACK_COMMIT: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+      REPORT_REPO: https://github.com/hhdy/matepad11-dby-w09-agent-reports.git
+      ACK_REPO: https://github.com/aosp-mirror/kernel_common.git
+    steps:
+      - name: Fetch the dedicated report branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth=1 --branch "$GITHUB_REF_NAME" "$REPORT_REPO" "$RUNNER_TEMP/report"
+          test -f "$RUNNER_TEMP/report/kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft"
+
+      - name: Fetch immutable ACK source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/ack"
+          git -C "$RUNNER_TEMP/ack" remote add origin "$ACK_REPO"
+          git -C "$RUNNER_TEMP/ack" fetch --depth=1 origin "$ACK_COMMIT"
+          git -C "$RUNNER_TEMP/ack" checkout --detach FETCH_HEAD
+          actual="$(git -C "$RUNNER_TEMP/ack" rev-parse HEAD)"
+          printf 'ACK_HEAD=%s\n' "$actual"
+          test "$actual" = "$ACK_COMMIT"
+          git -C "$RUNNER_TEMP/ack" status --short
+
+      - name: Verify immutable source blob identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/ack"
+          check_blob() {
+            local path="$1" expected="$2" actual
+            actual="$(git rev-parse "HEAD:$path")"
+            printf '%s %s\n' "$actual" "$path"
+            test "$actual" = "$expected"
+          }
+          check_blob Documentation/devicetree/bindings/ufs/qcom,ufs.yaml 1dd41f6d5258014d59c8c8005bc54f7994351a52
+          check_blob Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml 962dffcd28b44b3489be5615c75e7270a0c45dc4
+          check_blob drivers/ufs/host/ufs-qcom.c a80c6998406dbc88c25dbd9977699ba481207efe
+          check_blob drivers/ufs/host/ufs-qcom.h 5f979daabd5323184eeee137cc8ecc076193979e
+
+      - name: Apply ordered UFS patches with real git apply
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/report"
+          ack="$RUNNER_TEMP/ack"
+          apply_patch() {
+            local patch="$1"
+            printf '\n=== git apply --check: %s ===\n' "$patch"
+            git -C "$ack" apply --check "$report/$patch"
+            printf '=== git apply: %s ===\n' "$patch"
+            git -C "$ack" apply "$report/$patch"
+            git -C "$ack" diff --check
+          }
+          apply_patch kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft
+          apply_patch kernel-baseline/round57/0001-dt-bindings-ufs-sm8250-clock-names-exact-count.patch.draft
+          apply_patch kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
+          apply_patch kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft
+          apply_patch kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft
+          apply_patch kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
+          printf '\n=== final diff check ===\n'
+          git -C "$ack" diff --check
+          git -C "$ack" status --short
+          git -C "$ack" diff --stat
+          git -C "$ack" diff --numstat
+          git -C "$ack" diff --binary > "$RUNNER_TEMP/round61-ufs-applied.diff"
+          sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
+          git -C "$ack" diff --binary
+
+      - name: Install device-tree schema prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y device-tree-compiler libyaml-dev python3-venv
+          python3 -m venv "$RUNNER_TEMP/dtschema-venv"
+          "$RUNNER_TEMP/dtschema-venv/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/dtschema-venv/bin/python" -m pip install dtschema
+          "$RUNNER_TEMP/dtschema-venv/bin/dt-doc-validate" --version || true
+          dtc --version
+
+      - name: Run authoritative UFS dt_binding_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/ack"
+          export PATH="$RUNNER_TEMP/dtschema-venv/bin:$PATH"
+          export PYTHON="$RUNNER_TEMP/dtschema-venv/bin/python"
+          set -o pipefail
+          make ARCH=arm64 dt_binding_check \
+            DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml" \
+            2>&1 | tee "$RUNNER_TEMP/round61-dt-binding-check.log"
+
+      - name: Summarize validation evidence
+        if: always()
+        shell: bash
+        run: |
+          printf 'ACK_COMMIT=%s\n' "$ACK_COMMIT"
+          if [ -d "$RUNNER_TEMP/ack/.git" ]; then
+            git -C "$RUNNER_TEMP/ack" rev-parse HEAD
+            git -C "$RUNNER_TEMP/ack" status --short
+          fi
+          if [ -f "$RUNNER_TEMP/round61-ufs-applied.diff" ]; then
+            sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
+          fi
+          if [ -f "$RUNNER_TEMP/round61-dt-binding-check.log" ]; then
+            sha256sum "$RUNNER_TEMP/round61-dt-binding-check.log"
+          fi

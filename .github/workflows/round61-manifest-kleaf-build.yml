@@ -98,7 +98,6 @@ jobs:
             -b common-android17-6.18 \
             --repo-url=https://gerrit.googlesource.com/git-repo
 
-          stage="repo sync manifest projects"
           test "$(git -C .repo/manifests rev-parse HEAD)" = "$MANIFEST_COMMIT"
 
           stage="repo sync manifest projects"

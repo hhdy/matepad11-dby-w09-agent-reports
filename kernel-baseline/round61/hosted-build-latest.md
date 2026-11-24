@@ -1,9 +1,9 @@
 # ROUND61 hosted manifest/Kleaf build result
 
-- Date UTC: 2026-11-24T17:36:44Z
+- Date UTC: 2026-11-24T17:41:07Z
 - Branch: ai-parallel/stagea-port-until-boot
-- Trigger commit: 558c2d2deb1c8d5bd6eaea29db6766cf7e04af64
-- Workflow run ID: 45449517911
+- Trigger commit: 9963b227cef39246c08289ad4903a86644885594
+- Workflow run ID: 45449838606
 - Manifest commit: 46a1a5274ff0b40419952c861a8958bba5f28cfc
 - ACK required commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 - Last stage: locate manifest-provided Clang
@@ -12,8 +12,8 @@
 - JAVA_HOME: /home/runner/work/_temp/ack-6.18.33/prebuilts/jdk/jdk11/linux-x86
 - Clang path: prebuilts/clang/host/linux-x86/clang-3289846/bin/clang
 - Rust path: unset
-Filesystem            Size  Used Avail Use% Mounted on
-/dev/mapper/cow-root  145G   85G   60G  59% /
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       145G   89G   56G  62% /
 
 ## Source identity
 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a

@@ -122,3 +122,10 @@ Fixed ACK source shows `ufshcd_hba_exit()` calls the Qualcomm variant exit callb
 A pinned downstream OnePlus SM8150 example treats VDDP and VCCQ-parent differently: VDDP has enable/disable handling, while VCCQ-parent uses load/voltage configuration and PM/BKOPS-dependent vote changes; its `ufs_qcom_exit()` does not explicitly disable VCCQ-parent. Another downstream family differs, so no single vendor policy can be assumed for DBY-W09 HOS4.3.
 
 Do not merge the existing source sketch with ROUND33 yet. The supply patch needs an exact `.33_r00` diff and separate policies. If either rail gets an explicit enable reference, final cleanup should occur after generic UFS child rails have been disabled (for example via a device-managed action registered after enable, subject to full review of devres order); VDDP and VCCQ-parent must not share an assumed identical enable/disable policy. The HOS4.3 S8 enable semantics remain UNKNOWN. See `kernel-baseline/round39/ufs-vccq-parent-vddp-lifetime-and-merge-audit.md`.
+
+
+## 7. ROUND45 driver patch revision
+
+ROUND45 updated the ROUND33 driver artifact to Git blob SHA `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`. It validates every available UFS OPP entry rather than only the first available child, checks the target OPP node is available, requires the provider's single `operating-points-v2` table to be the exact target-containing table node, and balances OF node references on error and success paths.
+
+The source-compatible hunk check against the pinned ACK `drivers/ufs/host/ufs-qcom.c` passed for both hunks (12/18 include lines; 15/214 probe/helper lines). Diffstat: 205 insertions. This remains a source-context verification, not full-tree `git apply`, checkpatch, compile, schema or runtime verification. Unknown SM8250 UFS two-domain layouts are explicitly fail-closed; the currently supported order is MMCX index 0, GCC UFS_PHY_GDSC index 1. Full details: `../round45/ack-ufs-dual-genpd-all-opp-validation.md`.

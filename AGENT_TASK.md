@@ -1,6 +1,6 @@
 # AGENT_TASK.md — DBY-W09 / Android 17 / ACK 6.18 内核移植总入口
 
-> **当前本地 Agent：暂无待执行任务。** ROUND11 已完成并上传。GPT 继续负责公开 ACK 源码审查、DTS/Kconfig 方案和文档更新；除非明确出现本机独有的验证需求，不要重复解析 ROUND1–ROUND11，也不需要重新上传固件。
+> **当前本地 Agent：ROUND12 唯一待办（只读 AVB 元数据核验）。** ROUND11 已完成并上传。ROUND12 只核验现有 HOS4.3 boot/ramdisk/DTBO 与 vbmeta 的 AVB footer / descriptor 关系；只使用本机已有可信工具，无工具则 BLOCKED，不安装、不下载、不使用 WSL。GPT 继续负责其余公开源码审查和 DTS/Kconfig 设计，不重复 ROUND1–ROUND11。
 
 ## 当前项目目标
 

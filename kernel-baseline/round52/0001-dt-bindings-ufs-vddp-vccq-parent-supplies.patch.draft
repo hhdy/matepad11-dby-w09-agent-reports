@@ -12,8 +12,8 @@ Apply after ROUND32 has added qcom,sm8250-ufshc to the schema compatible list.
 Draft only; dt_binding_check has not been run.
 
 ---
- Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
@@ -23,7 +23,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
      $ref: /schemas/types.yaml#/definitions/phandle
      description: phandle to the Inline Crypto Engine node
  
-   reg:
++  qcom,vddp-ref-clk-supply:
 +    $ref: /schemas/types.yaml#/definitions/phandle
 +    description:
 +      Supply for the UFS device reference-clock pad. The Qualcomm host
@@ -42,5 +42,5 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +  qcom,vccq-parent-max-microamp:
 +    $ref: /schemas/types.yaml#/definitions/uint32
 +    description: Maximum load associated with the VCCQ-parent host consumer.
-+  reg:
+   reg:
 --

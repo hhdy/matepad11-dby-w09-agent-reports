@@ -87,6 +87,8 @@ jobs:
           apply_patch kernel-baseline/round61/patches/round52-0001-context-corrected.patch
           apply_patch kernel-baseline/round61/patches/round33-checkpatch-clean.patch
           apply_patch kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch
+          apply_patch kernel-baseline/round61/patches/round63-0002-qmp-ufs-phy-binding.patch
+          apply_patch kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch
           printf '\n=== final diff check ===\n'
           git -C "$ack" diff --check
           git -C "$ack" status --short
@@ -122,8 +124,11 @@ jobs:
           rc52=$?
           cat "$RUNNER_TEMP/round33-checkpatch.log"
           cat "$RUNNER_TEMP/round52-0002-checkpatch.log"
-          printf 'ROUND33_CHECKPATCH_RC=%s\nROUND52_0002_CHECKPATCH_RC=%s\n' "$rc33" "$rc52"
-          if [ "$rc33" -ne 0 ] || [ "$rc52" -ne 0 ]; then
+          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch" > "$RUNNER_TEMP/round63-0001-checkpatch.log" 2>&1
+          rc63=$?
+          cat "$RUNNER_TEMP/round63-0001-checkpatch.log"
+          printf 'ROUND33_CHECKPATCH_RC=%s\nROUND52_0002_CHECKPATCH_RC=%s\nROUND63_0001_CHECKPATCH_RC=%s\n' "$rc33" "$rc52" "$rc63"
+          if [ "$rc33" -ne 0 ] || [ "$rc52" -ne 0 ] || [ "$rc63" -ne 0 ]; then
             exit 1
           fi
 
@@ -163,18 +168,24 @@ jobs:
           export PYTHON="$RUNNER_TEMP/dtschema-venv/bin/python"
           set -o pipefail
           make ARCH=arm64 dt_binding_check \
-            DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml:Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml" \
+            DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml:Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml:Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml" \
             2>&1 | tee "$RUNNER_TEMP/round61-dt-binding-check.log"
           dt-doc-validate -u Documentation/devicetree/bindings \
             Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
-            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml \
+            Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
           yamllint -f parsable -c Documentation/devicetree/bindings/.yamllint \
             Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
-            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml \
+            Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
           test -f Documentation/devicetree/bindings/processed-schema.json
           test -s Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
           find Documentation/devicetree/bindings/ufs -maxdepth 1 \
             -name 'qcom,ufs*.example.dtb' -print
+          find Documentation/devicetree/bindings/phy -maxdepth 1 \
+            -name 'qcom,sc8280xp-qmp-ufs-phy.example.dtb' -print
+          printf '\n=== dt-validate CLI ===\n'
+          dt-validate --help
 
       - name: Summarize validation evidence
         if: always()

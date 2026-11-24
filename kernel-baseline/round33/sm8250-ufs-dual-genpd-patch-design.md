@@ -72,3 +72,13 @@ The patch must remain a draft until these gates are closed. ROUND12 remains the 
 - SM8250 provider compatibles and domain IDs: https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18.33_r00/arch/arm64/boot/dts/qcom/sm8250.dtsi
 - RPMHPD MMCX ID: https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18.33_r00/include/dt-bindings/power/qcom,rpmhpd.h
 - GCC UFS_PHY_GDSC ID: https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18.33_r00/include/dt-bindings/clock/qcom,gcc-sm8250.h
+
+## 7. Latest exact-source hunk recheck
+
+On 2026-11-24, the complete ROUND33 draft was re-read from `main` and both unified-diff hunks were compared against the exact pinned ACK `ufs-qcom.c` file:
+- ACK source blob SHA: `a80c6998406dbc88c25dbd9977699ba481207efe`.
+- ROUND33 patch blob SHA: `454a4443035cf3451c87e2735f0b876d65d52f8b`.
+- Include hunk `@@ -11,12 +11,18 @@`: 12 old / 18 new lines; every old-side line matches the pinned source.
+- Probe hunk `@@ -2802,15 +2808,128 @@`: 15 old / 128 new lines; every old-side line matches the pinned source.
+
+This is full-file source-context and hunk-count verification, not `git apply` on a full kernel worktree. No checkpatch, compile, dt-schema, DTB, runtime-PM, or device validation is claimed.

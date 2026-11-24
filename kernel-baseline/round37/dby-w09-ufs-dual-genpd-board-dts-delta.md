@@ -78,4 +78,17 @@ Conclusion: the board-level two-domain delta is now specified and matches the pi
 - Current ROUND37 patch blob SHA: `486654c8d0b1b785190253270f5e83f796f07362`.
 - Unified-diff hunk 1 (`-19,6 +19,8`): old/new line counts match; all six old-side lines match the exact board file context.
 - Unified-diff hunk 2 (`-212,6 +214,8`): old/new line counts match; all six old-side lines match the exact board file context around `&ufs_mem_hc`.
-- This was an exact source-context comparison using the full current GitHub file text, not a full-file `git apply` test. The protected DTS branch remains unchanged.
+- This initial context comparison was followed by a true isolated one-file apply test using the full source fixture reconstructed from the same GitHub content. Before the test, `git hash-object` of the local source file matched the protected source blob SHA exactly. The protected DTS branch remains unchanged.
+
+## 7. Isolated exact-blob `git apply` verification
+
+The complete protected board DTS file was reconstructed into a local temporary fixture from the GitHub file content.
+- Source path: `dts/dby-w09-ack18-board.dts.draft`.
+- Exact protected source Git blob SHA and local `git hash-object`: `e86c8707c413a9376b1e332a94e292b86acde3e2` (identical).
+- ROUND37 patch Git blob SHA and local `git hash-object`: `486654c8d0b1b785190253270f5e83f796f07362` (identical).
+- `git apply --check`: **PASS**.
+- `git apply`: **PASS**.
+- `git diff --check`: **PASS** after marking the untracked fixture file intent-to-add so the new source diff was checked.
+- The resulting temporary file contains both domain ID header includes and the requested MMCX index 0 / GCC UFS_PHY_GDSC index 1 property. The UFS PHY node itself was not modified by this patch.
+
+This is a genuine single-file exact-blob patch application test. It is not an application to the protected GitHub branch, nor a complete ACK kernel tree integration. `dtc`, schema validation, and final DTB inspection remain NOT_RUN. No protected branch or PR was changed.

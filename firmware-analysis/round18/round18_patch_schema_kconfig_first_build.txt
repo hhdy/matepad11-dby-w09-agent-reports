@@ -1,0 +1,798 @@
+ROUND18 — ACK 6.18.33 补丁集成、schema/Kconfig 与首次 Image 编译
+================================================================================
+设备：Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250 v2.1 / Snapdragon 865
+固定源码：ACK tag android17-6.18.33_r00
+          common commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+任务书：firmware-analysis/round18/AGENT_TASK.md（含 revision 1、revision 2）
+执行模式：本机 WSL2 Ubuntu-24.04 内真实执行；无 hosted runner 结果混入
+报告时间：2026-11-25（UTC 2026-11-24 17:36 → 见各节时间戳）
+
+说明：本报告按任务书 revision 2（2026-11-25）执行。执行开始时发现远端
+AGENT_TASK.md 与 START_PROMPT.md 已被更新（main 5a5f5a595f / f6de59eed7 /
+1da925e211 / 5a5f5a595f 四个提交），因此废弃第一版 7 补丁序列，按 revision 2
+的 8 补丁序列在 pristine 副本上从头重做。旧序列的执行痕迹保留在副本日志中，
+不用于任何 PASS 判定。
+
+
+--------------------------------------------------------------------------------
+1. 状态表
+--------------------------------------------------------------------------------
+PATCH_APPLY   : PASS     8/8 补丁真实 git apply --check → apply → diff-check 全部通过
+                         （其中 2 个补丁先做本地 hunk/context 最小修正，见第 5 节）
+DT_BINDING    : PASS     dt_binding_check 4 schema / 4 example DTB 零 diagnostics；
+                         dt-doc-validate 4/4 rc=0；dt-validate 直接调用 4/4 零 diagnostics；
+                         15 个正反例 MISMATCH_COUNT=0
+KLEAF_QUERY   : PASS     bazel 8.7.0；query 命中；cquery --output=files 精确 4 项输出
+KCONFIG       : PASS     真实 Kleaf config target 生成 .config；ROUND61 validator
+                         31/31 =y PASS；fragment 30/30 请求项一致
+IMAGE_BUILD   : PASS     真实 Kleaf 构建 6m00s，exit 0；Image 44820992 B
+                         sha256 983b342e…；System.map / vmlinux / .config 齐备
+                         状态记为 IMAGE_BUILD_PASS / STAGE_A_BUILD_READY
+
+本轮不产生：board DTB/DTBO、boot.img/vendor_boot/init_boot、刷机包。
+本轮不执行：设备连接、ADB/fastboot、解锁、root、分区写入。
+
+
+--------------------------------------------------------------------------------
+2. ROUND16 权威证据（本轮起点，未重做环境部署）
+--------------------------------------------------------------------------------
+实时复核（GitHub API，只读）：
+
+  分支              : firmware-audit-v1
+  分支尖端          : 99f93d2e81ccb88715bf47ed1aff167d4cd98c55
+  文件              : firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt
+  文件大小          : 20158 bytes
+  Git blob          : c9516f20d3e13cb5d5ec42e41bec4c8a05b25123
+  结论              : WSL_AND_PINNED_ACK_WORKSPACE_READY
+
+与任务书 §0 所列完全一致。本轮未重新部署 WSL/Ubuntu，未 repo init、未 repo
+sync、未重下源码或工具链，未修改 .wslconfig。
+
+
+--------------------------------------------------------------------------------
+3. WSL / workspace / 工具链复核与资源数据
+--------------------------------------------------------------------------------
+3.1 工作区
+
+  原始 workspace : /home/kerneldev/work/matepad11/ack-6.18.33
+  common HEAD    : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  git describe   : android17-6.18.33_r00
+  git status     : 0 行（pristine，本轮全程未改动；开始与结束各核一次）
+  Makefile       : VERSION=6 PATCHLEVEL=18 SUBLEVEL=33 EXTRAVERSION= (空)
+
+  ROUND18 副本   : /home/kerneldev/work/matepad11/ack-6.18.33-round18
+  common HEAD    : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a（与原始一致）
+  git describe   : android17-6.18.33_r00
+
+3.2 工具链（实测）
+
+  Bazel          : Build label 8.7.0
+  Clang          : Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+                   clang version 22.0.1
+  Rust           : rustc 1.91.1-dev (ed61e7d7e 2025-11-07)
+                   Android Rust Toolchain version 15551131-linux-x86
+                   （prebuilts/rust-toolchain/linux-x86/1.91.1.p3）
+  系统 dtc       : DTC 1.7.0
+  内核树内 dtc   : DTC 1.7.2-g52f07dcc（fixtures 使用；与 dt_binding_check 一致）
+  dtschema       : 2026.9（隔离 venv，见 3.4）
+  Python         : 3.12.3
+
+3.3 资源（构建前实测，2026-11-24T17:49:36Z）
+
+  WSL 内存       : total 7.3 GiB / available 5.7 GiB；Swap 2.0 GiB
+  nproc          : 12
+  WSL 磁盘       : /dev/sdd 1007G，已用 85G，可用 872G
+  Windows D:     : 可用 239.47 GiB（任务书下限 100 GiB，满足）
+  cgroup v2      : memory.max / memory.current 在 WSL 内未暴露可读值（空）
+
+3.4 schema 工具环境
+
+  venv 路径      : <副本>/round18-venv（dtschema 2026.9）
+  说明           : 固定 ACK 树内没有 requirements.txt，也没有 dtschema 版本钉定；
+                   common/Documentation/devicetree/bindings/writing-schema.rst
+                   仅给出 "pip3 install dtschema"。
+                   为满足任务书 §6 对 "dtschema 2023.9 依赖" 的要求，另建
+                   <副本>/round18-venv-2023（dtschema 2023.9 / jsonschema 4.17.3）
+                   做对照复跑，结果见 6.5。
+  yamllint       : 未安装；dt_binding_check 期间内核 Makefile 自身输出
+                   "warning: python package 'yamllint' not installed, skipping"，
+                   属该 Makefile 明确容忍的可选依赖。
+
+
+--------------------------------------------------------------------------------
+4. 副本创建方式与原 workspace pristine 证明
+--------------------------------------------------------------------------------
+  创建方式       : cp -a /home/kerneldev/work/matepad11/ack-6.18.33 \
+                          /home/kerneldev/work/matepad11/ack-6.18.33-round18
+                   （本机复制，保留 .repo、项目目录与符号链接；耗时 2m31s）
+  副本体积       : 41 GiB（common 1.7G、prebuilts 21G）
+  manifest 快照  : <副本>/metadata/repo-manifest-revisions.xml，12472 B，58 projects
+
+  原 workspace pristine 证明（两次实测，前后一致）：
+    git -C <原始>/common rev-parse HEAD
+      → 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    git -C <原始>/common status --short | wc -l
+      → 0
+
+  副本内的收尾状态（git status --short）：
+     M BUILD.bazel
+     M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+     M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+     M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+     M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+     M drivers/ufs/host/ufs-qcom.c
+     M drivers/ufs/host/ufs-qcom.h
+    ?? arch/arm64/configs/dby_w09_storage_first.fragment
+
+  累计 diff（源码 6 文件，不含 Kleaf）：
+    +458 / -7，629 行，18373 bytes
+    SHA-256 ff67b7abeaa5d272196d4985a069d6fa8dce991befe0c62a9bb6c8931a1d372c
+  累计 diff（源码 + BUILD.bazel，7 文件）：
+    +477 / -7，659 行，19084 bytes
+    SHA-256 045341234db90a150d559a1c256bf51e794eb74a9f23c10c9e223c57ae2f1281
+
+  git diff --stat（7 文件）：
+    BUILD.bazel                                          |  19 ++
+    .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml      |   5 +
+    .../bindings/ufs/qcom,sc7180-ufshc.yaml              |   1 +
+    .../bindings/ufs/qcom,ufs-common.yaml                |  51 +++-
+    drivers/phy/qualcomm/phy-qcom-qmp-ufs.c              | 123 +++++++-
+    drivers/ufs/host/ufs-qcom.c                          | 281 +++++++++++++
+    drivers/ufs/host/ufs-qcom.h                          |   4 +-
+
+
+--------------------------------------------------------------------------------
+5. 补丁集成：blob、真实 apply、diff-check、checkpatch
+--------------------------------------------------------------------------------
+5.1 二号 AI 分支与拉取时的实际状态（只读，未写入该分支）
+
+  main HEAD                    : 5a5f5a595f54d3a400a66cc24dfaae41dda34dca
+  ai-parallel/stagea-port-until-boot HEAD（实测）
+                               : 1db78203bd044993e3db63eb86ad79a9d2eba728
+                                 （任务书快照为 faae6c044369c24afbdc270eb53fd2e0d31ad451，
+                                  分支已前进；按 revision 2 要求以实际 blob 为准）
+  PROGRESS.md blob             : 2a4c91b9e7a74e3021783bde3b2221d84ea63aee（与任务书一致）
+
+  分支前进导致 1 处 blob 漂移，已按任务书"不可把快照 SHA 当作永久不变"处理：
+
+    03 ROUND36 corrected power-domain range
+      任务书快照 blob : a6e8eeaf9303e428e644245749e6daec4d0e38ac（934 B）
+      实测当前 blob   : f36f13e81ce4638d8aff9780eb0d3445dfda5754（1007 B）
+      内容差异        : 新版把 minItems: 1 同时写入 shared 属性与 SM8250
+                        then 分支（旧版只写 shared）；commit message 重写、hunk
+                        统计 1→2 行插入。语义覆盖更完整，采用实测新 blob。
+
+5.2 实际应用顺序与结果（全部真实执行，未使用内存模拟）
+
+  # 文件（副本内 round18-artifacts-r2/）                     blob                                   字节  check apply diffchk
+  1 01_round36_dual_pd_schema.patch                          dad87ef8dfefee6141b8a7949982c007c4a03b4a  1575   0     0     0
+  2 02_round52_0001_vddp_vccq_parent.patch                   e47219d4a944b44f5c1461689b76e77b4f0317a8  5093   0     0     0
+  3 03_round36_corrected_pd_range.local-fixed.patch          79b00af904454f637098b2882b78b01d52c831cf  1006   0     0     0
+  4 04_round32_corrected_clock_names.patch                   2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb  1151   0     0     0
+  5 05_round33_ufs_dual_genpd.patch                          f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622  8481   0     0     0
+  6 06_round52_0002_vddp_lifecycle.patch                     7e5df841b756dfef803edec486d9a5e3e753f47b  4773   0     0     0
+  7 07_round63_0002_qmp_vdda_binding.patch                   a6668eebe293f9a35e9c08d6be4f37c4340e7ddd  1152   0     0     0
+  8 08_round63_0001_qmp_vdda_lifecycle.final.patch           09f581f4b029be9da8775c150a30fba8cd9b20bf  7473   0     0     0
+  9 09_round58_kleaf_target.patch                            dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec  8513   0     0     0
+
+  （"check" = git apply --check，默认完整上下文，未使用 -C 放宽；
+    "apply" = git apply；"diffchk" = 应用后 git diff --check）
+
+  每个补丁实际执行的命令（在 <副本>/common 下，$f 为该补丁路径）：
+    git hash-object "$f"                 # 与任务书/分支 blob 核对
+    git apply --check -v "$f"            # 返回码记入 check 列
+    git apply -v "$f"                    # 返回码记入 apply 列
+    git diff --check                     # 返回码记入 diffchk 列
+  日志：<副本>/round18-logs/r2_patch_sequence.log（逐补丁分段，含
+  FILE_BYTES / BLOB_SHA / 各步 RC / 累计 diffstat）
+  Kleaf 补丁另有日志：<副本>/round18-logs/r2_kleaf_stage.log
+
+  说明：上表第 3、8 项是本地修正版（其上游原始 blob 各自失败一次，失败与修正
+  过程见 5.3）。以最终采用的补丁计，9/9 均以默认完整上下文通过，无一次使用
+  -C 放宽。
+
+5.3 两处必须先修 hunk/context 才能 apply 的产物缺陷
+
+  任务书 §5.3 要求"若失败，先修 hunk/context 并重复 check，不得跳过检查"。
+
+  (a) 03 ROUND36 corrected（实测 blob f36f13e8）
+      现象：git apply --check 返回 128
+            error: patch fragment without header at line 22: @@ -92,4 +93,5 @@
+      根因：该补丁在 hunk 1 与 hunk 2 之间夹了一个**完全空行**。GNU patch
+            容忍此写法（patch -p1 --dry-run 返回 0），但 git apply 的解析器在
+            计数满足后把该空行视为补丁片段结束，随后无法把 @@ 认作同一文件的
+            第二个 hunk。
+      修正：仅删除该空行（不触碰任何 hunk 内容、行号或计数）
+            blob a6e8eeaf → f36f13e8（上游） → 79b00af9（本地修正，1006 B）
+      修正后：check 0 / apply 0 / diff-check 0
+      复核：patch 内容的两个 hunk 与 02 之后的 qcom,ufs-common.yaml 完全吻合；
+            shared 属性与 SM8250 then 分支都得到 minItems: 1 + maxItems: 2。
+
+  (b) 08 ROUND63-0001（上游 blob a06b7d3f）
+      现象：git apply --check 返回 1；单独拆出 hunk 1 后仍返回 1（与 hunk 2..5 无关）
+            error: patch failed: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c:16
+      根因：hunk 1 为 `@@ -16,5 +16,6 @@`，5 行全部是**前置**上下文、**零尾随
+            上下文**，且以纯新增行结尾。该形态在默认完整上下文模式下无法定位。
+            实测 -C4 / -C3 / -C2 / -C1 均可通过，证明内容本身正确、缺的只是
+            尾随上下文。
+      修正 1（context）：为 hunk 1 补 2 行尾随上下文（文件第 21 行空行、
+            第 22 行 #include <ufs/unipro.h>），header 改为 `@@ -16,7 +16,8 @@`。
+            blob 4e987e877cfab202da9f25184c32dfcdee1925af（7469 B）
+      修正 2（checkpatch 驱动，见 5.4）：代码续行对齐 3 tab → 2 tab + 5 space；
+            并把提交信息中 78 列与 82 列的两行重排到 ≤72 列（保持原意）。
+            blob 09f581f4b029be9da8775c150a30fba8cd9b20bf（7473 B，最终采用）
+      复核：最终版本在 pristine 文件上默认上下文 git apply 通过，应用后
+            #include <linux/string.h> 落在第 21 行（紧接 slab.h），对齐生效。
+
+5.4 checkpatch（scripts/checkpatch.pl --no-signoff --strict --no-tree，对补丁本体）
+
+  #  补丁                                        errors  warnings  checks  lines
+  5  05_round33_ufs_dual_genpd.patch                  0        0        0     232
+  6  06_round52_0002_vddp_lifecycle.patch             0        0        0     104
+  8  08_round63_0001_...final.patch                   2        0        0     224
+
+  第 8 项的 2 个 error 全部位于**提交信息层**，不在代码树内，且为草案自带的
+  出处标注，按要求保留并逐项说明（不删出处信息、不伪造 Signed-off-by）：
+    #25  "Pinned source: ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a"
+         → checkpatch 期望 'commit <12+ sha1> ("<title>")' 叙述体
+    #26  "Source blob: 8af777f7ddd0385a6bb9d9b9563f0e6329699cd3"
+         → 同上
+  本轮已修掉的真实代码问题：
+    - CHECK: Alignment should match open parenthesis（phy-qcom-qmp-ufs.c:1997
+      qphy_clrbits 续行）。修正后 checks 由 1 → 0。
+    - WARNING: Prefer a maximum 75 chars per line（提交信息 78 列）已消除。
+
+  未伪造任何 Signed-off-by；未替他人署名。
+
+5.5 语义确认（应用后实测）
+
+  qcom,ufs-common.yaml
+    power-domains:              minItems: 1 / maxItems: 2        （shared）
+    if compatible contains qcom,sm8250-ufshc
+      then power-domains:       minItems: 1 / maxItems: 2        （SM8250 允许 1 或 2）
+    else power-domains:         maxItems: 1                      （非 SM8250 仍为 1，
+                                                                  minItems 由
+                                                                  maxItems 推得 1）
+    新增属性：qcom,vddp-ref-clk-supply / -max-microamp、
+              qcom,vccq-parent-supply / -max-microamp
+    新增条件：supply 存在则 max-microamp 必填（两条 if/then）
+    保留：allOf 首项 $ref: ufs-common.yaml（指向同目录通用 schema，非自引用）、
+          additionalProperties: true（严格性由消费方 schema 的
+          unevaluatedProperties: false 承担）
+    注：ROUND52-0001 会整体重写该文件，因此 ROUND36 的 minItems 修正必须在
+        它之后补回 —— 本轮严格按此顺序执行，实测结果如上。
+
+  qcom,sc7180-ufshc.yaml
+    else 分支（非 sc7180，含 sm8250）clock-names: minItems 8 + maxItems 8
+    → SM8250 的 clock-names 精确为 8 项；sc7180 分支保持 maxItems 7。
+    ROUND32 只补了上限，未再触碰 qcom,ufs.yaml 的 compatible selector
+    （旧 ROUND32 的重复 schema 选择问题按任务书永久移除）。
+
+  qcom,sc8280xp-qmp-ufs-phy.yaml
+    vdda-phy-always-on: boolean（可选），未放宽其它约束。
+
+
+--------------------------------------------------------------------------------
+6. schema 验证（dt_binding_check / dt-doc-validate / dt-validate / fixtures）
+--------------------------------------------------------------------------------
+6.1 dt_binding_check（4 个 schema，冒号分隔，内核真实路径）
+
+  DT_SCHEMA_FILES='Documentation/devicetree/bindings/ufs/qcom,ufs.yaml:
+                   Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml:
+                   Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml:
+                   Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml'
+  make -j2 ARCH=arm64 dt_binding_check DT_SCHEMA_FILES="$DT_SCHEMA_FILES"
+
+  时间 2026-11-24T17:46:00Z → 17:46:33Z，DT_BINDING_CHECK_RC=0
+
+    SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+      CHKDT   ./Documentation/devicetree/bindings
+    warning: python package 'yamllint' not installed, skipping
+      DTEX    .../ufs/qcom,ufs.example.dts
+      DTEX    .../ufs/qcom,sc7180-ufshc.example.dts
+      DTEX    .../ufs/qcom,ufs-common.example.dts
+      DTEX    .../phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
+      DTC [C] .../ufs/qcom,ufs.example.dtb
+      DTC [C] .../ufs/qcom,sc7180-ufshc.example.dtb
+      DTC [C] .../ufs/qcom,ufs-common.example.dtb
+      DTC [C] .../phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+
+  日志中除 yamllint 可选依赖提示与 gunyah-cma-mem.yaml 忽略行（见下）外，
+  **没有任何 validation diagnostics**（即没有 "too short" / "too long" /
+  "Unevaluated properties are not allowed"）。因此本轮不是"make 返回 0 就判
+  成功"：日志同时被逐行检查，且 6.2/6.3 用直接工具调用独立复验。
+
+  其他日志行（与本轮 4 个 schema 无关，如实记录）：
+    .../bindings/firmware/gunyah-cma-mem.yaml: ignoring, error parsing file
+  该文件属 ACK 树自带、不在本轮范围，dtschema 在处理整目录时忽略它，不影响
+  4 个目标 schema 的 SCHEMA/CHKDT/DTEX/DTC 结果，也不影响其 example 校验。
+
+  processed-schema.json: 25084938 bytes
+    sha256 447e4c45e86f00078dd788ce114a16239f6905d29327625ad5d255f8c83a9bc9
+    （该文件经历两次版本化重建，见 6.5；上值为最终 2026.9 形态）
+
+6.2 dt-doc-validate（逐文件直接调用，保留真实返回码）
+
+  qcom,ufs.yaml                       DOC_VALIDATE_RC=0
+  qcom,sc7180-ufshc.yaml              DOC_VALIDATE_RC=0
+  qcom,ufs-common.yaml                DOC_VALIDATE_RC=0
+  qcom,sc8280xp-qmp-ufs-phy.yaml      DOC_VALIDATE_RC=0
+  均无输出。
+
+6.3 dt-validate（直接对 4 个 example DTB 运行，绕过 Makefile 的 || true）
+
+  内核真实调用形态：dt-validate -u <bindings> -p <processed-schema.json> <dtb>
+  同时增加限定形态：dt-validate -l <4 schema 冒号串> -u <bindings> -p <schema> <dtb>
+
+    qcom,ufs.example.dtb                     rc=0  diagnostics=0 行（两种形态均 0）
+    qcom,sc7180-ufshc.example.dtb            rc=0  diagnostics=0 行
+    qcom,ufs-common.example.dtb              rc=0  diagnostics=0 行
+    qcom,sc8280xp-qmp-ufs-phy.example.dtb    rc=0  diagnostics=0 行
+
+  已知 UFS example diagnostics 的处置结论：
+    - "power-domains ... is too short"            → 已消除
+    - "Unevaluated properties are not allowed
+       ('#reset-cells','freq-table-hz','interrupts',
+        'iommus', ...)"                            → 已消除
+  根因（单一）与修法：shared power-domains 只有 maxItems 时，dtschema 会把
+  minItems 推导为等于 maxItems（精确长度），SM8250 单域 example 因此失败；
+  $ref 目标校验失败后不再产生 annotation，导出 schema 的
+  unevaluatedProperties: false 便把 common 中已定义的通用属性全部判为
+  unexpected。ROUND36 corrected 补丁显式写入 minItems: 1 后两个 diagnostics
+  同时消失——不是靠删 example、不是靠放宽 unevaluatedProperties。
+
+6.4 正反例（15 个，全部真实 cpp → dtc → dt-validate）
+
+  工具：cpp 13.3.0；内核树内 dtc 1.7.2-g52f07dcc；dt-validate dtschema 2026.9
+  流程：cpp -nostdinc -I include -I scripts/dtc/include-prefixes -undef -D__DTS__
+        → dtc -I dts -O dtb → dt-validate
+  两种调用形态均执行，结论一致：
+    (i)  限定形态 -l <4 schema 冒号串>（2026.9 支持列表语义）→ 下表
+    (ii) 内核真实形态 -u -p（不加 -l）→ MISMATCH_COUNT_2026_9_KERNELFORM=0
+  判定：dtschema 2026.9 的 dt-validate main() 无返回值，进程**恒 exit 0**，
+        故判定依据为"是否输出非空 diagnostics"，而不是 $?（见 10.2）。
+
+  fixture                            expect  dtc  dt-validate  result
+  u01_sm8250_8clk_1pd                ACCEPT  OK   ACCEPT       MATCH
+  u02_sm8250_8clk_2pd                ACCEPT  OK   ACCEPT       MATCH
+  u10_sm8250_vddp_pair               ACCEPT  OK   ACCEPT       MATCH
+  u03_sm8250_7clk                    REJECT  OK   REJECT       MATCH
+  u03b_sm8250_8clk_7names            REJECT  OK   REJECT       MATCH
+  u04_sm8250_9clk                    REJECT  OK   REJECT       MATCH
+  u05_sm8250_3pd                     REJECT  OK   REJECT       MATCH
+  u06_sm8150_2pd                     REJECT  OK   REJECT       MATCH
+  u07_vddp_supply_without_load       REJECT  OK   REJECT       MATCH
+  u08_vccq_parent_without_load       REJECT  OK   REJECT       MATCH
+  u09_load_without_supply            OBSERVE OK   ACCEPT       OBSERVED
+  p01_phy_with_always_on             ACCEPT  OK   ACCEPT       MATCH
+  p02_phy_without_always_on          ACCEPT  OK   ACCEPT       MATCH
+  p03_phy_always_on_non_boolean      REJECT  OK   REJECT       MATCH
+  p04_phy_unknown_property           REJECT  OK   REJECT       MATCH
+
+  MISMATCH_COUNT=0
+
+  fixture 文件位置（副本内，DTS/预处理 DTS/DTB/日志四件套）：
+    <副本>/round18-fixtures-r2/<name>.dts        （源，manifest.tsv 记录期望值）
+    <副本>/round18-fixtures-r2/<name>.pp.dts     （cpp 预处理结果）
+    <副本>/round18-fixtures-r2/<name>.dtb        （dtc -I dts -O dtb 结果）
+    <副本>/round18-logs/<name>.r2.dtc.log        （dtc 输出）
+    <副本>/round18-logs/<name>.r2.validate.log   （dt-validate 诊断原文）
+  2023.9 对照使用同名 *.pp2023.dts / *.2023.dtb 与 *.r2_2023 日志。
+
+  每个用例的关键诊断（节选，完整在 round18-logs/*.r2.validate.log）：
+    u03   clock-names [7 项] is too short   from qcom,sc7180-ufshc.yaml
+    u03b  clock-names [7 项] is too short   from qcom,sc7180-ufshc.yaml
+    u04   clock-names [9 项] is too long    from qcom,sc7180-ufshc.yaml
+    u05   power-domains [[..],[..],[..]] is too long  from qcom,sc7180-ufshc.yaml
+    u06   power-domains [[..],[..]] is too long       from qcom,ufs.yaml
+    u07   'qcom,vddp-ref-clk-max-microamp' is a required property
+    u08   'qcom,vccq-parent-max-microamp' is a required property
+    p03   vdda-phy-always-on: 1 is not of type 'boolean'
+    p04   'vdda-phy-alwayson' does not match any of the regexes
+  说明：u05/u06/u07/u08 除主诊断外还附带一条 unevaluatedProperties 报告，这是
+  6.3 所述"$ref 失败后不产生 annotation"的必然级联，属预期现象；主诊断均正确，
+  且正例（u01/u02/u10/p01/p02）无任何此类级联。
+  u09（只有 max-microamp、没有对应 supply）按 binding 既定约束被接受，如实记为
+  OBSERVED，不作为 PASS 也不作为 FAIL。
+
+  说明：2023.9 与 2026.9 的 processed-schema.json 二进制格式不同（2026.9 会拒绝
+  旧格式并抛 "Processed schema out of date, delete and retry"），因此两套环境各自
+  重新生成自己的 schema，两轮结果不可混用同一 json。
+
+6.5 dtschema 2023.9 对照复跑
+
+  环境：<副本>/round18-venv-2023，dtschema 2023.9 / jsonschema 4.17.3 / Python 3.12.3
+        （pip install "dtschema==2023.9"，实测安装成功并记录版本）
+  做法：先 git clean -fdx 清除 DT 中间产物，用 2023.9 重新生成 processed-schema.json，
+        再跑 dt_binding_check、dt-doc-validate、dt-validate 与 15 个 fixtures。
+
+  A. dt_binding_check（4 schema）        DT_BINDING_CHECK_RC=0
+     4 个 example 全部 DTEX + DTC [C]，无 validation diagnostics。
+     日志另有两行"ignoring, error parsing file"：
+       .../bindings/iommu/pkvm,pviommu.yaml
+       .../bindings/firmware/gunyah-cma-mem.yaml
+     均为 ACK 树自带的、不在本轮范围的 schema，被 dtschema 忽略；不影响 4 个目标
+     schema 与其 example 的编译与校验。
+     （dt-extract-example 在 Python 3.12 下报 SyntaxWarning: invalid escape
+       sequence '\s'，属旧脚本自身告警，不影响生成结果。）
+
+  B. dt-doc-validate（逐文件）           4/4 RC=0，无输出
+
+  C. dt-validate 对 4 个 example DTB     4/4 rc=0，diagnostics=0 行
+
+  D. 15 个 fixtures，内核真实调用形态（-u -p，不加 -l）：
+       MISMATCH_COUNT_2023_9_KERNELFORM=0（15/15 与预期一致，与 2026.9 结论相同）
+
+  重要工具差异（本轮实测，直接影响判定方法）：
+    2023.9 的 `-l/--limit` 语义是"limit validation to schemas with $id matching
+    LIMIT **substring**"，只接受一个子串，不接受冒号分隔的 schema 列表；
+    2026.9 的 `-l` 接受冒号分隔的 schema 路径列表。
+    若把 4 个 schema 的冒号串直接喂给 2023.9，$id 匹配不到任何 schema，结果是
+    **不做任何校验、静默成功**：首轮实测 8 个负例全部被误判为 ACCEPT
+    （u03/u03b/u04/u05/u06/u07/u08 与 p04），MISMATCH_COUNT=8。
+    改用内核真实形态（-u -p）后变为 15/15 全对。
+    结论：跨 dtschema 版本比对时不得假定 -l 语义一致；判定必须以内核自身的
+    调用形态（-u -p）为准，这也是本轮最终的权威口径。
+
+  为消除版本变量，2026.9 侧同样补跑了内核形态（强制删除并用 2026.9 重建
+  processed-schema.json，避免沿用 2023.9 生成的旧格式）：
+    dt_binding_check RC=0；4 个 example diagnostics=0；
+    MISMATCH_COUNT_2026_9_KERNELFORM=0（15/15）
+    重建后 processed-schema.json: 25084938 bytes
+      sha256 447e4c45e86f00078dd788ce114a16239f6905d29327625ad5d255f8c83a9bc9
+
+  两套版本、两种形态的结论完全一致 → DT_BINDING 判定不依赖 dtschema 版本。
+
+
+--------------------------------------------------------------------------------
+7. Kleaf / Bazel / config validator
+--------------------------------------------------------------------------------
+7.1 Kleaf BUILD 补丁
+
+  文件 : round18-artifacts-r2/09_round58_kleaf_target.patch
+  blob : dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec（8513 B，与任务书一致）
+  git apply --check → 0；git apply → 0；git diff --check → 0
+  新增：BUILD.bazel 中 kernel_build(name = "dby_w09")；
+        arch/arm64/configs/dby_w09_storage_first.fragment（132 行）
+
+7.2 validator 与单测
+
+  check_dby_w09_config.py
+    blob   5622b1e8e3dcf1c683e252e2abb1177de0b44435
+    sha256 4de1ebc8c4d051611e2aa8101e04d90b030eadacf0500b5e71e1282ad66fd11b
+    放置   <副本>/round18-validator/check_dby_w09_config.py（不在内核树内，
+           避免污染 kernel_build 的源码集）
+  tests/test_check_dby_w09_config.py
+    blob   82acac9f1602228ed9a780a98f7aadc046d55cad
+    sha256 70748825a7703e5cf0b0e3f45994b44a53efc600638a3c7ed6de3ad72b8949df
+
+  单测（python3 -m unittest discover，Python 3.12.3）：
+    Ran 9 tests in 0.004s — OK，9/9 通过
+      test_conflicting_duplicate_assignments_fail            ok
+      test_disabled_value_fails                             ok
+      test_json_output_is_machine_readable                  ok
+      test_missing_input_fails_clearly                      ok
+      test_missing_required_symbol_fails                    ok
+      test_module_value_fails                               ok
+      test_optional_derived_symbol_if_present_must_be_y      ok
+      test_unreadable_input_fails_clearly                   ok
+      test_valid_config_passes_and_reports_derived_symbol    ok
+    说明：该测试集基于 unittest，不需要 pytest；系统 Python 未装 pytest 不影响。
+
+7.3 buildifier
+
+  结论：NOT_PROVIDED。固定 ACK manifest 与工作区均不提供 buildifier 二进制
+  （PATH 无、prebuilts/build-tools 与 build/ 内无 buildifier*；Kleaf 源码只在
+  注释里出现 "buildifier: disable=print"）。按任务书 §7.4 该步骤为条件性执行。
+  替代性保障：
+    - BUILD.bazel 由 Bazel 自身完整解析（query/cquery 成功即证明 Starlark 语法
+      与规则签名可接受）；
+    - 新增 kernel_build 属性按字母序排列、4 空格缩进、尾随逗号、块间空行，
+      与文件既有风格一致（二号 AI 在其侧用 buildifier 发现并修复的就是
+      "新 target 后缺一个空行"，本文件已含该空行）。
+
+7.4 Bazel 查询（rev2，副本根目录执行 tools/bazel）
+
+  tools/bazel version                      → Build label: 8.7.0
+  tools/bazel query //common:dby_w09       → //common:dby_w09（QUERY_RC=0）
+  tools/bazel query 'kind(kernel_build, //common:*)'
+                                           → 命中 kernel_x86_64 / rockpi4 /
+                                             wonder_aarch64 / yukawa 等既有 target
+                                             （dby_w09 亦在其中）
+  tools/bazel query //common:dby_w09_config → //common:dby_w09_config
+  tools/bazel cquery --output=files //common:dby_w09
+    → bazel-out/k8-fastbuild/bin/common/dby_w09/.config
+      bazel-out/k8-fastbuild/bin/common/dby_w09/Image
+      bazel-out/k8-fastbuild/bin/common/dby_w09/System.map
+      bazel-out/k8-fastbuild/bin/common/dby_w09/vmlinux
+      CQUERY_RC=0（Analyzed 70 packages, 114375 targets）
+
+7.5 target 属性核实（逐项对照任务书 §7.6）
+
+  defconfig                  = arch/arm64/configs/gki_defconfig      ✓ 基础为 gki_defconfig
+  post_defconfig_fragments   = arch/arm64/configs/dby_w09_storage_first.fragment
+                                                                    ✓ fragment 经 Kleaf 注入
+  make_goals                 = ["Image"]                            ✓ Image-first
+  outs                       = .config / Image / System.map / vmlinux ✓ 仅此四项
+  base_kernel                = 未声明                                ✓ 无 base_kernel
+  arch                       = arm64
+  未声明/未产出 DTB、DTBO、boot.img、vendor_boot、init_boot、module_outs、
+  kmi_symbol_list —— cquery --output=files 的四项输出与之一致，无臆造。
+
+  说明：本轮未遇到需要按 pinned Kleaf API 修正的属性不匹配；未使用 legacy
+  build.sh，未使用 build.config.gki.aarch64。
+
+
+--------------------------------------------------------------------------------
+8. 实际 Kconfig 与最终 .config
+--------------------------------------------------------------------------------
+8.1 生成方式（真实 Kleaf target，非手写 fragment、非 synthetic）
+
+  tools/bazel build --jobs=2 //common/dby_w09_config
+    start 2026-11-24T17:48:35Z  end 2026-11-24T17:49:08Z  时长 32.8s
+    CONFIG_BUILD_RC=0（759 actions，其中 251 linux-sandbox）
+    关键 action 行：Creating kernel config (dby_w09_storage_first.fragment)
+    → 证明 Kleaf 实际执行 defconfig + fragment + olddefconfig，并在
+      olddefconfig 之后校验 fragment 请求的 built-in 值。
+
+  产物：bazel-bin/common/dby_w09_config/out_dir/.config
+    size   238376 bytes
+    lines  8687
+    sha256 5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7
+    localversion: -android17-5-maybe-dirty
+      （"android17-5" 来自 ACK 的 scmversion 与 KMI_GENERATION=5；
+        "maybe-dirty" 是本轮补丁 + 未跟踪 fragment 使源码树非 pristine 所致，
+        属预期，不参与 storage-first 判定）
+    .config 中 CONFIG_ 赋值行数：2456
+
+8.2 ROUND61 config validator 结果
+
+  python3 round18-validator/check_dby_w09_config.py <config>
+    PASS: all 31 required storage-first symbols are present as =y;
+          no duplicate assignments found.
+    RESULT: PASS      VALIDATOR_RC=0
+
+  --json：
+    {"checked_required": 31, "errors": [], "info": [], "missing": [],
+     "not_y": [], "ok": true}
+
+8.3 首阶段关键驱动逐项确认（全部 =y）
+
+  ARM64=y                  ARCH_QCOM=y              OF=y
+  SCSI=y                   BLK_DEV_SD=y             SCSI_UFSHCD=y
+  SCSI_UFSHCD_PLATFORM=y   SCSI_UFS_QCOM=y          SCSI_UFSHCD_PCI=y
+  GENERIC_PHY=y            PHY_QCOM_QMP=y           PHY_QCOM_QMP_UFS=y
+  COMMON_CLK=y             COMMON_CLK_QCOM=y        QCOM_CLK_RPMH=y
+  SM_GCC_8250=y            RESET_CONTROLLER=y       PM=y
+  INTERCONNECT=y           INTERCONNECT_QCOM=y      INTERCONNECT_QCOM_SM8250=y
+  QCOM_COMMAND_DB=y        QCOM_RPMH=y              QCOM_RPMHPD=y
+  REGULATOR=y              REGULATOR_QCOM_RPMH=y    IOMMU_SUPPORT=y
+  ARM_SMMU=y               ARM_SMMU_QCOM=y          BLK_DEV_DM=y
+  DM_BUFIO=y               EROFS_FS=y               EROFS_FS_ZIP=y
+  DM_VERITY=y              DM_VERITY_FEC=y
+
+  分组核对：UFS(SCSI/BLK_DEV_SD/SCSI_UFSHCD/SCSI_UFS_QCOM)=y；
+  QMP PHY(PHY_QCOM_QMP/PHY_QCOM_QMP_UFS)=y；SM8250 GCC(SM_GCC_8250)=y；
+  RPMhPD(QCOM_RPMHPD)=y；ICC(INTERCONNECT_QCOM_SM8250)=y；SMMU(ARM_SMMU)=y；
+  DM(BLK_DEV_DM/DM_VERITY/DM_VERITY_FEC)=y；EROFS(EROFS_FS/EROFS_FS_ZIP)=y。
+
+8.4 三类来源区分（显式 / 上游继承 / select 自动）
+
+  显式 fragment 项（30 条 CONFIG_ 赋值）与最终 .config 逐条比对：
+    MATCH 30/30，无 DIFF、无 ABSENT。
+
+  上游 inherited 项：上述 30 条之外的绝大多数 =y 项来自 gki_defconfig 与
+    ACK 的 Kconfig 默认/依赖解析，未在本轮 fragment 中赋值。
+
+  由 select/depends 链自动得到（未手写，实测被解析出来）：
+    - ARM_SMMU_QCOM=y：fragment 未写；由 SCSI_UFS_QCOM 的依赖链解析得到。
+      validator 将其列为 DERIVED_OPTIONAL_SYMBOL，若出现必须为 y，实测 =y。
+    - DM_BUFIO=y、SCSI_UFSHCD_PLATFORM=y、SCSI_UFSHCD_PCI=y 等同理由由真实
+      依赖链解析，未做任何手写赋值。
+
+  hidden symbol 处理：本轮未对任何 hidden symbol 直接赋值；fragment 内注释明确
+  要求让 SCSI_DMA / PM_DEVFREQ / PM_OPP 等 hidden 依赖由真实选择链解析，实测
+  .config 中相关 hidden 项均由内核自身解析生成。
+
+  未添加 # nocheck，未屏蔽任何关键配置失败。
+
+
+--------------------------------------------------------------------------------
+9. 首次 Image 编译
+--------------------------------------------------------------------------------
+9.1 命令与环境
+
+  cd <副本>
+  set -o pipefail
+  tools/bazel build --jobs=2 //common:dby_w09 2>&1 | tee <副本>/round18-logs/r2_image_build.log
+
+  start 2026-11-24T17:49:41Z   end 2026-11-24T17:55:42Z
+  IMAGE_BUILD_RC=0
+  Bazel: Elapsed 360.336s，Critical Path 342.37s，21 processes
+         （2 action cache hit、20 internal、1 linux-sandbox）
+  关键 action：Building kernel (dby_w09_storage_first.fragment) //common:dby_w09
+         → 与 §8 一致，构建走 post_defconfig_fragments 注入的 storage-first 配置
+
+  并发说明（如实记录）：Bazel 层 --jobs=2 生效；linux-sandbox 内部 kbuild 自行
+  并行，实测同时存在的 clang 进程约 11–12（nproc=12）。峰值内存未触发 OOM：
+  构建中采样 used≈2.45 GiB / total 7.3 GiB，available≈5.0–5.1 GiB。
+
+9.2 build log
+
+  path  : <副本>/round18-logs/r2_image_build.log
+  bytes : 2444
+  lines : 43
+  sha256: afc41217df6e58837174de4bf35a5045656f0d620e3cd6203c1c440f5d5721b4
+
+9.3 产物（精确路径 / 大小 / SHA-256）
+
+  基路径：<副本>/bazel-bin/common/dby_w09/
+
+  Image         44820992 bytes   sha256 983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884
+  System.map     7610772 bytes   sha256 fdcd61215cffffecd5becbab44072be79845da35a1d3ab9db8140ee2f851b6d2
+  vmlinux      230254408 bytes   sha256 f063aac462042c74a197acb03e23d688c955f23c4f63156e94a084577c7e2e8e
+  .config       238376 bytes    sha256 5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7
+
+  .config 一致性：kernel_build 产出的 .config 与 §8 的 config target 产出
+  **逐字节相同**（SHA-256 一致 5f7fd8b3…，8687 行）。对该 .config 再跑一次
+  ROUND61 validator：RESULT PASS（31/31 =y）。
+
+  Image 身份核验：
+    file  : Linux kernel ARM64 boot executable Image, little-endian, 4K pages
+    magic : 偏移 56 处为 41 52 4d 64（"ARM\x64"，即 0x644d5241）
+    banner: Linux version 6.18.33-android17-5-maybe-dirty-4k (kleaf@build-host)
+            (Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+             clang version 22.0.1 …, LLD 22.0.1) #1 SMP PREEMPT
+    → 版本号、ACK commit、编译器与 §3.2/§4 的固定基线完全对应。
+
+  其余同目录产物（由 Kleaf 生成、非本 target 的 outs）：
+    Module.symvers 0 B、modules_staging_dir.tar.gz 67 B、
+    out-dir-kernel-headers.tar.gz 2218052 B、include/ 目录
+    → 因 target 未声明 module_outs / kmi_symbol_list，无任何 .ko 产物；不存在
+      DTB、DTBO、boot.img、vendor_boot、init_boot。
+
+9.4 构建后资源
+
+  WSL 磁盘：/dev/sdd 1007G，已用 88G，可用 869G（+3G）
+  WSL 内存：total 7.3Gi，used 1.3Gi，free 5.5Gi，available 6.1Gi
+  Windows D: 构建后仍远超 100 GiB 下限
+
+9.5 判定
+
+  IMAGE_BUILD_PASS / STAGE_A_BUILD_READY
+
+  含义边界（按任务书 §9）：本状态只表示"固定 ACK 源码 + 本轮补丁 + storage-first
+  配置"能在本机真实编译出 ARM64 Image；不代表 Stage A 完成，不代表设备可刷写，
+  更不代表已在平板启动。未做任何 boot image 打包、未连接设备。
+
+
+--------------------------------------------------------------------------------
+10. 失败 / 修复 / 重跑清单，与未运行项目
+--------------------------------------------------------------------------------
+10.1 本轮全部失败与处置（按发生顺序，不合并为一次 PASS）
+
+  F1 任务书在执行中途更新为 revision 2
+     现象：远端 AGENT_TASK.md（blob 6385290d6b，18727 B）与 START_PROMPT.md
+           被改写，补丁序列由 7 个改为 8 个，ROUND32 由"新增 compatible"改为
+           "clock-names 上限修正"，并新增 ROUND36 corrected range 补丁。
+     处置：停止旧序列，撤销副本 common 的全部改动（git checkout + 删除补丁新增
+           的 fragment），按 revision 2 从头重做。旧序列痕迹不作为任何依据。
+
+  F2 ROUND36 corrected 补丁含空行，git apply 解析失败（第 5.3(a) 条）
+     处置：删除 hunk 间空行 → 79b00af9，check/apply/diff-check 全 0。
+
+  F3 ROUND63-0001 hunk 1 零尾随上下文，git apply --check 失败（第 5.3(b) 条）
+     处置：补 2 行尾随上下文 → 4e987e87；随后按 checkpatch 修对齐与提交信息
+           行长 → 09f581f4（最终）。均在 pristine 文件上重新验证可应用。
+
+  F4 checkpatch 对 ROUND63-0001 报 1 个真实 CHECK（续行对齐）
+     处置：3 tab → 2 tab + 5 space。中间的 2 tab + 4 space 版本仍报 CHECK，
+           经枚举 4/5/6/7/8 空格实测（nspaces=5 时 0 checks）后定稿。
+           对齐由 checkpatch 的客观判定选定，不是目测。
+
+  F5 二号 AI 分支前进导致 ROUND36 corrected blob 漂移（第 5.1 条）
+     处置：以实测 blob f36f13e8 为准，记录与任务书快照 a6e8eeaf 的差异。
+
+  F6 旧序列遗留的 dt-binding 中间产物（.dtb/.cmd/.dts tmp）
+     现象：git clean -nxd 列出上轮 dt_binding_check 的 20 个未跟踪产物；
+           若不清除，dt_binding_check 可能复用陈旧 .dtb 而"看起来通过"。
+     处置：在副本内 git clean -fdx -- Documentation/devicetree/bindings 后重跑，
+           确保 4 个 example DTB 全部重新 DTEX/DTC 生成。
+
+  F7 dt-validate 恒 exit 0（工具层缺陷，影响判定方法）
+     现象：诊断已打印（is too short / is too long）但进程返回 0。
+     根因：dtschema 2026.9 的 dt-validate main() 无 return 语句，sys.exit(main())
+           收到 None 即 0；这正是内核 scripts/Makefile.dtbs 中
+           "dt-validate ... || true" 会彻底吞掉真实失败的机制。
+     处置：fixtures 判定改为"是否输出非空 diagnostics"，不使用 $?；直接调用
+           时同时记录 rc 与 diagnostics 行数。
+
+  F8 dtschema 2023.9 的 -l 语义与 2026.9 不同，导致首轮对照出现 8 个假 ACCEPT
+     现象：把 4 个 schema 的冒号串传给 2023.9 的 -l 后，所有负例（u03/u03b/u04/
+           u05/u06/u07/u08、p04）全部被判 ACCEPT，MISMATCH=8。
+     根因：2023.9 的 -l 是"按 $id 子串匹配"，只接受单个子串；冒号串匹配不到任何
+           $id → 实际不校验任何 schema → 静默成功（rc 仍为 0）。
+     处置：改用内核真实形态 dt-validate -u <bd> -p <schema> <dtb>，2023.9 侧
+           MISMATCH=0（15/15）；并在 2026.9 侧同样补做内核形态（MISMATCH=0）。
+     结论：跨版本比对不得假定 -l 语义一致；"-l 生效但没匹配到"与"校验通过"
+           在输出上完全一样，是最容易造成假 PASS 的陷阱之一。
+
+  F9 processed-schema.json 跨版本残留导致 2026.9 抛异常
+     现象：先用 2023.9 生成 processed-schema.json 后，切回 2026.9 直接校验，
+           正例全部抛 Exception 并返回非 0：
+             Processed schema out of date, delete and retry: .../processed-schema.json
+           此时若只看"负例仍 REJECT"会误以为结果正常。
+     根因：两个 dtschema 版本的 processed schema 二进制格式不兼容，且内核 Makefile
+           的 .cmd 依赖判定认为无需重建。
+     处置：rm -f processed-schema.json .processed-schema.json.cmd 后强制用目标
+           版本重建，再跑校验（最终 2026.9 形态 sha256 447e4c45…）。
+
+10.2 需要交叉验证的工具层/产物层事实（供二号 AI 对照）
+
+  C1 dtschema 的 maxItems→minItems 推导
+     只写 maxItems 而无 minItems 时，minItems 被推导为等于 maxItems（精确长度）。
+     这既解释了 UFS example "power-domains is too short" 的根因，也解释了
+     ROUND57 在固定八项 items 列表上再加 minItems/maxItems 触发 meta-schema
+     不兼容的现象。本轮修法：显式 minItems: 1（shared + SM8250 then 两处）。
+     决定性证据：加上后 example 与 15 个 fixtures 全部符合预期，无需删除
+     example、无需放宽 unevaluatedProperties。
+
+  C2 dt-validate 恒 exit 0（见 F7）
+     任何以"make dt_binding_check 返回 0"为依据的 PASS 结论都不可靠。
+
+  C3 $ref 失败后的 diagnostics 级联
+     子 schema（$ref 目标）校验失败时不再产生 annotation，导出 schema 的
+     unevaluatedProperties: false 会把 common 中已定义的属性全部判为
+     unexpected。因此"Unevaluated properties are not allowed (...)"通常是
+     次生报告，应优先修 $ref 目标的真实失败。
+
+  C4 二号 AI 分支状态与 artifact 缺陷（只读观察）
+     分支 HEAD 已到 1db78203bd044993e3db63eb86ad79a9d2eba728（快照为 faae6c04）。
+     round36-corrected-power-domain-range.patch 当前 blob f36f13e8 在 hunk 之间
+     含一个空行 → git apply 无法解析（GNU patch 可）。建议其侧删除该空行。
+     round63-0001 补丁 hunk 1 缺尾随上下文 → 默认上下文 git apply 失败；
+     其 driver 代码续行对齐也会被判 CHECK。本轮的 09f581f4 是可用形态。
+
+  C5 dt-validate 的 -l 参数在不同 dtschema 版本语义不同（见 F8）
+     2023.9：单个 $id 子串；2026.9：冒号分隔的 schema 路径列表。
+     用错形态会得到"零 diagnostics 的假 PASS"。建议双方在 schema 结论中明确
+     写出使用的 dt-validate 形态与 dtschema 版本。
+
+  C6 processed-schema.json 不可跨 dtschema 版本复用（见 F9）
+
+10.3 本轮未运行 / 明确不做的项
+
+  - board dtbs_check、board DTB/DTBO 编译、boot image assembly/packaging：
+    按 §10 保持隔离（ROUND37 仍只针对 review-only DTS 草案）。
+  - ROUND57：明确不应用（固定八项 items 上再加 min/max 会触发 meta-schema
+    不兼容）；本轮未屏蔽任何 meta-schema 错误。
+  - 旧 ROUND32 补丁（efe2d932）：永久移除，未下载、未应用。
+  - 设备侧任何操作：未连接平板、未执行 ADB/fastboot、未解锁、未 root、
+    未写分区、未触碰 boot/ramdisk/vbmeta。
+  - 未修改 .wslconfig、未改 WSL networking/memory、未 sudo、未 apt 安装系统包、
+    未 pip --break-system-packages（仅用独立 venv）。
+
+10.4 第一遗留 blocker
+
+  Stage A 的阻塞点不在本轮的补丁/schema/Kconfig/编译链路，而在设备启动所需的
+  下列事实仍未闭合（与 §10 一致）：
+    - HOS4.3 post-ABL FDT 的真实 RAM memory node/reg 与 Linux EFI-stub handoff
+      未知；34 个 reserved-memory child 不能替代 RAM map。
+    - PM8150 L5 物理输入 supply 拓扑未知；不得编造 vdd/vin/vph parent。
+    - HOS4.3 ARC parent/proxy consumer 未移植；ROUND63 的 PHY 89900µA load 不能
+      替代 ROUND48/51 的 L5/L9 临时 100mA proxy vote。
+    - AVB footer / vbmeta descriptors / ramdisk 内容仍 BLOCKED。
+  因此本轮即使 Image 编译通过，也只能写 IMAGE_BUILD_PASS / STAGE_A_BUILD_READY。
+
+
+--------------------------------------------------------------------------------
+11. 脱敏与范围声明
+--------------------------------------------------------------------------------
+- 本报告不含 Windows 用户名、个人 profile 路径、环境 token、代理凭证。
+- 未上传任何 raw firmware、boot/ramdisk/DTBO 内容、VHDX、密钥或设备序列号。
+- 未上传补丁二进制、未上传编译产物；只上传本文本报告。
+- 上传目标：firmware-audit-v1:firmware-analysis/round18/
+            round18_patch_schema_kconfig_first_build.txt
+- 未修改 main、ack18-dby-w09-dts-draft、二号 AI 专属分支或 PR #1。
+- 二号 AI 的 ai-parallel/stagea-port-until-boot 分支仅被只读访问（取补丁与
+  PROGRESS.md），未向其推送任何内容。

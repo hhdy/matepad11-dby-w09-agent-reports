@@ -95,3 +95,14 @@ Hosted run `45441391557` reached the exact fixed ACK commit and applied the UFS 
 Corrected the branch-local include hunk to anchor on the preceding `linux/of_address.h` include and the following blank line, with updated hunk counts. The driver implementation hunks are unchanged. A new hosted run on commit `4f8eaacf045b1179d099ba2307175193c651884c` is executing this corrected patch.
 
 The same failed run also exposed a race in result publication: the branch advanced after the report checkout, so the bot's push was non-fast-forward rejected. The publisher now fetches and resets to the latest branch head immediately before writing and pushing its result. Run `45442645017` is queued with that publisher fix. These are validation/workflow corrections, not evidence of a passing patch yet.
+
+
+## 10. Hosted strict-checkpatch diagnostics and correction
+
+Run `45442605274` confirms the corrected ROUND63 driver patch now applies cleanly to the fixed ACK tree, and the ROUND58 Kleaf patch also applies. Strict checkpatch then found:
+- two commit-description errors because the patch preamble included raw source commit/blob hashes rather than the required `commit <sha> ("title")` format;
+- one over-75-column description line;
+- a continuation-alignment check in the existing `qphy_clrbits()` call;
+- a `CAMELCASE` false positive for the upstream regulator API field `init_load_uA`.
+
+The branch-local patch now removes raw hashes from the patch preamble (the report retains immutable identities), wraps the long description, and aligns the continuation at the opening parenthesis. The workflow ignores only checkpatch's `CAMELCASE` check for this patch because `init_load_uA` is an existing public field name in the pinned regulator API and cannot be renamed by this driver patch. All other strict checks remain enabled. A fresh hosted run is required to establish the corrected result.

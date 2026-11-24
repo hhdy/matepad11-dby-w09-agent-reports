@@ -113,8 +113,10 @@
  * RPMh accelerator feature, not a generic regulator parent graph. Upstream
  * ACK android17-6.18 qcom-rpmh-regulator only matches VRM/XOB, so these ARC
  * child nodes must remain disabled/absent until an ARC-capable driver is
- * deliberately ported and reviewed. The SoC rpmhpd/OPP provider remains a
- * separate system performance-domain mechanism, not a one-to-one substitute.
+ * deliberately ported and reviewed. Such an ARC platform provider must be a
+ * direct child of apps_rsc because ACK rpmh_write() uses the immediate parent
+ * RSC driver data. The SoC rpmhpd/OPP provider remains a separate system
+ * performance-domain mechanism, not a one-to-one substitute.
  * The six proxy-supply phandles are also not self-implementing: ACK lacks the
  * vendor boot-time proxy-consumer helper. Their matching proxy request flags
  * have not yet been verified in the local FDT report scope.

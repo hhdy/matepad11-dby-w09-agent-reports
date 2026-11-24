@@ -19,11 +19,9 @@ The first configured regulator must remain vdda-phy, as in the current
 Qualcomm UFS PHY regulator lists. Reject an unexpected list rather than
 silently applying the special case to the wrong rail.
 
-Candidate only. No full-tree git apply, checkpatch, compile, dt_binding_check,
-regulator hardware test or device boot has run.
-
-Pinned source: ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
-Source blob: 8af777f7ddd0385a6bb9d9b9563f0e6329699cd3
+Candidate implementation only; no regulator hardware test or device boot
+has run. Immutable source revision and blob identity are recorded in the
+ROUND61 ROUND63 integration report.
 
 ---
  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | candidate
@@ -208,7 +206,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
 -
 -	/* Put PHY into POWER DOWN state: active low */
 -	qphy_clrbits(qmp->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
--			SW_PWRDN);
+-		     SW_PWRDN);
 -
 -	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
 -

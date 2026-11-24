@@ -1,0 +1,339 @@
+ROUND17 — Local Agent execution-policy diagnosis, then WSL deployment resume
+============================================================================
+
+Report ID      : round17_wsl_ack_workspace_deployment
+Date (local)   : 2026-11-24
+Target device  : Huawei MatePad 11 (2021), DBY-W09 / KONA / SM8250 rev 2.1
+Stage          : A only — ACK 6.18.33 kernel port
+Pinned source  : tag android17-6.18.33_r00 / commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (unchanged, still not fetched)
+Predecessor    : ROUND16 ended BLOCKED_BY_HOST_SECURITY_POLICY
+
+STATUS: BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL
+
+Blocker identity: ESTABLISHED, with direct product-internal evidence.
+Owner of the policy: the WorkBuddy desktop application's own command-safety
+layer. It is NOT Windows Defender, NOT Windows Security Center on the OS side,
+NOT AppLocker/WDAC, and NOT a third-party endpoint product.
+
+Resolution still requires a user action inside the application, which this
+round deliberately did not perform (§3 forbids changing security settings).
+
+
+1. SCOPE OF THIS ROUND
+----------------------
+Task book §3 required passive identification only, with an explicit ban on
+invoking the blocked program again. This round complied strictly:
+
+  - wsl.exe was NOT invoked in ROUND17. Zero attempts.
+  - No alternate shell, wrapper, copy, rename or repackaging was used.
+  - No execution-policy, AppLocker/WDAC, Defender, SmartScreen or firewall
+    setting was read-modified or changed.
+  - No UAC bypass, scheduled task, token manipulation or silent elevation.
+  - No installation, no WSL alternative, no third-party distro package.
+  - The Agent was NOT relaunched elevated.
+  - No BIOS/UEFI change, no reboot.
+
+Evidence sources used, all passive and read-only:
+  - Live process ancestry and executable metadata (CIM/Process APIs).
+  - The Agent's own per-user configuration directory, read as files.
+  - The Agent's own audit log for the already-recorded block events.
+  - Static string inspection of shipped product resources (files read as
+    bytes; nothing executed).
+  - Official product documentation pages.
+
+No UI was opened, so every UI-path statement below is derived from shipped
+resource strings and is labelled as such, not as an observed screen.
+
+
+2. CARRIED-FORWARD VERIFIED FACTS (unchanged from ROUND16)
+----------------------------------------------------------
+  OS              : Windows 11 Pro for Workstations, 10.0.26200, x64
+  CPU             : AMD Ryzen 5 9600X, 12 logical processors
+  RAM             : 15.16 GiB
+  Virtualization  : HypervisorPresent=True, VirtualizationFirmwareEnabled=True,
+                    VMMonitorModeExtensions=False (normal with an active
+                    hypervisor; not evidence of a BIOS problem)
+  WSL             : Store WSL app package 2.7.3.0 installed
+  Distros         : one registered distribution named `Ubuntu`, registered as
+                    WSL 2, stored under the C: user profile; exact Ubuntu
+                    release UNKNOWN
+  Features        : VirtualMachinePlatform=Enabled,
+                    HypervisorPlatform=Disabled,
+                    Microsoft-Windows-Subsystem-Linux=Disabled
+  Disk            : C: 64.3 / D: 325.3 / E: 299.2 GiB free at ROUND16 time
+  Agent privilege : not elevated
+  Deployment      : nothing installed, nothing synced, nothing patched,
+                    nothing compiled
+
+None of the above was re-measured destructively in this round and none changed.
+
+
+3. IDENTIFICATION — WHAT THE LOCAL AGENT ACTUALLY IS
+----------------------------------------------------
+Method: walked the live process ancestry upward from the shell that runs my
+commands, and read each process's executable path, file version and command
+line.
+
+Ancestry (sanitized, 7 levels observed):
+
+  [0] powershell.exe        <- the shell executing my commands
+  [1] sandbox-cli.exe       5.11.4   (bundled sandbox component)
+  [2] WorkBuddy.exe         5.11.3.0 (agent CLI host process)
+  [3] WorkBuddy.exe         5.11.3.0 (sidecar host)
+  [4] WorkBuddy.exe         5.11.3.0 (app server daemon)
+  [5] WorkBuddy.exe         5.11.3.0 (main GUI process)
+  [6] explorer.exe
+
+  Product name / vendor : WorkBuddy
+  Company (signed metadata): Tencent Technology (Shenzhen) Company Limited
+  Product version       : 5.11.3.0   (FileVersion 5.11.3)
+  Install root          : a local application directory on drive E:
+                          (exact path omitted; not a user profile path)
+  Sandbox component     : sandbox-cli.exe, version 5.11.4, under the app's
+                          resources tree in cli/vendor/sandbox/5.11.4/
+  Sandbox rule mode     : `--rule_decision center` — i.e. the sandbox CLI does
+                          not decide alone; it asks a "center" component.
+  Agent session mode    : `--permission-mode fullAccess`
+
+Crucial inference: the effective permission mode of this session is already
+fullAccess, yet the program was still blocked. The block therefore does not
+come from the tool-permission layer at all. It is a separate, lower execution
+gate.
+
+This also corrects the ROUND16-era assumption space: the blocker is not the
+OS, not Defender, not a corporate MDM product. It is the Agent application's
+own shipped security component, running as a child of the Agent itself.
+
+
+4. MECHANISM — WHERE THE BLOCK IS ACTUALLY DECIDED
+--------------------------------------------------
+4.1 The event is a first-class product event, with a stable type
+The Agent keeps a per-user audit log. The exact recorded events for the two
+blocked attempts are:
+
+  category   : command-safety
+  eventType  : command-safety.program-blacklist-blocked
+  decision   : blocked
+
+Same-day census of command-safety events in that log:
+  command-safety.sandbox-executed            : 326  (decision=allowed)
+  command-safety.program-blacklist-blocked   :   3  (decision=blocked)
+
+So: hundreds of commands ran normally through the sandbox; exactly the WSL
+attempts were rejected by a dedicated rule, not by a general failure.
+
+4.2 The wording comes from the product, not from Windows
+The shipped resource bundle contains the product's own message catalogue keys
+for this exact condition:
+
+  securityCenter.audit.commandSafety.programBlacklistBlocked
+  securityCenter.audit.commandSafety.programBlacklistBlockedWithPrograms
+
+and the panel strings:
+
+  settings.securityCenter.detail.programBlacklistTitle = "Program Blacklist"
+  settings.securityCenter.detail.programBlacklistDesc  = "Configure high-risk
+     programs that must not run. Matching programs are blocked, including when
+     launched by child processes. Enter only the program name, without a path
+     or arguments."
+  settings.securityCenter.detail.programBlacklistDescWindows = same meaning,
+     "the .exe suffix is optional."
+  settings.securityCenter.title = "Security Center"
+  settings.securityCenter.toolControl.title = "Agent Tool Controls"
+
+4.3 `wsl.exe` is a shipped default entry, not something the user added
+The shipped bundle contains a hard-coded default program list whose members
+are, verbatim:
+
+  wsl.exe, wslconfig.exe, wmic.exe, sc.exe, reg.exe, schtasks.exe
+
+and the matcher also derives the extension-less forms (`wsl`, `wslconfig`,
+`wmic`, `sc`, `reg`, `schtasks`) from that list.
+
+This is the decisive fact: `wsl.exe` is blocked **by product default**. It
+explains why the user found no matching entry to remove and no obvious menu
+naming: nothing was ever configured locally.
+
+4.4 Local configuration contains no such entry — confirmed
+  - The Agent's user settings file has `sandbox.orderedRules.command` =
+    { presetVersion: 1, customized: false, rules: [] } — empty, never
+    customised. The words "wsl", "blacklist", "deny" appear zero times.
+  - The sandbox's own rule file has `process_rules: []` and
+    `default_action: "ask"`; its only process list is a browser allow-list.
+  - A bounded scan of 1,808 plain-text configuration files under the product's
+    resources tree found zero occurrences of `wsl.exe`.
+  => The effective blacklist is the built-in default, applied because no user
+     override exists. Nothing on disk points at a user-authored rule.
+
+4.5 Static component inspection
+  - sandbox-cli.exe contains only enum-like identifiers
+    (Whitelist/Blacklist/RuntimeDecision/DefaultAllow/DefaultDeny), no
+    `wsl.exe` literal -> it is not the list holder.
+  - The main application bundle holds the default array and the UI strings
+    above, and is the origin of both the decision data and the message text.
+  => Consistent with `--rule_decision center`: the "center" side (the Agent
+     application) owns the list; sandbox-cli enforces it.
+
+
+5. POLICY OWNERSHIP — THE ANSWER §3 ASKED FOR
+---------------------------------------------
+Question: is the policy user-controlled, device-admin-managed, or fixed by
+host/service?
+
+Answer: USER-CONTROLLED, per user profile, inside the Agent application.
+
+Supporting reasoning:
+  - The list is exposed as an explicit, editable settings panel with an
+    "Add" action and a helper text that tells the user to "enter only the
+    program name". That is a configuration surface, not a fixed policy.
+  - The storage location is the per-user Agent settings/audit area, under the
+    current user profile — not a machine-wide policy store, not a domain GPO,
+    not an MDM channel.
+  - No enterprise-policy marker was found; the settings file's command rule
+    group reports `customized: false`, which only makes sense for a
+    user-editable layer that has not yet been edited.
+  - The prior ROUND16 guess named a Windows OS location. That was wrong and is
+    formally withdrawn: the owning UI belongs to the Agent application, and
+    the OS-level security stack is not involved.
+
+What remains UNKNOWN, stated honestly:
+  - The exact localized (zh-CN) label text of that panel is not present in the
+    inspected bundle region; the English labels above are confirmed, the
+    Chinese equivalents are not. Do not rely on a memorised Chinese menu name.
+  - Whether shipped default entries can be removed in this exact build
+    (5.11.3.0), or only supplemented, is NOT verified. The description implies
+    a user-editable set, but "editable" was inferred from strings and the
+    presence of an add/remove-style list, not observed.
+  - Whether a service-side or organisational policy also applies on top of the
+    local list is UNKNOWN; no such artefact was found, which is not proof of
+    absence.
+
+
+6. WHY THE ROUND16 MESSAGE LOOKED LIKE AN OS SECURITY BLOCK
+-----------------------------------------------------------
+The enforcement message is intentionally phrased in generic security language
+("blocked by security policy", "cannot be bypassed from the current command")
+and it told the operator to change a setting in a "Security Center". Both
+statements are literally true of the Agent's own Security Center — but they
+read like an OS-level control, which is what misled the previous task book into
+guessing a Windows menu.
+
+Recorded for the audit trail: the guessing failure was in the task book, not in
+the observed machine state. ROUND16's machine facts were correct; only its
+attribution of ownership was wrong, and this round corrects it.
+
+
+7. SUPPORTED RESOLUTION PATH — USER ACTION REQUIRED
+---------------------------------------------------
+The supported, documented-by-product-shape path is:
+
+  WorkBuddy application -> Settings -> Security Center -> Program Blacklist
+  -> remove the `wsl.exe` / `wsl` entry (or otherwise permit it), for this
+     user profile only.
+
+This is a per-user product setting, not an OS hardening change. It is the
+operator's decision and the operator's click.
+
+This round did NOT perform it, on purpose:
+  - §3 forbids changing security settings;
+  - editing another product's allow/deny list unilaterally would be exactly
+    the kind of silent security weakening this project has consistently
+    refused;
+  - and the effect cannot be validated without invoking wsl.exe, which §3
+    forbids in the diagnostic phase.
+
+After the user changes it, ROUND17 §5 may resume in this order:
+  1. verify `wsl.exe --version`, `--status`, `--list --verbose`,
+     `--list --online`;
+  2. confirm the existing `Ubuntu` distro is still registered and untouched,
+     and that name `Ubuntu-24.04` plus path `D:\WSL\Ubuntu-24.04` are free;
+  3. confirm D: free space >= 100 GiB and total deployment <= 200 GiB;
+  4. install Ubuntu-24.04 at D:\WSL\Ubuntu-24.04 using Microsoft's documented
+     WSL CLI syntax with the already-installed Store WSL 2.7.3.0;
+  5. user personally completes first-run Linux user creation (suggested
+     neutral name `kerneldev`); password never seen, logged or uploaded;
+  6. verify Ubuntu 24.04 (noble), WSL version 2, BasePath on D:;
+  7. only then: official Ubuntu host packages, then
+     `repo init -u https://android.googlesource.com/kernel/manifest
+      -b common-android17-6.18`, `repo sync -c -j4 --fail-fast`;
+  8. pin `common` to 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a, capture
+     `repo manifest -r`, record actual Bazel/Clang/Rust (source contract:
+     Clang r584948c, Rust 1.91.1.p3).
+
+Still forbidden in ROUND17 regardless of outcome: any patch application, any
+Kconfig/schema/dtc run, any compilation, any image packaging, any device
+access.
+
+
+8. FIXED DISTRO DECISION — UNCHANGED AND RESPECTED
+--------------------------------------------------
+The existing C: distribution named `Ubuntu` was not launched, mounted,
+inspected, updated, moved, exported, imported, unregistered, reset, deleted or
+overwritten. No default-distro change was made. The plan remains a SEPARATE
+Ubuntu-24.04 at D:\WSL\Ubuntu-24.04, installed only after the gate above is
+cleared through the supported path. WSL was not reinstalled and no legacy
+Windows optional component was enabled.
+
+
+9. STATUS
+---------
+BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL
+
+This is the §6 status for "blocker product/policy identity is established but
+still requires user/admin action". It is explicitly NOT a completed deployment
+and must not be read as one. No part of the ACK workspace exists yet.
+
+Evidence grade summary:
+  - Product identity and version ............... DIRECT (process metadata)
+  - Blocking subsystem identity ................ DIRECT (audit event type)
+  - `wsl.exe` as a shipped default deny entry .. DIRECT (shipped default list)
+  - Absence of a local user-authored rule ....... DIRECT (settings + rule file)
+  - UI label wording (English) ................. DIRECT (shipped strings)
+  - UI label wording (zh-CN) ................... NOT ESTABLISHED
+  - Removability of default entries in 5.11.3.0  NOT VERIFIED
+  - Whether an org/service policy also applies .. UNKNOWN
+
+
+10. NOT PERFORMED — EXPLICIT LIST
+---------------------------------
+  - wsl.exe not invoked (0 attempts this round); no equivalent program run
+  - no alternate shell/script/wrapper used to reach WSL
+  - no copy, rename, re-sign or repackage of any blocked executable
+  - no change to PowerShell execution policy, AppLocker, WDAC, Defender,
+    SmartScreen, firewall, antivirus or any endpoint control
+  - no change to the Agent's Program Blacklist or any other security setting
+  - no UAC bypass, no scheduled task, no token manipulation, no silent
+    elevation, no elevated relaunch of the Agent
+  - no WSL install/update, no distro create/register/import/move/delete
+  - no Linux user creation, no password handling
+  - no apt operation, no package install, no version capture
+  - no repo init/sync, no git fetch/clone, no checkout of the pinned commit
+  - no kernel patch, no Kconfig, no dt-schema, no dtc, no compile, no packaging
+  - no device connection, ADB, fastboot, unlock, root, flash or partition write
+  - no modification of main, ack18-dby-w09-dts-draft, ai-parallel/round58,
+    or PR #1 (PR #1 remains Draft/Open/unmerged)
+  - no BIOS/UEFI change, no reboot, no disk consumption beyond reading
+
+The source checkout still does not exist, so the "keep it pristine" condition
+remains vacuously satisfied.
+
+
+APPENDIX — Reproducibility pointers for the next reviewer
+---------------------------------------------------------
+  - Process ancestor of every shell command: sandbox-cli.exe 5.11.4, whose
+    parent is the WorkBuddy 5.11.3.0 host.
+  - Block event type to search in the Agent audit log:
+    `command-safety.program-blacklist-blocked`, category `command-safety`.
+  - Default program list string to search in the shipped bundle:
+    the six-entry `wsl.exe, wslconfig.exe, wmic.exe, sc.exe, reg.exe,
+    schtasks.exe` array with extension-less derivation.
+  - Settings keys that drive the panel:
+    settings.securityCenter.detail.programBlacklistTitle
+    settings.securityCenter.detail.programBlacklistDesc
+    settings.securityCenter.detail.programBlacklistDescWindows
+    settings.securityCenter.title
+  - Local config that is provably empty of user rules:
+    settings -> sandbox -> orderedRules -> command (customized=false, rules=[])
+    sandbox rule file -> process_rules ([])
+
+— end of report —

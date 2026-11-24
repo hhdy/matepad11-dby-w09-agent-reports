@@ -141,3 +141,6 @@ ROUND45 已更新 ROUND33 UFS 双 GenPD 驱动补丁：
 ROUND45 仅完成补丁文本/hunk/source-context 静态核验。完整 ACK 工作树 git apply、checkpatch、编译、dt-schema、dtc/dtbs_check、Kconfig、Kleaf 和设备验证均 NOT_RUN。完整报告：kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md。
 
 本地 Agent 队列不变：ROUND12 仍是唯一活动任务。不得改动 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1。Stage A 仍是唯一主线，Stage A 通过设备启动与存储验收前不得开始完整 DerpFest Stage B。
+
+
+ROUND45 补充 Kconfig 源码核验：固定 ACK 源码中 UFS core → PM_DEVFREQ → PM_OPP；SM8250 GCC → QCOM_GDSC → PM_GENERIC_DOMAINS（PM=y 时）；PM_GENERIC_DOMAINS_OF 随 OF 自动启用；QCOM_RPMHPD 依赖 QCOM_RPMH + QCOM_COMMAND_DB，均已由 storage-first fragment 请求。未发现新增 helper 还需要额外直接配置符号；最终 Kleaf/Kconfig resolver 与 .config 核验仍 NOT_RUN。

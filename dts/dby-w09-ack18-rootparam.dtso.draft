@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * DBY-W09 minimal ABL identity overlay — ACK android17-6.18 draft.
+ *
+ * DRAFT ONLY: not dtc-compiled or ABL-tested.
+ *
+ * This intentionally replaces the broad stock HOS4.3 entry-8 overlay for
+ * the minimal ACK base DTS. The stock entry-8 overlay has 145 fragment
+ * targets into Huawei/Qualcomm vendor nodes not present in this base.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	model = "Huawei MatePad 11 (2021) DBY-W09";
+	compatible = "huawei,dby-w09", "qcom,sm8250";
+
+	/* ROUND7/8: DBY-W09 DTBO board-id 8298 decimal = 0x206a. */
+	qcom,board-id = <0x206a 0>;
+
+	fragment@0 {
+		target = <&rootparam>;
+
+		__overlay__ {
+			qcom,boardid = <0x08 0x02 0x09 0x08>;
+			qcom,board_name = "DBY_W09_VG";
+			qcom,product_name = "DBY-W09";
+			hardware_version = "SH1DBSLM";
+
+			/*
+			 * huawei,modem_id is omitted intentionally. Before adding
+			 * it, verify whether ABL requires the property itself and
+			 * determine an approved non-sensitive value/representation.
+			 */
+		};
+	};
+};

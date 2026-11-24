@@ -174,11 +174,15 @@ properties:
   has a hardware implementation.
 - PM8150 L6 LDO6 supplies both generic VCCQ and the separate UFS VDDP
   reference-clock pad. The regulator framework aggregates consumer load votes.
-  ACK's PMIC5 NLDO data selects HPM at aggregated load >= 30000 uA and LPM
-  below that threshold. The UFS core VCCQ consumer has an 800000 uA load
-  request; the Host VDDP request is 100 uA. The effective L6 mode therefore
-  depends on both consumers and the UFS power state, not on the 100 uA VDDP
-  vote in isolation.
+  ACK's PMIC5 NLDO data supports DRMS and selects HPM at aggregate load
+  >= 30000 uA and LPM below that threshold. However, the current conservative
+  board DTS does not set regulator-allow-set-load / regulator-allowed-modes
+  on the PM8150 L5/L6/L9 group, pending ROUND13 verification of original
+  HOS4.3 mode properties. With those constraints absent, regulator core
+  treats DRMS as not allowed and regulator_set_load() is a successful no-op;
+  the draft retains HPM initial mode as a same-device HOS4.2 cross-reference.
+  If ROUND13 later confirms HOS4.3 DRMS permission on L6, then its 800mA
+  standard VCCQ vote and 100uA VDDP vote will be aggregated by the 30mA rule.
 - The current ACK QMP UFS PHY bulk regulator list for SM8250 contains only
   vdda-phy and vdda-pll. Do not put qcom,vddp-ref-clk-supply in &ufs_mem_phy.
 - The ACK UFS driver must consume both vendor properties; DTS alone is inert.

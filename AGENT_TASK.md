@@ -1,11 +1,12 @@
 # AGENT_TASK.md — DBY-W09 GKI / ACK 内核移植调研总入口
 
-> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND9.md。** ROUND8 已完成 145/145 fragment target 解析和 UFS/rootparam 映射；ROUND9 只补齐尚未解析的 supply / pinctrl / GPIO / camera / USB endpoint，不重复 fragment target、PATH 探测或上游公开研究。
+> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND10.md。** ROUND9 已完成，4 份脱敏文本已上传至 firmware-audit-v1。ROUND10 仅检查已有 boot.img / ramdisk 的 boot-chain 静态信息，不重复 FDT/DTBO 解析、不读取 EROFS、不进行设备操作。
 
 ## 当前任务
 
 - [AGENT_TASK_ROUND9.md](./AGENT_TASK_ROUND9.md)：只读使用 ROUND3 已有 FDT candidate 0 + DTBO entry 8，补充 UFS supply phandle、THP/panel/WLAN GPIO-pinctrl、camera sensor board properties、USB-C/DP endpoints。只上传四份脱敏文本报告。
-- [ROUND9 ChatGPT 独立驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)：已比对 HOS4.3、同型号 Linux 参考与 Linux v6.18 upstream driver/binding；不要重复公开源码研究。
+- [ROUND9 ChatGPT 独立驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)：HOS4.3 / 同型号 Linux / Linux v6.18 对照背景。
+- [ROUND10 ACK DTS 兼容性与迁移评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)：已吸收 ROUND9 本机 rails/GPIO/pinctrl；列出 compatible、UFS rail 语义、reset-cell 纠错和 panel 证据边界。
 - [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：已完成 145/145 fragment target 解析，确认 fragment@143 -> /rootparam，并确认 entry 8 的 fragment@63/@64 修改 UFS PHY/Host；只作历史任务参考。
 - [ROUND8 HOS4.3 与同型号 Linux 对照](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)：历史阶段报告，target 解析前版本。
 - [ROUND7 本地 FDT 属性清单](./AGENT_TASK_ROUND7.md)：已完成，13/13 FDT VALID，9 个 DTBO entries 已有属性清单。
@@ -46,6 +47,8 @@
 
 ## 历史任务书
 
+- [ROUND10](./AGENT_TASK_ROUND10.md)
+- [ROUND9](./AGENT_TASK_ROUND9.md)
 - [ROUND8](./AGENT_TASK_ROUND8.md)
 - [ROUND2](./AGENT_TASK_ROUND2.md)
 - [ROUND3](./AGENT_TASK_ROUND3.md)

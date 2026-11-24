@@ -1,5 +1,9 @@
 # AGENT_TASK.md — DBY-W09 / Android 17 / ACK 6.18 内核移植总入口
 
+> **新会话必读：先读取 [PROJECT_HANDOFF.md](./PROJECT_HANDOFF.md)，再执行本文件。**
+>
+> **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
+
 > **当前本地 Agent：ROUND12 唯一待办（只读 AVB 元数据核验）。** ROUND11 已完成并上传。ROUND12 只核验现有 HOS4.3 boot/ramdisk/DTBO 与 vbmeta 的 AVB footer / descriptor 关系；只使用本机已有可信工具，无工具则 BLOCKED，不安装、不下载、不使用 WSL。GPT 继续负责其余公开源码审查和 DTS/Kconfig 设计，不重复 ROUND1–ROUND11。
 
 ## 当前项目目标
@@ -7,7 +11,10 @@
 - 设备：Huawei MatePad 11 DBY-W09，KONA / SM8250 v2.1 / Snapdragon 865。
 - ROM 目标：Android 17 DerpFest。
 - 内核目标：ACK android17-6.18；目前以 branch Makefile 6.18.33 作为研究基线。
-- 第一阶段优先完成 ACK-derived DBY-W09 定制内核的 DTS / UFS / legacy boot-chain 基础。
+- **阶段 A（当前唯一主线）：先完成 ACK/GKI 6.18.33 内核的 DBY-W09 DTS / 驱动 / UFS / 电源域 / memory handoff / legacy boot-chain 适配，并以设备实际启动 6.18.33 内核作为核心验收；仅编译成功不算完成。**
+- **阶段 B：只有阶段 A 通过验收后，才开始 Android 17 DerpFest 的 device/vendor/product、HAL/VINTF、SELinux、fstab/init 和镜像集成。**
+- 阶段 C 才评估 ColorOS 或其他 ROM。
+- 同型号 Android 12L 项目仅供具体问题的历史参考，禁止将其重新作为当前主线或重复调查。
 - 不宣称官方 GKI certified：现有设备是 boot header v2 + 独立 ramdisk 分区，未发现 vendor_boot / init_boot。ACK 6.18 源码不自动等于官方 GKI 合规。
 
 ## 当前公开研究报告

@@ -174,29 +174,38 @@ This matters for DBY-W09's legacy boot header v2 + separate ramdisk + DTBO topol
 6. Keep ROUND30 MMCX→MX corner equivalence and ROUND12 AVB/legacy boot layout as separate pre-boot gates.
 
 
-## 11. Follow-up comparison: exact mixed-build examples and modern DT rules
+## 11. Follow-up comparison: full-image target and modern DT rules
 
-The pinned ACK `.33_r00` `BUILD.bazel` was re-read at the exact source commit (blob SHA `3c8178ebce1f27f2c417e4aeaa00fc7001a96be6`). Its mixed-build examples give two complementary patterns:
+The pinned ACK `.33_r00` `BUILD.bazel` blob `3c8178ebce1f27f2c417e4aeaa00fc7001a96be6` contains three useful device-build patterns:
 
-- `wonder_aarch64`: `base_kernel = ":kernel_aarch64"`, device `pre_defconfig_fragments`, and `make_goals = ["modules"]`; it has no DTB output and only declares the modules that are built as modules.
-- `db845c`: `base_kernel = ":kernel_aarch64"`, `defconfig = "arch/arm64/configs/gki_defconfig"`, a device pre-defconfig fragment, explicit DTB outputs and matching Make goals, plus a device KMI symbol list. This is a broader SoC/platform example, not a DBY-W09 template to copy verbatim.
+- `wonder_aarch64`: mixed/module-only target with `base_kernel = ":kernel_aarch64"`, `make_goals = ["modules"]`, and a short `module_outs` list.
+- `db845c`: mixed build with `base_kernel = ":kernel_aarch64"`, `gki_defconfig`, device fragment, and a large set of Qualcomm modules/DTB outputs.
+- `yukawa`: full-image `kernel_build` with **no `base_kernel`**, `srcs = [":kernel_aarch64_sources"]`, `gki_defconfig`, a device fragment, and outputs including `Image`, `System.map`, `vmlinux`, `vmlinux.symvers`, `modules.builtin`, `modules.builtin.modinfo`; it runs `Image` and `modules` goals and declares the matching modules.
 
-The build/kernel Kleaf documentation on the main-kernel-2026 tooling line further clarifies the current DT build split:
-- `rules_devicetree` supplies `dtb()`, `dtbo()` and `composite_dtb()` rules for compiling device-tree sources.
-- Kernel source DTSI/binding include paths can be supplied via `//common:dtc_includes_aarch64` in the DT rule's dependencies.
-- A separate `dtbo_image` packaging rule creates the DTBO partition image with a `dt_table_entry` header; `dtb_image` concatenates DTBs for embedding in a boot/vendor_boot image and is not the DTBO partition packager.
-- Kleaf's current implementation guidance says not to put `dtbs` into `kernel_build.make_goals`; the dedicated DT rules build DTBs. This is why the DBY-W09 plan should not mechanically copy the older db845c DTB-as-kernel-build-outs pattern without checking the synced Kleaf module version.
+ROUND41 establishes that DBY-W09's stock GKI defconfig omits the Qualcomm-specific UFS/QMP/GCC/RPMhPD/SM8250 interconnect/SMMU chain, while the first-storage milestone requires this chain built-in and early ramdisk module loading is still unproven. **Therefore the DBY-W09 default target is the full-image `yukawa`-style custom kernel target without `base_kernel`.** The mixed `db845c`/ `wonder` style is only a later alternative if a working early-module-loading path is proven. This supersedes the provisional mixed-build suggestion in §6.
 
-For DBY-W09 the build graph should therefore be split as follows, subject to exact API validation after workspace sync:
-1. `//common:kernel_aarch64` — stock GKI base sanity build.
-2. A DBY-W09 mixed `kernel_build` target — `base_kernel = ":kernel_aarch64"`, `gki_defconfig`, and the storage-first device fragment. Its `make_goals` should contain module-related goals only; `module_outs` must be derived from the resolved .config, not guessed. Built-in UFS/QMP/RPMh/GenPD/ICC/SMMU symbols do not belong in `module_outs`.
-3. Dedicated `rules_devicetree` `dtb()` and `dtbo()` targets for the real in-tree DBY-W09 DTS and reviewed rootparam overlay, using the common DTS include dependency.
-4. A DTBO partition packaging target (Kleaf `dtbo_image`) only after the actual ABL and ROUND12 AVB checks confirm that this is the correct on-device artifact format. Do not create a `vendor_boot` image target by assumption.
-5. A distribution target that exports the exact Image, matching modules, DTB, DTBO image and revision/config metadata together.
+The current build/kernel Kleaf documentation on the `main-kernel-2026` line also clarifies a separate device-tree build graph:
+- `rules_devicetree` provides `dtb()`, `dtbo()` and `composite_dtb()` to compile device-tree source files.
+- Kernel DTSI and binding include dependencies can use `//common:dtc_includes_aarch64`.
+- `dtb_image` concatenates DTBs for embedding in boot/vendor_boot; it is **not** a DTBO partition packager.
+- Kleaf's `dtbo_image` packages DTBOs into the table-header format for a DTBO partition.
+- Current Kleaf implementation guidance says not to place `dtbs` in `kernel_build.make_goals` when using dedicated DT rules. The exact rule versions must be confirmed from the revision-pinned synced workspace.
 
-This narrows the target design but does not yet authorize writing a BUILD patch: the default manifest's build/kernel revision is still moving, no complete `repo manifest -r` has been captured, no Kleaf query has run, and the user-facing board source files still have the `.draft` suffix and live outside the kernel source tree.
+For DBY-W09, the candidate graph is:
+1. Optional stock `//common:kernel_aarch64_dist` sanity build to validate the synced ACK/Kleaf toolchain; it is not the device kernel.
+2. Full-image DBY-W09 `kernel_build`, no `base_kernel`, based on `gki_defconfig` plus the storage-first device fragment, with Image/System.map/vmlinux/symvers/built-in metadata outputs.
+3. Separate `rules_devicetree` `dtb()` / `dtbo()` targets for source files migrated into proper kernel-tree paths; use the common DTC include dependency.
+4. A separate `dtbo_image` target only after ROUND12/ABL/AVB checks prove the correct DTBO partition format. Do not define a `vendor_boot_image` target by assumption: DBY-W09 evidence is boot header v2 plus a separate ramdisk, with no vendor_boot found so far.
+5. A distribution target that collects the exact custom Image, matching modules (if any), DTB, DTBO image and revision/config metadata together.
 
-No Bazel target was created or queried in this round; no repo sync, build, DTB, DTBO or device operation was performed.
+No BUILD target was created or queried. No workspace sync, Kconfig resolution, dtc/dt-schema, kernel build, DTBO image, or device operation was performed. Board source files remain `.draft` artifacts outside the kernel source tree and cannot be used as direct Kleaf build inputs yet.
+
+Exact source examples checked in the pinned BUILD.bazel:
+- `yukawa` full custom target: lines 1289–1322.
+- `db845c` mixed build: lines 961–1004.
+- `wonder_aarch64` mixed/module-only target: lines 648–662.
+
+The modern Kleaf DT-rule guidance is documented in the build/kernel `main-kernel-2026` documentation; its moving branch must be captured with the eventual `repo manifest -r` and validated against the synced toolchain. See the official [Kleaf devicetree guide](https://android.googlesource.com/kernel/build/+/c172e1bb1bdf766fd4208e31bdf3aec1ef0974c2/kleaf/docs/devicetree.md) and [Kleaf implementation guide](https://android.googlesource.com/kernel/build/+/refs/heads/main-kernel-2026/kleaf/docs/impl.md).
 
 ## 10. Safety / branch boundaries
 

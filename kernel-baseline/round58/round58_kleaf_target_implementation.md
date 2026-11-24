@@ -266,11 +266,18 @@ git diff --check
 git status --short
 \`\`\`
 
-Run \`scripts/checkpatch.pl\` on the ROUND33 and ROUND52-0002 driver patch files and preserve the full output. Run the schema gate:
+Run \`scripts/checkpatch.pl\` on both driver patch files and preserve the full output:
 
 \`\`\`sh
-make ARCH=arm64 dt_binding_check \
-  DT_SCHEMA_FILES=Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+scripts/checkpatch.pl --strict < <report-checkout>/kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft
+scripts/checkpatch.pl --strict < <report-checkout>/kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
+\`\`\`
+
+Run the schema gate for both modified UFS binding files:
+
+\`\`\`sh
+make ARCH=arm64 dt_binding_check \\
+  DT_SCHEMA_FILES="Documentation/devicetree/bindings/ufs/qcom,ufs.yaml Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml"
 \`\`\`
 
 The DTS migration gate is currently open: ROUND37 still targets a review-only draft and there is no established real DBY-W09 DTS source path. Do not invent a path. Until that migration and the trusted board memory strategy exist, do not claim a board DTB or run a board \`dtbs_check\`. The source-only schema check is independent of that board memory gate.

@@ -30,13 +30,15 @@ Source blob: 8af777f7ddd0385a6bb9d9b9563f0e6329699cd3
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
-@@ -16,5 +16,6 @@
+@@ -15,7 +15,8 @@
+ #include <linux/of_address.h>
  #include <linux/phy/phy.h>
  #include <linux/platform_device.h>
  #include <linux/regulator/consumer.h>
  #include <linux/reset.h>
  #include <linux/slab.h>
 +#include <linux/string.h>
+ 
 @@ -1133,6 +1134,8 @@
  	struct clk_bulk_data *clks;
  	int num_clks;

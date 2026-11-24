@@ -57,6 +57,24 @@ In BootLinux.c, DTBImgCheckAndAppendDT() runs before LoadAddrAndDTUpdate(); the 
 
 Caveat: this describes the public FreeABL build path and source. It is not evidence that Huawei HOS4.3 uses the identical source revision, build flags, or DTB selection policy.
 
+## 2.1 Exact final-FDT timing: the check is after the DTB/DTBO composition stage
+
+A second pass through the exact pinned `BootLinux.c` confirms the timing of the lookup:
+
+1. `DTBImgCheckAndAppendDT()` calculates the boot-header-v2 DTB offset (or vendor_boot DTB offset for newer headers).
+2. It validates the DTBO image and selects the appended DTB when present; otherwise it selects the SoC DTB.
+3. In the SoC-DTB branch, it can add the selected board DTBO plus Hypervisor DTBOs, debug override DTB, and AVF DP DTBO to the overlay list.
+4. It calls `ApplyOverlay()`. The overlay implementation creates the final tree and copies its total contents into `BootParamlistPtr->DeviceTreeLoadAddr`.
+5. Later in the outer Linux boot path, `BootLinux.c` calls `LoadAddrAndDTUpdate()`.
+6. `LoadAddrAndDTUpdate()` copies/concatenates ramdisk and then calls `UpdateDeviceTree((VOID *)BootParamlistPtr->DeviceTreeLoadAddr, ...)`.
+7. The `UpdateDeviceTree()` call then performs the exact `FdtPathOffset(fdt, "/memory")` lookup discussed in §2.
+
+Thus the lookup in this reference is performed on the final device-tree buffer after the ABL's own DTB selection / DTBO composition stage, not merely on the original boot.img DTB. This makes it unsafe to assume that a missing memory node in the raw base DTB is harmless unless the relevant overlay path demonstrably adds it before this stage.
+
+Pinned source blob references:
+- `BootLinux.c`: `c51e41c42fd6d58240290fdba10c86ef81e2218a`, especially `DTBImgCheckAndAppendDT()` around lines 558–840, `LoadAddrAndDTUpdate()` around lines 1183–1368, and the caller around lines 1830–1865.
+- `UpdateDeviceTree.c`: `97ea961ffeecb9c24540ee0ab47c57afef2e1800`, `UpdateDeviceTree()` around lines 1377–1442.
+
 ## 3. Where the memory ranges come from in this reference
 
 The same FreeABL code obtains RAM entries through the UEFI EFI_RAMPARTITION_PROTOCOL:

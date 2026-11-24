@@ -283,11 +283,16 @@
 
 &ufs_mem_phy {
 	vdda-phy-supply = <&vreg_l5a_0p88>;
-	vdda-phy-max-microamp = <89900>;
+	/*
+	 * HOS4.3 DTBO inventory carries vdda-phy-always-on. ROUND63 adds an
+	 * ACK QMP UFS PHY consumer implementation that retains this rail's
+	 * enable reference across PHY power-off and drops its DRMS load vote.
+	 */
+	vdda-phy-always-on;
 
 	vdda-pll-supply = <&vreg_l9a_1p2>;
-	vdda-pll-max-microamp = <18800>;
 
+	/* ACK SM8250 QMP UFS PHY's pinned config already sets 89900/18800uA. */
 	status = "okay";
 };
 

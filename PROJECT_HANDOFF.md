@@ -758,3 +758,12 @@ The driver candidate retains the vdda-phy consumer enable reference from first P
 **Not done:** no real git apply, checkpatch, dt_binding_check, C compile, Kconfig, Kleaf build, regulator measurement or hardware test. The provider-removal/device-link ordering and all error paths must be reviewed and tested. ROUND11/21 physical PM8150 L5 input-supply topology remains unresolved; ROUND63 does not invent a physical parent rail.
 
 The updated patch series for real integration now includes the QMP PHY binding and driver candidates before final board DTS schema/DTB validation. See ROUND63 §8 and the ROUND61 long-running AI task update.
+
+
+### ROUND63 follow-up — exact candidate hunk replay and QMP regulator-list verification
+
+Primary AI checked every QMP UFS `vreg_list` in the exact ACK source: all 15 lists put `vdda-phy` first and `vdda-pll` second; SM8250 load values remain 89900/18800µA. It also checked the pinned `regulator_bulk_data.init_load_uA` field and the device devres action declaration. The candidate now explicitly includes `linux/string.h`.
+
+Final driver patch blob: `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`. A deterministic in-memory exact-context replay against the exact pinned source blobs verified 5/5 driver hunks and 1/1 binding hunk with declared counts and anchors. This is **not** `git apply`, checkpatch, dt_binding_check or compilation.
+
+Updated report: `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md` (commit `2bfe3e0d2d4f6b17e057a8e9e5ffc7b4d4bab2d6`). The second AI ROUND61 task must use the final driver patch blob above and independently run the real worktree checks.

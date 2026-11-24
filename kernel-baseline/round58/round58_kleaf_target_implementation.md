@@ -57,6 +57,16 @@ The manifest's \`build/kernel\` revision is a branch name, not an immutable comm
 
 The attributes used by the candidate are explicitly documented in the manifest-declared Kleaf API branch: \`srcs\`, \`outs\`, \`arch\`, \`defconfig\`, \`make_goals\`, \`makefile\`, and \`post_defconfig_fragments\`. The exact pinned ACK BUILD already uses \`kernel_build\` with the first six attributes and uses \`post_defconfig_fragments\` in its \`fips140\` target. No unverified attribute was introduced.
 
+The future device-tree API shape was also cross-checked against the public `rules_devicetree` source as a separate corroboration step:
+
+- Repository branch inspected: `bazel-contrib/rules_devicetree:main`
+- Branch HEAD observed during this round: `5d1347708e520a2442c8e397b415c7f5292fa66d`
+- Public wrapper `devicetree/dtb.bzl` blob: `a88911fef9142855e452758ff8bcc2f965ec7e13`
+- Public wrapper `devicetree/dtbo.bzl` blob: `9331de50fcdbb364541a9a4e77559c8a5b721fcf`
+- Rule implementation `devicetree/private/dtb.bzl` blob: `be34fd3e91183f6d3269e87720b2f42eea9578ed`
+
+Sources: https://github.com/bazel-contrib/rules_devicetree/blob/5d1347708e520a2442c8e397b415c7f5292fa66d/devicetree/dtb.bzl, https://github.com/bazel-contrib/rules_devicetree/blob/5d1347708e520a2442c8e397b415c7f5292fa66d/devicetree/dtbo.bzl, and https://github.com/bazel-contrib/rules_devicetree/blob/5d1347708e520a2442c8e397b415c7f5292fa66d/devicetree/private/dtb.bzl. This source inspection confirms the `dtb()` / `dtbo()` input extensions and attributes used in the future template. **This GitHub main-branch commit is not asserted to be the manifest-locked module revision.** The actual `rules_devicetree` version must be read from the synced `MODULE.bazel.lock` before the future target is authored or queried.
+
 ## 3. Deliverable A — full custom Kleaf target candidate
 
 ### 3.1 Files

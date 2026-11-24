@@ -32,7 +32,7 @@ diff --git a/dts/dby-w09-ack18-board.dts.draft b/dts/dby-w09-ack18-board.dts.dra
  #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
  
  #include "sm8250.dtsi"
-@@ -211,7 +213,11 @@
+@@ -212,6 +214,8 @@
   *     verified HOS VCC operating window is 2.504–2.950 V.
   */
  &ufs_mem_hc {

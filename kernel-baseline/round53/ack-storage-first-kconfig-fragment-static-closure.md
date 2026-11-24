@@ -186,3 +186,20 @@ The source blob identities checked in this follow-up:
 - Base `gki_defconfig`: `a3e1c0d60d5220b6be8b306157a331fc1696afb0` (`CONFIG_PCI=y`, `CONFIG_ARCH_QCOM=y`).
 
 This remains a static source dependency proof. Actual `.config` resolution remains NOT_RUN.
+
+
+## 12. ROUND53 follow-up — do not assign hidden SCSI_DMA / OF_RESERVED_MEM
+
+A final pass over the visible Kconfig definitions identified two additional hidden symbols that should be derived rather than written as ordinary fragment assignments:
+
+- `SCSI_DMA` is a hidden bool with default n; `SCSI` selects it when `HAS_DMA`. The arm64 target provides DMA capability, so the UFS chain must derive it through `SCSI=y`.
+- `OF_RESERVED_MEM` is `def_bool OF_EARLY_FLATTREE`; `OF_EARLY_FLATTREE` itself is derived from `OF` on this architecture. It is not a user-selectable option.
+
+The storage-first fragment has removed direct `CONFIG_SCSI_DMA=y` and `CONFIG_OF_RESERVED_MEM=y` assignments. It now documents the parent selection/derived chain instead. This joins the earlier cleanup of hidden `GENERIC_MSI_IRQ` and `PM_OPP` direct assignments.
+
+Source evidence:
+- `drivers/scsi/Kconfig`: `SCSI` selects `SCSI_DMA if HAS_DMA`; `SCSI_DMA` is a hidden bool default n. Blob `19d0884479a247f1e91300bcfc1112e7b3ea5e46`.
+- `drivers/of/Kconfig`: `OF_RESERVED_MEM def_bool OF_EARLY_FLATTREE`; `OF_EARLY_FLATTREE` derives from OF. Blob `50697cc3b07ebeb24283e22299797ce4612db89c`.
+- Current fragment blob after these corrections: `ae8675357e2f5c57c9ec38e7574b00590b558c63`.
+
+No final .config resolution was performed; this only removes direct hidden-symbol requests and documents their source selection paths.

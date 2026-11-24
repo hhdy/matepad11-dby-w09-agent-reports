@@ -1,5 +1,5 @@
 From: DBY-W09 Stage-A primary-source review
-Subject: [PATCH DRAFT] phy: qcom-qmp-ufs: preserve always-on vdda-phy supply votes
+Subject: [PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle
 
 The DBY-W09 HOS4.3 UFS PHY DTBO inventory records vdda-phy-always-on.
 The downstream Qualcomm UFS PHY consumer semantics retain the vdda-phy

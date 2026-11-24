@@ -39,13 +39,12 @@ REQUIRED_SYMBOLS = (
     "REGULATOR_QCOM_RPMH",
     "IOMMU_SUPPORT",
     "ARM_SMMU",
+    "ARM_SMMU_QCOM",
     "BLK_DEV_DM",
     "EROFS_FS",
     "DM_VERITY",
     "DM_VERITY_FEC",
 )
-DERIVED_OPTIONAL_SYMBOLS = ("ARM_SMMU_QCOM",)
-
 _SET_RE = re.compile(r"^CONFIG_([A-Z0-9_]+)=(.*)$")
 _UNSET_RE = re.compile(r"^# CONFIG_([A-Z0-9_]+) is not set$")
 
@@ -108,17 +107,6 @@ def validate_config(path: Path) -> dict[str, Any]:
         assigned = assignments.get(symbol)
         if assigned is None:
             missing.append(symbol)
-        elif assigned[0] != "y":
-            not_y.append({"symbol": symbol, "value": assigned[0]})
-
-    for symbol in DERIVED_OPTIONAL_SYMBOLS:
-        assigned = assignments.get(symbol)
-        if assigned is None:
-            info.append(
-                f"CONFIG_{symbol} is absent; it is a hidden/derived Kconfig symbol. "
-                "Investigate the source/Kconfig selection chain; do not add it blindly "
-                "to the fragment."
-            )
         elif assigned[0] != "y":
             not_y.append({"symbol": symbol, "value": assigned[0]})
 

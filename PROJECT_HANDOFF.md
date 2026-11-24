@@ -666,3 +666,44 @@ WorkBuddy 5.11.3.0 + sandbox-cli 5.11.4 的内部审计记录和静态资源表�
 - 下一次实际 build gate：有可用固定 ACK 工作树时执行真正的 `git apply --check` / 应用 / diff-check、dt_binding_check、Kconfig/Kleaf resolve 和 full custom Image 编译。
 
 PR #1 仍 Draft/Open/unmerged；protected DTS branch 不改。Stage A 仍先于 DerpFest Stage B。
+
+
+## ROUND61 — 持续式二号 AI 内核实现任务（2026-11-24）
+
+用户明确要求二号 AI 不再只做一次性审查，而是持续承担一条实质性的 Stage A 移植工作流，直到 ACK 6.18.33 内核通过设备启动和存储验收，或只剩必须由用户/本地 Agent 处理的外部硬件动作。
+
+### 二号 AI 新任务分支
+
+- 专属分支：`ai-parallel/stagea-port-until-boot`
+- 长期任务书：`kernel-baseline/round61/ROUND61_LONG_RUNNING_STAGEA_MISSION.md`
+- 一键启动指令：`kernel-baseline/round61/START_PROMPT.md`
+- 持续进度日志：`kernel-baseline/round61/PROGRESS.md`
+
+任务不是只提交报告：二号 AI 必须按阶段持续执行真实补丁应用、UFS binding dt_binding_check、Kleaf/Bazel target 校验、实际 Kconfig/.config 解析、配置检查器验证、完整 DBY-W09 Image 编译；每次失败后修复并重跑受影响步骤。之后继续处理真实 DTS、memory handoff、PMIC 物理供电、AVB/ramdisk/boot header v2、受控启动计划和设备验收。每一阶段均在同一专属分支提交并更新 PROGRESS.md，不得做完单份报告便停止。
+
+允许二号 AI复用 ROUND58 在 `ai-parallel/round58-kleaf-target-audit` 的 BUILD target、Python validator、9 个 synthetic tests；ROUND60 已完成的主审查只是源码设计审查，不等于实际 Bazel/Kconfig/编译通过。ROUND59 的 16/16 仅为 in-memory exact-context replay，不是真实 `git apply`。所有实际检查均须重新执行并留存日志。
+
+### 长期任务阶段
+
+1. 在获准 Linux 环境中建立精确 ACK worktree，common commit 必须为 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。
+2. 对 ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND33 → ROUND52-0002 执行真实 `git apply --check` / apply / diff / checkpatch；ROUND37 是报告仓库里的 DTS fixture，不能假装它已成为内核 source-tree DTS。
+3. 对 UFS binding 运行真实 `dt_binding_check`，修正问题并重跑。
+4. 集成 ROUND58 Kleaf target 和配置检查器，执行 Bazel query/cquery、最终 Kconfig 解析和实际 .config 检查。
+5. 编译 DBY-W09 storage-first full custom Image；失败则定位、修复、重编译，直到成功或有证据的外部执行限制。
+6. 在可信 RAM / reserved-memory / PMIC 输入供电信息具备后，将 board DTS 迁入真实 ACK source path，构建 DTB/DTBO。
+7. 独立关闭 legacy boot header v2、separate ramdisk、AVB/vbmeta 和 ABL 入口证据；先形成非刷写 packaging/rollback plan。
+8. 只有经主 AI/用户审查并明确授权后，才进行任何临时启动/设备操作；不得自行刷写分区、解锁、root 或绕过安全策略。
+
+### 本地 WorkBuddy 状态
+
+ROUND16 因 WorkBuddy 的 command-safety/sandbox 层拦截 `wsl.exe` 而 BLOCKED；ROUND17 已将策略责任定位为 WorkBuddy 自身，不是 Windows Security Center 菜单。用户已明确表示由本地 Agent 自行处理。主 AI 不再要求用户查找不存在的 Windows 菜单，也不让二号 AI重复研究 WorkBuddy。二号 AI 应在其自身合法可用的运行环境里继续；本机 WorkBuddy 的部署问题不构成停止公开源码/补丁工作流的理由。
+
+### 任务边界与当前真实状态
+
+- 二号 AI只能写 `ai-parallel/stagea-port-until-boot`，不能修改 main、firmware-audit-v1、protected DTS branch 或 PR #1。
+- PR #1 继续 Draft/Open/unmerged。
+- 不得编造 RAM ranges、AVB descriptor、PMIC 输入电源或启动链；不绕过主机安全策略；不刷写设备。
+- 当前仍没有实际 kernel build / Image / DTB / boot / UFS storage acceptance 证据。
+- Stage A 仍是唯一主线；Stage A 真正验收前不开始 DerpFest Android 17 Stage B。
+
+主 AI / ChatGPT 继续并行推进固定源码分析与设备启动链阻塞项，审查二号 AI 每阶段产物，并将已验证结果同步到主仓库。该长期任务不是把项目交给二号 AI后停止主 AI 工作。

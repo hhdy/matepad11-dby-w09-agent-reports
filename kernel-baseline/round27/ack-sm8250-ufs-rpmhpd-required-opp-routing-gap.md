@@ -78,11 +78,35 @@ HOS4.3 ROUND11 found an MMCX ARC parent-supply edge targeting a child in the MX-
 
 ## 5. Candidate correction architectures (not implemented)
 
-1. Targeted UFS dual-domain integration. Preserve UFS_PHY_GDSC and add a separate RPMHPD GenPD attachment for the UFS Host. Because generic device-core attachment supports one domain by default, the UFS driver must explicitly attach the additional domain and configure the required-OPP device/index so the UFS OPP maps to the RPMHPD GenPD. This needs a carefully reviewed UFS/OPP patch and error/teardown handling.
-2. Targeted GDSC parent relationship. Extend the GCC/GDSC integration so UFS_PHY_GDSC has an explicit RPMHPD parent and the required performance-state requests propagate through it. Avoid attaching every GCC GDSC to MMCX unless each domain's parent/corner semantics are justified.
+1. Targeted UFS dual-domain integration. Preserve UFS_PHY_GDSC and add RPMHPD MMCX as a second UFS Host GenPD. Generic genpd_dev_pm_attach() deliberately skips devices with more than one power-domain phandle, so the UFS driver must call devm_pm_domain_attach_list() during probe and retain both virtual GenPD devices/device-links. The UFS power-domains order should be RPMHPD MMCX first, GCC UFS_PHY_GDSC second, so the existing single required-opps entry remains index 0 for RPMHPD. The UFS driver must then configure struct dev_pm_opp_config.required_dev = pd_list->pd_devs[0] and required_dev_index = 0 before devm_pm_opp_of_add_table(). This needs a carefully reviewed UFS/OPP patch and error/teardown handling.
+2. Targeted GDSC parent relationship. Extend the GCC/GDSC integration so UFS_PHY_GDSC has an explicit RPMHPD parent and the required performance-state requests propagate through it. The current qcom_cc_really_probe()/gdsc_register() parent-list path can attach the GCC device's supplied parent-domain list to its GDSCs broadly, so do not add an RPMHPD parent to GCC globally unless every GCC GDSC's domain/corner semantics are justified.
 3. Board-specific performance vote. If the UFS driver's OPP framework cannot safely express a second domain, add a narrowly scoped RPMHPD vote at the appropriate UFS lifecycle/OPP transitions. This must use supported RPMH/GenPD interfaces and preserve active/sleep and failure rollback behavior.
 
 Before selecting an architecture, verify the exact HOS4.3 UFS ARC resource-name, qcom,set and parent/dropout properties from existing local data after ROUND12 and the already-queued ROUND13 mode/DRMS task. Do not run concurrent local scans or reparse the ARC supply graph.
+
+## 5.1 Multi-domain GenPD API detail (additional ACK source review)
+
+ACK provides devm_pm_domain_attach_list() and struct dev_pm_domain_attach_data for drivers whose device has multiple power-domains. It creates a virtual device for each listed domain, adds device links (by default DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME), and returns a struct dev_pm_domain_list containing pd_devs. The generic device-core genpd_dev_pm_attach() skips automatic attachment when more than one power-domain phandle is present, so the UFS driver must own this attach-list path.
+
+The existing UFS platform probe calls ufshcd_parse_operating_points() before ufshcd_init(). Inside ufshcd_parse_operating_points(), ACK calls devm_pm_opp_set_config() first and devm_pm_opp_of_add_table() second. That is an insertion point for multi-domain attachment and OPP required_dev configuration; dev_pm_opp_set_config() must be called before the OPP table is initialized.
+
+Important indexing trap: PD_FLAG_REQUIRED_OPP tells devm_pm_domain_attach_list() to configure required_dev_index=i for every attached domain. The UFS OPP entries currently contain exactly one required-opps phandle, so applying this flag to both the RPMHPD and GDSC domains will attempt to configure index 1 even though required_opp_count is 1; ACK OPP core rejects this with -EINVAL. Do not use PD_FLAG_REQUIRED_OPP for this two-domain, one-required-OPP layout.
+
+A possible source-patch sequence is therefore:
+1. Order UFS Host power-domains as RPMHPD MMCX first, GCC UFS_PHY_GDSC second; keep UFS PHY itself attached to GCC UFS_PHY_GDSC.
+2. In the Qualcomm UFS platform/variant setup before OPP table parsing, call devm_pm_domain_attach_list() without PD_FLAG_REQUIRED_OPP and retain the returned list.
+3. Set dev_pm_opp_config.required_dev to pd_list->pd_devs[0] and required_dev_index to 0, using devm_pm_opp_set_config() before devm_pm_opp_of_add_table(). The existing OPP required-opps[0] then targets the RPMHPD virtual device, while the second GDSC domain remains attached through its device link.
+4. Verify initial power-on/runtime-PM ordering, error unwind and managed teardown. The default attach-list flags create runtime-PM device links but do not themselves prove the UFS register-access/initialization sequence is safe.
+
+This is a source-derived implementation candidate only. It has not been patched or tested, and the RPMHPD MMCX-to-MX corner equivalence remains a separate HOS4.3 question.
+
+Sources:
+- Multi-domain GenPD attachment: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/base/power/common.c
+- GenPD attach-by-id behavior: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/pmdomain/core.c
+- Multi-domain flags/list structure: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/linux/pm_domain.h
+- OPP required-device mapping: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/linux/pm_opp.h
+- OPP config required-dev index validation: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/opp/core.c
+- UFS OPP parsing order: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/ufs/host/ufshcd-pltfrm.c
 
 ## 6. Verification status
 
@@ -98,6 +122,9 @@ Before selecting an architecture, verify the exact HOS4.3 UFS ARC resource-name,
 | UFS OPP required-opps actually reaches RPMHPD under the inspected topology | NOT ESTABLISHED; source path terminates at standalone GDSC GenPD |
 | HOS4.3 UFS ARC resource-name / qcom,set details | UNKNOWN / NOT_CAPTURED |
 | MMCX-to-MX HOS/ACK corner equivalence | NOT_ESTABLISHED |
+| devm_pm_domain_attach_list multi-domain API | SOURCE REVIEWED / AVAILABLE |
+| Single required-opps entry + two-domain PD_FLAG_REQUIRED_OPP mapping | INVALID: second required_dev_index exceeds required_opp_count |
+| Manual required_dev mapping to first RPMHPD virtual domain before OPP table init | DESIGN CANDIDATE |
 | Corrected GenPD/UFS patch | NOT_IMPLEMENTED |
 | DTS/schema/Kconfig resolution, compile, boot and rail runtime | NOT_RUN |
 

@@ -18,7 +18,7 @@ Status: **SCHEMA PATCH PAIR APPLIES TO EXACT PINNED SOURCE FILES; BOARD DTS AND 
 | 32 | `round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft` | ACK `qcom,ufs.yaml` | source blob `1dd41f6d5258014d59c8c8005bc54f7994351a52`; patch blob `efe2d932da34716c631de22d89aba19730cc7f50` | Exact-file apply PASS |
 | 36 | `round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft` | ACK `qcom,ufs-common.yaml` | source blob `962dffcd28b44b3489be5615c75e7270a0c45dc4`; patch blob `dad87ef8dfefee6141b8a7949982c007c4a03b4a` | Exact-file apply PASS |
 | 37 | `round37/0001-dby-w09-ufs-host-dual-genpd-dts.patch.draft` | Protected board DTS draft file | source blob `e86c8707c413a9376b1e332a94e292b86acde3e2`; patch blob `486654c8d0b1b785190253270f5e83f796f07362` | Exact single-file fixture `git apply --check` / apply / diff-check PASS; protected branch unchanged |
-| 33 | `round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft` | ACK `drivers/ufs/host/ufs-qcom.c` | source blob `a80c6998406dbc88c25dbd9977699ba481207efe`; patch blob `454a4443035cf3451c87e2735f0b876d65d52f8b` | Both hunk contexts match; not applied |
+| 33 | `round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft` | ACK `drivers/ufs/host/ufs-qcom.c` | source blob `a80c6998406dbc88c25dbd9977699ba481207efe`; updated patch blob `565090acbfe9aad00200b3cccbd64a8a45c7c4c3` | Both hunk contexts/counts match; exact provider OPP-table identity check added; not applied |
 
 Related reports:
 - ROUND32 binding coverage / 8-clock single-reg description.
@@ -27,6 +27,7 @@ Related reports:
 - ROUND35 current board DTS single-domain integration gap.
 - ROUND36 common binding maxItems constraint and scoped fix.
 - ROUND37 DBY-W09 board DTS delta.
+- ROUND38 RPMhPD provider registration, deferred-probe rollback and required-OPP table identity review.
 
 ## 3. Required patch order for a disposable full-source worktree
 
@@ -64,7 +65,7 @@ Both source files were then parsed with PyYAML. The relevant ROUND32 SM8250 cloc
 
 ### Driver and board source context
 
-- ROUND33's include and probe hunks match the exact pinned `ufs-qcom.c` source at the declared old line positions; hunk old/new counts match.
+- Updated ROUND33's include and probe hunks match the exact pinned `ufs-qcom.c` source at the declared old line positions; hunk old/new counts match. The helper now verifies that the provider's operating-points-v2 phandle is the exact table node containing the required-opps target.
 - ROUND37's complete board DTS source fixture hash matched the protected source blob exactly; its exact patch file also matched the patch blob. `git apply --check`, `git apply`, and `git diff --check` passed on the isolated one-file fixture; the protected branch itself was not changed.
 - ROUND34 confirms from pinned-source API review that the two-domain attach-list / required-dev mapping order is consistent with the UFS OPP initialization order and devres unwind sequence; repeated OPP configs use independent tokens and the later clock-only config does not clear required_dev.
 
@@ -98,6 +99,16 @@ The dual-domain UFS request-routing change and MMCX→MX corner equivalence are 
 - No device connection, unlocking, flashing, partition writing, or boot testing was performed.
 
 **Conclusion:** the schema patch pair is now a viable exact-source candidate and the UFS dual-domain integration has a precise patch order and validation matrix. This is not yet a compiled kernel, validated DTB, working MMCX vote, or bootable DBY-W09 image.
+
+
+## 9. ROUND38 provider registration and OPP-table identity review
+
+- The pinned SM8250 RPMhPD descriptor maps RPMHPD_MMCX (ID 6) to the mmcx resource and installs the GenPD performance-state callback.
+- RPMhPD probe configures and initializes domains; of_genpd_add_provider_onecell() creates indexed OPP tables before marking domains as having a provider and registering the provider with the OF GenPD core.
+- With one operating-points-v2 phandle, the indexed OPP helper maps each provider index request to index 0, so the SM8250 RPMhPD domains use the declared common table.
+- If a provider is not ready, GenPD attach returns deferred-probe state. dev_pm_domain_attach_list() rolls back already-attached virtual domains and device links if a later domain attach fails.
+- ROUND33 now compares the OPP table node containing the required-opps target with the provider's operating-points-v2 phandle. Current ROUND33 patch blob SHA: `565090acbfe9aad00200b3cccbd64a8a45c7c4c3`.
+- This is pinned-source review and source hunk checking only. No full-tree patch application, build, runtime PM test or hardware validation is claimed.
 
 ## 8. ROUND37 exact-blob board-DTS patch application update
 

@@ -1,72 +1,56 @@
 # ROUND61 Phase E — board DTS, memory handoff and PM8150 power gates
 
-**Date:** 2026-11-24  
+**Date:** 2026-11-25  
 **Branch:** `ai-parallel/stagea-port-until-boot`  
-**Phase status:** BLOCKED — evidence review complete; no real board DTS migration is authorized by the available evidence
+**Fixed ACK:** `android17-6.18.33_r00` / `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`  
+**Phase status:** BLOCKED — evidence review complete; no real board DTS migration is justified by the available HOS4.3 evidence.
 
-## 1. Scope
+## 1. Existing HOS4.3 facts (read-only reports reused)
 
-This is a parallel evidence-gate review only. It does not migrate or modify the review-only ROUND37 DTS draft, create a board DTB/DTBO, invent memory ranges, or infer PMIC rail parents.
+No new firmware parsing or extraction was performed. The following completed reports on `firmware-audit-v1` remain the evidence source:
 
-## 2. Memory/FDT handoff
+- ROUND7 / ROUND42: HOS4.3 base boot FDT has no root `/memory` node and no `device_type = "memory"` property. It has 34 `/reserved-memory` children across firmware, secure, DSP, reusable and crash-record classes. Physical addresses are not published.
+- ROUND8: stock DTBO entry 8 resolves 145/145 fragment targets. Its UFS host/PHY fragments describe board supplies and `vdda-phy-always-on`; overlay contents establish intent, not actual runtime selection or final post-ABL FDT.
+- ROUND11: four explicit ARC parent-supply edges and six proxy-supply edges were resolved in the inspected base FDT. Proxy-supply is a distinct RPMh mechanism, not an external PMIC input. A whole-base-FDT property-name scan found no `vdd-s1..s10-supply`, `vin-supply` or `vph-pwr-supply`.
+- ROUND13/14/48/51: UFS PM8150 rails and vendor regulator mode/corner semantics were reviewed against public KONA source. This does not establish the missing physical PM8150 input connections or runtime rail enable state.
+- ROUND12: AVB metadata inspection is separately blocked; no footer or descriptor state was established.
 
-The ROUND42 and ROUND43 evidence establishes that the Linux kernel's usable RAM map must come from the actual final handoff path. Two distinct mechanisms must not be conflated:
+## 2. Memory handoff is a hard first-boot gate
 
-- A classic arm64 entry path consumes the final FDT `/memory` nodes and relevant reserved-memory declarations.
-- An EFI-stub entry path can consume the EFI memory map and has different reservation/ownership semantics.
+The fixed ACK 6.18.33 classic ARM64 path scans enabled root-level nodes with `device_type = "memory"`, then imports `reg` or `linux,usable-memory` ranges. The `/reserved-memory` scan is separate; reserved children do not create system RAM.
 
-The name or apparent capability of an ABL build is not enough to prove which path HOS4.3 uses on this tablet. The available evidence does not include a trusted, target-specific final HOS4.3 FDT captured at the kernel handoff point, nor a verified EFI memory-map handoff trace.
+ROUND42's pinned public SM8250-capable FreeABL reference shows a classic LinuxLoader path that resolves `/memory` after its DTB/DTBO composition stage and fails if no unambiguous memory node exists. This is a same-SoC-class reference, not proof that Huawei HOS4.3 uses the same ABL source or build flags.
 
-Therefore:
-- No `memory@...` range is added or guessed.
-- No `/reserved-memory` carveout is copied from a related SM8250 device.
-- No assumption is made that the full physical RAM map can be inferred from the Android userspace-visible memory total.
-- The ROUND37 draft remains review-only and is not applied to ACK DTS paths.
+ROUND43 establishes a real alternative: if the kernel is actually entered through Linux's EFI stub, and the final `/chosen` carries the complete trusted UEFI system-table and memory-map metadata, ACK EFI initialization can replace the earlier DT-derived memblock map with UEFI descriptors. A UEFI ABL or Qualcomm EFI_KERNEL_PROTOCOL alone does not prove Linux EFI-stub entry.
 
-Required evidence to unblock:
-1. A sanitized final HOS4.3 FDT (or exact handoff FDT dump) captured immediately before kernel entry.
-2. ABL boot log/entry trace proving whether the kernel receives a direct FDT or EFI stub handoff.
-3. Exact `/memory`, `/reserved-memory`, `linux,usable-memory`, `no-map`, and dynamic reservation content, with addresses and sizes preserved.
-4. Evidence that any overlay/ABL mutation occurs before the captured final FDT, not merely an earlier vendor DTB.
+**DBY-W09's actual HOS4.3 kernel entry route and final post-ABL FDT remain UNKNOWN.** Do not infer the final tree from the raw boot-image DTB, borrow RAM ranges from another SM8250 product, or copy HOS4.2 splash/DFPS carveouts.
 
-## 3. PM8150 / VDDP / VCCQ parent-supply gate
+Required evidence:
+1. Sanitized final FDT captured after the real ABL DTB/DTBO selection and overlay composition, immediately before kernel entry.
+2. Actual kernel entry classification: classic ARM64 Image entry or Linux EFI-stub entry.
+3. For classic entry, valid enabled system-memory ranges; for EFI-stub entry, complete trusted `/chosen/linux,uefi-*` metadata and proof the stub was entered.
+4. Reconciliation of all 34 reserved-memory classes against usable RAM, including secure firmware, DSP, reusable and crash-dump regions.
+5. Selected DTBO entry and any ABL memory mutation demonstrated in the same final-tree evidence.
 
-The ROUND21 PM8150 VRM-parent review remains unresolved for the actual DBY-W09 board. The evidence set does not prove the physical PMIC parent rail or board wiring for the UFS VDDP REF_CLK supply. It also does not establish a safe parent-supply relationship for the legacy VCCQ-parent path.
+## 3. PM8150 physical input-parent gap
 
-Consequently:
-- Do not map VDDP to `vph_pwr`, `vreg_s4a_1p8`, or another guessed regulator.
-- Do not add `qcom,vccq-parent-supply` merely because a similarly named rail exists on a related Qualcomm platform.
-- Keep the UFS driver changes tolerant of absent optional supply properties.
-- The board DTS must only add supply phandles after board-specific schematic, bootloader regulator-tree, or trusted runtime regulator evidence identifies the exact parent.
+The review-only board draft `dts/dby-w09-ack18-board.dts.draft` describes evidence-backed UFS consumer connections to PM8150 S4/L5/L6/L9/L17 and PM8150L S8. The UFS host's `qcom,vccq-parent-supply` link to S8 and `qcom,vddp-ref-clk-supply` link to L6 are consumer links; they do not resolve the physical input supply of S8 itself.
 
-Required evidence to unblock:
-1. HOS4.3 PMIC regulator-tree dump with regulator names, parent relationships and voltage/current constraints.
-2. Board-specific schematic or equivalent trusted hardware evidence for the UFS REF_CLK pad supply.
-3. Evidence of whether VCCQ is parented or directly supplied on this board, including the actual consumer/enable owner.
+The pinned ACK PM8150 VRM table expects physical input supply names for the relevant regulators, including vdd-s4, grouped LDO input names and vdd-s8. HOS4.3's inspected base FDT does not expose the corresponding upstream input-supply properties. The board draft correctly leaves those physical parent paths unresolved.
+
+Do not add `vph_pwr=3.7 V`, guessed `vdd-s*-supply` links, fake fixed regulators, vendor ARC nodes, or proxy-supply translations. Regulator-core dummy-parent fallback is not evidence that a physical rail is present or enabled.
+
+Required evidence:
+1. Trusted HOS4.3 regulator-tree or bootloader regulator evidence showing exact PM8150 physical input parents and voltage/current constraints.
+2. Board-specific schematic or equivalent authoritative evidence for the UFS REF_CLK pad supply.
+3. Evidence identifying the VCCQ parent/enable owner and S8's own input path.
 
 ## 4. DTS migration decision
 
-**Do not migrate ROUND37 yet.** It remains a `.dts.draft` review artifact, not a patch against the real ACK board DTS path. A correct board DTS cannot be produced without both:
-- trusted memory/FDT handoff facts; and
-- board-specific PM8150 regulator parent facts.
+**Do not migrate ROUND37 yet.** The board file remains a review-only `.dts.draft`, not an ACK DTS build input. It intentionally does not reconstruct `/memory` or the 34 reserved-memory children. No board DTB or `dtbs_check` has been run.
 
-Once those are available, create a new board DTS patch against the exact ACK path, then run:
-- `git apply --check` and `git diff --check`;
-- `make ARCH=arm64 dt_binding_check DT_SCHEMA_FILES=...`;
-- `make ARCH=arm64 dtbs_check DT_SCHEMA_FILES=...` for the actual board DTS;
-- a final DTB inspection to verify the intended memory and regulator nodes.
+Once the memory and power evidence is available, create a new board DTS patch against the exact ACK board path, then run real `git apply --check`, `git diff --check`, binding checks, `dtc`, `dtbs_check`, and final DTB inspection. Do not use the draft as an input before that point.
 
-## 5. Phase F/G dependencies
+## 5. Phase E verdict
 
-ROUND62 same-device boot-chain cross-reference is useful but does not supply the missing local HOS4.3 artifacts. The following remain unverified:
-- actual boot/vendor_boot/dtbo partition layout and whether the target kernel image is consumed as Image, boot image, or another packaging format;
-- ramdisk ownership and required init/fstab/first-stage dependencies;
-- AVB descriptor/footer layout and rollback metadata for the installed image set;
-- ABL RAM-boot support and whether it preserves the final FDT/bootconfig state;
-- any safe, reversible test-boot procedure for this exact device.
-
-No boot image, vendor_boot, DTBO, AVB metadata, or device operation is claimed or generated.
-
-## 6. Decision
-
-Phase E is **BLOCKED on missing target-specific evidence**, not on a source-code implementation issue. Continue source-level validation and Kleaf candidate validation independently, but do not fabricate a board DTB or advance to Stage-B/DerpFest work until the memory, power, and boot-chain gates are closed.
+**BLOCKED on target-specific memory/FDT and PM8150 physical parent evidence.** Kernel-only Image compilation may proceed independently. Board DTB generation and any first boot remain gated.

@@ -94,6 +94,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 ## 6. 已完成的内核移植研究（无需从零重做）
 
 - ROUND31：ACK .33_r00 UFS/QMP/SM8250 GCC/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig 依赖闭环；storage-first fragment 的隐藏依赖注释已更新，最终 Kconfig 解析仍 NOT_RUN。
+- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：ACK .33 及当前上游的 qcom,ufs.yaml 都遗漏 qcom,sm8250-ufshc；SM8250 节点实际为 8 clocks、无 ICE 窗口、单 reg。独立 schema-only patch 草案位于 round32；未运行 dt_binding_check/dtbs_check，未包含 dual-GenPD 变更。
 
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
 
@@ -139,6 +140,8 @@ ROUND27 已确认：SM8250 UFS OPP 表存在 RPMHPD required-opps，但 UFS Host
 ROUND29 已将设计缩小并精确到 ACK `.33_r00`：在 `ufs_qcom_probe()` 中、`ufshcd_pltfrm_init()` 之前，用 `devm_pm_domain_attach_list()` 附着 MMCX（index 0）和 GCC UFS_PHY_GDSC（index 1），仅使用 `PD_FLAG_DEV_LINK_ON`；再用 `devm_pm_opp_set_config()` 将唯一 required-opps index 0 指向第一个虚拟 GenPD 设备。通用 UFS 后续仍按原样设置 clock OPP config 并初始化 OPP table，不需要改通用 `ufshcd-pltfrm.c` 或 `ufs_hba_variant_ops`。
 
 ROUND29 另确认 `of_genpd_add_provider_onecell()` 在注册 GenPD provider 之前先为 RPMHPD 域注册 indexed OPP table，因此 attach-list 成功后再绑定 required_dev，不会因 RPMHPD OPP table 尚未注册而触发 `-ENODEV`。这只是源码顺序证明，运行时未验证。不能对两个域使用 `PD_FLAG_REQUIRED_OPP`，因为它会把 index 1 映射到不存在的第二个 required-opps 槽位。设计报告列出剩余的 DTS order、probe defer、runtime-PM、错误 unwind、实际 vote、HOS corner 对等验证。尚未实现、编译或测试。
+
+ROUND32 确认 `qcom,ufs.yaml` 未将 `qcom,sm8250-ufshc` 纳入 schema select/compatible enum；该缺漏在当前 Linux 主线版本仍存在。实际 SM8250 UFS node 是八个时钟、没有 ICE reg window、单个 reg window。已创建 schema-only patch 草案，只补 compatible 与相应时钟/寄存器布局，不改变 power-domains 数量或顺序。补丁尚未应用，dt_binding_check/dtbs_check 未运行；待 schema 覆盖闭环后，才单独验证 ROUND29 的双 GenPD DTS 变化。
 
 ROUND30 的父级对照另发现：HOS4.3 已报告 MMCX ARC → MX ARC parent-supply 边，但 ACK .33 的 SM8250 RPMHPD descriptor 只为 CX 设置 MX parent，MMCX 使用无 parent 的 plain descriptor。若增加 MMCX→MX GenPD 层级，通用 GenPD 会通过 dev_pm_opp_xlate_performance_state() 换算父域 pstate；当前所有 RPMHPD 域使用同一 OPP enum 表且无 required-opps 转换时，helper 原样传递同一个 pstate，并不自动实现 HOS min-dropout delta。HOS 的 qcom,min-dropout-voltage-level 仍 UNKNOWN / NOT_CAPTURED，因此不能直接添加 parent pointer，须把 MMCX→MX corner equivalence 单独列为阻塞项。
 

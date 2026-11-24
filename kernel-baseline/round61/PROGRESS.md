@@ -204,3 +204,8 @@ At the time of this update the same run is installing dtschema prerequisites; th
 ### Phase B run-83 result: validator diagnostics are output-based
 
 Run `45443538190` passed source patch/checkpatch/buildifier/unit-test gates, then exposed two harness facts: the direct UFS example `dt-validate` command returned 0 despite printing schema diagnostics, and the generated UFS fixture DTS had root `interrupt-parent` after a subnode (invalid DTS property ordering). Fixed the fixture generator to place all root properties before subnodes. Updated validation so positive DTBs require empty diagnostic logs and negative DTBs must contain the expected property diagnostic, independent of dt-validate's exit status. The original UFS example diagnostics are now a final failure gate. The processed schema is also retained as a hashed artifact for inspection. New run is pending.
+
+
+### Manifest sync succeeded; toolchain preflight remains unresolved
+
+Hosted manifest run `45442933079` successfully initialized the pinned `common-android17-6.18` manifest and completed `repo sync`. It verified the exact ACK common HEAD `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, recorded `build/kernel` at `2bebe7c443d0e6d5d549fb2a2377dce980d1b15e`, and published `manifest-pinned.xml` (SHA-256 `6449879cd7081345cf0a2e7060a1e40b9edfe1b8b22629263c96f8e2141a1f11`). It failed after source identity capture and before Bazel target query; no Bazel query or Image build occurred. The coarse stage label did not identify which toolchain preflight command failed. The workflow now sets the manifest JDK explicitly and records granular Bazel/JDK/Clang/Rust stages and paths. Trigger commit `82f218ad5b042c89596d58b6fd9563c4f9fc3324` starts the next diagnostic attempt.

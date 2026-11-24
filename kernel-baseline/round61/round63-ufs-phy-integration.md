@@ -106,3 +106,18 @@ Run `45442605274` confirms the corrected ROUND63 driver patch now applies cleanl
 - a `CAMELCASE` false positive for the upstream regulator API field `init_load_uA`.
 
 The branch-local patch now removes raw hashes from the patch preamble (the report retains immutable identities), wraps the long description, and aligns the continuation at the opening parenthesis. The workflow ignores only checkpatch's `CAMELCASE` check for this patch because `init_load_uA` is an existing public field name in the pinned regulator API and cannot be renamed by this driver patch. All other strict checks remain enabled. A fresh hosted run is required to establish the corrected result.
+
+
+## 11. Hosted application evidence — ROUND63 driver now applies
+
+Hosted run `45443465025` (workflow commit `501b9c4d8c23588971e4983a71bbac2eb50f9369`) completed:
+- fixed ACK HEAD verified as `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`;
+- all previous UFS binding/driver patches applied;
+- ROUND63 PHY binding patch applied;
+- corrected ROUND63 PHY driver patch applied with no rejected hunks;
+- ROUND58 Kleaf target patch applied;
+- final `git diff --check` passed.
+
+The hosted applied-diff SHA-256 was `d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65`. The diff stat included 123 added lines in `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`, 5 in the PHY binding, 281 in the UFS QCOM driver, 18 net in UFS bindings, 19 in `BUILD.bazel`, and the new config fragment.
+
+The same run then stopped at strict checkpatch with exactly one remaining 75-column commit-description warning (zero errors and zero CHECKs); `CAMELCASE` was successfully ignored as configured. The final description line was wrapped in commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`. Run `45443538190` is now checking the warning-free patch. The UFS/PHY schema stage did not run in run 82 because checkpatch is an earlier gate.

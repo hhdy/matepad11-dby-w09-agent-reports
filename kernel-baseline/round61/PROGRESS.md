@@ -332,3 +332,13 @@ A static comparison of the storage-first fragment and resolved-config checker fo
 - Reported acceptance scope is now 32 explicit required symbols and 10 unit tests.
 - The test has not yet been re-run by hosted CI after this edit; do not count it as passed until the new validation workflow reports success.
 - This edit does not trigger another full Kleaf/Image build. It triggers the lightweight ACK UFS/PHY validation workflow because its test/checker paths changed.
+
+
+### Phase D acceptance-script hardening — Qualcomm SMMU implementation
+
+A second static review found that generic `ARM_SMMU=y` alone is not enough to prove the Qualcomm apps_smmu driver is included. The fragment documents `ARM_SMMU_QCOM` as a derived `def_tristate y` selected under `ARM_SMMU && ARCH_QCOM`; the validator previously treated its absence as informational. The Second AI promoted `ARM_SMMU_QCOM` to a required =y output and added regression tests for missing and =m cases. The symbol is not forced into the fragment.
+
+- Validator commit: `40e6c909f9d23e0e489fb75d573d36464e7b3215`.
+- Regression tests: `4f5adaf6d22f5bf1eca5e30cd711cf545cce7d86`; test newline correction: `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf`.
+- Acceptance scope: 33 explicit required symbols; 11 unit tests.
+- The current hosted UFS/PHY validation runs were triggered by these checker/test changes. Their terminal results are pending. These edits do not trigger a full Kleaf/Image build.

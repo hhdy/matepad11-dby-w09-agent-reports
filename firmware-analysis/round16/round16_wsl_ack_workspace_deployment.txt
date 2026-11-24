@@ -1,0 +1,323 @@
+ROUND16 — WSL2 Ubuntu / pinned ACK 6.18.33 Kleaf workspace deployment
+=====================================================================
+
+Report ID      : round16_wsl_ack_workspace_deployment
+Date (local)   : 2026-11-24
+Target device  : Huawei MatePad 11 (2021), DBY-W09 / KONA / SM8250 rev 2.1
+Stage          : A only — ACK 6.18.33 kernel port
+Pinned source  : tag android17-6.18.33_r00
+                 commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Task book      : firmware-analysis/round16/AGENT_TASK.md (main)
+Upload branch  : firmware-audit-v1
+
+READINESS VERDICT: BLOCKED_BY_HOST_SECURITY_POLICY
+
+Reason: `wsl.exe` is still blocked by the host security program's Program
+Blacklist. ROUND16 §3 requires an immediate stop with this exact verdict and
+§2 forbids any bypass. No elevated process context was available either,
+which is a second, independent gate.
+
+Note on procedure: the stop happened at preflight. No WSL command ever
+succeeded, so no later stage could begin. This is not an incomplete run of a
+permitted action; it is the task book's designated terminal state.
+
+
+1. AUTHORIZATION AND BOUNDARIES
+-------------------------------
+The user authorized environment deployment in the chat session, and ROUND16
+explicitly supersedes the ROUND15 read-only restriction for this scope only.
+The authorization was accepted, but could not be exercised because the first
+required program is blocked by host policy.
+
+Executed in this round (all read-only):
+  - Windows/CPU/RAM/disk/feature queries via standard PowerShell and CIM.
+  - Exactly one normal, approved invocation attempt of the Microsoft WSL
+    command-line entry point (`--status` and `--version`).
+  - Read-only registry inspection of the WSL distro registration key to
+    determine installation state without launching WSL.
+  - Read-only file-existence and service-state checks.
+
+NOT done in this round:
+  - No WSL component installation, no distro creation, no distro registration.
+  - No launch/entry into any existing distribution.
+  - No Ubuntu package installation (apt was never reachable).
+  - No repo init, no repo sync, no source download of any kind.
+  - No patch application, no Kconfig, no schema check, no dtc, no compile.
+  - No image packaging, no AVB tooling, no device access, no flashing.
+  - No change to security policy, no Defender/AV change, no UAC bypass,
+    no privilege escalation, no BIOS/UEFI change, no reboot.
+  - No unregister/delete/reset/relocate of the existing distribution.
+  - No change to `main`, `ack18-dby-w09-dts-draft`, the ROUND54 branch or PR #1.
+  - No retry of the blocked program through another shell, script, copied
+    binary, renamed binary or alternate path. The block was accepted as final.
+
+
+2. WINDOWS / WSL
+----------------
+Operating system
+  Edition          : Windows 11 Pro for Workstations (zh-CN)
+  Version / Build  : 10.0.26200, build 26200
+  Architecture     : x64
+
+Hardware
+  CPU              : AMD Ryzen 5 9600X 6-Core
+  Logical CPUs     : 12
+  RAM              : 15.16 GiB visible
+  HypervisorPresent: True
+  VirtualizationFirmwareEnabled: True
+  VMMonitorModeExtensions      : False
+                    (False is the expected reading while a hypervisor is
+                     already active; it is not evidence that CPU
+                     virtualization is unavailable.)
+
+Privilege context
+  Current process elevated (built-in administrator role): FALSE
+  Consequence: Windows optional-feature queries via the DISM-backed cmdlet
+  failed with "the requested operation requires elevation". Feature states were
+  therefore obtained from the non-elevated CIM class instead (see below).
+
+WSL installation state (evidence gathered WITHOUT launching wsl.exe)
+  Appx package     : MicrosoftCorporationII.WindowsSubsystemForLinux
+  Appx version     : 2.7.3.0
+  Install location : under C:\Program Files\WindowsApps\<package> (generalized)
+  wsl.exe present  : yes, at C:\WINDOWS\system32\wsl.exe
+  => WSL is INSTALLED on this machine, contrary to the ROUND15 assumption that
+     the Linux environment was entirely unmeasured/absent.
+
+Registered distributions (read from the per-user WSL registry key, not via
+wsl.exe)
+  Count            : 1
+  DistributionName : Ubuntu
+  Version          : 2  (i.e. registered as a WSL 2 distribution)
+  State            : 1  (installed; not running)
+  BasePath         : under the Windows user profile on C:, in the standard
+                     per-user WSL directory (path and GUID redacted)
+  BasePath present on disk: NOT CONFIRMED — the directory probe returned
+                     missing, but this may equally be an access denial on the
+                     per-user WSL store. Recorded as UNKNOWN, not as "absent".
+  DefaultDistribution: the single entry above
+  DefaultVersion   : not set at user scope (empty)
+
+Services
+  vmcompute  : Stopped / Manual
+  WslService : Stopped / Manual
+  (Both idle states are consistent with WSL not currently in use.)
+
+Windows optional features (CIM Win32_OptionalFeature, non-elevated)
+  VirtualMachinePlatform              : Enabled
+  HypervisorPlatform                  : Disabled
+  Microsoft-Windows-Subsystem-Linux   : Disabled
+
+  Interpretation guard: current shipping WSL delivered as an app package does
+  not necessarily require the legacy "Windows Subsystem for Linux" optional
+  component, and this machine already hosts a registered WSL 2 distribution.
+  Whether the disabled legacy component still matters here cannot be verified
+  while the WSL entry point is blocked. Recorded as UNKNOWN, not as a defect.
+
+BLOCKER — host security policy
+  The single normal invocation attempt returned, verbatim in substance:
+    "PROGRAM BLOCKED BY SECURITY POLICY - The sandbox prevented a program on
+     the configured Program Blacklist from starting: wsl.exe
+     (C:\WINDOWS\system32\wsl.exe). This block cannot be approved or bypassed
+     from the current command. Do NOT retry this program, launch it through
+     another shell or script, or attempt an equivalent workaround."
+  The same entry point was blocked in ROUND15. The block is unchanged and is
+  enforced by the endpoint's own command-security layer, above the agent.
+
+  Therefore these were NOT obtained and remain UNKNOWN:
+    wsl --status, wsl --version, wsl --list --verbose, effective default WSL
+    version, whether the existing `Ubuntu` distro is 24.04, and whether a new
+    Ubuntu-24.04 image could be provisioned at all.
+
+Security / admin / reboot blockers in total: THREE, in this order
+  (a) PRIMARY  : wsl.exe blocked by Program Blacklist  -> BLOCKED_BY_HOST_SECURITY_POLICY
+  (b) SECONDARY: current process not elevated; enabling optional features or
+                 running the installer needs elevation -> would be ADMIN_REQUIRED
+  (c) PRE-EXISTING DISTRO: a WSL 2 distro named `Ubuntu` already exists on C:.
+                 ROUND16 forbids overwriting/unregistering/relocating it, and
+                 ROUND16's target name (`Ubuntu-24.04`) and target directory
+                 (D:\WSL\Ubuntu-24.04) are both currently free. Version of the
+                 existing distro is UNKNOWN without wsl.exe, so the decision to
+                 add a second distro is the user's, not the agent's.
+  No reboot was requested or performed.
+
+
+3. STORAGE
+----------
+Before (measured)          Total GiB    Free GiB
+  C:                          199.1        64.3
+  D:                          731.2       325.3
+  E:                          953.9       299.2
+
+After (measured)
+  Unchanged. No deployment occurred, so nothing was written to D:.
+
+  D:\WSL                      : does not exist (target directory is free)
+  WSL/source deployment size  : NOT MEASURABLE (nothing deployed)
+  D: safety reserve of 100 GiB: trivially satisfied (325.3 GiB free); the
+                                200 GiB deployment budget was never approached.
+
+
+4. UBUNTU PACKAGES
+------------------
+Status: NOT ATTEMPTED.
+
+No Ubuntu 24.04 instance was provisioned and no existing distribution was
+entered, so apt was never reachable. The package list from ROUND16 §5
+(git, git-lfs, curl, ca-certificates, gnupg, repo, flex, bison,
+build-essential, zip, zlib1g-dev, libncurses-dev, libssl-dev, libelf-dev,
+libxml2-utils, xsltproc, unzip, fontconfig, bc, rsync, python3, python3-venv,
+python3-pip, python3-yaml, device-tree-compiler, dwarves, lz4, file,
+pkg-config) was not installed and no versions were recorded.
+
+Deliberately avoided regardless of outcome: no PPAs, no third-party apt
+sources, no `pip install --break-system-packages`, and no global installation
+of Bazel, Clang, LLD, Rust or a JDK.
+
+Failed / partially installed: none (nothing was attempted).
+Version capture (git, git-lfs, repo, python3, make, gcc, dtc, pahole):
+NOT MEASURED.
+
+
+5. REPO WORKSPACE
+-----------------
+Status: NOT ATTEMPTED.
+
+Intended, recorded for the next attempt only:
+  Manifest URL    : https://android.googlesource.com/kernel/manifest
+  Manifest branch  : common-android17-6.18  (official kernel manifest only,
+                     NOT the Android platform / DerpFest manifest)
+  Intended Linux path: /home/<linux-user>/work/matepad11/ack-6.18.33
+                     (inside the WSL Linux filesystem, not on /mnt/d)
+  Intended sync   : repo sync -c -j4 --fail-fast
+
+Manifest revision              : NOT OBTAINED
+Sync outcome                   : NOT RUN
+Project revisions              : NOT OBTAINED
+`repo manifest -r` output file : NOT CREATED
+Sync errors                    : none, because no sync was started
+
+
+6. ACK SOURCE PIN
+-----------------
+Status: NOT ATTEMPTED.
+
+  Expected tag      : android17-6.18.33_r00
+  Expected commit   : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  Actual HEAD       : NOT OBTAINED (no workspace exists)
+  Remote identity   : NOT INSPECTED
+  Tag -> commit     : NOT VERIFIED
+  Makefile version  : NOT READ
+  Clean/dirty state : NOT APPLICABLE
+
+No substitute source, mirror or moving branch head was used, because no source
+was fetched at all.
+
+Correction to an earlier belief: the pinned commit and tag cannot be described
+as "absent from the local tree" — there is still no object store to query.
+Their local presence remains NOT_APPLICABLE / UNKNOWN, exactly as in ROUND15.
+
+
+7. TOOLCHAIN
+------------
+Status: NOT MEASURED.
+
+  tools/bazel wrapper version : NOT OBTAINED
+  Bazel version               : NOT OBTAINED
+  Clang version / revision    : NOT OBTAINED
+  Rust  version / revision    : NOT OBTAINED
+  Comparison against the pinned source's declared toolchain contract
+  (ROUND39 baseline expectation: Clang r584948c, Rust 1.91.1.p3): NOT PERFORMED.
+
+No toolchain success is claimed. No Windows-side Clang/LLD/Bazel/Bazelisk/
+JDK/Rust/NDK was installed, in line with ROUND16 §2.
+
+
+8. WORKSPACE PATHS
+------------------
+  Windows storage target : D:\WSL\Ubuntu-24.04   (NOT CREATED; path is free)
+  Linux workspace target : /home/<linux-user>/work/matepad11/ack-6.18.33
+                           (NOT CREATED; generic user name only)
+  Windows user name, profile path, distro GUID and volume identifiers are
+  intentionally omitted. The existing distribution is described only as
+  "on C:, in the standard per-user WSL store".
+
+No password, token, key or credential was requested, seen, echoed, stored or
+uploaded. First-run Linux user creation (suggested neutral name `kerneldev`)
+was never reached; consequently no password-less or root-only environment was
+created.
+
+
+9. READINESS VERDICT
+--------------------
+BLOCKED_BY_HOST_SECURITY_POLICY
+
+Justification, against ROUND16 §3: "If direct WSL commands remain blocked by
+the security program, stop immediately and report
+BLOCKED_BY_HOST_SECURITY_POLICY." That condition was met on the first and only
+attempt, through the normal approved invocation path.
+
+Secondary gates that must also be cleared before Stage B of ROUND16 can run,
+even after the blacklist entry is removed:
+  - ADMIN_REQUIRED: enabling/repairing Windows optional features and running
+    the WSL installer need an elevated context; the agent session is not
+    elevated, and no elevation path was attempted or is available
+    non-interactively.
+  - Existing-distro decision: a WSL 2 distro `Ubuntu` is already registered on
+    C:. Its exact release is UNKNOWN. ROUND16 forbids touching it. Whether to
+    add a separate Ubuntu-24.04 at D:\WSL\Ubuntu-24.04, or to reuse the
+    existing distro, is a user decision — the agent will not choose silently.
+
+Terminal-state confirmation: this is one of the enumerated verdicts in §9, so
+the round is complete as a reported BLOCKED outcome. It is NOT
+WSL_AND_PINNED_ACK_WORKSPACE_READY, NOT WSL_READY_SOURCE_SYNC_INCOMPLETE, and
+NOT WSL_READY_TOOLCHAIN_MISMATCH — nothing was provisioned, synced or measured.
+
+
+10. NOT PERFORMED
+-----------------
+Explicitly not performed in ROUND16:
+  - no WSL component install or update; no distro install, register or import
+  - no first-run Linux user creation; no password handling of any kind
+  - no apt-get update / install; no package version capture
+  - no repo init, repo sync, repo manifest, git fetch or git clone
+  - no git checkout / detach of the pinned ACK commit
+  - no kernel patch application (ROUND32/36/37/33/52 series untouched)
+  - no make, olddefconfig, savedefconfig, Kconfig resolution
+  - no tools/bazel build/query, no bazel invocation of any kind
+  - no checkpatch, dt_binding_check, dtbs_check, or dtc on the board tree
+  - no image packaging, AVB tooling, boot image assembly
+  - no device connection, ADB, fastboot, unlock, root, flash or partition write
+  - no modification of main, ack18-dby-w09-dts-draft, ai-parallel/round54,
+    or PR #1 (PR #1 remains Draft/Open/unmerged)
+  - no security-policy change, no Defender/AV/SmartScreen/firewall change,
+    no application-control change, no privilege escalation,
+    no BIOS/UEFI change, no forced reboot
+
+The source checkout does not exist yet, therefore the §9 requirement that it
+"remain pristine" is vacuously satisfied (nothing was downloaded, so nothing
+can be dirty).
+
+
+APPENDIX — What the operator must decide to unblock
+---------------------------------------------------
+The block message itself states the only supported resolution path: an
+authorized person must remove the entry from the endpoint's command-security
+Program Blacklist (Security Center -> Command Security -> Program Blacklist).
+The agent did not and will not edit that list, disable protection, copy or
+rename the executable, or reach it through another shell.
+
+After that, two operator decisions are still required:
+  1. Grant an elevated context for feature enablement/install (or confirm the
+     existing WSL 2.7.3.0 app package is sufficient for `wsl --install
+     --distribution Ubuntu-24.04 --location D:\WSL\Ubuntu-24.04 --no-launch`
+     without the legacy optional component).
+  2. Decide whether to keep the pre-existing `Ubuntu` distro untouched and add
+     a second one at D:\WSL\Ubuntu-24.04 exactly as ROUND16 specifies, or to
+     revise the target. The agent will not reuse, move or replace the existing
+     distribution unilaterally.
+
+Once those are resolved, ROUND16 can be resumed from Stage A without repeating
+any destructive step, because none was taken.
+
+— end of report —

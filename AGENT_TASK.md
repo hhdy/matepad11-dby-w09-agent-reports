@@ -253,4 +253,4 @@ ROUND14 was once the sole active Local Agent task. It has since been completed, 
 - No Local Agent is needed or active. The next blocked boundary is a full authorized ACK source/build worktree, not another local firmware scan.
 
 
-ROUND52 final identities: binding patch c0ac84067a900022a077c748b7abb10345f1295f; VDDP driver patch fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78; report acd35ab048a437e03957cf6a7f5ffd2c82885378; series manifest 128bf07e7d637e9e52f8ee27e87ca475a67c939a. The HBA/host pointer lifetime check is recorded in ROUND52: devres LIFO releases the later VDDP cleanup action before the earlier variant-host and HBA release actions.
+ROUND52 final identities: binding patch c0ac84067a900022a077c748b7abb10345f1295f; VDDP driver patch fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78; report acd35ab048a437e03957cf6a7f5ffd2c82885378; series manifest 3b6a07c2c29b07f3e95af6d342f84117ecb993c9. The HBA/host pointer lifetime check is recorded in ROUND52: devres LIFO releases the later VDDP cleanup action before the earlier variant-host and HBA release actions.

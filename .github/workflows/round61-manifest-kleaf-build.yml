@@ -96,12 +96,13 @@ jobs:
           cd "$WORK"
           repo init -u https://android.googlesource.com/kernel/manifest \
             -b common-android17-6.18 \
-            --repo-url=https://gerrit.googlesource.com/git-repo
+            --repo-url=https://gerrit.googlesource.com/git-repo \
+            --depth=1
 
           test "$(git -C .repo/manifests rev-parse HEAD)" = "$MANIFEST_COMMIT"
 
           stage="repo sync manifest projects"
-          repo sync -c --depth=1 --no-tags --no-clone-bundle --optimized-fetch -j4 \
+          repo sync -c --no-tags --no-clone-bundle --optimized-fetch -j4 \
             2>&1 | tee "$RUNNER_TEMP/round61-sync.log"
 
           stage="record pinned manifest and verify fixed ACK source"

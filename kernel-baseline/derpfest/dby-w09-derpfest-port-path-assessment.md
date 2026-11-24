@@ -1,10 +1,12 @@
-# DBY-W09 DerpFest ROM Port Path Assessment
+# DBY-W09 DerpFest ROM Port Path Assessment — updated to kernel-first plan
 
 Date: 2026-11-24
 
+> **Superseding decision (user-confirmed 2026-11-24): this document's former userspace-first recommendation is obsolete. The mandatory order is Stage A: first port and validate DBY-W09 ACK/GKI 6.18.33; Stage B: only then port Android 17 DerpFest. Stage C: only after that assess ColorOS or other ROMs. Read [PROJECT_HANDOFF.md](../../PROJECT_HANDOFF.md) and [ROUND28](../round28/android17-6.18.33-source-baseline-and-qcom-platform-delta.md) as authoritative.**
+
 ## Executive conclusion
 
-The DerpFest direction is feasible as a separate Android userspace/ROM bring-up track, but it should not be conflated with the ACK/GKI 6.18.33 kernel port. The lowest-risk architecture is to first reproduce a DBY-W09-compatible Android userspace using the existing HarmonyOS boot/vendor chain (subject to exact-version and VINTF checks), and only later replace the 4.19 kernel with a new kernel.
+The DerpFest direction remains feasible, but the user's required project order is kernel-first. Stage A must first port and device-validate the DBY-W09 ACK `android17-6.18.33_r00` kernel. Only after Stage A passes its startup acceptance gates does Stage B begin Android 17 DerpFest integration. This is an independent kernel milestone followed by ROM integration, not a userspace-first port.
 
 Do not wait for or depend on the unpublished Coolapk package. Treat the reported successful Coolapk port as an important lead, but do not assume its Android version, partition strategy, boot image, or vendor base until the post or an independently verifiable record is available.
 
@@ -38,20 +40,26 @@ This is not evidence that DerpFest itself has already booted on the user's exact
 
 The user reports that a Coolapk contributor successfully ported DerpFest to DBY-W09 but has not released the original package. Public searches in this assessment did not locate a verifiable post/package. Status: USER-REPORTED LEAD; exact Android version, firmware baseline, build type (GSI vs device-specific), boot/vendor handling and tested features remain UNKNOWN.
 
-## Recommended port architecture
+## Required port architecture — kernel first
 
-### Track A — DerpFest userspace bring-up first
+### Stage A — DBY-W09 ACK/GKI 6.18.33 kernel (current mainline)
 
-1. Identify the exact DerpFest Android release used by the Coolapk porter, if possible. Exact release matching is preferable to choosing a newer branch by guesswork.
-2. Keep the existing DBY-W09 board/boot identity as the source of truth. Do not substitute Motorola pstar/nio board properties.
-3. Prefer an initial bring-up that preserves the device-matched stock boot image, ramdisk, DTBO and vendor/odm partitions, unless verified evidence from the Coolapk port proves a different architecture.
-4. Build/adapt the DerpFest system userspace and make only the minimum DBY-W09-specific product, VINTF, init and compatibility changes needed.
-5. Validate Android boot-complete and hardware surfaces separately. Do not label a launcher boot as a fully working port.
-6. Only after this baseline is reproducible should the team consider changing the kernel.
+1. Pin the official ACK `android17-6.18.33_r00` tag and exact commit. Do not use the pure stable `v6.18.33` source tree as a substitute for ACK and do not follow a moving branch HEAD.
+2. Finish the existing SM8250 board DTS, PMIC/RPMh, UFS/QMP, clock/reset/interconnect/SMMU, memory/reserved-memory and GenPD/OPP work.
+3. Close the legacy header-v2 / separate-ramdisk / DTBO / AVB constraints before creating the device boot image. ROUND12 is the currently assigned local read-only task.
+4. Build a reproducible arm64 GKI-derived config and exact matching Image, DTB/DTBO and any required modules. Do not reuse 4.19 vendor modules with a 6.18 kernel.
+5. Validate the kernel on DBY-W09 independently with controlled boot evidence. Compilation alone does not complete Stage A; require actual device startup, exact kernel release, logs and UFS/storage availability.
 
-### Track B — ACK/GKI kernel migration later
+### Stage B — Android 17 DerpFest (after Stage A acceptance)
 
-Keep the android17-6.18 kernel work as an independent future track. Do not force the 6.18 kernel into the first DerpFest userspace milestone. DBY-W09 currently has a legacy boot layout and an Android 12/HarmonyOS vendor stack; a new kernel will add a distinct driver, module, KMI, DTB and boot-image compatibility problem.
+1. Use the DerpFest Android 17 source manifest, but override its current generic June/6.18.21 kernel reference with the already validated DBY-W09 6.18.33 kernel and matching modules.
+2. Adapt DBY-W09 device/product/vendor configuration, fstab, init, VINTF, SELinux and proprietary firmware only after the kernel/boot integration baseline is stable.
+3. Preserve the real DBY-W09 legacy boot layout unless new local evidence proves otherwise. Do not copy the Motorola pstar/nio header-v3/A-B/vendor_boot layout.
+4. Bring the ROM to boot-complete and validate hardware surfaces separately.
+
+### Stage C — later ROM targets
+
+Only after Android 17 DerpFest is stable should ColorOS or other ROMs be evaluated.
 
 ## Blocking facts and explicit UNKNOWNs
 
@@ -63,11 +71,11 @@ Keep the android17-6.18 kernel work as an independent future track. Do not force
 
 ## Proposed next work
 
-After the current ROUND10 task is completed, create a DerpFest-specific read-only source-and-configuration assessment. It should compare:
+After Stage A kernel acceptance, create a DerpFest-specific source-and-configuration assessment. It should compare:
 - the exact public DerpFest source branch selected for the target Android release;
 - Motorola pstar/nio SM8250 build patterns, separating common SoC logic from Motorola-only assumptions;
 - DBY-W09 boot header/ramdisk/partition layout facts already established in ROUND1–ROUND9;
 - the published DBY-W09 Android 12L/API32 research milestones and their stated limits;
 - any exact Coolapk post metadata supplied by the user.
 
-Do not ask the local Agent to repeat FDT/DTBO parsing. Do not ask for firmware re-upload. Do not flash, unlock, root, connect to the device, write partitions, compile, load modules or mount writable filesystems as part of this assessment.
+Current work remains Stage A kernel migration; do not start the full DerpFest device/vendor port before Stage A acceptance. ROUND12 remains the only active local read-only Agent task. Do not ask the local Agent to repeat FDT/DTBO parsing. Do not ask for firmware re-upload. Do not flash, unlock, root, connect to the device, write partitions, compile locally, load modules or mount writable filesystems as part of this assessment.

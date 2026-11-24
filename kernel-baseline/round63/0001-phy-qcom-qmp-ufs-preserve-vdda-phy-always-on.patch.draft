@@ -37,7 +37,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
  #include <linux/reset.h>
  #include <linux/slab.h>
 +#include <linux/string.h>
-@@ -1133,6 +1133,8 @@
+@@ -1133,6 +1134,8 @@
  	struct clk_bulk_data *clks;
  	int num_clks;
  	struct regulator_bulk_data *vregs;
@@ -46,7 +46,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
  	struct reset_control *ufs_reset;
  
  	struct phy *phy;
-@@ -1829,31 +1831,123 @@
+@@ -1829,31 +1832,123 @@
  		qmp_ufs_init_all(qmp, &cfg->tbls_hs_b);
  }
  
@@ -195,7 +195,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
  static int qmp_ufs_phy_calibrate(struct phy *phy)
  {
  	struct qmp_ufs *qmp = phy_get_drvdata(phy);
-@@ -1891,22 +1985,24 @@
+@@ -1891,22 +1986,24 @@
  	return 0;
  }
  
@@ -236,7 +236,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
  static int qmp_ufs_set_mode(struct phy *phy, enum phy_mode mode, int submode)
  {
  	struct qmp_ufs *qmp = phy_get_drvdata(phy);
-@@ -2139,6 +2235,20 @@
+@@ -2139,6 +2236,20 @@
  	}
  	if (ret)
  		goto err_node_put;

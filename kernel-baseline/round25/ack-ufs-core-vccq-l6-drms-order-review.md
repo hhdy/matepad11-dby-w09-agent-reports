@@ -75,3 +75,8 @@ This remains a patch sketch, not an apply-tested diff. It has not been compiled,
 ## 7. Next steps
 
 Continue GPT-side source work. ROUND12 AVB metadata inspection remains the only local Agent task. No new local task is required for this source-only review.
+
+
+## 4.1 ROUND27 clarification — required-opps routing
+
+The UFS OPP table's required-opps entries reference RPMHPD OPPs, but the generic OPP core routes each required performance-state request through the device's currently attached GenPD. In the inspected SM8250 DTS, UFS Host is attached to GCC UFS_PHY_GDSC. ROUND27 finds no explicit RPMHPD parent for the GCC provider, no explicit parent on ufs_phy_gdsc, and no set_performance_state callback in the GDSC definition. Therefore the UFS required-opps declarations do not, by themselves, establish an actual MMCX RPMHPD vote in the unmodified upstream source topology. Preserve UFS_PHY_GDSC and solve the missing RPMHPD route separately. See ROUND27.

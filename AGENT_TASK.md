@@ -10,15 +10,19 @@
 
 - 设备：Huawei MatePad 11 DBY-W09，KONA / SM8250 v2.1 / Snapdragon 865。
 - ROM 目标：Android 17 DerpFest。
-- 内核目标：ACK android17-6.18；目前以 branch Makefile 6.18.33 作为研究基线。
+- 内核目标：ACK tag `android17-6.18.33_r00`（官方 tag target commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`）；Stage A 以该固定源码为基线，不跟踪会漂移的 branch HEAD。
 - **阶段 A（当前唯一主线）：先完成 ACK/GKI 6.18.33 内核的 DBY-W09 DTS / 驱动 / UFS / 电源域 / memory handoff / legacy boot-chain 适配，并以设备实际启动 6.18.33 内核作为核心验收；仅编译成功不算完成。**
 - **阶段 B：只有阶段 A 通过验收后，才开始 Android 17 DerpFest 的 device/vendor/product、HAL/VINTF、SELinux、fstab/init 和镜像集成。**
 - 阶段 C 才评估 ColorOS 或其他 ROM。
+- DerpFest Android 17 manifest 当前 `kernel-6.18.xml` 指向 June 2026 branch（6.18.21），不改变本项目 6.18.33 目标；Stage B 必须集成本项目已验证的 DBY-W09 内核和匹配模块。
+- 官方 Android 17 GKI release 页面列出的 September 2026 分支为 6.18.32；本项目的 6.18.33 ACK-derived build 不得未经 KMI/ABI/认证验证就宣称是官方 certified GKI。
+- 不要用 `aosp-mirror/kernel_common` 的 `android17-6.18` GitHub mirror branch 作为 6.18.33 版本证明；该 mirror 当前 Makefile 曾显示 6.18.0-rc6。版本以官方 ACK tag 和锁定 commit 为准。
 - 同型号 Android 12L 项目仅供具体问题的历史参考，禁止将其重新作为当前主线或重复调查。
 - 不宣称官方 GKI certified：现有设备是 boot header v2 + 独立 ramdisk 分区，未发现 vendor_boot / init_boot。ACK 6.18 源码不自动等于官方 GKI 合规。
 
 ## 当前公开研究报告
 
+- [ROUND28：Android 17 ACK 6.18.33 源码基线与 Qualcomm 平台增量策略](./kernel-baseline/round28/android17-6.18.33-source-baseline-and-qcom-platform-delta.md)
 - [ROUND27：ACK SM8250 UFS required-opps 到 RPMHPD 的 GenPD 路径缺口](./kernel-baseline/round27/ack-sm8250-ufs-rpmhpd-required-opp-routing-gap.md)
 - [ROUND24：HOS4.3 ARC 逻辑 corner 与 DT 约束语义](./kernel-baseline/round24/hos43-arc-logical-corner-dt-semantics.md)
 - [ROUND23：ACK ARC provider 的 RSC 设备层级与请求上下文设计](./kernel-baseline/round23/ack-arc-provider-rsc-device-hierarchy.md)

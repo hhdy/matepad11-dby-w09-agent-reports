@@ -7,11 +7,11 @@
 
 ## Current overall state
 
-**STAGE_A_SOURCE_PATCHES_BASELINE_PASS — prior UFS source series passed real apply/checkpatch; mandatory ROUND63 PHY patches and manifest-pinned Kleaf/Image build are now wired into hosted workflows but their current-run results are pending; UFS schema remains partial; no kernel Image or device boot is yet evidenced.**
+**PHASE A SOURCE PATCHES PASS — exact ACK apply, diff-check, ROUND63 PHY integration and strict checkpatch now pass in hosted run 83; ROUND58 Kleaf patch/buildifier/config-helper tests pass; Phase B schema fixtures and manifest-pinned Bazel/Image build are still running. No Image or device boot is yet evidenced.**
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PARTIAL: previous UFS series PASS; ROUND63 revalidation pending | Run 45435020774 proves the previous UFS series; current workflow adds the mandatory ROUND63 binding/driver patches and will publish new real apply/diff/checkpatch evidence. ROUND57 remains superseded because ROUND32's fixed eight-item list already expresses exact cardinality and dt-schema rejects redundant min/max constraints |
+| A — real Git patch application | PASS | Hosted run 45443538190: fixed ACK commit verified; UFS series, ROUND63 binding/driver and ROUND58 Kleaf patches applied; git diff --check and strict checkpatch passed. ROUND57 is superseded by ROUND32's fixed eight-item list because ACK dt-schema rejects redundant min/max constraints |
 | B — UFS binding validation | PARTIAL / BLOCKED | Schema docs and yamllint pass; generated example DTBs exist; qcom,ufs.example.dtb still reports power-domains too short and unevaluatedProperties errors. ACK Makefile returns success despite those example diagnostics; do not mark Phase B PASS |
 | C — Kleaf target validation | PARTIAL | ROUND58 patch applies; buildifier auto-format showed only one missing blank line, now fixed in branch-local patch; current workflow revision requires clean buildifier check. 9 config-validator unit tests pass. No Bazel query/cquery because full manifest workspace and locked build/kernel dependency are unavailable |
 | D — final Kconfig + Image build | NOT_RUN | No manifest-pinned Kleaf workspace, actual .config, or Image build |
@@ -187,3 +187,15 @@ The first manifest build run `45441246235` confirmed the official manifest branc
 Hosted run `45443465025` confirms, on the exact ACK commit, the previous UFS series, ROUND63 binding patch, corrected ROUND63 driver patch (all hunks, no rejects), and ROUND58 Kleaf patch all apply; final `git diff --check` passes. Applied-diff SHA-256: `d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65`.
 
 That run stopped at checkpatch with only one remaining 75-column commit-description warning (0 errors, 0 CHECKs); the final description line was wrapped in commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`. Latest run `45443538190` is validating the warning-free patch. Phase A remains PARTIAL until that gate passes; Phase B has not yet run on this latest applied patch because checkpatch is an earlier gate.
+
+
+### Hosted run 83 pre-schema gates passed
+
+Run `45443538190` (commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`) has completed successfully through:
+- exact ACK source verification and all ordered source patch applications, including both ROUND63 PHY patches and ROUND58 Kleaf target;
+- final `git diff --check`;
+- strict checkpatch on ROUND33, ROUND52-0002 and ROUND63 driver patches (the only ignored type is the upstream `init_load_uA` CAMELCASE false positive);
+- `buildifier -mode=check common/BUILD.bazel`;
+- all 9 config-helper unit tests.
+
+At the time of this update the same run is installing dtschema prerequisites; the schema and fixture step has not yet completed. Phase A is now PASS. Phase C is still PARTIAL until manifest-pinned Bazel query/cquery and Image build complete.

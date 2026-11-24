@@ -81,7 +81,7 @@ In a complete worktree at the immutable ACK tag:
 - `git apply --check`: **PASS** on the exact-blob one-file fixture.
 - `git apply`: **PASS** on the isolated fixture.
 - `git diff --check`: **PASS** after application.
-- Current patch blob SHA on `main`: `6da6abd5408868f610bd26b8196f8e973284ea07` (at the time of the apply run; re-fetch before future use).
+- Current patch blob SHA on `main`: `dad87ef8dfefee6141b8a7949982c007c4a03b4a` (at the time of the apply run; re-fetch before future use).
 
 Tool availability in the isolated environment:
 - `dt-doc-validate`: NOT_FOUND

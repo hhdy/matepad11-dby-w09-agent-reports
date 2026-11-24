@@ -70,7 +70,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - 系统/固件：用户当前研究的是别人移植的 HarmonyOS 4.3。
 - 原始内核：4.19.157-perf+。
 - 启动：Android boot image header v2，独立 `ramdisk` 分区；现有采集未发现 `vendor_boot` / `init_boot`。
-- 分区：具有 Android dynamic partitions / `super` 结构；vendor / odm 文件系统有 EROFS 特征。
+- 分区：具有 Android dynamic partitions / `super` 结构。vendor / odm 曾有 EROFS 相关初步迹象，但当前 EROFS filesystem/content 识别仍 BLOCKED；不得当作已验证的文件系统结论。
 - 固件本体、分区镜像和敏感设备标识仅保存在用户本地，不上传公开仓库。
 
 权威本机证据位于本仓库 `round1-adb/`、`round2-adb/`、`firmware-hos43/` 和后续已审查的 ROUND 报告。
@@ -80,7 +80,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 主仓库：https://github.com/hhdy/matepad11-dby-w09-agent-reports
 
 - `main`：GPT 可公开完成的上游源码研究、交接文档、脱敏分析报告。
-- `firmware-audit-v1`：本地 Agent 的只读固件报告分支；截至 2026-11-24，ROUND11 与 ROUND12 报告均已上传。ROUND12 在可信 AVB 工具门槛 BLOCKED：没有解析 footer / vbmeta descriptor，AVB 覆盖关系仍 UNKNOWN。firmware-analysis ROUND13 模式/DRMS 只读任务书已放在 main，等待 Agent 执行。
+- `firmware-audit-v1`：本地 Agent 的只读固件报告分支；ROUND11、ROUND12、ROUND13 脱敏报告均已上传。ROUND12 因无可信 AVB 工具 BLOCKED，未解析 footer / vbmeta descriptor，覆盖关系仍 UNKNOWN；ROUND13 mode/DRMS 审计已完成，详见其报告与 ROUND48。
 - `ack18-dby-w09-dts-draft`：ACK 6.18 板级 DTS / rootparam DTBO 草案分支。
 - PR #1：保持 Draft，不得擅自合并。
 
@@ -88,7 +88,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - GPT 优先自行完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给本地 Agent。
 - 只有必须访问用户本机文件、检查已有工具/环境、对本地固件执行只读提取或读取设备状态时，才编写本地 Agent 任务书。
 - 本地 Agent 只读；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件、不编译内核。任务书要求的工具不存在时必须 BLOCKED 并停止。
-- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED 停止；当前唯一活动本地任务为 firmware-analysis/round13/AGENT_TASK.md。注意它与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
+- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED；firmware-analysis ROUND13 已上传完成；当前本地 Agent 队列为空。ROUND13 与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
 - 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY。不能把源代码推理写成设备运行结论。
 
 ## 6. 已完成的内核移植研究（无需从零重做）
@@ -165,7 +165,7 @@ ROUND11 找到 4 条 ARC level parent-supply 边和 6 条 ARC proxy-supply 边�
 
 ### 7.4 PM8150 电源输入与 DRMS
 
-完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。HOS4.3 L5/L6/L9 的 DRMS/allowed-modes 约束由 firmware-analysis ROUND13 定向核验；ROUND47 已完成 ACK 侧解释，但 HOS4.3 实际字段仍 UNKNOWN。不得根据 HOS4.2 参考树臆造供电或模式属性。
+完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。ROUND13 已完成 HOS4.3 S4/L5/L6/L9/L17/S8 mode/DRMS 字段核验；ROUND48 已基于公开 SM8250 KONA vendor header/driver 映射其旧 vendor enum，并更新 main 分支 review DTS。DTBO entry selection 与 effective post-overlay 仍 UNKNOWN；不得根据 HOS4.2 参考树臆造供电或模式属性。
 
 ### 7.5 Memory / reserved-memory
 
@@ -178,12 +178,12 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ## 8. 当前任务队列
 
-### 本地 Agent（唯一活动任务）
+### 本地 Agent（当前无活动任务）
 
 - **ROUND12：已交付 / BLOCKED**。报告：`firmware-analysis/round12/round12_avb_metadata_findings.txt`。无可信已安装 AVB 工具，未做 footer / descriptor 解析；不重复执行，AVB gate 保持 UNKNOWN。
-- **firmware-analysis ROUND13：当前唯一活动任务**，任务书：`firmware-analysis/round13/AGENT_TASK.md`。只读核验 HOS4.3 PM8150 S4/L5/L6/L9/L17 和 PM8150L S8 的 mode / DRMS 属性及适用 DTBO fragment。
-- 只使用 ROUND3 已审查 FDT parser、ROUND9 resolution pattern 和 ROUND7/8 已有工作副本；缺少输入/工具则 BLOCKED。不得安装、下载、写 parser、调用 WSL 或更改安全策略。
-- 报告只放脱敏文本在 `firmware-audit-v1`，完成后停止；不更新 `main`、ACK DTS 草案分支或 PR #1。
+- **firmware-analysis ROUND13：已完成 / 已上传**。报告：`firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`；本地 Agent 按要求只上传脱敏文本并停止，不得重跑或要求再次解析 FDT。
+- 当前本地 Agent 队列为空。只在新的问题必须依赖本机已有工作副本或可信本地工具、且相关工具确实已存在时，才创建新的只读任务；不得为了推进而创建无有效输入的任务。
+- 不得安装、下载、写 parser、调用 WSL 或更改安全策略。报告只放脱敏文本在 `firmware-audit-v1`；不更新 `main`、受保护 ACK DTS 草案分支或 PR #1。
 
 ### GPT 侧（当前继续工作）
 
@@ -191,7 +191,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 - 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
-- ROUND12 已在工具门槛 BLOCKED 并上传；当前按既定次序执行 firmware-analysis ROUND13 的 HOS4.3 regulator mode/DRMS 属性核验。ACK 侧解释见 ROUND47。
+- ROUND12 AVB 检查已上传并 BLOCKED；ROUND13 mode/DRMS 核验已完成，ACK 侧语义与 DTS 决策见 ROUND47/ROUND48。后续可由 GPT 继续固定 ACK / 公共源码研究；本地 Agent 队列为空。
 - 每一轮先读本文件和已有报告，再开展新工作；不要重新做 Android 12L 的泛化调研。
 
 ## 9. 阶段验收定义
@@ -214,7 +214,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ---
 
-**新会话的正确起点：读取 `AGENT_TASK.md`，确认 ROUND12 状态，随后继续阶段 A 的 ACK 6.18.33 内核移植。不要重新讨论 Android 12L，不要提前跳到 DerpFest 全系统适配，也不要改动 PR #1 或 ACK DTS 草案分支，除非当前任务明确授权。**
+**新会话的正确起点：先读本文件及 `AGENT_TASK.md` 末尾的最新状态。ROUND12 为 BLOCKED、ROUND13 已完成、本地 Agent 队列为空。继续由 GPT 独立完成可从固定 ACK / 公共源码推进的阶段 A 工作；只有确实需要本机已有副本或工具时才新建只读 Agent 任务。不要重新讨论 Android 12L，不要提前跳到 DerpFest 全系统适配，也不要改动 PR #1 或受保护 ACK DTS 草案分支，除非用户明确授权。**
 
 
 ## 10. Latest progress — ROUND44 UFS dual-GenPD probe contract review

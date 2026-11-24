@@ -7,17 +7,17 @@
 
 ## Current overall state
 
-**PHASE A SOURCE PATCHES PASS — exact ACK apply, diff-check, ROUND63 PHY integration and strict checkpatch now pass in hosted run 83; ROUND58 Kleaf patch/buildifier/config-helper tests pass; Phase B schema fixtures and manifest-pinned Bazel/Image build are still running. No Image or device boot is yet evidenced.**
+**PHASE A + PHASE B PASS.** Exact ACK source patches, ROUND63 PHY integration, strict style/buildifier/config-helper checks, authoritative UFS/PHY binding validation and all explicit positive/negative fixtures passed hosted run 45451513173. Phase C/D is actively retrying the manifest-pinned Kleaf target after fixing the runner's missing Clang runtime library and a narrowly scoped upstream checkpatch CAMELCASE false positive. No Bazel query/cquery, final .config or Image compile has yet passed. No board DTB, boot package or device boot is evidenced.
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PASS | Hosted run 45443538190: fixed ACK commit verified; UFS series, ROUND63 binding/driver and ROUND58 Kleaf patches applied; git diff --check and strict checkpatch passed. ROUND32 is superseded because pinned ACK qcom,sc7180-ufshc.yaml already selects SM8250 and defines its eight-clock branch; applying ROUND32 would duplicate schema selection. ROUND57 is superseded by that same fixed eight-item list because ACK dt-schema rejects redundant min/max constraints |
-| B — UFS binding validation | PARTIAL / BLOCKED | Schema docs and yamllint pass; generated example DTBs exist; qcom,ufs.example.dtb still reports power-domains too short and unevaluatedProperties errors. ACK Makefile returns success despite those example diagnostics; do not mark Phase B PASS |
-| C — Kleaf target validation | PARTIAL | ROUND58 patch applies; buildifier auto-format showed only one missing blank line, now fixed in branch-local patch; current workflow revision requires clean buildifier check. 9 config-validator unit tests pass. No Bazel query/cquery because full manifest workspace and locked build/kernel dependency are unavailable |
-| D — final Kconfig + Image build | NOT_RUN | No manifest-pinned Kleaf workspace, actual .config, or Image build |
-| E — board DTS + memory/power handoff | BLOCKED | See `phase-e-board-dts-memory-power-gates.md`; no trusted final HOS4.3 FDT RAM map or PM8150 physical supply-parent facts |
-| F — boot image / ramdisk / AVB | BLOCKED | ROUND62 cross-reference reviewed; local HOS4.3 partition, AVB and ABL RAM-boot evidence remains unavailable |
-| G — device validation | NOT_RUN | No approved boot plan or hardware test |
+| A — real Git patch application | PASS | Hosted run 45451513173: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and 9 config-helper tests passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
+| B — UFS / PHY binding validation | PASS | Hosted run 45451513173: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14947424627. |
+| C — Kleaf target validation | IN PROGRESS | Official manifest sync and exact source pin pass. Ubuntu-latest failed on missing libtinfo.so.5; Ubuntu 22.04 + libtinfo5 fixed that. Next attempt stopped at checkpatch's existing init_load_uA CAMELCASE false positive; build workflow now applies the same narrow ignore as Phase A/B. Active run 45453412267. |
+| D — final Kconfig + Image build | NOT RUN | No successful Bazel query/cquery, final resolved .config, config validation against actual output or Image compilation yet. |
+| E — board DTS + memory/power handoff | BLOCKED | No trusted final HOS4.3 post-ABL FDT/EFI memory handoff or PM8150 physical supply-parent map. Do not guess. |
+| F — boot image / ramdisk / AVB | BLOCKED | ROUND62 same-device cross-reference warns fastboot RAM boot may be refused, but exact HOS4.3 AVB/footer/partition metadata and ABL behavior remain unverified. |
+| G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
 ## 2026-11-24 execution evidence
 

@@ -238,3 +238,24 @@ ROUND30's MMCX-to-MX parent/corner equivalence remains a separate unresolved pow
 Full report: kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
 
 Next sequence: harden ROUND33, maintain the ROUND38 patch order (ROUND32 schema → ROUND36 common binding → ROUND37 board DTS → ROUND33 driver), then run complete disposable-tree patch/schema/DTB/Kconfig/build checks only after the AVB and memory/boot-chain gates are addressed. ROUND12 remains the only active local Agent task. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware validation.
+
+
+## 11. Latest progress — ROUND45 all-entry UFS OPP validation hardening
+
+Updated: 2026-11-24.
+
+ROUND45 revised the ROUND33 UFS dual-GenPD driver draft:
+- New helper validation iterates every available child OPP in the UFS OPP descriptor table; it no longer checks only the first available entry.
+- Every available entry must have exactly one required-opps phandle; the target must exist and be available, belong to an operating-points-v2 table whose parent is qcom,sm8250-rpmhpd, and match the provider's sole operating-points-v2 table by exact device-tree node identity.
+- OF node references are released on the success and error paths; an empty available OPP table is rejected.
+- The support policy is now explicit: the one-domain generic path remains unchanged; the only currently supported SM8250 UFS two-domain layout is MMCX index 0 plus GCC UFS_PHY_GDSC index 1; other multi-domain layouts fail closed because generic GenPD skips automatic attachment for multi-domain consumers.
+
+Updated ROUND33 patch:
+- path: kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft
+- Git blob SHA: 2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5
+- 205 insertions.
+- Both unified-diff hunks were re-counted and compared with the exact pinned ACK ufs-qcom.c at commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a: include hunk 12 old / 18 new; probe/helper hunk 15 old / 214 new. Both count checks and old-side source-context comparisons PASS.
+
+This is not full-tree git apply, checkpatch, C compilation, dt-schema, DTB, Kconfig, Kleaf or device validation. ROUND45 report: kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md.
+
+ROUND30 MMCX-to-MX, ROUND42/43 Huawei final memory handoff, ROUND12 AVB and ROUND40 UFS companion-supply teardown remain separate open gates. ROUND12 remains the only active local Agent task. No protected DTS branch, firmware audit branch or PR #1 was modified. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware acceptance.

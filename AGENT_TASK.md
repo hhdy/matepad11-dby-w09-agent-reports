@@ -267,3 +267,11 @@ No ROUND15 task is active. Stage A ACK 6.18.33 remains the sole milestone; do no
 - Intended series order after ROUND32/36/37/33 is documented in ROUND52. VDDP/L6 gets a managed load+enable reference; cleanup runs after generic UFS VCCQ shutdown and before regulator_put. S8 has no get/load/enable/disable or voltage request in the initial ACK driver patch.
 - ROUND52's patch hunk counts were statically checked, but no complete source-tree apply/checkpatch/schema/build was run.
 - No Local Agent task is active or needed for ROUND52. The next complete integration/build gate requires a full ACK worktree and an authorized build environment; do not ask the read-only Agent to compile or modify source.
+
+
+## ROUND52 final context-validation update (2026-11-24)
+
+- The full intended patch order was simulated in memory against the exact ACK .33_r00 pristine files and the protected board DTS file fetched read-only: ROUND32 3/3, ROUND36 2/2, ROUND52 binding 2/2, ROUND37 2/2, ROUND33 2/2, ROUND52 driver header 1/1 and driver 3/3 — all 13 hunks matched.
+- This is source-context/order simulation only, not a real git worktree apply, dt-schema, build or runtime test.
+- Updated full manifest: kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. Latest ROUND52 report: kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md.
+- No Local Agent is needed or active. The next blocked boundary is a full authorized ACK source/build worktree, not another local firmware scan.

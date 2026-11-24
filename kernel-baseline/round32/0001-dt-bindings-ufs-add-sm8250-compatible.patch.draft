@@ -40,7 +40,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
        - const: qcom,ufshc
        - const: jedec,ufs-2.0
  
-@@ -148,9 +150,32 @@ allOf:
+@@ -148,13 +150,35 @@ allOf:
          reg:
            minItems: 2
            maxItems: 2

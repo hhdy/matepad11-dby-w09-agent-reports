@@ -382,3 +382,14 @@ Hosted run `45457083961` at `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` published
 Artifact ID `14951770706`; processed-schema SHA-256 `da994937d63cca2176a5065e8119be7ecd8b45c4939729f1810a8a8f5cc8dc50`; applied diff SHA-256 `b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90`.
 
 The schema scanner reports two unrelated malformed upstream YAML files ignored by its scanner; all modified UFS/PHY schema and explicit fixture gates passed. Phase B remains PASS for the current patch set. No actual Kleaf Kconfig resolution or Image compile is implied.
+
+
+### Archived .config recheck and workflow observability update (2026-11-25)
+
+The original hosted artifact `round61-ack-6.18.33-image-build` (run `45453412267`, artifact `14951184014`) was downloaded and its `dby_w09.config` independently rechecked against the current 33-symbol requirement set. Result: **33/33 =y, no missing symbols, no non-y values, no duplicate assignments**. File size is 238,376 bytes and SHA-256 is `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`, matching the recorded hosted/local byte-identical config. This closes the pending 33-symbol archived-config recheck without another Image build.
+
+The manifest workflow has been refactored into nine separately visible stages: preflight/dependencies; repo init/sync; ACK pin/manifest record; manifest-pinned JDK/Clang/Rust discovery; ordered patch application; checkpatch/buildifier/unit tests; Bazel query/cquery; Image build; final config/artifact validation. The Image build is now its own Actions step. The workflow uses `concurrency.group: round61-manifest-kleaf-build` with `cancel-in-progress: false` to queue duplicate triggers without cancelling an active valid build. The job hard timeout remains 180 minutes. Operational watchdogs must use the active step `started_at` (50-minute alert threshold for the former monolithic stage), never `updated_at` or an in-progress log 404.
+
+Toolchain discovery now reads `CLANG_VERSION` and `RUSTC_VERSION` from manifest-pinned `build/kernel/build.config.constants` and resolves the exact matching versioned paths, instead of selecting the alphabetically first toolchain directory. The prior `clang-3289846` / Rust `1.91.1.p2` reports are treated as misleading first-on-disk discoveries, not the toolchains selected by Kleaf.
+
+The workflow change is path-filtered away from its own trigger: it listens only to `kernel-baseline/round61/run-manifest-kleaf-build.txt`. This workflow-file and progress-document update does not request a new full Image build.

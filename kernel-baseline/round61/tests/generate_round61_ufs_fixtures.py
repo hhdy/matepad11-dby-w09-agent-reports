@@ -36,7 +36,7 @@ def render(
     names = names[:clock_count]
     clocks = ", ".join(f"<&clk{i}>" for i in range(clock_count))
     clock_names = ", ".join(f'"{name}"' for name in names)
-    domains = ", ".join(f"<&pd{i}>" for i in range(domain_count))
+    domains = ", ".join(f"<&pd{i} 0>" for i in range(domain_count))
     if compatible == "qcom,sm8150-ufshc":
         regs = '<0x01d84000 0x2500>, <0x01d90000 0x8000>'
         reg_names = 'reg-names = "std", "ice";'
@@ -66,6 +66,8 @@ def render(
 / {{
     #address-cells = <1>;
     #size-cells = <1>;
+    compatible = "test,round61-ufs-fixture";
+    model = "ROUND61 UFS schema fixture";
     interrupt-parent = <&intc>;
 
     intc: interrupt-controller {{

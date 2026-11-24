@@ -108,6 +108,22 @@ ROUND42's FreeABL SM8250 reference is particularly informative here:
 
 For the current DBY-W09 port, boot header v2 + separate ramdisk and the Android ABL context are consistent with a classic Android boot-image route, but the actual Huawei kernel entry path has not been directly inspected. Do not infer EFI-stub memory-map support merely from the presence of UEFI ABL.
 
+
+## 5.1 Same-SoC-class Qualcomm loader example shows what "classic" actually does
+
+The pinned FreeABL submodule source used in ROUND42 provides a concrete SM8250 example:
+- Its root `build.sh` selects `DISABLE_KERNEL_PROTOCOL=1` by default for `sm8250`; its comment says SM8250 stock ABLs boot the Android kernel through the classic path.
+- In `BootLinux.c`, when the Qualcomm `EFI_KERNEL_PROTOCOL` is disabled or unavailable, the loader prepares the classic handoff, shuts down UEFI Boot Services, casts `KernelLoadAddr` to a `LINUX_KERNEL` function pointer, and calls it as `LinuxKernel(DeviceTreeLoadAddr, 0, 0, 0)`.
+- This is the standard ARM64 direct Image entry contract: x0 is the final FDT address. It is not a call through the Linux PE/COFF `efi_stub_entry` in the Image's PE header.
+- The Qualcomm `EFI_KERNEL_PROTOCOL` in this loader is a Qualcomm handoff/stack interface; the source still calls the classic Image entry. Its presence is not proof that Linux's EFI stub was entered.
+
+Sources at the FreeABL source pins already listed in ROUND42:
+- FreeABL main `build.sh` blob `59be219332afd0f73dd71725201b3eab5e82fda5` (SM8250 default classic selection).
+- `BootLinux.c` blob `c51e41c42fd6d58240290fdba10c86ef81e2218a` (protocol fallback around lines 1884–1912; classic entry at lines 1950–2003).
+- ACK ARM64 `head.S` blob `87a822e5c4ca83c279c733a54c79e64bb41870db`: Image code0 branches to `primary_entry`; its PE header points separately to the EFI entry.
+
+This example increases the relevance of the classic-FDT gate for SM8250 Android boot-image use, but it remains a different device and does not close Huawei's actual HOS4.3 entry path.
+
 ## 6. Updated DBY-W09 gate
 
 The exact Huawei HOS4.3 path must be classified before selecting the memory solution:

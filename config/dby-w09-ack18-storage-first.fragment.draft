@@ -62,7 +62,9 @@ CONFIG_REGULATOR_QCOM_RPMH=y
 # UFS Host has apps_smmu stream IDs in the ACK SM8250 DTSI.
 # ARM_SMMU_QCOM is def_tristate y inside if ARM_SMMU when ARCH_QCOM=y and
 # selects QCOM_SCM; IOMMU_DMA and OF_IOMMU are architecture/OF-derived.
-CONFIG_GENERIC_MSI_IRQ=y
+# SCSI_UFS_QCOM requires GENERIC_MSI_IRQ. Do not assign this hidden
+# bool directly: arm64 selects ARM_GIC_V3 and selects ARM_GIC_V3_ITS when
+# PCI=y; ARM_GIC_V3_ITS selects GENERIC_MSI_IRQ. The pinned GKI base has PCI=y.
 CONFIG_IOMMU_SUPPORT=y
 CONFIG_ARM_SMMU=y
 # ARM_SMMU_QCOM is def_tristate y under ARM_SMMU && ARCH_QCOM;

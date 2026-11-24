@@ -295,3 +295,24 @@ The user has explicitly authorized the local Agent to deploy the build environme
 ROUND54 remains the separate second-AI source review on `ai-parallel/round54-ufs-review`; do not overlap the tasks.
 
 ROUND16 copy/paste start prompt: `firmware-analysis/round16/START_PROMPT.md`.
+
+
+## ROUND54 completed; ROUND57 follow-up added (2026-11-24)
+
+The second GitHub-connected AI completed its independent UFS review on `ai-parallel/round54-ufs-review`. Report verdict: `PASS WITH NON-BLOCKING FINDINGS`; one P3 finding only. No proven P1/P2 driver lifecycle defect was found at source-review level.
+
+R54-001: ROUND32 constrains SM8250 `clocks` to 8 but does not constrain `clock-names` count, while the shared schema allows 7..9. Primary AI reviewed and accepted the correction as a separate ROUND57 follow-up:
+- patch: `kernel-baseline/round57/0001-dt-bindings-ufs-sm8250-clock-names-exact-count.patch.draft`
+- report: `kernel-baseline/round57/sm8250-ufs-clock-names-exact-count-follow-up.md`
+- updated series order: ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 → ROUND33 → ROUND52-0002.
+No full-tree apply or dt_binding_check/dtbs_check was run; this is still a patch draft.
+
+## Current active local Agent task — ROUND16 deployment
+
+ROUND15 is complete. The user authorized environment deployment. The current local Agent task is now ROUND16:
+- `firmware-analysis/round16/AGENT_TASK.md`
+- Copy/paste execution prompt: `firmware-analysis/round16/START_PROMPT.md`
+
+Execute WSL2 + Ubuntu 24.04 deployment, minimal official host packages, official kernel Repo manifest sync, and pin ACK common to `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`. Stop before patch application and kernel compilation. Never bypass a Windows security block, disable security software, force a reboot, change BIOS/UEFI, or operate the tablet. Upload only the sanitized report to `firmware-audit-v1`, then stop.
+
+Current status: **READY FOR LOCAL AGENT — deployment result not yet uploaded.** Do not claim environment readiness until the report verifies it.

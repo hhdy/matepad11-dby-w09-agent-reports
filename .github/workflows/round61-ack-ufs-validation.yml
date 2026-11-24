@@ -183,8 +183,10 @@ jobs:
             Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml \
             Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
           yamllint -f parsable -c Documentation/devicetree/bindings/.yamllint \
+            Documentation/devicetree/bindings/ufs/ufs-common.yaml \
             Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
             Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml \
+            Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml \
             Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
           test -f Documentation/devicetree/bindings/processed-schema.json
           test -s Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb

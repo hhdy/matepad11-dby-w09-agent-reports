@@ -88,7 +88,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - GPT 优先自行完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给本地 Agent。
 - 只有必须访问用户本机文件、检查已有工具/环境、对本地固件执行只读提取或读取设备状态时，才编写本地 Agent 任务书。
 - 本地 Agent 只读；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件、不编译内核。任务书要求的工具不存在时必须 BLOCKED 并停止。
-- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED；firmware-analysis ROUND13 已上传完成；当前本地 Agent 队列为空。ROUND13 与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
+- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED；firmware-analysis ROUND13/14 均已上传完成；当前本地 Agent 队列为空。ROUND13 与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
 - 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY。不能把源代码推理写成设备运行结论。
 
 ## 6. 已完成的内核移植研究（无需从零重做）
@@ -306,11 +306,11 @@ Key source conclusions:
 - PM8150 S4 and PM8150L S8 map to `pmic5_hfsmps510` using the non-DRMS `rpmh_regulator_vrm_ops`; they have manual set_mode/get_mode but no get_optimum_mode or set_load callback. A DRMS load request on these rails can return success without automatic mode switching.
 - For LDO DRMS, the core sums enabled consumer load votes plus `regulator-system-load`, selects HPM at/above the HW threshold and LPM below it, then constrains the requested mode against `regulator-allowed-modes`. The allow-list must accommodate the required HPM operating range; an LPM-only list can fail a high-load HPM request.
 
-Current DBY-W09 board DTS draft still has HPM initial mode on PM8150 S4/L5/L6/L9/L17, but no allow-set-load / allowed-modes on those nodes. PM8150L S8 currently has no mode/DRMS attributes. These are draft settings only.
+Current DBY-W09 board DTS draft (main, review-only) reflects the ROUND48/51/52 corrections: S4 has no forced mode; L5/L9 use HPM initial with LPM/HPM allowed and set-load DRMS; L6/L17 use LPM initial with LPM/HPM allowed and set-load DRMS; S8 uses RET initial with RET/AUTO allowed but no forced enable/boot-on/always-on. No synthetic L5/L9 system-load is used because the vendor proxy request is temporary. These are draft settings only and effective post-overlay values remain UNKNOWN.
 
 The public same-device Linux DTS used as a HOS4.2 cross-reference shows HPM initial mode on the PM8150 UFS rails, while LPM/HPM + allow-set-load appears on PM8150L L6/L9 for microSD. This is **not evidence of actual HOS4.3 settings** and must not be copied mechanically.
 
-ROUND13/14 已完成 HOS4.3 base-FDT 静态字段审计：上游标准 `regulator-*` mode/DRMS 属性在所检查范围内 NOT_FOUND；本机实际使用 provider-level `qcom,supported-modes` / `qcom,mode-threshold-currents` 与 child-level `qcom,init-mode` / `qcom,set`。ROUND48/51 已按固定 ACK enum 完成符号转换并更新 main DTS：L5/L9 HPM initial，L6/L17 LPM initial，LPM/HPM allowed + DRMS；S4 不强制模式；S8 RET initial、RET/AUTO allowed，不强制 enable。MMC X/MX ARC 与 S8 enable 静态属性已在 ROUND14 提取，proxy/ARC 等价性差异见 ROUND51。临时 proxy 生命周期与 ACK 不具备的 ARC/proxy helper 仍是启动期差异；runtime mode/enable 状态均未读取。
+ROUND13/14 已完成 HOS4.3 base-FDT 静态字段审计：上游标准 `regulator-*` mode/DRMS 属性在所检查范围内 NOT_FOUND；本机实际使用 provider-level `qcom,supported-modes` / `qcom,mode-threshold-currents` 与 child-level `qcom,init-mode` / `qcom,set`。ROUND48/51 已按固定 ACK enum 完成符号转换并更新 main DTS：L5/L9 HPM initial，L6/L17 LPM initial，LPM/HPM allowed + DRMS；S4 不强制模式；S8 RET initial、RET/AUTO allowed，不强制 enable。MMCX/MX ARC 与 S8 enable 静态属性已在 ROUND14 提取，proxy/ARC 等价性差异见 ROUND51。临时 proxy 生命周期与 ACK 不具备的 ARC/proxy helper 仍是启动期差异；runtime mode/enable 状态均未读取。
 
 ROUND47/48/51 为固定 ACK 与公开 KONA 源码审查；ROUND13/14 为本机静态 FDT 提取，均未读取 runtime regulator mode。完整树 apply、DTS/schema、DTB、Kconfig、Kleaf build 和设备启动仍 NOT_RUN。ROUND12 AVB 继续 BLOCKED；Local Agent 队列为空。Stage A ACK 6.18.33 仍是唯一项目阶段，DerpFest Stage B 继续等待。
 

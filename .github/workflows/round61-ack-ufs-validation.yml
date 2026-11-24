@@ -83,7 +83,7 @@ jobs:
           apply_patch kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft
           apply_patch kernel-baseline/round57/0001-dt-bindings-ufs-sm8250-clock-names-exact-count.patch.draft
           apply_patch kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
-          apply_patch kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft
+          apply_patch kernel-baseline/round61/patches/round52-0001-context-corrected.patch
           apply_patch kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft
           apply_patch kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
           printf '\n=== final diff check ===\n'

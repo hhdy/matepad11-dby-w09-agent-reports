@@ -54,6 +54,7 @@ The earlier storage-first fragment omitted two consumers visible in the ACK SM82
 ~~~text
 CONFIG_SCSI_DMA=y
 CONFIG_QCOM_CLK_RPMH=y
+CONFIG_QCOM_RPMHPD=y
 CONFIG_INTERCONNECT=y
 CONFIG_INTERCONNECT_QCOM=y
 CONFIG_INTERCONNECT_QCOM_SM8250=y
@@ -75,11 +76,11 @@ References:
 - Qualcomm interconnect Kconfig: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/interconnect/qcom/Kconfig
 - UFS Host Kconfig: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/ufs/host/Kconfig
 
-### 1.4 Do not confuse GCC GDSC with RPMh power domains
+### 1.4 Keep the direct GCC GDSC and RPMh OPP paths distinct
 
-The UFS Host DTSI references UFS_PHY_GDSC from the SM8250 GCC provider (&gcc). SM_GCC_8250 selects QCOM_GDSC, which supplies this generic power-domain framework.
+The UFS Host DTSI has a direct power-domains reference to UFS_PHY_GDSC from the SM8250 GCC provider (&gcc). SM_GCC_8250 selects QCOM_GDSC, which supplies this direct generic power-domain.
 
-Thus QCOM_RPMHPD is not required merely to satisfy this UFS Host power-domain reference. It should be enabled when a later enabled node actually references an RPMh power-domain provider (&rpmhpd), not simply because the platform also uses RPMh resources.
+However, the same ufs_mem_hc node also references ufs_opp_table. Its OPP entries carry required-opps references to rpmhpd_opp_low_svs and rpmhpd_opp_nom. The UFS clock-scaling path can call dev_pm_opp_set_opp(), so those OPP transitions need the RPMh power-domain OPP provider. Consequently CONFIG_QCOM_RPMHPD remains built-in in the storage-first fragment for the OPP path, not because UFS_PHY_GDSC is an RPMh domain. Exact pinned-ACK behavior must still be confirmed with Kconfig resolution and source build; no runtime test was run.
 
 Likewise, the RPMh regulator provider under apps_rsc is distinct from the SPMI PMIC arbiter path. The minimal UFS-only DTS has no PMIC SPMI GPIO/PON/IRQ consumers, so SPMI_MSM_PMIC_ARB, MFD_SPMI_PMIC and PMIC SPMI pinctrl stay deferred for now.
 
@@ -97,6 +98,8 @@ Branch: ack18-dby-w09-dts-draft
 - config/dby-w09-ack18-storage-first.fragment.draft — added SCSI DMA, RPMh XO clock, SM8250 interconnect support and explicit SMMU variant; removed UFS-only need for RPMh power domains.
 - dts/README.md — updated limitations and evidence boundary.
 
+ROUND15 follow-up note: a closer check found that the UFS OPP table includes required-opps references to RPMh power-domain OPP states. The config fragment and ROUND14 table therefore retain QCOM_RPMHPD for OPP scaling; this is separate from the direct GCC UFS_PHY_GDSC reference.
+
 These remain .draft files, not build inputs.
 
 ## 3. Current verification state
@@ -110,6 +113,7 @@ These remain .draft files, not build inputs.
 | PMIC upstream input-supply parent links in raw HOS4.3 base FDT | AGENT ROUND11 REQUIRED |
 | Exact ABL acceptance of a new minimal DTBO | UNKNOWN / NOT_TESTED |
 | UFS clock/interconnect source-level consumer mapping | SOURCE REVIEWED |
+| UFS OPP required-opps RPMhPD dependency | SOURCE REVIEWED; QCOM_RPMHPD RETAINED |
 | Kconfig fragment olddefconfig resolution | NOT_RUN |
 | dtc / dt-schema validation | NOT_RUN |
 | Kernel / DTB compile or image packaging | NOT_RUN |

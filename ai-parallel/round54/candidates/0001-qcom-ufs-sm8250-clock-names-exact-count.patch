@@ -1,0 +1,23 @@
+From: ROUND54 independent review
+Subject: [PATCH CANDIDATE] dt-bindings: ufs: constrain SM8250 clock-names count
+
+ROUND32 constrains the SM8250 clocks array to exactly eight entries and
+provides eight positional clock-names values, but does not constrain the
+clock-names array length. The shared qcom,ufs-common.yaml still permits
+7..9 clock-names entries, so the SM8250 branch can accept a count that does
+not match its eight clocks.
+
+Apply after ROUND32 has added the SM8250-specific branch to qcom,ufs.yaml.
+This is an isolated review candidate; do not replace the canonical ROUND32
+draft without primary-AI review.
+
+---
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicree/bindings/ufs/qcom,ufs.yaml
+--- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+@@ -0,0 +0,2 @@
++          minItems: 8
++          maxItems: 8

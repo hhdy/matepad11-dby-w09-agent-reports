@@ -192,10 +192,11 @@
  * Notes:
  *   - vdd-hba-supply: HOS maps this to UFS_PHY_GDSC, already expressed by
  *     the SoC power-domains property; it is not a regulator.
- *   - qcom,vccq-parent-supply is a downstream Qualcomm UFS extension. The
- *     local HOS4.3 phandle resolves to PM8150A S8 / ACK PM8150L S8. This
- *     board draft preserves it, but upstream ACK UFS ignores it until the
- *     companion driver patch draft is applied.
+ *   - qcom,vccq-parent-supply and qcom,vddp-ref-clk-supply are
+ *     downstream Qualcomm UFS Host extensions. HOS4.3 resolves them to
+ *     PM8150A S8 and PM8150 L6 respectively. The board draft preserves both,
+ *     but upstream ACK UFS ignores them until the companion driver patch.
+ *   - vddp-ref-clk is the UFS device REF_CLK pad supply, not a QMP PHY rail.
  *   - vcc-low-voltage-sup: not translated to vcc-supply-1p8 because the
  *     verified HOS VCC operating window is 2.504–2.950 V.
  */
@@ -207,9 +208,13 @@
 	vccq-supply = <&vreg_l6a_1p2>;
 	vccq-max-microamp = <800000>;
 
-	/* Vendor Qualcomm UFS parent rail; requires the companion ACK driver patch. */
+	/* Vendor Qualcomm UFS parent rails; both require the companion ACK driver patch. */
 	qcom,vccq-parent-supply = <&vreg_s8c_1p2_1p4>;
 	qcom,vccq-parent-max-microamp = <210000>;
+
+	/* UFS device REF_CLK pad supply, not a QMP PHY analog supply. */
+	qcom,vddp-ref-clk-supply = <&vreg_l6a_1p2>;
+	qcom,vddp-ref-clk-max-microamp = <100>;
 
 	vccq2-supply = <&vreg_s4a_1p8>;
 	vccq2-max-microamp = <800000>;
@@ -223,10 +228,6 @@
 
 	vdda-pll-supply = <&vreg_l9a_1p2>;
 	vdda-pll-max-microamp = <18800>;
-
-	/* Optional QMP UFS PHY refclk rail; HOS maps it to the same PM8150 L6. */
-	vddp-ref-clk-supply = <&vreg_l6a_1p2>;
-	vddp-ref-clk-max-microamp = <100>;
 
 	status = "okay";
 };

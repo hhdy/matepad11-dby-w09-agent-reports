@@ -14,6 +14,7 @@ REQUIRED_SYMBOLS = (
     "ARM64",
     "ARCH_QCOM",
     "OF",
+    "BLOCK",
     "SCSI",
     "BLK_DEV_SD",
     "SCSI_UFSHCD",

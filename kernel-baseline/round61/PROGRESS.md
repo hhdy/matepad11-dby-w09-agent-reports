@@ -11,8 +11,8 @@
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PASS | Hosted run 45451513173: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and 9 config-helper tests passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
-| B — UFS / PHY binding validation | PASS | Hosted run 45451513173: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14947424627. |
+| A — real Git patch application | PASS | Latest hosted validation run 45457083961: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and updated 11-test config-helper suite passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
+| B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
 | C — Kleaf target validation | PASS | Run 45453412267 completed official manifest sync, exact ACK pin, Bazel query/cquery and the manifest-pinned `//common:dby_w09` target. The target resolved the expected four outputs: `.config`, `Image`, `System.map`, `vmlinux`. |
 | D — final Kconfig + Image build | PASS (build-time gate 31/31; updated 33-symbol recheck pending) | Run 45453412267 built Image successfully (44,820,992 B); final `.config` passed all 31 symbols required by the checker at that run and is byte-identical to independent ROUND18 local output (238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`). The later hardened 33-symbol checker has not yet been applied to this archived config. |
 | E — board DTS + memory/power handoff | BLOCKED | No trusted final HOS4.3 post-ABL FDT/EFI memory handoff or PM8150 physical supply-parent map. Do not guess. |

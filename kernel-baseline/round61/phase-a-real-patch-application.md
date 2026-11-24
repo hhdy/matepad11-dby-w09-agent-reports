@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-24  
 **Branch:** `ai-parallel/stagea-port-until-boot`  
-**Phase status:** PARTIAL / BLOCKED — first three patches apply; ROUND52-0001 original hunk fails; a branch-local context-strengthened candidate is queued for validation  
+**Phase status:** SOURCE PATCH APPLICATION PASS with a ROUND61-local ROUND52-0001 correction; checkpatch pending; Phase B command is being corrected after a false-positive run  
 **Fixed source:** `android17-6.18.33_r00` / `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
 
 ## 1. Work performed
@@ -19,91 +19,107 @@
 4. Added a no-secret GitHub Actions workflow:
    `.github/workflows/round61-ack-ufs-validation.yml`
    It fetches the pinned ACK commit, verifies source blob identities, applies the source patch series in order, runs diff/checkpatch checks and then the authoritative UFS binding check.
-5. The workflow ran repeatedly on GitHub-hosted Ubuntu runners. The source fetch and exact blob checks succeeded; the original ROUND52-0001 hunk failed consistently.
+5. Diagnosed and corrected the ROUND52-0001 hunk on this branch only. The canonical main patch remains unchanged.
+6. The first successful full patch-series runner completed on GitHub-hosted Ubuntu. A later review of its schema log found the `DT_SCHEMA_FILES` separator was wrong, so the schema stage is not accepted yet.
 
 ## 2. Execution environment and source identity
 
 The local shell available to this session is a Linux container with 3 logical CPUs, 5.8 GiB visible memory, a 4 GiB cgroup limit, and no `repo` or Bazel. A direct `git ls-remote` attempt against android.googlesource.com failed due to DNS resolution. This local container was not used as an ACK worktree.
 
-The hosted runner successfully fetched:
+The hosted runner fetched:
 - ACK commit: `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
 - `Documentation/devicetree/bindings/ufs/qcom,ufs.yaml`: `1dd41f6d5258014d59c8c8005bc54f7994351a52`
 - `Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml`: `962dffcd28b44b3489be5615c75e7270a0c45dc4`
 - `drivers/ufs/host/ufs-qcom.c`: `a80c6998406dbc88c25dbd9977699ba481207efe`
 - `drivers/ufs/host/ufs-qcom.h`: `5f979daabd5323184eeee137cc8ecc076193979e`
 
-All four source blob assertions passed in each completed runner attempt.
+All four source blob assertions passed.
 
-## 3. Real Git application results for the canonical source series
+## 3. ROUND52-0001 diagnosis and branch-local correction
 
-Initial runner: [45430859807](https://github.com/hhdy/matepad11-dby-w09-agent-reports/actions/runs/45430859807)  
-Repeat runner: [45430957517](https://github.com/hhdy/matepad11-dby-w09-agent-reports/actions/runs/45430957517)  
-Diagnostic runner: [45431553772](https://github.com/hhdy/matepad11-dby-w09-agent-reports/actions/runs/45431553772)
+The canonical main patch blob is preserved:
+- `kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft`
+- blob `c0ac84067a900022a077c748b7abb10345f1295f`
 
-| Patch | `git apply --check` | `git apply` | Result |
+Real Git rejected its second hunk at line 64, although the first property hunk applied. Diagnostic output showed the short context around `allOf` visually matched. A ROUND61-local candidate was created:
+- `kernel-baseline/round61/patches/round52-0001-context-corrected.patch`
+- blob `6ab8411cd1bec6675e412633093b9b7d74dbce58`
+
+It preserves the original semantics and adds the next existing `  - if:` line as trailing context, updating the hunk count from 3/16 to 4/17. This candidate is now confirmed to pass real `git apply --check` and `git apply` in the ordered series. No change was made to main or the canonical patch.
+
+## 4. Real source patch application — PASS
+
+Runner:
+[45431820876](https://github.com/hhdy/matepad11-dby-w09-agent-reports/actions/runs/45431820876)
+
+The runner fetched the exact ACK commit and checked all four immutable source blobs before patching. It then ran `git apply --check`, `git apply`, and `git diff --check` for every patch in order:
+
+| Patch | Check | Apply | Result |
 |---|---:|---:|---|
 | ROUND32 | 0 | 0 | PASS |
 | ROUND57 | 0 | 0 | PASS |
 | ROUND36 | 0 | 0 | PASS |
-| ROUND52-0001 canonical | 1 | NOT_RUN | FAIL — hunk 2 near line 64 |
-| ROUND33 | NOT_RUN | NOT_RUN | BLOCKED |
-| ROUND52-0002 | NOT_RUN | NOT_RUN | BLOCKED |
+| ROUND52-0001 ROUND61-local corrected copy | 0 | 0 | PASS |
+| ROUND33 | 0 | 0 | PASS |
+| ROUND52-0002 | 0 | 0 | PASS |
 
-Exact failure:
+The final `git diff --check` also returned 0. The resulting source diff contained:
+- `qcom,ufs-common.yaml`: 17 additions / 1 deletion
+- `qcom,ufs.yaml`: 61 additions
+- `ufs-qcom.c`: driver additions
+- `ufs-qcom.h`: host state additions
 
+The runner printed the complete resulting diff. SHA-256 of the binary diff:
+`e52f213856caac061a403da922ca1675386db317791d9ed022e8c19acee75139`.
+
+This is real patch application evidence on a disposable hosted-runner checkout. It is not a kernel compile or runtime test.
+
+## 5. Schema validation — NOT YET ACCEPTED
+
+Runner `45431820876` completed its `make ARCH=arm64 dt_binding_check` step with exit 0, but review of the log found that the invocation did **not** actually select the requested UFS files.
+
+The ACK `Documentation/devicetree/bindings/Makefile` constructs its filter using:
+
+```make
+$(subst :," -e ",$(DT_SCHEMA_FILES))
 ```
-error: patch failed: Documentation/devicetree/bindings/ufs/qcom,ufs.yaml:64
-error: patch does not apply
+
+Therefore `DT_SCHEMA_FILES` must be colon-separated, not space-separated. The initial workflow passed a space-separated string. The observed log showed:
+- `SCHEMA Documentation/devicetree/bindings/processed-schema.json` was generated;
+- `CHKDT` / `LINT` were invoked with an empty file list;
+- `yamllint` printed its usage error because it received no files;
+- the ACK Makefile uses `|| true` for these helper commands, so the target's exit 0 is not proof that the selected schemas were checked.
+
+Accordingly:
+- This run is **not** counted as a UFS `dt_binding_check` PASS.
+- No schema correctness conclusion is drawn from the generated all-tree processed-schema file alone.
+- The workflow has been corrected to use a colon-separated `DT_SCHEMA_FILES` value and to invoke `dt-doc-validate -u Documentation/devicetree/bindings` directly on both modified UFS schema files. It also asserts that processed-schema output exists and lists the generated UFS example DTBs.
+
+The corrected workflow still needs a new run before Phase B can be accepted.
+
+## 6. Checkpatch status
+
+The first successful patch-application run predates the strict checkpatch step. The workflow has now been updated to run:
+
+```sh
+perl scripts/checkpatch.pl --no-tree --strict < ROUND33 patch
+perl scripts/checkpatch.pl --no-tree --strict < ROUND52-0002 patch
 ```
 
-The runner used `set -euo pipefail`; this is not a hidden pipeline failure. `git apply --reject --verbose` confirmed:
-- ROUND52-0001 hunk 1 (the VDDP/VCCQ-parent property declarations) applies cleanly.
-- ROUND52-0001 hunk 2 (the `allOf` supply/load required-property conditions) is rejected.
+Those checks have not yet run on a completed workflow revision. Do not mark checkpatch PASS until its output and exit code are inspected.
 
-The diagnostic runner printed the exact lines:
-- line 64: `allOf:`
-- line 65: `  - $ref: qcom,ufs-common.yaml`
-- line 66: empty line
-- line 67: `  - if:`
-
-It also ran `sed -n '62,68l'`; the source showed no hidden trailing whitespace around this context. The rejected hunk's raw bytes show the three expected old context lines are `allOf:`, the common-schema ref, and one empty line. Thus the failure is not explained by an obvious visible whitespace mismatch. The exact reason Git rejects this short hunk remains under investigation.
-
-## 4. ROUND61-local corrective candidate
-
-The canonical main patch is preserved unchanged:
-- Original patch blob: `c0ac84067a900022a077c748b7abb10345f1295f`
-
-A branch-local candidate was created at:
-`kernel-baseline/round61/patches/round52-0001-context-corrected.patch`
-
-Candidate blob:
-`6ab8411cd1bec6675e412633093b9b7d74dbce58`
-
-The candidate preserves the original property hunk and supply/load semantics. It strengthens the second hunk with the following existing `  - if:` line as trailing context and updates the hunk counts from 3/16 to 4/17. It does not change schema behavior. The workflow has been updated to test this candidate instead of the canonical main draft.
-
-**This candidate has not yet passed real `git apply --check`.** It is an experiment to test whether a stronger context anchor resolves the Git application issue, not yet an accepted correction. The next workflow run must start from a fresh ACK checkout and validate it.
-
-## 5. Schema/checkpatch status
-
-Because the complete patch series has not yet applied:
-- ROUND33 and ROUND52-0002 remain NOT_RUN.
-- Driver `checkpatch.pl --strict` remains NOT_RUN.
-- The authoritative kernel `dt_binding_check` remains NOT_RUN.
-- No schema PASS is claimed.
-
-The prior ROUND59 16/16 in-memory hunk simulation remains historical static evidence only and is superseded for the failing hunk by the actual Git result.
-
-## 6. Remaining Phase A gates
+## 7. Remaining gates
 
 - [x] Fetch exact ACK commit on a hosted runner.
 - [x] Verify four immutable source blob identities.
-- [x] Real `git apply --check` and apply for ROUND32, ROUND57 and ROUND36.
-- [ ] Validate the ROUND61-local ROUND52-0001 candidate.
-- [ ] Real apply for ROUND33 and ROUND52-0002.
-- [ ] Final `git diff --check`.
-- [ ] `scripts/checkpatch.pl --strict` for both driver patches.
-- [ ] Archive resulting source diff and hashes.
+- [x] Apply all six source patches in order using real Git, using the ROUND61-local corrected ROUND52-0001 copy.
+- [x] Final `git diff --check`.
+- [ ] Strict checkpatch for ROUND33 and ROUND52-0002.
+- [ ] Correctly filtered and directly validated `dt_binding_check`.
+- [ ] Positive/negative DT-schema fixtures.
+- [ ] Kleaf BUILD patch real apply, buildifier, Bazel query/cquery.
+- [ ] Actual final Kconfig and Image build.
 
-## 7. Next action
+## 8. Next action
 
-Inspect the next workflow run for the branch-local corrected hunk. If it applies, continue the full ordered source series and then run checkpatch plus authoritative `dt_binding_check`. If it still fails, stop patch-series advancement and isolate the hunk with a minimal independent Git fixture; do not force-apply or edit the canonical main artifact. Keep ROUND37 excluded until Phase E legitimately migrates the board DTS.
+Run the latest workflow revision from a fresh pinned ACK checkout. Inspect strict checkpatch output and the corrected colon-filtered UFS schema validation. Then add positive/negative fixtures for SM8250 clock counts, power-domain limits and supply/load pairing. Only after these gates pass should Phase C proceed. Keep ROUND37 excluded until Phase E legitimately migrates the board DTS.

@@ -4,7 +4,7 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **当前本地 Agent：firmware-analysis ROUND13 唯一活动任务。** ROUND12 已上传但在可信 AVB 工具门槛 BLOCKED：没有进行 footer / vbmeta descriptor 解析，不要重复执行或安装工具。当前 ROUND13 只读核验 HOS4.3 PM8150 UFS rails 的 mode / DRMS / suspend 属性；任务书：`firmware-analysis/round13/AGENT_TASK.md`。注意这与历史 `kernel-baseline/round13` DTS 设计是不同工作流。
+> **当前本地 Agent 队列为空。** ROUND12 已上传但在可信 AVB 工具门槛 BLOCKED；ROUND13 已上传完成并停止。不要重跑 ROUND12/13，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。最新状态见本文件末尾。
 
 ## 当前项目目标
 
@@ -104,7 +104,7 @@
 - 所有 11 条 phandle 均已解析；BLOCKED=NONE，UNKNOWN=NONE。
 - ACK 不支持把 vendor `qcom,rpmh-arc-regulator` 节点直接搬入上游 VRM regulator；性能级使用 ACK SM8250 rpmhpd/OPP 模型。完整 MMCX/CX/MX corner 等价性仍未建立。
 
-**当前本地 Agent：firmware-analysis ROUND13 唯一活动任务。** ROUND12 已上传并在可信 AVB 工具门槛 BLOCKED；报告 `firmware-analysis/round12/round12_avb_metadata_findings.txt` 已在 `firmware-audit-v1`。当前 ROUND13 任务书 `firmware-analysis/round13/AGENT_TASK.md`，只读核验 PM8150 UFS rails 的 mode/DRMS 属性和适用 DTBO fragment。
+**历史状态说明：** ROUND12 AVB 报告已在 `firmware-audit-v1` 上传并 BLOCKED；ROUND13 regulator mode/DRMS 报告也已上传完成。当前本地 Agent 队列为空。
 
 ## 仓库与安全边界
 
@@ -122,7 +122,7 @@ GPT 已完成 ROUND44：在固定 ACK android17-6.18.33_r00 commit 8ad08f75ddf05
 
 - kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
 
-本轮没有改变本地 Agent 队列：ROUND12 仍是唯一活动任务；没有修改 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1；没有运行完整内核构建或设备测试。
+该轮没有修改 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1，也没有运行完整内核构建或设备测试。当前队列状态以后续 ROUND12/13 完成记录为准。
 
 
 ## 最新公开源码/补丁进度：ROUND45（2026-11-24）
@@ -140,7 +140,7 @@ ROUND45 已更新 ROUND33 UFS 双 GenPD 驱动补丁：
 
 ROUND45 仅完成补丁文本/hunk/source-context 静态核验。完整 ACK 工作树 git apply、checkpatch、编译、dt-schema、dtc/dtbs_check、Kconfig、Kleaf 和设备验证均 NOT_RUN。完整报告：kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md。
 
-本地 Agent 队列不变：ROUND12 仍是唯一活动任务。不得改动 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1。Stage A 仍是唯一主线，Stage A 通过设备启动与存储验收前不得开始完整 DerpFest Stage B。
+不得改动 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1。Stage A 仍是唯一主线，Stage A 通过设备启动与存储验收前不得开始完整 DerpFest Stage B。
 
 
 ROUND45 补充 Kconfig 源码核验：固定 ACK 源码中 UFS core → PM_DEVFREQ → PM_OPP；SM8250 GCC → QCOM_GDSC → PM_GENERIC_DOMAINS（PM=y 时）；PM_GENERIC_DOMAINS_OF 随 OF 自动启用；QCOM_RPMHPD 依赖 QCOM_RPMH + QCOM_COMMAND_DB，均已由 storage-first fragment 请求。未发现新增 helper 还需要额外直接配置符号；最终 Kleaf/Kconfig resolver 与 .config 核验仍 NOT_RUN。
@@ -160,7 +160,7 @@ ROUND46 已对固定 ACK `android17-6.18.33_r00` commit `8ad08f75ddf056e1ee600e1
 
 **结论：** ROUND45 的全可用 OPP 条目预检与 ACK parser 的 table-discovery/per-entry-link 两阶段语义一致；本轮无需再改 ROUND33 补丁。ROUND46 报告：`kernel-baseline/round46/ack-opp-required-opps-parser-contract-review.md`。
 
-以上仅为固定源码静态审查；full-tree git apply、checkpatch、编译、最终 Kconfig/.config、dt-schema、DTB、Kleaf、运行时 MMCX vote、UFS 启动和设备实机启动均仍 NOT_RUN。ROUND12 仍是唯一活动本地 Agent 任务，尚未在 `firmware-audit-v1` 看到其结果。ROUND30 MMCX-to-MX、ROUND42/43 memory handoff、ROUND40 VCCQ-parent/VDDP teardown 仍是独立门槛。
+以上仅为固定源码静态审查；full-tree git apply、checkpatch、编译、最终 Kconfig/.config、dt-schema、DTB、Kleaf、运行时 MMCX vote、UFS 启动和设备实机启动均仍 NOT_RUN。ROUND12 已上传但 AVB 检查 BLOCKED；ROUND13 已上传完成。ROUND30 MMCX-to-MX、ROUND42/43 memory handoff、ROUND40 VCCQ-parent/VDDP teardown 仍是独立门槛。
 
 Stage A 仍是唯一当前主线：先让 DBY-W09 实际启动 ACK 6.18.33 并通过存储/基础硬件验收；未通过前不开始完整 Android 17 DerpFest Stage B。
 
@@ -183,19 +183,19 @@ ROUND47 已完成 ACK .33_r00 PM8150 regulator mode / DRMS 能力审查。固定
 
 同设备公开 Linux DTS 属 HOS4.2 交叉参考：PM8150 UFS rails 写 HPM initial mode；LPM/HPM + allow-set-load 是在 PM8150L L6/L9 microSD rail 上出现。不得据此假定 HOS4.3 相同，也不得机械复制到 PM8150 UFS L6 或 S8。
 
-**ROUND13 local evidence 仍待查：** ROUND7 过滤报告不含 `regulator-initial-mode`、`regulator-allowed-modes`、`regulator-allow-set-load`。ROUND13 应在 ROUND12 完成后，只读扫描已存在 HOS4.3 base boot FDT 与适用 stock DTBO fragment，定向查 PM8150 S4/L5/L6/L9/L17 和 PM8150L S8 的 initial-mode、allowed-modes、allow-set-load、system-load 与 suspend-state mode/on-off properties；须保留节点路径和 overlay fragment→target 关系。ROUND47 报告：`kernel-baseline/round47/ack-pm8150-regulator-mode-drms-capability-review.md`。
+**ROUND13 local evidence 已完成：** upstream `regulator-*` mode/DRMS/suspend 属性名在所检查 HOS4.3 scope 内均为 `NOT_FOUND_IN_INSPECTED_SCOPE`；本机使用 vendor `qcom,supported-modes` / `qcom,mode-threshold-currents` / `qcom,init-mode`。S4 无 mode metadata；L5/L6/L9/L17 为 PMIC5 LDO；S8 为 PMIC5 HFSMPS。详细值、overlay 边界及 ACK 转换见 `firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt` 与 `kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md`。
 
-ROUND47 仅为固定 ACK 源码和公开 HOS4.2 交叉参考审查，不代表 HOS4.3 本机字段结果或运行时 mode 读数。ROUND12 仍是唯一活动本地 Agent 任务；未创建/派发另一个 Agent 任务。Stage A 6.18.33 内核仍是唯一当前主线，Stage A 实际启动和存储验收前不开始 DerpFest Stage B。
+ROUND47 是固定 ACK 源码能力审查；ROUND13 现在已补齐 HOS4.3 静态字段结果，但没有任何运行时 mode 读数。当前本地 Agent 队列为空；Stage A 6.18.33 内核仍是唯一主线，实际启动和存储验收前不开始 DerpFest Stage B.
 
 
-## 最新本地任务状态（2026-11-24）— ROUND12 BLOCKED；ROUND13 唯一活动任务
+## 历史本地任务状态（2026-11-24）— ROUND12 BLOCKED；ROUND13 已完成
 
 ROUND12 已上传到 `firmware-audit-v1`：
 `firmware-analysis/round12/round12_avb_metadata_findings.txt`
 
 结果：**BLOCKED at tool gate**。本机没有已安装可信 avbtool / 已审查 AVB helper；已审查脚本不解析 AVB footer 或 vbmeta descriptors。未执行 AVB 解析，没有安装/下载工具，没有使用 WSL 或更改安全策略。因此 footer、original-image-size、descriptor coverage 和链式 vbmeta 关系继续 BLOCKED / UNKNOWN。不要从 AVB0 magic 或文件大小推断。
 
-当前唯一活动本地任务是 **firmware-analysis ROUND13：HOS4.3 PM8150 UFS regulator mode / DRMS metadata audit**：
+ROUND13 **已完成并上传** HOS4.3 PM8150 UFS regulator mode / DRMS metadata audit；当前无活动本地任务。
 - 任务书：`firmware-analysis/round13/AGENT_TASK.md`（本文件所在仓库 main）。
 - 只读扫描已有 ROUND3 base boot-FDT work copy 和 ROUND7/8 stock DTBO work copies；重用 ROUND3 已审查 parser 与 ROUND9 resolution pattern。
 - 目标：PM8150 S4/L5/L6/L9/L17 与 PM8150L S8 的 initial-mode、allowed-modes、allow-set-load、system-load 和 suspend-state mode/on-off 属性，保留节点路径及 fragment-to-target 关联。
@@ -203,7 +203,7 @@ ROUND12 已上传到 `firmware-audit-v1`：
 - 只将脱敏文本结果上传到 `firmware-audit-v1` 的 `firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`；上传后停止。
 - 该 `firmware-analysis/round13` 与历史 `kernel-baseline/round13` ACK DTS 设计是不同命名空间，不应混淆。
 
-ROUND47 已提供 ACK 侧 regulator DRMS 解释；ROUND13 负责补充实际 HOS4.3 本机字段，不要把 HOS4.2 公共 DTS 当作 HOS4.3 证据。
+ROUND47 提供 ACK 侧 regulator DRMS 解释；ROUND13 已补充实际 HOS4.3 本机字段，ROUND48 已完成公开 SM8250 vendor enum 交叉核验并更新 main DTS draft。不要把 HOS4.2 公共 DTS 当作 HOS4.3 证据。
 
 ---
 

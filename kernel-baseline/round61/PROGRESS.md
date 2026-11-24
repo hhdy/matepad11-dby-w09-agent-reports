@@ -173,3 +173,10 @@ The UFS negative matrix was extended to test zero VCCQ-parent max-microamp as we
 Run `45441391557` fetched exact ACK `8ad08f75...`, verified the prior source blob identities, and applied ROUND32, ROUND36, corrected ROUND52-0001, cleaned ROUND33, cleaned ROUND52-0002 and the ROUND63 PHY binding patch. The ROUND63 driver patch's first include hunk failed at line 16; all later driver hunks applied in diagnostic reject mode. This is a real failure, not a pass.
 
 Corrected the include hunk with broader pinned-source context (including `linux/of_address.h` and the blank line after the include block). Driver implementation hunks unchanged. New run `45442605274` tests the corrected patch. The prior run's evidence-publish push also failed non-fast-forward because the branch advanced after clone; publisher now fetches/resets to the latest branch before commit. Run `45442645017` contains that publication fix. Await these actual results before changing Phase A to PASS.
+
+
+### ROUND63 strict-checkpatch correction
+
+Run `45442605274` proves the corrected driver patch and ROUND58 Kleaf patch both apply to the fixed ACK tree. The next gate failed strict checkpatch on two raw commit hashes in the patch preamble, one long description line, one continuation alignment, and the upstream API field spelling `init_load_uA`. The branch-local patch now removes raw hashes from the preamble, wraps the line, aligns `qphy_clrbits()`, and the workflow ignores only the false-positive `CAMELCASE` check for this upstream field. Other strict checks remain enabled. A fresh hosted run is pending.
+
+The first manifest build run `45441246235` confirmed the official manifest branch resolved to the pinned manifest commit and initialized successfully, but `repo sync` failed because Repo v2.71 does not accept `--depth` on `repo sync`. The workflow now removes that unsupported flag (keeps `-c` branch-only sync) and retries the immutable ACK tag checkout. The result publisher is race-safe with latest-branch fetch/retry. Trigger commit `9934bf735a31c565456fd7a1c5c8d67121e8a541` starts the corrected manifest sync/build attempt.

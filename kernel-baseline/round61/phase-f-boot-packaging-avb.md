@@ -39,3 +39,12 @@ If the trusted AVB tool remains unavailable, retain BLOCKED status. Do not bypas
 ## 4. Phase F verdict
 
 **BLOCKED / NOT PACKAGED.** No boot image, ramdisk, DTBO or vbmeta file has been generated or modified. The kernel Image build may proceed independently, but it is not a device boot package.
+
+
+## ROUND62 same-device boot-chain cross-reference (not HOS4.3 proof)
+
+The primary report `kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md` reviews public DBY-W09 Linux source pinned at `116cb1fe06110543ce03217e8bd8f35c12ca89c3`. It reports Huawei ABL consuming a header-v2 `boot` image plus a separate `ramdisk` partition, and that `fastboot boot` was refused on that project's tested setup. It also documents a required ABL-selected DTBO fragment that populates `/rootparam`.
+
+This raises the risk that a RAM-only first boot may not be available and makes a future write-based boot experiment a separate, high-authorization operation. It is cross-reference only: that public port's own DTS refers to HarmonyOS 4.2, so it does not prove the user's HOS4.3 ABL policy, selected overlay, partition sizes, offsets, AVB footer or RAM map. Do not copy its stock hashes, fixed 96 MiB / 2 MiB sizes, command line, offsets, DTB or AVB data. The reusable method is to inspect and no-op-rebuild the exact local stock header-v2 image before replacing any payload, after local AVB and final-memory evidence are available.
+
+**Packaging remains BLOCKED and no image is generated.** Do not assume `fastboot boot` works, and do not write boot/ramdisk/DTBO/vbmeta without a separate explicit reviewed authorization and a verified rollback path.

@@ -506,3 +506,5 @@ ROUND16 当前状态：**任务书已上传，等待本地 Agent 执行；尚无
 技术决策记录：`kernel-baseline/round56/linux-build-host-deployment-decision.md`。
 
 Stage A ACK 6.18.33 顺序不变；设备实际启动与存储/基础硬件验收前，不进入 DerpFest Stage B。
+
+ROUND16 local Agent copy/paste start prompt: `firmware-analysis/round16/START_PROMPT.md`.

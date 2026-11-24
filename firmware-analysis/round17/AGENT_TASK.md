@@ -1,188 +1,121 @@
-# ROUND17 — Resume WSL deployment after operator clears security policy
+# ROUND17 — Diagnose local Agent execution-policy blocker, then resume WSL deployment
 
 **Date:** 2026-11-24  
-**Status:** WAITING FOR USER PRECONDITIONS — DO NOT RUN UNTIL BOTH ARE CONFIRMED  
+**Status:** WAITING FOR BLOCKER IDENTIFICATION — DO NOT RETRY wsl.exe YET  
 **Target:** Huawei MatePad 11 (2021), DBY-W09 / KONA / SM8250 rev 2.1  
 **Stage:** A only — ACK 6.18.33 kernel port  
 **Pinned common source:** android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a  
-**Predecessor:** ROUND16 ended normally as BLOCKED_BY_HOST_SECURITY_POLICY; it is not a failed installation and must not be represented as partially deployed.
+**Predecessor:** ROUND16 ended as BLOCKED_BY_HOST_SECURITY_POLICY. No deployment or source sync occurred.
 
-## 0. What ROUND16 actually established
+## 0. Critical correction to the prior taskbook
 
-Read the completed report:
+ROUND16 reported this message in substance:
+
+"The sandbox prevented a program on the configured Program Blacklist from starting: wsl.exe ... This block cannot be approved or bypassed from the current command. Do NOT retry this program, launch it through another shell or script, or attempt an equivalent workaround."
+
+The message does NOT identify Windows Security Center, Microsoft Defender, a third-party endpoint product, the local Agent's own command sandbox, or a named policy-management UI. Therefore the earlier guess "Security Center → Command Security → Program Blacklist" is withdrawn. Do NOT instruct the user to search for that menu; it may not exist.
+
+The only proven fact is: the local Agent's attempt to execute wsl.exe was blocked by a program-execution policy implemented somewhere in the execution path. The policy owner/configuration point is currently UNKNOWN.
+
+This round must first identify where the block originates using passive product/version/configuration evidence and official documentation. Do not invoke wsl.exe again in this diagnostic phase.
+
+## 1. Current verified machine facts from ROUND16
+
+Read report:
 firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt on firmware-audit-v1, commit 2150bb1c3239630635b24f1265fc7aa1b6fcdac0.
 
-Verified in ROUND16:
-- Windows 11 Pro for Workstations, build 26200, x64.
-- Store WSL Appx MicrosoftCorporationII.WindowsSubsystemForLinux version 2.7.3.0 is installed.
-- One WSL distribution named Ubuntu is already registered, Version=2, State=installed. Its exact Ubuntu release is UNKNOWN; its BasePath is under C: and the directory probe was inconclusive.
+- Windows 11 Pro for Workstations build 26200, x64.
+- Store WSL Appx MicrosoftCorporationII.WindowsSubsystemForLinux 2.7.3.0 installed.
+- One distro named Ubuntu is registered as WSL2; exact Ubuntu release UNKNOWN.
+- Distro is stored under C: user profile; precise BasePath/directory status UNKNOWN.
 - VirtualMachinePlatform is Enabled.
-- Microsoft-Windows-Subsystem-Linux legacy optional feature is Disabled; whether that is relevant to this Store WSL2 installation is UNKNOWN.
-- HypervisorPlatform is Disabled; this is not established as a WSL2 blocker.
-- HypervisorPresent and VirtualizationFirmwareEnabled are TRUE. Do not treat VMMonitorModeExtensions=FALSE, while a hypervisor is present, as a BIOS/CPU defect.
-- D: had 325.3 GiB free; D: storage is not the blocker.
-- The only execution attempt of wsl.exe was blocked by the host Program Blacklist. The agent complied and stopped.
-- The local Agent process was not elevated. No WSL installation, distro creation/launch, apt package installation, repo sync, pinning or build occurred.
+- Microsoft-Windows-Subsystem-Linux legacy optional feature is Disabled; whether it is relevant to Store WSL is UNKNOWN.
+- HypervisorPlatform is Disabled; not proven to be a blocker.
+- HypervisorPresent and VirtualizationFirmwareEnabled are TRUE. Do not infer a BIOS problem from VMMonitorModeExtensions=False.
+- D: had about 325.3 GiB free; not a storage blocker.
+- The local Agent process was not elevated.
+- No WSL invocation succeeded; no packages, Repo sync, ACK pin, patches, build or device operation occurred.
 
-ROUND15 conclusion correction: WSL was not absent. ROUND15 did not successfully query it. The existing Store WSL2 app package and registered WSL2 distro were discovered only in ROUND16. Preserve this distinction in all future reports.
+ROUND15 did not prove WSL absent; ROUND16 later established the Store WSL package and registered WSL2 distro.
 
-## 1. User/operator prerequisites — NOT AGENT TASKS
+## 2. User question / required clarification
 
-The user must complete both items before dispatching this task:
+The user reports there is no "Command Security → Program Blacklist" menu. That is expected because the prior taskbook guessed the product/UI incorrectly.
 
-### A. Remove only the explicit WSL program blacklist entry
+Before continuing any installation, ask the user to identify the local Agent application or host (name and version, e.g. the actual product they use) and, where possible, provide a screenshot or exact unredacted block dialog text without tokens or personal data. Do not assume Codex, VS Code, an endpoint antivirus, Defender, or any particular product.
 
-On the local computer, user/operator opens:
-**Security Center → Command Security → Program Blacklist**
+This is an information request, not a demand to change settings. User may simply share the app name/screenshot. Do not ask for passwords, account tokens, keys or private policy files.
 
-Remove/allow this exact blocked program entry:
-C:\Windows\System32\wsl.exe.
+## 3. Passive local Agent diagnostics — NO wsl.exe invocation
 
-This must be a user/operator action. The Agent must not open or modify Security Center, must not alter blacklist entries, and must never attempt workarounds. Do not disable endpoint protection globally or weaken unrelated security settings.
+Using only already available UI/app metadata and safe read-only inspection that does not launch blocked programs:
+- identify the exact local Agent product, version/build and execution mode;
+- identify whether its command is run through a built-in sandbox, managed enterprise policy, configured executable denylist, OS application-control product, or another known layer;
+- identify the exact source of the "Program Blacklist" wording if the product logs or official docs provide it;
+- capture the exact block message and the command context as already recorded; do not reproduce the blocked action;
+- inspect the Agent's visible settings/help/docs for the supported, administrator-authorized way to request/approve an allowed development command, if one exists;
+- determine whether policy is user-controlled, device-admin-managed, or fixed by the host/service.
 
-After the user says the entry was removed/allowed, the Agent may make a normal approved wsl.exe invocation. If still blocked, immediately stop and report BLOCKED_BY_HOST_SECURITY_POLICY; do not retry through another shell, script, path, copy or renamed executable.
+Use official documentation for the actual identified product/version only. If identity is not available from passive evidence, report UNKNOWN and ask user for the product name/screenshot. Do not guess a settings path.
 
-### B. Start the local Agent in an elevated Administrator context
+Do NOT:
+- retry wsl.exe or equivalent;
+- launch WSL through another shell/script/tool;
+- copy, rename, wrap or repackage wsl.exe;
+- change PowerShell execution policy or AppLocker/WDAC/Defender/SmartScreen;
+- disable antivirus/firewall/security controls;
+- attempt UAC bypass, scheduled tasks, token manipulation or silent elevation;
+- install WSL alternatives / third-party distro packages;
+- change BIOS/UEFI, reboot, access the tablet or modify partitions.
 
-The user must launch the local Agent/application once using the normal **Run as administrator** flow, or otherwise provide the task in an already-approved elevated terminal/session. The task requires a privileged context only if official WSL/Windows feature installation proves necessary.
+The "administrator context" requirement in the prior ROUND17 draft is also withdrawn as a blanket precondition. Elevation is needed only if a later, identified official installation step actually requires it. Do not launch the whole Agent as administrator preemptively. First identify the execution-policy owner and supported approval path.
 
-The Agent must inspect its own current elevation status without trying to self-elevate. If it is not elevated, stop with ADMIN_REQUIRED; ask the user to relaunch it elevated. Do not use credentials, scheduled tasks, token duplication, UAC bypass or silent privilege escalation.
+## 4. Fixed distro decision remains unchanged
 
-Do not request or store the Windows password or Linux password. During Ubuntu's first-run username/password prompt, pause and let the user enter those values directly.
+Once the normal authorized WSL entry point is available, preserve the existing C: distro named Ubuntu entirely:
+- do not launch/inspect its filesystem;
+- do not update, move, export/import, unregister, delete, reset or overwrite it;
+- install a separate Ubuntu-24.04 to D:\WSL\Ubuntu-24.04;
+- do not change the default distro.
 
-**ROUND17 is not dispatched merely because this taskbook exists.** Wait until the user confirms A and B are complete.
+The installed Store WSL 2.7.3.0 and enabled VirtualMachinePlatform should be verified before any install. Do not blindly reinstall WSL or enable legacy Windows optional components. Do not enable HypervisorPlatform without an actual error proving it is necessary.
 
-## 2. Fixed user decision — preserve the existing Ubuntu
+## 5. WSL deployment procedure — ONLY AFTER supported approval path is established
 
-The primary AI has decided the safe path:
+Only after the block source is identified and an authorized administrator/user has approved the normal command through the documented supported method, resume the install:
+- verify wsl.exe --version, --status, --list --verbose and --list --online;
+- confirm existing Ubuntu remains registered and target name/path are free;
+- check D: free space >=100 GiB and deployment budget <=200 GiB;
+- install Ubuntu-24.04 at D:\WSL\Ubuntu-24.04 with Microsoft's documented WSL CLI syntax and existing Store WSL;
+- user personally completes first-run Linux username/password creation;
+- verify Ubuntu 24.04 (noble), WSL Version 2 and registered D: BasePath;
+- only then install official Ubuntu host packages and sync the official kernel-only common-android17-6.18 manifest;
+- pin common to exact ACK commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a;
+- capture repo manifest -r plus actual Bazel/Clang/Rust versions (source contract Clang r584948c, Rust 1.91.1.p3).
 
-- Preserve the pre-existing WSL distribution Ubuntu on C: exactly as found.
-- Do not inspect its filesystem by launching it, do not update it, do not set it as default, do not change its WSL version, do not move/export/import it, and do not unregister/delete/reset it.
-- Install a separate distro named Ubuntu-24.04 at exactly:
-  D:\WSL\Ubuntu-24.04.
-- Do not ask the Agent to choose between reuse and replacement. This decision is already made.
-- Do not modify any other existing distro or change the default distro.
+No patch application and no kernel compilation is part of ROUND17. Do not install global Bazel/Clang/Rust/JDK/NDK. Do not sync full AOSP or DerpFest.
 
-## 3. Store WSL 2.7.3.0 verification strategy — do not reinstall the WSL platform blindly
+## 6. Required result/report
 
-ROUND16 has shown that Store WSL 2.7.3.0 already exists and a WSL2 distro is registered; VirtualMachinePlatform is already enabled. Therefore the Agent must **not** begin by rerunning the full wsl --install platform bootstrap, reinstalling the Store WSL package, or enabling legacy optional features speculatively.
+If blocker product/policy identity is established but still requires user/admin action, upload a diagnostic-only report with status BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL. Do not call this deployment complete.
 
-After prerequisites A and B are confirmed, use the standard WSL entry point and collect:
-    wsl.exe --version
-    wsl.exe --status
-    wsl.exe --list --verbose
-    wsl.exe --list --online
+If the policy is resolved through documented authorized means and deployment is subsequently completed, report the full exact evidence and status. If security policy remains fixed/non-overridable, stop and recommend a compliant alternative build host only after user decision; do not bypass.
 
-Record exact outputs and exit codes. These commands verify the Store WSL CLI/runtime, default WSL settings, existing distro registration and the official available distribution names. They do not launch the existing Ubuntu distro.
-
-Do not treat HypervisorPlatform=Disabled as a blocker. Do not enable it.
-
-Do not enable the legacy Microsoft-Windows-Subsystem-Linux optional feature merely because CIM reported it Disabled. Store WSL is already installed, and a WSL2 distro is registered. Only consider an official feature enablement if the actual Store WSL CLI or Ubuntu-24.04 installation returns a specific error proving it is required. If the requirement is unclear, stop and report evidence; do not guess.
-
-## 4. Install the separate Ubuntu 24.04 distro on D:
-
-First check that Ubuntu-24.04 is not already registered and that the target directory does not contain user data. Do not overwrite anything.
-
-Create D:\WSL if absent. Confirm D: free space remains at least 100 GiB and total deployment stays within 200 GiB.
-
-Use Microsoft's documented WSL distribution install options (the installed Store WSL CLI supports distribution selection and location):
-    wsl.exe --install --distribution Ubuntu-24.04 --location D:\WSL\Ubuntu-24.04
-
-**Omit --no-launch intentionally.** This allows the new distro's first-run initialization to open normally. If the first-run account creation prompt appears, pause and ask the user to enter a normal Linux username (suggested: kerneldev) and a private password directly. Do not capture or log the password. Continue only after the user confirms first-run setup completed.
-
-This path is the alternative to the old --no-launch sequence:
-- The already-installed Store WSL is verified with --version / --status.
-- The new distro is installed directly at the selected location.
-- First-run setup is completed interactively by the user.
-- The registered distro is verified after setup with wsl --list --verbose and an in-distro /etc/os-release check.
-
-Do not use the default Ubuntu distribution package or install a generic Ubuntu without the 24.04 identity. Ensure the new registration is WSL version 2.
-
-If the install explicitly requires a reboot, do not force it. Ask the user to reboot normally and resume only after the user confirms. If it requires a Windows feature, use only the exact official feature identified by the error and the existing elevated context; do not enable unrelated optional features. Record changes and reasons. If the action is ambiguous, stop.
-
-## 5. Verify both distributions and the target location
-
-After first-run setup:
-    wsl.exe --list --verbose
-
-It must show both:
-- existing Ubuntu — preserved, unmodified;
-- new Ubuntu-24.04 — Version 2.
-
-Verify the new distro in Linux:
-    cat /etc/os-release
-    id
-    uname -r
-    df -h /
-
-Confirm VERSION_ID="24.04" / VERSION_CODENAME=noble, the current user is the intended unprivileged user, and the filesystem has sufficient free space. Verify the Windows registration BasePath or equivalent supported WSL registration evidence points at D:\WSL\Ubuntu-24.04. Do not infer the D: location from the install command alone.
-
-The default WSL distro does not need to change. If possible, keep Ubuntu-24.04 invoked explicitly with wsl -d Ubuntu-24.04.
-
-## 6. Prepare the kernel-only build workspace
-
-Only after §5 is proven:
-- Work inside the distro Linux filesystem, not under /mnt/d:
-  /home/kerneldev/work/matepad11/ack-6.18.33.
-- Use only official Ubuntu repositories for the minimal host package set from the original ROUND16 §5 (Git, Git LFS, curl, certificates, GnuPG, Repo launcher, flex/bison/build-essential, required libraries, Python, dtc, pahole, lz4 and standard helpers).
-- Prefer the official Android Repo launcher/install instructions with signature verification. Do not install a random similarly named repo binary.
-- Do not install global Bazel, Bazelisk, Clang, LLD, Rust, JDK or NDK. The pinned Android kernel manifest supplies the expected build toolchain.
-- Initialize only the official kernel manifest:
-  https://android.googlesource.com/kernel/manifest
-  branch common-android17-6.18.
-- Synchronize with the original ROUND16 bounded settings, e.g. repo sync -c -j4 --fail-fast.
-- In common/, checkout detached commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a; verify git rev-parse HEAD.
-- Capture repo manifest -r and preserve the output.
-- Verify manifest-provided tools/bazel, Clang r584948c, Rust 1.91.1.p3, and project revisions. Do not assume version strings without actually running the binaries.
-- The workspace is kernel-only, not a full AOSP or DerpFest platform checkout.
-- Do not apply any DBY-W09 patch or alter canonical source artifacts in this round. Keep source checkout clean after pinning.
-
-## 7. Stop conditions
-
-Stop immediately with a precise status if:
-- user has not confirmed the blacklist change;
-- the normal wsl.exe entry point remains blocked;
-- the local Agent is not elevated when a privileged action is needed;
-- a distro named Ubuntu-24.04 or target directory already exists unexpectedly;
-- official CLI flags / distro identity differ from expectations;
-- a reboot or ambiguous feature change is requested;
-- D: free space falls below 100 GiB or the 200 GiB budget would be exceeded;
-- a trusted official Repo installation cannot be verified;
-- source ref/toolchain mismatch appears.
-
-Never bypass security, use third-party WSL packages, disable Defender/AV/firewall, change BIOS/UEFI, force reboot, overwrite the existing Ubuntu, touch the tablet, apply patches or compile during this round.
-
-## 8. Required report and upload
-
-Write one sanitized text report:
+Report path:
 firmware-analysis/round17/round17_wsl_ack_workspace_deployment.txt
 
-Upload to:
+Upload only sanitized text to:
 hhdy/matepad11-dby-w09-agent-reports, branch firmware-audit-v1.
 
-Report:
-- operator preconditions confirmed / not confirmed (do not expose personal names);
-- WSL Store version and exact CLI status;
-- registered distro list and proof existing Ubuntu was preserved;
-- new Ubuntu release, Version 2 registration and D: BasePath;
-- exact host packages and versions;
-- repo manifest revisions and manifest -r file hash;
-- pinned common HEAD and dirty status;
-- Bazel/Clang/Rust actual versions;
-- D: free space before/after and resource budget;
-- every action not attempted and every remaining blocker.
+After upload, stop. No device connection, unlocking, root, fastboot, flashing, partition writing or ROM work.
 
-Do not include usernames, user profile paths, GUIDs, passwords, tokens, keys or other identifying details.
+## 7. Next project stage
 
-After upload, stop. No kernel compilation is authorized in ROUND17.
+The parallel second-AI ROUND58 implementation branch is:
+ai-parallel/round58-kleaf-target-audit.
 
-## 9. Next stage after ROUND17
+It independently prepares a pinned-source full-image Kleaf target, final .config checker/tests and build runbook. This work does not require WSL execution and should continue while the local policy issue is diagnosed.
 
-When the report proves the WSL2 Ubuntu 24.04 environment, pinned ACK workspace and matching toolchain are ready, the next task will be a separate disposable-source integration/build round:
-1. import the ROUND57 follow-up in the ordered UFS patch series;
-2. actual git apply --check / apply / git diff --check;
-3. dt-schema and Kconfig resolution;
-4. add and verify the full no-base_kernel Kleaf DBY-W09 target;
-5. compile the first ACK-derived storage-first Image and archive logs/artifacts.
+After ROUND17 produces a pinned workspace and ROUND58 is reviewed, primary AI will coordinate an actual disposable-source patch integration, Kconfig/schema verification and first Image build.
 
-No DerpFest Stage B before Stage-A device boot and storage/basic-hardware acceptance.
+Stage A ACK 6.18.33 first; Android 17 DerpFest Stage B only after Stage-A boot and storage/basic hardware acceptance.

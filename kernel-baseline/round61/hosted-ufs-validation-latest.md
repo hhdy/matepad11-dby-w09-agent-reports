@@ -1,7 +1,7 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: dc091a5927bbdb8b8b9834996e0e5ea766658a37
-- Workflow run ID: 45443538190
+- Workflow commit: 20d788ca5a485bdfc7887399dd3acff763ce8c9f
+- Workflow run ID: 45444159124
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -25,6 +25,28 @@ ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
  drivers/ufs/host/ufs-qcom.h                        |   4 +
  7 files changed, 498 insertions(+), 7 deletions(-)
+
+## ufs-sm8250-1-domain-valid-validation.log
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: /: 'compatible' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: /: 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-1-domain-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+
+## ufs-sm8250-2-domains-valid-validation.log
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: /: 'compatible' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: /: 'model' is a required property
+	from schema $id: http://devicetree.org/schemas/root-node.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
 
 ## round33-checkpatch.log
 total: 0 errors, 0 warnings, 0 checks, 232 lines checked

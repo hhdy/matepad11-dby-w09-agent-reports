@@ -4,7 +4,8 @@
 
 ## 当前任务
 
-- [AGENT_TASK_ROUND9.md](./AGENT_TASK_ROUND9.md)：只读使用 ROUND3 已有 FDT candidate 0 + DTBO entry 8，补充 UFS supply phandle、THP/panel/WLAN GPIO-pinctrl、camera sensor board properties、USB-C/DP endpoints。只上传四份脱敏文本报告。
+- [AGENT_TASK_ROUND10.md](./AGENT_TASK_ROUND10.md)：当前唯一本地任务。仅检查已有 boot.img / ramdisk 静态内容、boot-chain mount/module/firmware 路径和可能的 display selector 线索；不重解析 FDT/DTBO、不读取 EROFS、不连接设备。
+- [ROUND9 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round9)：已完成，4 份脱敏文本；UFS supply 8/8 闭环，ACTIVE_PROFILE、camera model、redriver model 仍 UNKNOWN。
 - [ROUND9 ChatGPT 独立驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)：HOS4.3 / 同型号 Linux / Linux v6.18 对照背景。
 - [ROUND10 ACK DTS 兼容性与迁移评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)：已吸收 ROUND9 本机 rails/GPIO/pinctrl；列出 compatible、UFS rail 语义、reset-cell 纠错和 panel 证据边界。
 - [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：已完成 145/145 fragment target 解析，确认 fragment@143 -> /rootparam，并确认 entry 8 的 fragment@63/@64 修改 UFS PHY/Host；只作历史任务参考。
@@ -20,6 +21,8 @@
 - ROUND4：vendor / odm 已在本地独立提取；两者 EROFS 签名识别通过。
 - ROUND5：可信 EROFS 工具链不可用，内容枚举 BLOCKED；模块、firmware、VINTF、KMI 兼容性 UNKNOWN。
 - ROUND7：读取现成的 13 个 FDT 工作副本，13/13 结构有效；7937 行属性 inventory；9 个 DTBO board-id 已校验。
+- ROUND8：entry 8 的 145 个 fragment target 全部解析，fragment@143 指向 /rootparam；UFS Host / PHY overlay 修改事实已确认。
+- ROUND9：复用 ROUND3 parser 完成 UFS supply、THP/panel/WLAN/BT GPIO、camera 和 USB-C 只读补充核验；4 份脱敏文本已上传至 firmware-audit-v1/firmware-analysis/round9/。
 - 同型号主线 Linux 公开参考项目：svesnav Linux 7.0.14、youzjuzi Linux 7.2.10、CoWave Linux 7.3.4；只作硬件资料/bring-up 参考，不是可直接复用的 Android GKI 包。
 
 ## 当前关键技术判断

@@ -95,3 +95,20 @@ The shared-schema patch ROUND52-0001 replaces the common binding file as a full-
 ### Conditional minItems correction
 
 Run 45449803857's retained processed-schema.json confirmed that dtschema 2023.9 converts the SM8250 conditional then-branch's maxItems: 2 into minItems: 2 independently of the shared property's minItems: 1. The branch-local correction now sets minItems: 1 in both the shared power-domains property and the SM8250 then-branch, leaving the non-SM8250 else branch exactly one. This preserves the intended SM8250 cardinality range of one or two domains. A fresh hosted run is pending.
+
+
+## Final hosted result — PASS (run 45451513173)
+
+The latest pinned-source hosted run completed successfully on 2026-11-24 UTC. It fetched and verified ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, applied the ordered UFS + ROUND63 PHY + Kleaf patches using real `git apply --check` / `git apply`, passed `git diff --check`, strict checkpatch, buildifier and all 9 config-helper unit tests, then completed the authoritative `make ARCH=arm64 dt_binding_check` command with dtschema 2023.9.
+
+The archived self-contained fixture logs establish the expected matrix:
+
+- UFS positive: SM8250 with one power domain — empty diagnostics (PASS).
+- UFS positive: SM8250 with two power domains — empty diagnostics (PASS).
+- UFS negative: seven clock names, nine clock names, three power domains, SM8150 with two power domains, missing VDDP load, zero VDDP load, missing VCCQ-parent load, zero VCCQ-parent load — each rejected with the expected property diagnostic (8/8 PASS).
+- PHY positive: legacy node without `vdda-phy-always-on` and node with the empty boolean property — both empty diagnostics (2/2 PASS).
+- PHY negative: cell-valued `vdda-phy-always-on = <1>` — rejected as not boolean (PASS).
+
+Artifact: `round61-ufs-phy-validation`, GitHub Actions artifact ID `14947424627`, 1,607,562 bytes. Processed-schema SHA-256: `da083e8307d1f903d5784392b3cba29542343f49964482882b84f13a478447f6`. Applied-source diff SHA-256 remains `b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90`.
+
+The dt_binding_check log reports two unrelated malformed upstream YAML files ignored by the kernel schema scanner (`firmware/gunyah-cma-mem.yaml` and `iommu/pkvm,pviommu.yaml`); the modified UFS/PHY schemas and explicit fixture gates completed successfully. The upstream UFS example's standalone diagnostic log is empty in this run. This result closes Phase B for the current patch set; it does not prove board-DTS/DTB correctness or runtime regulator behavior.

@@ -86,3 +86,23 @@ Source anchors:
 - [ACK regulator_set_load handle enable-count gate](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c#L4955-L4964)
 
 This addendum is still source review, not a compiled or runtime validation.
+
+
+## ROUND52-1 final prerequisite-order hunk simulation (2026-11-24)
+
+After completing ROUND52-0001's positive-load and paired-supply constraints, a source-backed in-memory unified-diff application simulation was run against the exact pristine ACK .33_r00 files and the protected branch's unchanged board DTS source (read-only). It applied each patch in the intended dependency order and verified every old-context hunk and declared old/new line count:
+
+Schema sequence:
+1. ROUND32 -> qcom,ufs.yaml: 3/3 hunks matched.
+2. ROUND36 -> qcom,ufs-common.yaml: 2/2 hunks matched.
+3. ROUND52-0001 -> post-ROUND32 qcom,ufs.yaml: 2/2 hunks matched.
+
+Driver sequence:
+1. ROUND33 -> pristine ufs-qcom.c: 2/2 hunks matched.
+2. ROUND52-0002 -> pristine ufs-qcom.h: 1/1 hunk matched.
+3. ROUND52-0002 -> post-ROUND33 ufs-qcom.c: 3/3 hunks matched, including the include context, VDDP helper insertion before ufs_qcom_init(), and the call insertion after ufs_qcom_ice_init().
+
+Board sequence:
+- ROUND37 -> pristine protected-branch board DTS draft: 2/2 hunks matched. This was an in-memory simulation only; the protected branch was not changed.
+
+Result: **all 13 hunks across the seven patch applications matched**. This establishes patch-context/order consistency for these exact source blobs. It is not the Git `git apply` implementation, not an actual disposable Git worktree, and does not substitute for full-tree `git apply --check`, dt-schema, dtc/dtbs_check, checkpatch or compilation. Those remain NOT_RUN.

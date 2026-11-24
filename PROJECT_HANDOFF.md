@@ -1,6 +1,6 @@
 # PROJECT_HANDOFF.md — DBY-W09 GKI 6.18.33 → Android 17 DerpFest 总交接
 
-更新：2026-11-24  
+更新：2026-11-25  
 适用：新 ChatGPT 会话、GPT 上游源码研究、本地 Agent 只读固件检查、内核与 ROM 移植规划。
 
 > **新会话必读：先读本文件，再读根目录 `AGENT_TASK.md`。本文件是项目目标、阶段顺序和反复调查事项的权威交接入口。不要重复询问已确认的目标，也不要把历史参考项目误作当前目标。**
@@ -822,4 +822,47 @@ ROUND18 原始任务书第 5 节曾把 ROUND32 的旧 patch blob `efe2d932da3471
 2. 新增 `round36-corrected-power-domain-range.patch` blob `a6e8eeaf9303e428e644245749e6daec4d0e38ac`，必须在 ROUND52-0001 之后应用，因为 ROUND52-0001 会整体替换 `qcom,ufs-common.yaml`。顺序为 ROUND36 → ROUND52-0001 → ROUND36 corrected range → ROUND32 corrected clock count → ROUND33 → ROUND52-0002 → ROUND63 PHY binding/driver。
 
 二号 AI 当时 branch HEAD `faae6c044369c24afbdc270eb53fd2e0d31ad451` / PROGRESS blob `2a4c91b9e7a74e3021783bde3b2221d84ea63aee` 报告工作流顺序已修复，新验证仍 pending。必须读取最新分支而不是沿用快照。`dt_binding_check` / `dt-doc-validate` 要覆盖 qcom,ufs.yaml、qcom,sc7180-ufshc.yaml、qcom,ufs-common.yaml 和 QMP UFS PHY schema。
+
+
+
+## 2026-11-25 — 同设备 DerpFest 成功先例与 ROUND18 首次 Image 构建完成
+
+### A. 用户已确认的同设备成功先例（项目固定前提，不得反复询问）
+
+用户明确说明：本项目采用“先移植 ACK/GKI 6.18.33，再移植 Android 17 DerpFest”的路线，正是因为已有另一位开发者在**同一设备 Huawei MatePad 11 DBY-W09、同一 ACK/GKI 6.18.33 内核基线**上成功进入 Android 17 DerpFest 系统。用户提供的进度基准是：约两天进入系统，约一周完善其余功能。
+
+该信息属于用户明确提供的先例事实；本交接更新尚未把该开发者的原始仓库/帖子/提交 SHA 绑定为独立证据，因此不要伪称已完成来源级复核，也不要凭空补造开发者身份或链接。但也**不得再次向用户询问“是否同设备、是否同内核、是否已经有成功案例”**——这些关键前提已经明确确认多次。
+
+执行含义：
+1. 将“同一 DBY-W09 + ACK/GKI 6.18.33 + Android 17 DerpFest 已有成功启动先例”视为已知可行性基线；项目不是从零证明这套组合能否启动。
+2. 主任务改为尽快定位、复核并复用成功先例的 device tree、内核补丁、boot/ramdisk/DTBO、vendor/HAL/VINTF 和启动参数；再与当前 HOS4.3 固件及 ACK 固定源码做差异分析。凡是能从成功方案复用的内容，不应重新设计或重复探索。
+3. 继续遵守用户确定的顺序：先完成 DBY-W09 ACK/GKI 6.18.33 内核适配和构建，再集成 Android 17 DerpFest；不能因为成功先例已经进入 DerpFest，就擅自颠倒用户要求的实施顺序。
+4. 把“尽快进入 DerpFest 桌面”设为首要可见里程碑；相机、音频、蓝牙、传感器、休眠等非启动关键功能放到桌面启动后逐项完善。UFS、内存交接、显示/触摸、启动链等实际启动必需项仍需解决，不能为了赶时间编造参数或跳过安全验证。
+5. 时间上可以把同设备成功先例作为加速依据，但“2 天 / 1 周”是该先例的用户报告，不是对当前执行周期的保证。每次估时必须基于已复用资料、未闭合 gate 和真实进度，不要再用“从零移植”的假设给出 4–8 周基线。
+6. 后续新会话和所有 AI 必须先读本节；不要要求用户重复解释这项背景。优先从现有上下文、公开仓库、已记录项目链接中寻找该成功方案。若暂时无法定位来源，明确记录来源定位待办并继续其他工作，不要把问题退回给用户反复确认。
+
+### B. ROUND18 本地 Agent 最终结果（2026-11-25）
+
+最终脱敏报告：
+[`firmware-audit-v1/firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt`](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt)
+
+- Git blob：`9d756587c675387d676a53eae3dcca181bde0f26`
+- 固定 ACK：`android17-6.18.33_r00` / `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
+- 本机 WSL2 Ubuntu 24.04.5 内真实执行；原始 Repo workspace 起止均 pristine，所有修改均在独立 ROUND18 副本内。
+- 补丁集成：9/9 最终补丁真实 `git apply --check`、`git apply`、`git diff --check` 全通过。两项上游候选补丁存在 hunk/空行缺陷，Agent 在副本内做了最小修正后重新以默认完整上下文验证通过；没有写入二号 AI 分支。
+- Device-tree schema：4 个目标 schema、4 个 example DTB；`dt_binding_check`、`dt-doc-validate`、直接 `dt-validate` 通过。15 个正反例 MISMATCH_COUNT=0。报告同时记录 dtschema 版本参数差异及 dt-validate 可能 rc=0 但输出诊断的陷阱。
+- Kleaf/Bazel：`//common:dby_w09` query 和 cquery 均通过；cquery 得到 .config、Image、System.map、vmlinux 四个预期输出。
+- Kconfig：真实 Kleaf config target 生成最终 `.config`；31/31 个 storage-first 必需项为 `=y`，fragment 的 30/30 显式请求项与最终配置一致。
+- 首次 Image 编译：真实 `tools/bazel build --jobs=2 //common:dby_w09`，exit 0，耗时约 360 秒。Image 44,820,992 bytes，SHA-256 `983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884`；System.map、vmlinux、.config 均生成。内核 banner 为 `6.18.33-android17-5-maybe-dirty-4k`。
+- 当前准确里程碑：`IMAGE_BUILD_PASS / STAGE_A_BUILD_READY`。
+
+边界必须准确：ROUND18 没有生成板级 DTB/DTBO、boot.img、vendor_boot、init_boot 或刷机包；没有连接设备、ADB/fastboot、解锁、root、分区写入或实机启动。因此这代表**首次内核 Image 编译成功**，不代表已经点亮平板，也不代表 Stage A 设备验收完成。
+
+### C. 下一步优先级（按“复用成功先例、尽快点亮”执行）
+
+1. 主 AI 与二号 AI优先定位并拆解同设备成功 DerpFest 方案，逐项比较其源码版本、DTS/DTBO、boot header v2/ramdisk、vendor blobs、VINTF/HAL、AVB 和启动命令。能复用的现成实现优先复用；禁止重复证明已由先例证明的组合可行。
+2. 将 ROUND18 已成功的补丁集和 Image 构建基线作为当前 ACK build checkpoint，避免重复部署、Repo sync、重跑已通过的 9/9 patch/schema/Kconfig 任务；后续变更必须基于该 checkpoint 做增量验证。
+3. 优先闭合真正阻止首次启动的目标专属差异：最终 post-ABL FDT/内存交接、必要 PMIC/UFS 供电、板级 DTS/DTB/DTBO、HOS4.3 legacy boot-v2/ramdisk/AVB 组合。先以成功先例证据核对这些问题是否已被同型号方案解决，再决定是否需要本机额外采集。
+4. 首次启动目标为进入 Android 17 DerpFest 桌面；显示/触摸及系统分区挂载等必需路径优先。其他硬件功能作为第二阶段完善。
+5. 任何烧写或分区操作仍需用户另行明确授权；不得从“已有开发者成功”推导出本设备已授权写入。
 

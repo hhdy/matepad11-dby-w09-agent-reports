@@ -444,3 +444,29 @@ main 新增两个 candidate patch：
 
 
 ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.
+
+
+## 最新执行状态覆盖 — ROUND16 READY；ROUND18 已授权执行（2026-11-25）
+
+**以下状态覆盖本文件此前关于 ROUND16 BLOCKED、ROUND17 等待处理、没有 WSL workspace、尚未 repo sync 的旧内容。不要照旧任务文字重复部署。**
+
+ROUND16 当前权威报告：
+- firmware-audit-v1:firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt
+- blob c9516f20d3e13cb5d5ec42e41bec4c8a05b25123
+- branch tip 99f93d2e81ccb88715bf47ed1aff167d4cd98c55
+- status WSL_AND_PINNED_ACK_WORKSPACE_READY
+
+本地已有 Ubuntu 24.04.5 WSL2、kerneldev 用户、41 GiB / 58 project Repo workspace；common 精确 pin 到 ACK android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a，Clang r584948c、Rust 1.91.1.p3、Bazel 8.7.0 已实测匹配。原 workspace 路径：/home/kerneldev/work/matepad11/ack-6.18.33。
+
+**当前本地 Agent 任务改为 ROUND18：**
+- firmware-analysis/round18/AGENT_TASK.md
+- firmware-analysis/round18/START_PROMPT.md
+- report destination: firmware-audit-v1:firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt
+
+ROUND18 已明确授权：仅在现有 workspace 的独立副本中真实应用指定 ROUND32/36/52/33/63 patches，执行 Git/checkpatch、UFS/QMP PHY dt-schema/dtc 正反例、Kleaf BUILD patch、Bazel query/cquery、最终 Kconfig/.config 和首次 Image-only 编译。原始 workspace 必须 clean 且不修改；禁止重新部署、repo init/sync 或下载 source/toolchain。
+
+资源边界：WSL 当前约 7.3 GiB 内存，先以 jobs=2 低并发尝试；禁止修改 .wslconfig，若 OOM 则保留证据并等待单独授权。kerneldev 密码锁定不是主动设置密码的理由；本轮正常构建不需要 sudo。
+
+ROUND18 不处理 board DTS / DTB / DTBO / boot packaging / AVB，不连接或操作平板，不刷写、不写分区。ROUND57 因真实 schema meta-schema 不兼容而不应用；ROUND37 因仍是 review-only DTS fixture 且 memory/PMIC gates 未关闭而不应用。ROUND12 AVB BLOCKED 不影响 Image-only compile。
+
+报告上传后停止本地执行，并由主 AI复核。二号 AI仍只写 ai-parallel/stagea-port-until-boot，PR #1 保持 Draft/Open/unmerged，ack18-dby-w09-dts-draft 不修改。Stage A 设备启动和 UFS/storage acceptance 前不开始 Stage B DerpFest。

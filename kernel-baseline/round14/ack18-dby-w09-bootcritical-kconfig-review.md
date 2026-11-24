@@ -1,7 +1,7 @@
 # ROUND14 — ACK android17-6.18 boot-critical Kconfig dependency review
 
 Date: 2026-11-24
-Status: source review and config fragment draft only; dependency table updated by ROUND15 after re-reading the ACK SM8250 UFS clock and interconnect references. No ACK source sync, Kconfig resolution, Kleaf run, kernel build, DTB build, packaging or device test.
+Status: source review and config fragment draft only; dependency table updated by ROUND15/16 after reviewing ACK SM8250 UFS clocks, interconnects, OPP and the local HOS4.3 ARC parent graph. No ACK source sync, Kconfig resolution, Kleaf run, kernel build, DTB build, packaging or device test.
 
 ## 1. Purpose
 
@@ -55,6 +55,8 @@ Key Kconfig/source references:
 - RPMh and RPMh power domain: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/soc/qcom/Kconfig
 - SM8250 GCC: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/clk/qcom/Kconfig
 - ARM SMMU: https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/iommu/Kconfig
+
+The HOS4.3 ROUND11 ARC parent/proxy graph must not be translated into PM8150 VRM parent supplies: ACK's upstream qcom-rpmh-regulator driver handles VRM/XOB, while SM8250 performance levels use rpmhpd/OPP. The upstream SM8250 RPMhPD descriptor does not reproduce every MMCX ARC edge; full corner equivalence remains a later per-subsystem audit.
 
 The config fragment is a draft input layered on top of a pinned ACK configuration, not a replacement for `gki_defconfig` or the product's full defconfig. Kconfig resolution may add/remove symbols through selects and dependencies. The exact pinned source tree must be used when that phase is authorized.
 

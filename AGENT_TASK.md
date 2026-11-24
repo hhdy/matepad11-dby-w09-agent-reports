@@ -4,7 +4,7 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **当前本地 Agent 队列为空。** ROUND12 已上传但在可信 AVB 工具门槛 BLOCKED；ROUND13 已上传完成并停止。不要重跑 ROUND12/13，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。最新状态见本文件末尾。
+> **当前本地 Agent 队列为空。** ROUND12 AVB 报告已上传但在可信工具门槛 BLOCKED；ROUND13 regulator 审计、ROUND14 ARC/S8 属性审计均已上传并完成。不要重跑 ROUND11/13/14，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。最新状态见本文件末尾。
 
 ## 当前项目目标
 
@@ -241,3 +241,19 @@ GPT has completed public source review:
 - Do not modify main, protected DTS branch, or PR #1 from the Local Agent.
 
 No ROUND15 task is active. Stage A ACK 6.18.33 remains the sole milestone; do not start DerpFest Stage B before actual device boot and UFS/storage/basic-hardware acceptance.
+
+
+---
+
+## Latest queue/status correction — ROUND14 complete; ROUND51 reviewed (2026-11-24)
+
+- ROUND14 is uploaded on firmware-audit-v1 at firmware-analysis/round14/round14_arc_mmcx_mx_power_properties.txt (Git blob 2a1cf742ec45b1b17c98c006da241fb7737f6fcd). The Local Agent followed the stop-after-upload rule. Do not repeat FDT parsing or ROUND11/13 scans.
+- ROUND51 public-source report: kernel-baseline/round51/round14-arc-value-semantics-proxy-vote-and-round11-edge-reconciliation.md.
+- There are now at least five proven HOS4.3 base-FDT parent-supply edges; ROUND11's count of four was incomplete, and the full total remains unverified.
+- 0xffffffff min-dropout is not a no-dropout sentinel in the KONA ARC code path; it is read into signed int and added to the ARC logical level path as -1 on the ARM64 target. Do not normalize it to zero.
+- HOS MMCX ALL has a temporary proxy request at TURBO..MAX; it is not permanent system-load/always-on. ACK currently lacks an equivalent helper.
+- S8 has no static enable/boot-on/always-on property in inspected scope. qcom,set=3 and init-mode=RET are not enable. ACK S8 set_load is no-op; do not force enable. Board DTS initial mode is corrected to RET and runtime enable remains UNKNOWN.
+- ROUND49 VDDP/L6 enable + deferred cleanup remains; S8 load-only/get/enable/disable is omitted from the initial ACK UFS patch.
+- No ROUND15 local task is active. Do not prepare another Local Agent task unless subsequent implementation demonstrably needs a distinct fact that cannot be obtained from fixed/public source.
+- Main-only draft/report updates are recorded in PROJECT_HANDOFF.md and dts/README.md. Protected ack18-dby-w09-dts-draft branch remains untouched; PR #1 remains Draft.
+- All full-tree apply, checkpatch, dt-schema, dtc/dtbs_check, final Kconfig/.config, Kleaf build, boot packaging, device boot, UFS/storage and basic hardware validation remain NOT_RUN. Stage A ACK 6.18.33 is the sole active milestone; Stage B DerpFest waits for successful Stage A device acceptance.

@@ -90,3 +90,14 @@ ROUND38 added a source-level check that the required-OPP target's ancestor provi
 Updated patch blob SHA: `565090acbfe9aad00200b3cccbd64a8a45c7c4c3`.
 
 The updated include and probe hunk old-side source contexts and declared old/new counts match the exact pinned ACK `ufs-qcom.c` source. This remains a source-context check only; full-tree application, checkpatch, compile and hardware tests remain NOT_RUN. See ROUND38: `../round38/rpmhpd-provider-registration-and-ufs-opp-table-identity.md`.
+
+
+## 9. ROUND45 all-entry validation and scope decision
+
+ROUND45 supersedes the earlier first-available-child-only preflight description above.
+
+The updated patch at `kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft` has Git blob SHA `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`. It adds `ufs_qcom_validate_required_opp()` and `ufs_qcom_validate_opp_table()` so every available child OPP is checked, including an empty-table rejection and balanced OF-node reference cleanup.
+
+ROUND45 selected an explicit fail-closed driver contract rather than a DBY-W09-only opt-in property: for `qcom,sm8250-ufshc`, the ordinary one-domain path remains unchanged; the only currently supported two-domain layout is MMCX index 0 + GCC UFS_PHY_GDSC index 1; unsupported multi-domain counts or orderings fail rather than silently continuing without an attached domain. DBY-W09 is the board currently opting into this topology by its DTS. This is not a claim that arbitrary SM8250 UFS multi-domain layouts are supported.
+
+ROUND45 parsed both unified-diff hunks against the exact pinned ACK `ufs-qcom.c` fetched at commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`: include hunk 12/18 and probe/helper hunk 15/214; both count checks and both old-side source-context comparisons PASS. The diffstat is 205 insertions. This is patch-file/hunk verification only, not full-tree `git apply`, checkpatch, compiler or device validation. See `../round45/ack-ufs-dual-genpd-all-opp-validation.md`.

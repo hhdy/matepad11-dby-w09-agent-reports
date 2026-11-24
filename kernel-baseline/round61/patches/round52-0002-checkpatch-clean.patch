@@ -12,9 +12,9 @@ completed generic VCCQ shutdown. This action disables VDDP and then clears
 its load before the managed regulator handle is put. It also handles failed
 variant initialization after the generic HBA unwind.
 
-Intentionally do not acquire qcom,vccq-parent-supply: ROUND14/51 establishes
-that ACK S8 load-only is a no-op and no enable owner is proven. S8 is not
-enabled or mode-switched by this patch.
+Intentionally do not acquire qcom,vccq-parent-supply: ROUND14/51
+establishes that ACK S8 load-only is a no-op and no enable owner is proven.
+S8 is not enabled or mode-switched by this patch.
 
 Prerequisites: apply ROUND32 and ROUND36 schema drafts, ROUND37 board DTS
 delta, then ROUND33 dual-GenPD UFS driver draft before this patch. The driver
@@ -94,14 +94,14 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +		return 0;
 +
 +	ret = of_property_read_u32(dev->of_node,
-+			    "qcom,vddp-ref-clk-max-microamp", &load_uA);
++				   "qcom,vddp-ref-clk-max-microamp", &load_uA);
 +	if (ret)
 +		return dev_err_probe(dev, ret, "missing VDDP REF_CLK load\n");
 +	if (!load_uA)
 +		return dev_err_probe(dev, -EINVAL, "invalid zero VDDP REF_CLK load\n");
 +
 +	host->vddp_ref_clk = devm_regulator_get(dev,
-+					 "qcom,vddp-ref-clk");
++						"qcom,vddp-ref-clk");
 +	if (IS_ERR(host->vddp_ref_clk))
 +		return dev_err_probe(dev, PTR_ERR(host->vddp_ref_clk),
 +				     "failed to get VDDP REF_CLK supply\n");

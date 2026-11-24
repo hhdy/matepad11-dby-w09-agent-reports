@@ -132,7 +132,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
  /**
   * ufs_qcom_init - bind phy with controller
   * @hba: host controller instance
-@@ -1584,5 +1654,9 @@
+@@ -1584,5 +1656,9 @@
  	err = ufs_qcom_ice_init(host);
  	if (err)
  		goto out_variant_clear;

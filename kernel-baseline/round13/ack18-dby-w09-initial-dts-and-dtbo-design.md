@@ -56,6 +56,17 @@ Design interpretation:
 - HOS `vcc-low-voltage-sup` is not blindly translated to upstream `vcc-supply-1p8`; the HOS VCC operating window is 2.504–2.950 V. This property requires separate exact-driver interpretation.
 - The existing ACK SM8250 DTSI already declares Host reset, PHY reset, clocks, lanes, interconnect / power-domain structure. Do not duplicate those SoC-level definitions in the board DTS.
 
+### Provider-aware regulator load voting note
+
+The ACK UFS PHY helper reads each PHY rail's `*-max-microamp` value and may call `regulator_set_load()` for variable-voltage rails. Accordingly, the draft enables DRMS/load voting on the PM8150 LDO rails L5, L6 and L9 using `regulator-allow-set-load` plus LPM/HPM allowed modes. The shared L6 vote covers both Host VCCQ and PHY VDDP ref-clock consumers. The RPMh binding describes `regulator-allow-set-load` for LDO regulators managed via VRM:
+https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.txt
+
+PM8150 S4 is mapped by the ACK RPMh regulator driver to `pmic5_hfsmps510`, whose operations differ from the DRMS-enabled LDO path. Therefore the draft does not add the LDO-specific `regulator-allow-set-load` property to S4. Keep the HOS-confirmed `vccq2-max-microamp = <800000>` at the UFS Host; verify its exact power-mode behavior in the pinned ACK driver before claiming load voting works on this SMPS:
+https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/regulator/qcom-rpmh-regulator.c
+
+The UFS core also uses `vccq-max-microamp` and `vccq2-max-microamp` when deriving the device Active ICC level. These values therefore remain useful even where the PMIC regulator does not perform DRMS mode switching:
+https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/ufs/core/ufshcd.c
+
 ## 5. ACK source-level topology
 
 ACK `android17-6.18` SoC DTSI defines:

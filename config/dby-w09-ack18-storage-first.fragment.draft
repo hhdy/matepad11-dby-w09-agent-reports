@@ -105,8 +105,10 @@ CONFIG_EROFS_FS=y
 #   Command DB AUX voltage-level mapping, active/sleep aggregation, ARC
 #   enable-as-level-zero semantics, resource/parent links, and ACK rpmh API
 #   adaptation. New provider must be a direct apps_rsc child because ACK
-#   rpmh_write() resolves its RSC from dev->parent. Do NOT add vendor ARC
-#   nodes or invent a Kconfig symbol yet.
+#   rpmh_write() resolves its RSC from dev->parent. ARC min/max-microvolt are
+#   logical corner IDs, not physical uV; qcom,set selects active/sleep sets.
+#   Exact HOS4.3 resource-name/set/init-level data remain UNKNOWN. Do NOT add
+#   vendor ARC nodes or invent a Kconfig symbol yet.
 # - Vendor HOS4.3 proxy-supply groups: ROUND22 found ACK has no
 #   REGULATOR_PROXY_CONSUMER symbol/source/core hook. The six proxy-supply
 #   phandles are known, but local proxy-consumer-enable/voltage/current

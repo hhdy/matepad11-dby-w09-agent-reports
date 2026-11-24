@@ -66,12 +66,12 @@ def render(
 / {{
     #address-cells = <1>;
     #size-cells = <1>;
+    interrupt-parent = <&intc>;
 
     intc: interrupt-controller {{
         interrupt-controller;
         #interrupt-cells = <3>;
     }};
-    interrupt-parent = <&intc>;
 {clock_nodes}
 {domain_nodes}
     vddp_reg: vddp-regulator {{ }};

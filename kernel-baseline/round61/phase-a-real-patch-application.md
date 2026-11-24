@@ -173,3 +173,10 @@ The upstream make target did not propagate these example diagnostics as a nonzer
 - UFS example schema validation: FAIL / unresolved.
 - Bazel query, final Kconfig, kernel Image, DTB/boot image and device boot: NOT_RUN.
 - Phase E remains blocked on trusted HOS4.3 FDT/EFI memory handoff and board-specific PM8150 rail evidence, as detailed in `phase-e-board-dts-memory-power-gates.md`.
+
+
+## Superseding schema ownership decision — ROUND32 skipped
+
+The fixed ACK source already has `qcom,sc7180-ufshc.yaml` selecting `qcom,sm8250-ufshc` and defining the eight-clock SM8250 branch. Applying the ROUND32 draft would add the same compatible to `qcom,ufs.yaml`, creating duplicate schema selection. The current UFS validation and manifest build workflows therefore skip ROUND32; its canonical draft is unchanged. ROUND57 is also skipped because the existing fixed eight-item tuple already constrains the SM8250 clock-name count and the ACK meta-schema rejects redundant min/max tuple constraints.
+
+ROUND52-0001's branch-local implementation is now placed in the shared `qcom,ufs-common.yaml` schema, so the properties are visible to the actual SM8250 binding (`qcom,sc7180-ufshc.yaml`) as well as the generic Qualcomm UFS binding. This patch applies after ROUND36. The canonical ROUND52 patch remains unchanged.

@@ -1,19 +1,19 @@
 # ROUND61 hosted manifest/Kleaf build result
 
-- Date UTC: 2026-11-24T17:19:44Z
+- Date UTC: 2026-11-24T17:31:35Z
 - Branch: ai-parallel/stagea-port-until-boot
-- Trigger commit: 17fc9603ce29f0dbaa270fd1c0cfe8922fd4e5e7
-- Workflow run ID: 45446186250
+- Trigger commit: 1f62f80cd87461c59f068598344eb5057e88b28b
+- Workflow run ID: 45448441783
 - Manifest commit: 46a1a5274ff0b40419952c861a8958bba5f28cfc
 - ACK required commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
-- Last stage: run manifest-provided Bazel wrapper
-- Exit code: 1
+- Last stage: locate manifest-provided Clang
+- Exit code: 127
 - Runner resources: CPUs=4, memory.max=unknown
-- JAVA_HOME: prebuilts/jdk/jdk11/linux-x86
-- Clang path: unset
+- JAVA_HOME: /home/runner/work/_temp/ack-6.18.33/prebuilts/jdk/jdk11/linux-x86
+- Clang path: prebuilts/clang/host/linux-x86/clang-3289846/bin/clang
 - Rust path: unset
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/root       145G   89G   56G  62% /
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/cow-root  145G   85G   60G  59% /
 
 ## Source identity
 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a

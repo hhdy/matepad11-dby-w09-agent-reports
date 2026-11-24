@@ -1,6 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: DBY-W09 kernel port work <noreply@example.invalid>
-Date: Tue, 24 Nov 2026 00:00:00 +0000
+From: DBY-W09 kernel-port draft
 Subject: [PATCH DRAFT] dt-bindings: ufs: qcom: describe SM8250 UFS host
 
 This binding currently selects Qualcomm UFS nodes by their first compatible,
@@ -20,11 +18,10 @@ DBY-W09 dual-GenPD change requires its own source, binding and runtime review.
 This is a draft only. dt_binding_check / dtbs_check have not been run.
 
 ---
- Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 23 +++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 25 ++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-index 000000000000..111111111111 100644
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 @@ -23,6 +23,7 @@ select:
@@ -42,10 +39,16 @@ index 000000000000..111111111111 100644
 +          - qcom,sm8250-ufshc
        - const: qcom,ufshc
        - const: jedec,ufs-2.0
-@@ -149,6 +151,29 @@ allOf:
+ 
+@@ -148,9 +150,32 @@ allOf:
+         reg:
            minItems: 2
            maxItems: 2
- 
++        reg-names:
++          minItems: 2
++      required:
++        - reg-names
++
 +  - if:
 +      properties:
 +        compatible:
@@ -69,9 +72,8 @@ index 000000000000..111111111111 100644
 +        reg:
 +          minItems: 1
 +          maxItems: 1
-+
+ 
      # TODO: define clock bindings for qcom,msm8994-ufshc
  
    - if:
--- 
-2.43.0
+--

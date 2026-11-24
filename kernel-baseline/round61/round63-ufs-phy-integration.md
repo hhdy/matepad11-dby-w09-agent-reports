@@ -81,3 +81,8 @@ I also inspected pinned ACK `drivers/regulator/core.c`:
 - `regulator_set_load()` updates the consumer load and restores the old value if DRMS update fails.
 
 These contracts support the candidate's remaining-rail failure unwind and load-vote handling. They are source-level contracts only; no live regulator state was measured.
+
+
+## 8. ROUND63 patch-format correction before hosted checkpatch
+
+A local line-length scan found the copied driver patch's Subject line was 82 columns. The branch-local copy's subject was shortened to `[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle`; the actual source diff/hunks are unchanged. The canonical main candidate remains untouched. A repeat line scan now finds no over-80-column added source/message lines; the only >80 line is the standard 94-column `diff --git` header. Hosted strict checkpatch remains the authoritative result.

@@ -229,3 +229,14 @@ A further pinned-source check found a lifecycle limitation that must remain expl
 Therefore the ROUND63 cleanup action is ordered before the QMP PHY provider's managed regulator handles are released, but the stateless PHY link does **not** prove that manually unbinding the QMP PHY provider will first unbind every UFS consumer. This is a broader generic-PHY supplier-lifetime boundary, not introduced solely by ROUND63.
 
 For normal UFS host removal, the consumer driver is expected to shut down the PHY and release its managed PHY reference before the provider is removed. Do not manually unbind the QMP PHY platform device while the UFS host remains bound. ROUND61 must review the exact normal remove path and device-link behavior, and report this boundary rather than claiming universal supplier-unbind safety. No forced-unbind test is authorized or required for the first boot milestone.
+
+
+### Normal UFS consumer removal sequence verified
+
+The pinned ACK removal path provides a normal consumer-first shutdown sequence:
+
+1. `drivers/ufs/host/ufshcd-pltfrm.c`, blob `5ac7afe759346debfc2910fb219d8e491ba08b64`: `ufshcd_pltfrm_remove()` calls `ufshcd_remove(hba)`.
+2. `drivers/ufs/core/ufshcd.c`, blob `2cf7aa8e0a9472f9024d4251ac2f9d7da830e219`: `ufshcd_remove()` stops the HBA and calls `ufshcd_hba_exit()`; the latter calls `ufshcd_variant_hba_exit()` before generic regulator/clock/HBA-supply teardown.
+3. `drivers/ufs/host/ufs-qcom.c`, blob `a80c699840dff?\u0000`: Qualcomm `ufs_qcom_exit()` calls `phy_power_off()` and `phy_exit()`. The UFS device's devm PHY reference and stateless link are released during the subsequent devres unwind after the remove callback.
+
+This proves the normal UFS host remove callback requests PHY power-off/exit before its `devm_phy_get()` reference is released. It does not make the stateless link a managed supplier-presence dependency; a separate manual unbind of the QMP PHY provider while UFS remains bound is still unsupported and must not be used as a test path. QMP provider removal after UFS consumer removal runs the ROUND63 cleanup action before its managed regulator handles are freed.

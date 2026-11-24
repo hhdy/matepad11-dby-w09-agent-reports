@@ -69,3 +69,17 @@ The Second AI added `BLOCK` to `REQUIRED_SYMBOLS` and a regression test that cha
 - Unit tests: 10 (up from 9).
 
 This is a validator-coverage correction only. It is not evidence that a real Kleaf-resolved `.config` has `CONFIG_BLOCK=y`; the real config and Image build remain NOT RUN until the manifest-pinned build produces artifacts.
+
+
+## 6. Validator coverage correction — Qualcomm SMMU implementation
+
+A second static dependency review found that the fragment's IOMMU path requires the Qualcomm-specific SMMU implementation, not only the generic `CONFIG_ARM_SMMU=y`. The fragment documents `ARM_SMMU_QCOM` as a derived `def_tristate y` under `ARM_SMMU && ARCH_QCOM`, selecting `QCOM_SCM`. The prior validator treated this symbol as informational when absent, which could allow a config without the actual Qualcomm SMMU driver to pass.
+
+The Second AI promoted `ARM_SMMU_QCOM` into the required built-in symbol set and added regression tests for missing and module-valued states. It is validated as an output requirement; it is not added manually to the config fragment.
+
+- Validator change: `40e6c909f9d23e0e489fb75d573d36464e7b3215`.
+- Regression tests: `4f5adaf6d22f5bf1eca5e30cd711cf545cce7d86` and newline-fixture correction `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf`.
+- Required explicit symbols: 33.
+- Unit tests: 11.
+
+This remains a validator hardening change. The real resolved Kleaf `.config` must still prove `CONFIG_ARM_SMMU_QCOM=y`; if Kconfig does not resolve it, investigate the exact pinned dependency chain rather than forcing the symbol.

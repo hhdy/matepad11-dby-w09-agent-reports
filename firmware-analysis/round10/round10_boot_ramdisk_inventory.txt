@@ -1,0 +1,140 @@
+ROUND10 — DBY-W09 stock boot.img / ramdisk 静态只读取证报告
+生成时间：2026-11-24
+任务：AGENT_TASK_ROUND10.md（本地已有 boot/ramdisk 的 boot-chain 静态审查）
+范围：仅本地已有镜像与既有报告；不连接设备；不重新提取；不解析 FDT/DTBO；不读取 EROFS。
+
+======================================================================
+0. 边界声明
+======================================================================
+本轮未连接设备、未运行 ADB/fastboot、未刷机、未解锁、未 root、未写分区、
+未编译内核、未调用 WSL、未读 vendor/odm EROFS、未重新解析 FDT/DTBO、
+未安装任何工具、未下载任何 EXE/DLL、未执行来源不明二进制、未上传二进制。
+原始 boot.img 与所有既有工作副本保持未修改；本轮未创建解包目录。
+未实际执行的检查一律标记 NOT_RUN / BLOCKED / UNKNOWN，不虚报 inventory。
+
+======================================================================
+1. 工具与工作副本可用性（检测结果）
+======================================================================
+1.1 既有输出中是否存在 ramdisk 工作副本
+- ROUND2 输出目录：存在 boot.img、dtbo.img、ramdisk.img、recovery.img、
+  recovery_ramdisk.img、erecovery.img、erecovery_ramdisk.img 及 vbmeta 系列
+  的本地镜像副本；这些是完整镜像，不是解包后的 ramdisk 内容目录。
+- ROUND2 firmware_analysis.txt 记录的是镜像头部字段，未记录 boot.img 内
+  ramdisk 区域的偏移量，也未导出任何 ramdisk 文件。
+- ROUND3 输出：只有 super sparse / LP metadata 与 dtb_work 中的 FDT/DTBO
+  工作副本；没有 ramdisk 内容文件、boot unpack 工具或 ramdisk 解析器。
+- ROUND4 输出：只有 vendor / odm EROFS 镜像与 super 提取脚本；没有
+  ramdisk 内容文件、boot unpack 工具或 ramdisk 解析器。
+- 结论：NO_EXISTING_RAMDISK_WORKCOPY。
+
+1.2 已审核过的 boot image 解析脚本
+- ROUND2 使用的工作副本脚本（已审核、已修复 BOM 与路径问题）：
+  Analyze-DBY-W09-Firmware.ps1。它有 Read-U32LE / Read-U32BE 读取镜像
+  头字段的能力，并对 ramdisk*.img 调用 Get-FileMagic 做「完整文件级」
+  魔数检测；它不包含 boot.img 内 ramdisk 区域的定位、提取或解包函数。
+- ROUND3 的 Analyze-DBY-W09-DeviceTree.py 只在说明文字中描述 boot header
+  v2 的 DTB 偏移公式，不解析 ramdisk。
+- ROUND4 的两个 Python 脚本只处理 sparse / LP metadata。
+- 结论：无可复用的、能安全读取 ramdisk 内容的已审核脚本。
+
+1.3 本机已安装工具（仅检测，未执行解包）
+- magiskboot：NOT FOUND（ROUND2 已记录，本轮复核一致）
+- unpack_bootimg / unpack_bootimg.py：NOT FOUND（ROUND2 已记录）
+- lz4：NOT FOUND；zstd：NOT FOUND；7z / 7za：NOT FOUND；cpio：NOT FOUND
+- gzip / gunzip：FOUND；brotli：FOUND；tar：FOUND；openssl：FOUND
+- Python 3.13：FOUND；标准库 gzip / lzma / bz2 / zlib：FOUND
+- Python 第三方 lz4 / brotli / zstandard / cpio 模块：NOT FOUND
+- 上述 gzip / brotli / tar 是通用解压器，不是 Android boot image 解析器；
+  在没有可信 boot unpack 工具的前提下，不能据此判定 boot.img 内嵌
+  ramdisk 的格式，也不能安全提取其内容。
+
+======================================================================
+2. ramdisk 格式与读取结果
+======================================================================
+- ramdisk 压缩格式：UNDETERMINED / BLOCKED。
+  已审核脚本只对「完整文件」做魔数检测；boot.img 内的 ramdisk 是镜像内
+  的一个区域，现有输出没有该区域的偏移量，没有已审核脚本能定位它。
+  若要判定必须新增 boot image header 解析逻辑，按任务书第 3.A 节禁止，
+  因此本子项停止，不写自制 parser，不猜 gzip/lz4/brotli。
+- ramdisk 内容读取：NOT_RUN / BLOCKED。
+  BLOCKED 原因（逐条）：
+    B1 没有可信 boot unpack 工具（magiskboot / unpack_bootimg 均不存在）；
+    B2 没有已审核的 ramdisk 区域定位/提取脚本可复用；
+    B3 本机通用解压器（gzip/brotli/tar）不能替代 boot image 解析器；
+    B4 任务书明确禁止自写 boot parser、禁止下载/安装未知 EXE/DLL、
+       禁止 WSL 与绕过 Windows 安全策略；本轮遵守，不以任何方式绕过。
+- ramdisk 文件 inventory：EMPTY（BLOCKED，未读取任何 ramdisk 文件，
+  因此不编造 init*.rc / fstab.* / prop.default / ueventd*.rc 清单）。
+
+======================================================================
+3. 可复用的既有 boot-chain 记录（来自 ROUND2 报告，非本轮新发现）
+======================================================================
+以下字段来自 ROUND2 已上传的 firmware_analysis.txt，本轮仅引用，未重新解析：
+- boot.img：Android boot header v2；kernel 22,264,379 B；ramdisk 519,986 B；
+  second 0 B；page size 4,096 B；header size 1,660 B；DTB region 1,664,243 B；
+  DTB address 32,505,856（数值仅作既有记录引用，不作为新证据）。
+- 独立 ramdisk：boot.img 内嵌 ramdisk 区域 + 单独的 ramdisk.img 镜像并存；
+  ramdisk.img 自身为 header v0，声明 ramdisk 1,322,962 B、page size 2,048 B；
+  recovery/erecovery ramdisk 为 header v0，声明 29,099,169 B。
+- 传统 boot + 独立 ramdisk，不是 vendor_boot / init_boot 布局（ROUND1/2 结论）。
+- ROUND3 依据 boot header v2 布局算出 DTB region 偏移 22,790,144，
+  并在该处校验 d00dfeed magic；本轮不重算、不重新定位。
+
+======================================================================
+4. cmdline 中与 display / boot property 相关的命中（仅限既有头部记录）
+======================================================================
+检查范围：ROUND2 已记录的 boot.img / recovery.img / erecovery.img cmdline。
+检查方式：只读引用既有脱敏字段；未读取 ramdisk 文件。
+输出原则：只列 property key 与类别；敏感/数值型值一律不展开。
+
+boot property key（仅 key 名）：
+  androidboot.hardware, androidboot.console, androidboot.memcg,
+  androidboot.usbcontroller, androidboot.selinux, buildvariant,
+  earlycon, lpm_levels.sleep_disabled, video, msm_rtb.filter,
+  service_locator.enable, swiotlb, loop.max_part, cgroup.memory,
+  reboot, unmovable_isolate1
+（MMIO 地址、位掩码与内存数值均已省略/脱敏。）
+
+display 相关命中：
+  - video=vfb:*：通用虚拟 framebuffer console 参数（分辨率与显存数值脱敏）。
+    这是 display-adjacent 的通用内核参数，不是 panel/lcd 选择器，
+    不指向任何 panel profile，不对应 NT36523/110_20d 等候选。
+  - 未发现 panel、lcd、display 相关的 boot property key、service name、
+    触发器条件或配置文件路径。cmdline 中没有任何 ACTIVE_PROFILE 线索。
+
+证据等级：
+  - SELECTOR_SCAN_SCOPE_CMDLINE_ONLY = NO_PANEL_SELECTOR_FOUND
+    （仅在成功读取的既有 cmdline 记录范围内成立）
+  - RAMDISK_SELECTOR_SCAN = BLOCKED（ramdisk 未读取，不能声称 NO_PANEL_SELECTOR_FOUND）
+  - 全局 panel selector 状态 = BLOCKED + NO_PANEL_SELECTOR_FOUND(cmdline only)
+  - ACTIVE_PROFILE = UNKNOWN（无 boot selector 实证，更无 live FDT / runtime 证据）
+
+======================================================================
+5. Boot-chain mount / module / firmware 路径索引
+======================================================================
+- ramdisk 内 mount statements（init rc / fstab）：NOT_READ / BLOCKED。
+- module load directives：NOT_READ / BLOCKED；未读取 .ko，未计算哈希，
+  未尝试装载；旧 4.19 模块与 ACK 6.18 KMI 兼容性保持 UNKNOWN。
+- firmware path references：NOT_READ / BLOCKED；未提取、未打开任何固件文件。
+- system/vendor/odm/product/cust 挂载关系：只能确认既有报告记录的整体
+  boot 布局（传统 boot + 独立 ramdisk），具体挂载点因 ramdisk 不可读而 UNKNOWN。
+- 本轮没有从 boot.img 中提取任何二进制，也没有读取 vendor/odm EROFS。
+
+======================================================================
+6. 清理与覆盖确认
+======================================================================
+- 原始 boot.img 未修改（本轮没有写入任何镜像文件）。
+- 未创建临时解包目录；ROUND1–ROUND9 历史输出未被覆盖或删除。
+- 本目录只写入本报告的 UTF-8 文本与 summary JSON，无任何二进制。
+- 未上传、也不会上传 boot.img / ramdisk / DTB / DTBO / kernel / module /
+  firmware 二进制或含敏感值的完整 ramdisk 文件。
+
+======================================================================
+7. 结论
+======================================================================
+ramdisk 在现有可信工具条件下不能安全检查：缺少 boot unpack 工具与已审核
+的区域提取脚本，按任务书 fail-closed 原则判定 BLOCKED，不自制 parser。
+既有 cmdline 记录中没有 panel/lcd/display selector；video=vfb 只是通用
+framebuffer console 参数。没有 live FDT 或 runtime 证据，ACTIVE_PROFILE
+继续 UNKNOWN。后续若要解除 BLOCKED，需要由任务下发方提供可信的 boot
+unpack 工具与明确授权，而不是让本地 Agent 自行找工具或写解析器。

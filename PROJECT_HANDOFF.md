@@ -607,3 +607,25 @@ ROUND17 has been rewritten to passive diagnosis only:
 Ask the user for the local Agent product name/version and a screenshot of the block message if passive metadata cannot identify it.
 
 Fixed eventual distro plan remains: preserve current C: Ubuntu, install a separate Ubuntu-24.04 on D: only after supported WSL execution is authorized. ROUND58 second-AI Kleaf implementation continues independently.
+
+## 最新补丁集成进展 — ROUND59（2026-11-24）
+
+ROUND59 已完成完整 UFS 补丁系列的固定源码精确上下文模拟：
+`kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`。
+
+固定 ACK commit：`8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。五个输入 source blobs（qcom,ufs.yaml / qcom,ufs-common.yaml / ufs-qcom.c / ufs-qcom.h / 只读 board DTS fixture）的 Git SHA 均与预先记录身份完全一致。
+
+按顺序 ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37（仅在 review-only DTS fixture）→ ROUND33 → ROUND52-0002，完成 7 份补丁共 **16/16 hunk** 的精确 old-context / new-line-anchor 匹配；ROUND52-0002 正确拆分到 ufs-qcom.h 与 ufs-qcom.c。无 fuzz 或 nearest-context fallback。367 条新增行的轻量扫描没有发现行尾空白。
+
+重要修正：ROUND59 检出之前 ROUND57 patch 的 unified-diff hunk header 错误（旧 6/新 8 声明，但正文是旧 13/新 15；且 ROUND32 后实际起点是 165 而非 163）。已在 main 修复为 `@@ -165,13 +165,15 @@`，当前 blob SHA `3656f05ad01d54452b83591b762faaa71a16f592`。不要再使用旧 SHA `f282a695...`。ROUND32 原文件未修改。
+
+**验证边界必须准确：** ROUND59 是从 GitHub 获取精确 source blob 后进行的 in-memory exact-context patch replay，不是真实 `git apply --check`、真实工作树应用或 `git diff --check`。也没有运行 checkpatch、dt_binding_check、dtbs_check、Kconfig resolver、Kleaf/Bazel 或编译；ROUND37 仍只对 `.dts.draft` fixture 成立，不是 ACK kernel 树内真实 DTS。该报告将帮助本地 build Agent 后续少走弯路，但不代表可启动镜像。
+
+### WorkBuddy / 本地环境现状
+
+- ROUND16：终态 `BLOCKED_BY_HOST_SECURITY_POLICY`，WSL 未部署、源码未同步。
+- 用户已识别本地 Agent 为 **WorkBuddy**，所用模型为 **DeepSeek V4.1 Flash**。模型服务与 WorkBuddy 的命令执行沙箱属于不同层，不能由模型名称推断安全策略菜单或审批机制。
+- 用户明确要求由 WorkBuddy 自行处理其命令执行权限/拦截来源；主 AI 不再让用户寻找未经证实的 Windows 菜单。ROUND17 已改为 WorkBuddy 被动诊断实际执行策略、查阅自身应用文档/日志，再按正式授权方式处理；禁止绕过策略或盲目重试 WSL。
+- ROUND58：二号 AI 的 Kleaf target / .config helper / build runbook 实现任务在独立分支 `ai-parallel/round58-kleaf-target-audit`，继续并行推进。
+
+下一步：主 AI 继续固定源码层审查与 patch integration prep；ROUND17 由 WorkBuddy 按自身执行策略处理，ROUND58 由二号 AI 实现。拿到真实本地工作树后再做真实 Git apply、schema、Kconfig 和 Image 编译。

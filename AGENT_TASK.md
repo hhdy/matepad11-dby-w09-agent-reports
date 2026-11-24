@@ -16,6 +16,7 @@
 - ROUND29 已将 ROUND27 的 UFS→RPMHPD 双 GenPD 方案细化到精确 ACK .33 probe 时序；当前为 SOURCE-REVIEWED DESIGN ONLY，尚未写 patch、修改 DTS、编译或运行。
 - ROUND30 确认 ACK .33 的 SM8250 MMCX 描述符没有 MX parent，而 HOS4.3 有 MMCX→MX ARC parent-supply 边；UFS→MMCX 路由不能直接宣称复现该关系。MMCX→MX 角点/资源等价性继续作为单独 gate，不得猜测添加 DTS parent。
 - ROUND31 已对照 .33_r00 的 UFS/QMP/CLK/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig，修订 storage-first fragment 注释，明确 UFS→PM_DEVFREQ→PM_OPP 和 GCC→QCOM_GDSC→GENPD 的隐藏依赖；Kconfig resolver 尚未运行。
+- ROUND32 确认 ACK .33 与当前上游 qcom,ufs.yaml 均遗漏 qcom,sm8250-ufshc；已准备独立 schema patch 草案，声明 SM8250 8 clocks / 单 reg-window 结构。补丁未应用，dt_binding_check / dtbs_check 均 NOT_RUN；它不包含双电源域 DTS 改动。
 - 阶段 C 才评估 ColorOS 或其他 ROM。
 - DerpFest Android 17 manifest 当前 `kernel-6.18.xml` 指向 June 2026 branch（6.18.21），不改变本项目 6.18.33 目标；Stage B 必须集成本项目已验证的 DBY-W09 内核和匹配模块。
 - 官方 Android 17 GKI release 页面列出的 September 2026 分支为 6.18.32；本项目的 6.18.33 ACK-derived build 不得未经 KMI/ABI/认证验证就宣称是官方 certified GKI。
@@ -26,6 +27,7 @@
 ## 当前公开研究报告
 
 - [ROUND28：Android 17 ACK 6.18.33 源码基线与 Qualcomm 平台增量策略](./kernel-baseline/round28/android17-6.18.33-source-baseline-and-qcom-platform-delta.md)
+- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)
 - [ROUND31：ACK 6.18.33 存储优先 Kconfig 依赖闭环](./kernel-baseline/round31/ack-6.18.33-storage-first-kconfig-dependency-closure.md)
 - [ROUND30：ACK SM8250 MMCX→MX parent/corner 等价性门槛](./kernel-baseline/round30/sm8250-rpmhpd-mmcx-mx-parent-equivalence-gate.md)
 - [ROUND29：ACK .33 UFS 双 GenPD / required-OPP probe 接入设计](./kernel-baseline/round29/ack-qcom-ufs-dual-genpd-required-opp-probe-integration.md)

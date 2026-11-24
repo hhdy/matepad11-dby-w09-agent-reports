@@ -13,6 +13,7 @@
 ## 当前公开研究报告
 
 - [ROUND23：UFS VCCQ parent rail 与 ACK 驱动适配](./kernel-baseline/round23/ufs-vccq-parent-rail-and-ack-driver-adaptation.md)
+- [ROUND23：UFS VCCQ parent rail 与 ACK 驱动适配](./kernel-baseline/round23/ufs-vccq-parent-rail-and-ack-driver-adaptation.md)
 - [ROUND23：ACK ARC provider 设备结构与请求聚合设计](./kernel-baseline/round23/ack-arc-provider-device-and-aggregation-design.md)
 - [ROUND22：ACK RPMh ARC 与 proxy-consumer 移植可行性](./kernel-baseline/round22/ack-rpmh-arc-and-proxy-consumer-port-feasibility.md)
 - [ROUND21：ACK PM8150 VRM parent-supply 与 dummy regulator 风险审查](./kernel-baseline/round21/ack-pm8150-vrm-parent-supply-gap.md)
@@ -30,7 +31,7 @@
 
 ## 当前重点事实
 
-- UFS HOS4.3 supply map：ROUND9 已完成 8/8 的 Host/PHY 主电源闭合：VCC/L17、VCCQ/L6、VCCQ2/S4、VDDA-PHY/L5、VDDA-PLL/L9、VDDP-REF-CLK/L6、HBA/GCC UFS_PHY_GDSC；另有独立 UFS Host VCCQ parent rail PM8150A S8（1.2–1.4V，210mA），ROUND23 将其映射到 ACK PM8150L S8 并新增 driver patch draft。
+- UFS HOS4.3 supply map：ROUND9 已完成 8/8 的 Host/PHY 主电源闭合：VCC/L17、VCCQ/L6、VCCQ2/S4、VDDA-PHY/L5、VDDA-PLL/L9、VDDP-REF-CLK/L6、HBA/GCC UFS_PHY_GDSC；另有独立 UFS Host VCCQ parent rail PM8150A S8（1.2–1.4V，210mA）。ROUND23 已将它映射到 ACK PM8150L S8，并添加 qcom,vccq-parent consumer 属性与驱动 patch sketch。ACK S8 VRM ops 不支持 DRMS set_load，210mA load vote 可能 no-op；实际 enable/power 和 HOS suspend/resume 等价尚未 runtime 验证。
 - ROUND7 确认 PM8150 S4/L5/L6/L9/L17 的 regulator 节点和输出电压；ROUND11 对完整 HOS4.3 base FDT 复核后发现四条 parent-supply 全属于 ARC level groups、六条 proxy-supply 属于 ARC proxy 机制，并全 FDT 确认 vdd-s1..s10/vin/vph-pwr 属性零命中。物理 PMIC 输入 supply 仍未确定。
 - 同型号公开 Linux 7.0 DTS 使用固定 3.7 V vph_pwr 和 PM8150 vdd-s1..s10-supply links；其头部说明该部分参考 HOS4.2，因此不能直接当作本设备 HOS4.3 已证实事实。当前 ACK DTS 草案已暂时移除这些未确认输入链接。
 - ROUND7 的本机脱敏 DTBO inventory 显示 9 个 stock DTBO entry 都有相同的通用哨兵 huawei,modem_id = <0xffffffff 0>；当前最小 rootparam overlay 已保留该字段。它不是设备唯一编号，但新 DTBO 的 ABL 接受性仍未知。

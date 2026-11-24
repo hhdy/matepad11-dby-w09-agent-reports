@@ -479,3 +479,30 @@ ROUND55 consolidates existing Stage-A evidence into an execution sequence and se
 - ROUND54 remains the second AI's independent UFS review; its branch currently has a report template only. ROUND15 currently has a taskbook only, no execution report.
 
 No source patch, BUILD target, .config, DTB, image, or device partition was changed or built. No device boot is claimed. The order remains ACK 6.18.33 Stage A first; DerpFest Stage B only after Stage-A boot and storage/basic-hardware acceptance.
+
+
+## 最新环境盘点与部署授权 — ROUND15 / ROUND16（2026-11-24）
+
+### ROUND15 已完成
+
+本地 Agent 已上传 `firmware-analysis/round15/round15_stagea_build_environment_inventory.txt` 到 `firmware-audit-v1`，Git blob SHA `e4d5bcdb8ae2d6f7ff8ae173308badf549b8f0bb`。
+
+结论：`NO_EXISTING_BUILD_WORKSPACE_FOUND`。在限定扫描范围内未找到 ACK 源码树或 Repo workspace；未证实有可用 Linux 构建环境；Windows 侧缺少 kernel build toolchain。D 盘当时有 325.4 GiB 可用。WSL 可执行文件存在，但发行版查询被主机安全程序拦截，因此现有 WSL distro 状态 UNKNOWN，不能宣称 WSL 完全不存在。
+
+### ROUND16 已创建：部署 WSL2 + ACK kernel workspace
+
+用户于 2026-11-24 明确授权本地 Agent 在电脑上部署构建环境。
+
+任务书：`firmware-analysis/round16/AGENT_TASK.md`。
+
+计划采用 WSL2 + Ubuntu 24.04 LTS，发行版安装位置优先为 `D:\\WSL\\Ubuntu-24.04`；ACK workspace 放在 WSL 自己的 Linux 文件系统中，避免在 `/mnt/d` 上直接编译。仅同步官方 Android kernel manifest `common-android17-6.18`，不检出完整 AOSP/DerpFest 平台。将 common kernel 精确 pin 到 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`，并保存 `repo manifest -r`。
+
+Kleaf 的 Bazel / Clang / Rust 版本应由 Repo manifest 同步的 prebuilts 提供，不在 Windows 全局安装散装编译器。ROUND16 限制部署占用不超过 200 GiB，并保留 D 盘至少 100 GiB 可用。
+
+重要边界：ROUND16 允许官方 WSL、Ubuntu apt 包、Repo sync 和 workspace 创建；不允许绕过 Windows 安全程序、关闭 Defender/安全策略、修改 BIOS、强制重启、删除已有 distro、操作设备或刷写分区。若 WSL 仍被安全策略拦截则 BLOCKED 并停止；若需要重启或 UAC，则交给用户完成，不得自动强行推进。
+
+ROUND16 当前状态：**任务书已上传，等待本地 Agent 执行；尚无部署完成报告。** 本轮不做内核编译。只有环境与精确源码 pin 核验通过后，才进入独立的补丁集成、schema/Kconfig 检查与 Kleaf 编译阶段。
+
+技术决策记录：`kernel-baseline/round56/linux-build-host-deployment-decision.md`。
+
+Stage A ACK 6.18.33 顺序不变；设备实际启动与存储/基础硬件验收前，不进入 DerpFest Stage B。

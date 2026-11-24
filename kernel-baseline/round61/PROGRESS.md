@@ -163,3 +163,6 @@ Added `tests/generate_round61_ufs_fixtures.py` and wired it into the ACK schema 
 Positive UFS fixture output is retained, and every negative fixture must fail with a diagnostic naming its expected property. ROUND63 PHY fixtures remain independent: property absent accepted, empty boolean accepted, malformed cell-valued property rejected.
 
 Added `phase-b-dt-binding-validation.md` with exact command gates and the Round57 supersession rationale. The workflow publishes real output to `hosted-ufs-validation-latest.md` and uploads artifacts. **All current fixture outcomes remain pending** until that hosted result appears; the prior run predates these tests.
+
+
+The UFS negative matrix was extended to test zero VCCQ-parent max-microamp as well as zero VDDP load, so both positive-load constraints are exercised. Current generator has ten cases (two positive, eight negative). Workflow now requires both zero-load values to be rejected.

@@ -85,7 +85,7 @@ jobs:
           apply_patch kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
           apply_patch kernel-baseline/round61/patches/round52-0001-context-corrected.patch
           apply_patch kernel-baseline/round61/patches/round33-checkpatch-clean.patch
-          apply_patch kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
+          apply_patch kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch
           printf '\n=== final diff check ===\n'
           git -C "$ack" diff --check
           git -C "$ack" status --short
@@ -104,7 +104,7 @@ jobs:
           set +e
           perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round61/patches/round33-checkpatch-clean.patch" > "$RUNNER_TEMP/round33-checkpatch.log" 2>&1
           rc33=$?
-          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft" > "$RUNNER_TEMP/round52-0002-checkpatch.log" 2>&1
+          perl "$ack/scripts/checkpatch.pl" --no-tree --no-signoff --strict < "$report/kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch" > "$RUNNER_TEMP/round52-0002-checkpatch.log" 2>&1
           rc52=$?
           cat "$RUNNER_TEMP/round33-checkpatch.log"
           cat "$RUNNER_TEMP/round52-0002-checkpatch.log"

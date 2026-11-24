@@ -48,3 +48,9 @@
 Inspect the next hosted-runner diagnostic output. Correct ROUND52-0001 only on this branch if the actual context proves the defect; preserve the canonical main patch blob. Then rerun from a fresh pristine ACK checkout, complete the remaining source patches, run checkpatch and authoritative dt_binding_check, and continue into Kleaf integration where a pinned manifest workspace is available.
 
 ROUND37 remains excluded until Phase E has a real board DTS path backed by trusted memory and power-supply facts. Do not start DerpFest Stage B.
+
+
+## New input — ROUND63 (2026-11-24)
+
+Primary AI found an HOS4.3 UFS PHY `vdda-phy-always-on` lifecycle difference vs pinned ACK QMP UFS PHY and created driver + binding candidates on main. These are not validated. Mission now includes real git apply, schema, checkpatch, compile and regulator lifecycle tests for both property-present and absent paths. Physical PM8150 L5 input supply remains unresolved. See main report `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`.
+

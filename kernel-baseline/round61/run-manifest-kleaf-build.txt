@@ -1,1 +1,3 @@
 One-shot trigger refresh after correcting Repo v2.71 sync syntax (no unsupported repo sync --depth option) and adding race-safe publication of manifest-pinned build evidence. Verify the official manifest and exact ACK tag, then apply the complete patch stack and run the DBY-W09 Kleaf Image build.
+
+Retry trigger after granular toolchain diagnostics and explicit manifest JDK activation; record exact failing stage if Bazel wrapper or toolchain is unavailable.

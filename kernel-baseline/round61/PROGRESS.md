@@ -154,3 +154,12 @@ Workflow update commit: `35c71f9299165443586fe7e27cc196bcaab7382b`. This update 
 ### ROUND63 checkpatch preflight correction
 
 The independent driver-patch line scan found an 82-column Subject line. Shortened only the branch-local patch subject to `[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle`; source hunks are unchanged and canonical main candidate remains untouched. Repeat scan has no over-80-column source/message lines (only the conventional `diff --git` header). This patch update triggers the narrowed UFS/PHY hosted validation workflow again. Commit: `3d56f4449ff3330300036b5a79cde3550db00f3f`; report note commit: `853538b3a26c965eea25224f8f9458cf133d9d49`.
+
+
+## Phase B fixture expansion — 2026-11-25
+
+Added `tests/generate_round61_ufs_fixtures.py` and wired it into the ACK schema workflow. It generates nine minimal DTS fixtures and checks the exact intended matrix against processed ACK schemas: SM8250 1/2 GenPD accepted; SM8250 7/9 clock names rejected; SM8250 3 GenPD rejected; SM8150 2 GenPD rejected; missing VDDP/VCCQ-parent max-load pair rejected; zero VDDP load rejected. The SM8150 fixture uses its valid 9-clock/two-reg baseline so the failure isolates the non-SM8250 power-domain limit.
+
+Positive UFS fixture output is retained, and every negative fixture must fail with a diagnostic naming its expected property. ROUND63 PHY fixtures remain independent: property absent accepted, empty boolean accepted, malformed cell-valued property rejected.
+
+Added `phase-b-dt-binding-validation.md` with exact command gates and the Round57 supersession rationale. The workflow publishes real output to `hosted-ufs-validation-latest.md` and uploads artifacts. **All current fixture outcomes remain pending** until that hosted result appears; the prior run predates these tests.

@@ -366,3 +366,6 @@ The final primary candidate driver patch on main is now Git blob `a06b7d3fc19e0b
 
 Primary AI has verified all 15 pinned ACK QMP UFS regulator lists put `vdda-phy` first and `vdda-pll` second, and a deterministic in-memory replay now matches 5/5 driver hunks + 1/1 binding hunk. This remains NOT a real Git apply. Re-fetch the exact main artifacts and run real `git apply --check` / apply / diff / checkpatch / dt_binding_check / compile on the disposable pinned worktree.
 
+
+
+ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.

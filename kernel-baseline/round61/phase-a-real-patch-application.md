@@ -129,3 +129,47 @@ The workflow now applies and checks these branch-local copies. The changes are f
 ## 8. Next action
 
 Run the latest workflow revision from a fresh pinned ACK checkout. Inspect strict checkpatch output and the corrected colon-filtered UFS schema validation. Then add positive/negative fixtures for SM8250 clock counts, power-domain limits and supply/load pairing. Only after these gates pass should Phase C proceed. Keep ROUND37 excluded until Phase E legitimately migrates the board DTS.
+
+
+## 2026-11-24 follow-up — superseding evidence
+
+The earlier section describing a six-patch application is superseded by the actual schema-driven sequence below.
+
+### Source patch sequence used by the passing runner
+
+The hosted runner `45435020774` successfully applied:
+1. ROUND32
+2. ROUND36
+3. ROUND52-0001 ROUND61-local corrected copy
+4. ROUND33 ROUND61-local checkpatch-clean copy
+5. ROUND52-0002 ROUND61-local checkpatch-clean copy
+
+ROUND57 was intentionally not applied. ACK dt-schema rejected its redundant `minItems/maxItems` constraints when combined with the fixed eight-entry `clock-names.items` list. ROUND32 already defines the eight ordered const items. The exact 8-entry constraint still needs explicit 7/8/9 negative/positive DT fixtures before this design is accepted.
+
+### ROUND52-0001 schema correction
+
+The branch-local copy also removes four invalid explicit `$ref` declarations from standard `*-supply` and `*-microamp` properties. The qcom,ice phandle reference in the original context is retained. The corrected patch applies cleanly; canonical main remains unchanged.
+
+### Kleaf target and validator
+
+The ROUND58 target patch and storage-first fragment apply cleanly. The branch-local target patch was updated with the one blank line required by buildifier. The hosted runner's auto-format diagnostic showed that was the only BUILD.bazel formatting change. The nine config-helper unit tests passed. A subsequent workflow revision now runs `buildifier -mode=check` without auto-fixing the temporary source tree.
+
+### Latest schema evidence
+
+The colon-filtered `dt_binding_check` run generated the processed schema and both UFS example DTBs; direct `dt-doc-validate` and `yamllint` passed. However, the example validation emitted real errors:
+- `qcom,ufs.example.dtb`: `power-domains` too short.
+- `unevaluatedProperties` rejects common UFS properties (interrupts, iommus, phys/phy-names, resets and regulator supplies).
+
+The upstream make target did not propagate these example diagnostics as a nonzero exit, so Phase B is **NOT PASS**. The next workflow must invoke `dt-validate` directly on the generated examples and fail on these diagnostics. Do not suppress or work around them by weakening schema constraints.
+
+### Phase status
+
+- Source patch application: PASS on hosted runner.
+- Driver checkpatch: PASS (draft sign-off intentionally not fabricated).
+- Kleaf patch application: PASS.
+- Buildifier: the formatted temporary BUILD file passed; the corrected branch patch still requires the new non-auto-fixing check run.
+- Config helper tests: 9/9 PASS.
+- UFS schema documentation lint: PASS.
+- UFS example schema validation: FAIL / unresolved.
+- Bazel query, final Kconfig, kernel Image, DTB/boot image and device boot: NOT_RUN.
+- Phase E remains blocked on trusted HOS4.3 FDT/EFI memory handoff and board-specific PM8150 rail evidence, as detailed in `phase-e-board-dts-memory-power-gates.md`.

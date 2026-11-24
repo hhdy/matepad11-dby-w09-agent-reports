@@ -24,7 +24,7 @@ Sources:
 
 ### 2.1 Command DB AUX voltage map
 
-For each ARC resource, the old driver reads the resource's Command DB AUX data. It expects a u16 array with 1–16 entries, maps shared regulator-framework voltage levels (approximately 0–512) to ARC hardware operating levels (0–15), and ignores zero-padding entries added for alignment.
+For each ARC resource, the old driver reads the resource's Command DB AUX data. It expects a u16 array with 1–16 entries, maps shared regulator-framework logical voltage-level identifiers (roughly 1–513) to ARC hardware operating levels (0–15), and ignores zero-padding entries added for alignment. The regulator binding intentionally reuses regulator-min/max-microvolt for these logical corner identifiers; they are not physical microvolt values. The ARC regulator list_voltage callback returns the AUX-mapped logical level, and set_voltage_sel submits the selector as the hardware ARC level. ROUND24 records the binding and local HOS4.3 examples.
 
 It verifies:
 - the qcom,resource-name exists;
@@ -145,6 +145,14 @@ Sources:
 - ACK direct-child population and parent controller lookup: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh-rsc.c
 - ACK RPMh API and TCS states: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/rpmh.h and https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/tcs.h
 - Legacy ARC max aggregation: https://android.googlesource.com/kernel/msm/%2B/28f2b66a16e50693a0796b323d652ed1669115b1/drivers/regulator/rpmh-regulator.c
+
+## 4.2 ARC regulator voltage-selector semantics (ROUND24)
+
+The legacy RPMh regulator binding states that regulator-min-microvolt and regulator-max-microvolt on ARC children carry RPMH_REGULATOR_LEVEL_* identifiers, unlike physical VRM regulator outputs. qcom,set is required and selects active, sleep or both request sets. qcom,init-voltage-level is an optional initial ARC corner; qcom,min-dropout-voltage-level is an optional parent/child level delta used only when a parent-supply link exists. These values and properties must be preserved as corner semantics, not converted to physical microvolts.
+
+ROUND7's selected HOS4.3 property inventory shows ARC child minima such as 16, 48 and 64, with a 65535 maximum sentinel. The same inventory shows VRM outputs such as PM8150 L5 at 880000 and L9 at 1200000, which are physical microvolt constraints. The two meanings must remain separate. Resource names, qcom,set, init-level, dropout and send-default flags were not included in the selected ROUND7 rows, so their HOS4.3 values remain UNKNOWN, not absent.
+
+See ROUND24 for exact local examples and the required future local-property scope.
 
 ## 5. Recommended port sequence
 

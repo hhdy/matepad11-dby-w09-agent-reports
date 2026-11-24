@@ -75,7 +75,7 @@ The review-only main-branch draft `dts/dby-w09-ack18-board.dts.draft` has been u
 | L6 | PMIC5 LDO; init LPM; LPM/HPM supported; 30mA threshold; no proxy consumer. | ACK LPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS. |
 | L9 | PMIC5 LDO; init HPM; LPM/HPM supported; 30mA threshold; 100mA boot-time proxy consumer. | Same as L5: preserve HPM initial / LPM-HPM DRMS, but do not synthesize permanent system load. |
 | L17 | PMIC5 LDO; init LPM; LPM/HPM supported; 10mA threshold. | ACK LPM initial; ACK LPM/HPM allowed modes; enable set-load DRMS. Do not claim HOS established its PLDO subtype. |
-| S8 | PMIC5 HFSMPS; init RET; RET/AUTO supported; 200mA threshold. | ACK RET/AUTO allowed modes, but set initial AUTO instead of RET. ACK HFSMPS510 lacks load-based DRMS callbacks and the UFS parent advertises up to 210mA; fixed RET would not be dynamically promoted. AUTO uses the hardware's autonomous load response and is the safer static fallback. Do not add allow-set-load. |
+| S8 | PMIC5 HFSMPS; init RET; RET/AUTO supported; 200mA threshold. | ACK RET initial and RET/AUTO allowed. ROUND51 withdrew the interim AUTO fallback because the UFS load-only request is ineffective in fixed ACK. Do not add allow-set-load, boot-on, always-on or forced enable; runtime enable state is UNKNOWN. |
 
 ### Proxy-consumer lifecycle caveat for L5/L9
 
@@ -90,7 +90,7 @@ A permanent `regulator-system-load=<100000>` is therefore **not** an equivalent 
 
 ### S8 deviation caveat
 
-HOS4.3's initial RET and 200mA RET→AUTO threshold are direct local metadata, but the fixed ACK HFSMPS510 operations cannot perform that load-triggered policy. The draft uses hardware AUTO to avoid forcing a high-current UFS parent supply into fixed RET. This is an intentional compatibility fallback, not a claim that ACK reproduces HOS policy or threshold behavior. Runtime rail behavior remains untested.
+HOS4.3's initial RET and 200mA RET→AUTO threshold are direct local metadata, but the fixed ACK HFSMPS510 operations cannot perform that load-triggered policy. ROUND51 therefore restores the ACK DTS initial mode to RET, keeps RET/AUTO in the allowed-mode list, and leaves enable ownership/runtime state unresolved. This preserves the only proven initial mode; it does not prove that S8 is enabled or that UFS will operate without additional boot-time rail ownership. Runtime rail behavior remains untested.
 
 ## 5. Remaining boundaries
 

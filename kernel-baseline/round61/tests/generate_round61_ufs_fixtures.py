@@ -28,7 +28,11 @@ def render(
     vccq_supply: bool = True,
     vccq_load: int | None = 210000,
 ) -> str:
-    names = SM8150_NAMES if compatible == "qcom,sm8150-ufshc" else SM8250_NAMES + ["ice_core_clk"]
+    names = (
+        SM8150_NAMES
+        if compatible == "qcom,sm8150-ufshc"
+        else SM8250_NAMES + ["ice_core_clk"]
+    )
     names = names[:clock_count]
     clocks = ", ".join(f"<&clk{i}>" for i in range(clock_count))
     clock_names = ", ".join(f'"{name}"' for name in names)
@@ -67,6 +71,7 @@ def render(
         interrupt-controller;
         #interrupt-cells = <3>;
     }};
+    interrupt-parent = <&intc>;
 {clock_nodes}
 {domain_nodes}
     vddp_reg: vddp-regulator {{ }};
@@ -76,7 +81,6 @@ def render(
         compatible = "{compatible}", "qcom,ufshc", "jedec,ufs-2.0";
         reg = {regs};
         {reg_names}
-        interrupt-parent = <&intc>;
         interrupts = <0 1 4>;
         clocks = {clocks};
         clock-names = {clock_names};

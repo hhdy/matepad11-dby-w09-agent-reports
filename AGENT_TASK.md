@@ -144,3 +144,22 @@ ROUND45 仅完成补丁文本/hunk/source-context 静态核验。完整 ACK 工�
 
 
 ROUND45 补充 Kconfig 源码核验：固定 ACK 源码中 UFS core → PM_DEVFREQ → PM_OPP；SM8250 GCC → QCOM_GDSC → PM_GENERIC_DOMAINS（PM=y 时）；PM_GENERIC_DOMAINS_OF 随 OF 自动启用；QCOM_RPMHPD 依赖 QCOM_RPMH + QCOM_COMMAND_DB，均已由 storage-first fragment 请求。未发现新增 helper 还需要额外直接配置符号；最终 Kleaf/Kconfig resolver 与 .config 核验仍 NOT_RUN。
+
+
+## 最新公开源码核验：ROUND46（2026-11-24）
+
+ROUND46 已对固定 ACK `android17-6.18.33_r00` commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 的 `drivers/opp/of.c` / `drivers/opp/core.c` 做精确源码契约复核：
+
+- OPP framework 的 `_opp_table_alloc_required_tables()` 以第一个可用 OPP entry 确定整张表的 `required_opp_count`；这是 table-level 槽位发现。
+- 后续 `_of_opp_alloc_required_opps()` 会对每个具体 OPP entry，按该 count 解析对应的 `required-opps[i]`。因此不能把“第一个 entry 决定槽位数”误解为“只需要校验第一个 entry”。
+- ROUND45 的 ROUND33 驱动补丁预检全部可用 UFS OPP entry，每项强制恰好一个有效 MMCX required-opps target，与固定 ACK 的单槽位表结构一致，并能在通用 OPP 建表前提前发现后续 entry 的缺失/错误引用。
+- `_opp_set_required_dev()` 对 `required_dev_index` 做 required_opp_count 边界检查；index 0 与单 required-opps 槽位匹配。GCC UFS_PHY_GDSC 保持作为第二个已附着电源域，不映射到不存在的第二个 required-opps 槽位。
+- `devm_pm_opp_set_config()` 成功时返回 0；ROUND33 的错误判断方式正确。
+
+精确源 blob：`drivers/opp/of.c` = `505d79821584e28f454dae673cf85078762b2ec7`；`drivers/opp/core.c` = `157c84b689feba9ae2c446083e42de63e94a38a6`。
+
+**结论：** ROUND45 的全可用 OPP 条目预检与 ACK parser 的 table-discovery/per-entry-link 两阶段语义一致；本轮无需再改 ROUND33 补丁。ROUND46 报告：`kernel-baseline/round46/ack-opp-required-opps-parser-contract-review.md`。
+
+以上仅为固定源码静态审查；full-tree git apply、checkpatch、编译、最终 Kconfig/.config、dt-schema、DTB、Kleaf、运行时 MMCX vote、UFS 启动和设备实机启动均仍 NOT_RUN。ROUND12 仍是唯一活动本地 Agent 任务，尚未在 `firmware-audit-v1` 看到其结果。ROUND30 MMCX-to-MX、ROUND42/43 memory handoff、ROUND40 VCCQ-parent/VDDP teardown 仍是独立门槛。
+
+Stage A 仍是唯一当前主线：先让 DBY-W09 实际启动 ACK 6.18.33 并通过存储/基础硬件验收；未通过前不开始完整 Android 17 DerpFest Stage B。

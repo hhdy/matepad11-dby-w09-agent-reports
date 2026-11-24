@@ -629,3 +629,40 @@ ROUND59 已完成完整 UFS 补丁系列的固定源码精确上下文模拟：
 - ROUND58：二号 AI 的 Kleaf target / .config helper / build runbook 实现任务在独立分支 `ai-parallel/round58-kleaf-target-audit`，继续并行推进。
 
 下一步：主 AI 继续固定源码层审查与 patch integration prep；ROUND17 由 WorkBuddy 按自身执行策略处理，ROUND58 由二号 AI 实现。拿到真实本地工作树后再做真实 Git apply、schema、Kconfig 和 Image 编译。
+
+
+## ROUND58 completed / primary review ROUND60（2026-11-24）
+
+二号 AI 已提交 ROUND58 的完整 source-level 构建准备成果，独立分支保持：
+`ai-parallel/round58-kleaf-target-audit`。
+
+交付文件：
+- Kleaf target patch: `kernel-baseline/round58/0001-add-dby-w09-full-kernel-kleaf-target.patch`（blob `fa2183850a40b3e5054da8b9f410c0a65e820f79`）。
+- Final `.config` validator: `kernel-baseline/round58/check_dby_w09_config.py`（blob `5622b1e8e3dcf1c683e252e2abb1177de0b44435`）。
+- Unit tests: `kernel-baseline/round58/tests/test_check_dby_w09_config.py`（blob `82acac9f1602228ed9a780a98f7aadc046d55cad`）。
+- Implementation report/runbook: `kernel-baseline/round58/round58_kleaf_target_implementation.md`（blob `43be9adf30cc9cbff6443c554ef680e45cebf9b6`）。
+
+ROUND58 设计采用固定 ACK BUILD 中的 no-`base_kernel` full custom kernel_build 样式；以 `gki_defconfig` 为底，复制 storage-first fragment 到源码树并经 `post_defconfig_fragments` 应用，第一阶段仅构建 `Image`，不加臆造的 board DTB/DTBO/boot-image 目标。
+
+主 AI 已完成 ROUND60 独立复核：`kernel-baseline/round60/round60_primary_review_round58_kleaf_and_config_validator.md`。ACK pinned BUILD blob 与 insertion context 匹配；新增 132 行 fragment 与 main canonical config fragment 完全一致。Kleaf 官方 `main-kernel-2026` 文档说明 post fragment 在 defconfig 后应用、随后 olddefconfig 并检查最终 .config。配置检查器源码和九个 synthetic unit-test cases 已审阅；二号 AI 报告九项通过，但主 AI 未声称已在本地完整 checkout 中重新执行该测试。
+
+必须继续准确区分：ROUND58 target patch 已写、静态上下文已检查；真实 git apply、buildifier、Bazel query、Kconfig/Kleaf config、actual .config checker、Image compile 全部仍 NOT_RUN。ROUND58 不是编译成果，也不是 bootable image。
+
+ROUND60 对后续 runbook 加了两个执行注意点：所有 Bazel 命令经 tee 记录时要用 `set -o pipefail` 保留 Bazel 退出码；同一个 `//common:dby_w09` build 不要在两个阶段无缘无故重复执行，第一次得到 .config 后先 cquery/验证，只有源码配置有变化或明确 clean rebuild 才重跑。四个 Bazel jobs 仅是初始保守 CPU 上限，内存上限必须先测量 WSL/cgroup 实际值。
+
+### WorkBuddy ROUND17 最新事实
+
+ROUND17 已上传 `firmware-analysis/round17/round17_wsl_ack_workspace_deployment.txt`（branch `firmware-audit-v1`，blob `8efd13aa67774dceeef5c243f53044d474e3a37f`），状态 `BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL`。
+
+WorkBuddy 5.11.3.0 + sandbox-cli 5.11.4 的内部审计记录和静态资源表明：`wsl.exe` 是 WorkBuddy 自带默认 Program Blacklist 项，不是 Windows Defender 或 Windows 系统黑名单。应用内资源确认英文 UI 字符串为 Settings → Security Center → Program Blacklist。默认项是否能从 5.11.3.0 界面移除仍未由实机 UI 观察验证。ROUND17 没有改设置，没有再次运行 wsl.exe，也没有部署环境。用户已说由 WorkBuddy 自己处理，不要再把排查步骤推回给用户；主 AI 继续内核工作。
+
+保留原 C: Ubuntu 的决定不变。WorkBuddy 解决自身策略后，才可继续独立 Ubuntu 24.04 D: 部署与官方 manifest sync。暂不要求用户以管理员方式盲目重启 WorkBuddy。
+
+### 当前并行职责
+
+- WorkBuddy：自行处理自身命令执行策略；恢复后执行本地部署/ACK workspace。
+- 二号 AI：ROUND58 实现已提交并停止；其专属分支保留，不合并。
+- 主 AI：继续 Stage A 源码级集成审查与准备；ROUND59 patch series exact-source replay、ROUND60 Kleaf candidate review 已完成。
+- 下一次实际 build gate：有可用固定 ACK 工作树时执行真正的 `git apply --check` / 应用 / diff-check、dt_binding_check、Kconfig/Kleaf resolve 和 full custom Image 编译。
+
+PR #1 仍 Draft/Open/unmerged；protected DTS branch 不改。Stage A 仍先于 DerpFest Stage B。

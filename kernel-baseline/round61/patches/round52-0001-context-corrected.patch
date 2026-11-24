@@ -21,34 +21,29 @@ Draft only; dt_binding_check has not been run.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-@@ -47,5 +47,26 @@ properties:
+@@ -47,5 +47,22 @@ properties:
    qcom,ice:
-     $ref: /schemas/types.yaml#/definitions/phandle
-     description: phandle to the Inline Crypto Engine node
+      description: phandle to the Inline Crypto Engine node
  
 +  qcom,vddp-ref-clk-supply:
-+    $ref: /schemas/types.yaml#/definitions/phandle
-+    description:
+++    description:
 +      Supply for the UFS device reference-clock pad. The Qualcomm host
 +      driver requests the configured load and enables this supply.
 +
 +  qcom,vddp-ref-clk-max-microamp:
-+    $ref: /schemas/types.yaml#/definitions/uint32
-+    minimum: 1
+++    minimum: 1
 +    description: Maximum load requested from the UFS device reference-clock supply.
 +
 +  qcom,vccq-parent-supply:
-+    $ref: /schemas/types.yaml#/definitions/phandle
-+    description:
+++    description:
 +      Legacy Qualcomm UFS host VCCQ-parent rail. This is a separate host
 +      consumer supply and does not imply an enable or voltage request.
 +
 +  qcom,vccq-parent-max-microamp:
-+    $ref: /schemas/types.yaml#/definitions/uint32
-+    minimum: 1
+++    minimum: 1
 +    description: Maximum load associated with the VCCQ-parent host consumer.
    reg:
-@@ -64,4 +85,17 @@
+@@ -64,4 +81,17 @@
  allOf:
    - $ref: qcom,ufs-common.yaml
  

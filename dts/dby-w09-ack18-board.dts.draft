@@ -82,7 +82,10 @@
  * topology has no established RPMHPD parent or performance-state callback.
  * Therefore required-opps alone does NOT prove an MMCX RPMh vote. Preserve
  * UFS_PHY_GDSC and treat the UFS-to-RPMHPD route as an integration gap
- * (ROUND27). Do not copy vendor ARC nodes/properties as a shortcut.
+ * (ROUND27). A possible fix is a UFS dual-GenPD attach list with RPMHPD first
+ * and GDSC second, plus explicit OPP required_dev mapping before OPP-table
+ * parsing; this needs a UFS driver patch and has not been implemented.
+ * Do not copy vendor ARC nodes/properties as a shortcut.
  *
  * Important porting limit: the upstream SM8250 rpmhpd descriptor has a
  * CX->MX parent relationship, while its MMCX descriptor does not mirror

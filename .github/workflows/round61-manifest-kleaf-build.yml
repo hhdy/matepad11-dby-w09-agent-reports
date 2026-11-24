@@ -129,8 +129,12 @@ jobs:
           stage="locate and activate manifest-provided JDK"
           jdk_java="$(find -L prebuilts/jdk/jdk11 -type f -path '*/bin/java' | sort | head -n 1)"
           test -n "$jdk_java"
+          jdk_java="$(realpath "$jdk_java")"
           JAVA_HOME="$(dirname "$(dirname "$jdk_java")")"
+          test -x "$JAVA_HOME/bin/java"
           export JAVA_HOME
+          export TMPDIR="$RUNNER_TEMP"
+          mkdir -p "$TMPDIR"
           export PATH="$JAVA_HOME/bin:$PATH"
           "$JAVA_HOME/bin/java" -version 2>&1 | tee "$ART/java-version.txt"
           stage="run manifest-provided Bazel wrapper"

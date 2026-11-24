@@ -40,6 +40,7 @@ jobs:
               echo "- Date UTC: $(date -u +%FT%TZ)"
               echo "- Branch: $GITHUB_REF_NAME"
               echo "- Trigger commit: $GITHUB_SHA"
+              echo "- Workflow run ID: $GITHUB_RUN_ID"
               echo "- Manifest commit: $MANIFEST_COMMIT"
               echo "- ACK required commit: $ACK_COMMIT"
               echo "- Last stage: $stage"
@@ -212,25 +213,38 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -f "$RUNNER_TEMP/round61-result.md" ]; then
-            printf '# ROUND61 hosted manifest/Kleaf build result\n\nNo result file was produced; runner terminated before the build trap completed.\n' \
+            printf '# ROUND61 hosted manifest/Kleaf build result\n\nWorkflow run ID: %s\nNo result file was produced; runner terminated before the build trap completed.\n' "$GITHUB_RUN_ID" \
               > "$RUNNER_TEMP/round61-result.md"
           fi
-          git fetch origin ai-parallel/stagea-port-until-boot
           git checkout ai-parallel/stagea-port-until-boot
-          git reset --hard FETCH_HEAD
-          cp "$RUNNER_TEMP/round61-result.md" kernel-baseline/round61/hosted-build-latest.md
-          git add kernel-baseline/round61/hosted-build-latest.md
-          if [ -f "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" ]; then
-            cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" kernel-baseline/round61/manifest-pinned.xml
-            cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml.sha256" kernel-baseline/round61/manifest-pinned.xml.sha256
-            git add kernel-baseline/round61/manifest-pinned.xml kernel-baseline/round61/manifest-pinned.xml.sha256
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --cached --quiet; then
+          for attempt in 1 2 3; do
+            git fetch origin ai-parallel/stagea-port-until-boot
+            git reset --hard FETCH_HEAD
+            existing_id="$(awk -F': ' '/Workflow run ID:/ { print $2; exit }' kernel-baseline/round61/hosted-build-latest.md 2>/dev/null || true)"
+            if [[ "$existing_id" =~ ^[0-9]+$ ]] && (( existing_id > GITHUB_RUN_ID )); then
+              echo "A newer hosted build result already exists (run $existing_id); leaving it intact."
+              exit 0
+            fi
+            cp "$RUNNER_TEMP/round61-result.md" kernel-baseline/round61/hosted-build-latest.md
+            git add kernel-baseline/round61/hosted-build-latest.md
+            if [ -f "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" ]; then
+              cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" kernel-baseline/round61/manifest-pinned.xml
+              cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml.sha256" kernel-baseline/round61/manifest-pinned.xml.sha256
+              git add kernel-baseline/round61/manifest-pinned.xml kernel-baseline/round61/manifest-pinned.xml.sha256
+            fi
+            if git diff --cached --quiet; then
+              exit 0
+            fi
             git commit -m "ROUND61: publish hosted manifest and Image build result"
-            git push origin HEAD:ai-parallel/stagea-port-until-boot
-          fi
+            if git push origin HEAD:ai-parallel/stagea-port-until-boot; then
+              exit 0
+            fi
+            echo "Branch moved during publication; retrying against the latest branch head ($attempt/3)."
+            sleep 2
+          done
+          exit 1
 
       - name: Upload pinned build evidence and Image artifacts
         if: always()

@@ -441,3 +441,12 @@ Current state at task dispatch:
 - ROUND52 UFS binding + VDDP driver drafts prepared; 15/15 strict in-memory hunk-position simulation passed, but no full-tree git apply/build.
 - ROUND53 static Kconfig dependency-closure audit created; actual Kconfig resolution/final `.config`/Kleaf build remain not run.
 - Stage A ACK 6.18.33 remains the sole active porting stage; DerpFest Stage B remains deferred until real Stage-A boot and storage/basic-hardware acceptance.
+
+
+### ROUND53 follow-up — configuration dependency closure refinement
+
+ROUND53 confirms the static source dependency route for UFS/QMP/GCC/RPMh/SM8250 interconnect/RPMhPD/RPMh regulator/SMMU/DM/EROFS against the pinned ACK source. The pinned GKI base already has DM_VERITY, DM_VERITY_FEC and EROFS_FS built-in. A follow-up corrected the fragment so it no longer directly assigns hidden `GENERIC_MSI_IRQ`; arm64 selects GICv3 and (when the inherited `PCI=y`) GICv3 ITS, which selects GENERIC_MSI_IRQ for `SCSI_UFS_QCOM`.
+
+- Current storage-first config fragment blob: `e441d042418667ca6d5d58ca4a53bcd8ccd708c3`.
+- Current ROUND53 report blob: `e31686d79bfbcd31ccdfa346d8e738a9f12440ff`.
+- Actual Kconfig resolution, olddefconfig/final .config, Kleaf build and runtime remain NOT_RUN.

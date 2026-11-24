@@ -1,67 +1,57 @@
 # AGENT_TASK.md — DBY-W09 / Android 17 / ACK 6.18 内核移植总入口
 
-> **当前本地 Agent：暂无待执行任务。** ROUND10 已完成并上传。下一阶段是 GPT 负责的公开源码核对与 ACK 6.18 板级 DTS 设计，不需要本地 Agent 重复解析 FDT/DTBO，也不需要重新上传固件。
+> **当前本地 Agent：ROUND11 唯一待办（只读）**。只核验 HOS4.3 base FDT 中 PM8150 RPMh regulator 的输入供电 parent links。GPT 已完成可通过公开 ACK 源码、同型号公开仓库和现有 ROUND7/9 报告完成的工作；不要重做 ROUND1–ROUND10，也不要重新上传固件。
 
 ## 当前项目目标
 
 - 设备：Huawei MatePad 11 DBY-W09，KONA / SM8250 v2.1 / Snapdragon 865。
 - ROM 目标：Android 17 DerpFest。
-- 内核目标：ACK `android17-6.18`，当前研究基线目标 6.18.33。
-- 第一阶段优先完成 DBY-W09 ACK 派生设备内核的 DTS / UFS / legacy boot-chain 基础。
-- 注意：现有设备是 boot header v2 + 独立 ramdisk 分区，未发现 vendor_boot / init_boot。使用 ACK 6.18 源码不自动等于官方 GKI 合规。先按 ACK 6.18 派生的 DBY-W09 定制内核推进，除非后续证明能安全完成标准 GKI 启动架构 retrofit。
+- 内核目标：ACK android17-6.18；目前以 branch Makefile 6.18.33 作为研究基线。
+- 第一阶段优先完成 ACK-derived DBY-W09 定制内核的 DTS / UFS / legacy boot-chain 基础。
+- 不宣称官方 GKI certified：现有设备是 boot header v2 + 独立 ramdisk 分区，未发现 vendor_boot / init_boot。ACK 6.18 源码不自动等于官方 GKI 合规。
 
 ## 当前公开研究报告
 
+- [ROUND15：UFS 启动依赖与 rootparam 修正](./kernel-baseline/round15/ack18-storage-bringup-dependency-and-rootparam-correction.md)
 - [ROUND14：ACK 6.18 UFS 早期启动 Kconfig 依赖审查](./kernel-baseline/round14/ack18-dby-w09-bootcritical-kconfig-review.md)
 - [ROUND13：第一版 ACK 板级 DTS / 最小 rootparam DTBO 设计](./kernel-baseline/round13/ack18-dby-w09-initial-dts-and-dtbo-design.md)
+- [ACK 6.18 DTS / Kconfig 草案分支](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ack18-dby-w09-dts-draft)
 - [ROUND12：ROUND10 boot-chain 证据更新与 ACK DTS 基础](./kernel-baseline/round12/round10-boot-chain-update-and-ack18-dts-foundation.md)
-- [ACK 6.18 DTS 草案分支](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ack18-dby-w09-dts-draft/dts)
-- [ROUND11：Android 17 / ACK 6.18 内核优先移植方案](./kernel-baseline/round11/android17-6.18-dby-w09-kernel-port-plan.md)
-- [ROUND10：ACK 6.18 板级 DTS 兼容性评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)
-- [ROUND9：ACK 6.18 驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)
-- [ROUND8：HOS4.3 硬件参考对照](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)
-- [ROUND6：上游 GKI 基线研究](./kernel-baseline/round6/upstream-baseline-research.md)
+- [ROUND11 之前的内核优先移植方案](./kernel-baseline/round11/android17-6.18-dby-w09-kernel-port-plan.md)
 
-## 本地 Agent 历史结果
+## 当前重点事实
 
-- [ROUND10 本机 boot/ramdisk 报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round10)：2 份文本，`COMPLETE_WITH_BLOCKED_SUBITEMS`。
-  - cmdline 范围：`NO_PANEL_SELECTOR_FOUND_IN_CMDLINE_SCOPE`。
-  - ramdisk：`BLOCKED`，未读取，不得写成全局无 selector。
-  - mount/fstab/module/firmware 路径：`NOT_READ_BLOCKED`。
-  - `ACTIVE_PROFILE=UNKNOWN`。
-- [ROUND9 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round9)：4 份文本，UFS supply 8/8 闭环；panel ACTIVE_PROFILE、camera model、redriver model 仍 UNKNOWN。
-- [ROUND8 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round8)：3 份文本，145/145 overlay target resolved，fragment@143 -> /rootparam。
-- ROUND7：13/13 FDT valid，9 个 DTBO board-id 已校验。
-- ROUND5：EROFS 内容枚举 BLOCKED；vendor/odm 模块、firmware、VINTF、KMI 仍 UNKNOWN。
+- UFS HOS4.3 supply closure 已在 ROUND9 完成 8/8：UFS Host VCC/L17、VCCQ/L6、VCCQ2/S4；QMP PHY VDDA-PHY/L5、VDDA-PLL/L9、VDDP-REF-CLK/L6；HBA 对应 GCC UFS_PHY_GDSC。
+- ROUND7 FDT property inventory 确认 PM8150 S4/L5/L6/L9/L17 的 regulator 节点名称和输出电压属性；但该 CSV 未记录 regulator 的 parent input-supply links。CSV 未记录不等于原始 FDT 一定没有。
+- 同型号公开 Linux 7.0 DTS 使用固定 3.7 V vph_pwr 和 PM8150 vdd-s1..s10-supply links；其头部说明该部分参考 HOS4.2，因此不能直接当作本设备 HOS4.3 已证实事实。当前 ACK DTS 草案已暂时移除这些未确认输入链接。
+- ROUND7 的本机脱敏 DTBO inventory 显示 9 个 stock DTBO entry 都有相同的通用哨兵 huawei,modem_id = <0xffffffff 0>；当前最小 rootparam overlay 已保留该字段。它不是设备唯一编号，但新 DTBO 的 ABL 接受性仍未知。
+- ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA 等。
+- QCOM_RPMHPD 不是当前 UFS GCC GDSC 路径的必需项；仅在后续节点真的引用 RPMh power-domain 时加入。
+- Panel ACTIVE_PROFILE=UNKNOWN；ROUND10 ramdisk BLOCKED；EROFS 内容 BLOCKED；system/cust/hw_product filesystem 类型和完整 fstab 未明。
 
-## 当前重点技术事实
+## ROUND11 — 本地 Agent 唯一任务
 
-- Google ACK 源码父分支为 `android17-6.18`；先前 branch HEAD Makefile 识别为 6.18.33。但 Google Android 17 GKI release page 当前公开的 2026-09 认证 release 是 6.18.32；源码分支/Tag 不能当成已认证 GKI image。
-- ACK SM8250 DTSI 已有 UFS Host `ufs_mem_hc`、QMP PHY `ufs_mem_phy` / `ufs_mem_phy_lanes`、SPI14 `spi14`，可按 ROUND9 HOS4.3 事实制定板级 enable/rail mapping。
-- UFS host 的 ACK SoC 节点使用 GCC UFS PHY BCR reset 和 UFS_PHY_GDSC power-domain；PHY 的 reset specifier 是 `<&ufs_mem_hc 0>`。
-- UFS rails 需按 ROUND9 的 PM8150 rail map迁移；`vdd-hba` 映射到 GDSC，不应重复作为通用 regulator，`qcom,vccq-parent-supply` 是下游扩展。
-- HOS `qcom,dsi-default-panel` 指向 overlay 域 CSOT NT36523 默认候选，不代表 runtime active。ROUND10 cmdline scan only 没有 selector；ramdisk scan blocked；ACTIVE_PROFILE 继续 UNKNOWN。
-- 当前 boot layout 为 v2 + 独立 ramdisk，不存在标准 vendor_boot/init_boot 证据。ACK 6.18 kernel image 与 GKI boot architecture retrofit 是两个独立问题。
+任务文件：[firmware-analysis/round11/AGENT_TASK.md](./firmware-analysis/round11/AGENT_TASK.md)
 
-## 下一阶段由 GPT 负责
+只读核验 HOS4.3 base boot FDT 的 PM8150 RPMh regulator 输入供电 parent topology，重点是 apps_rsc 下 regulator group 的 vdd-s*-supply / vin-supply / 类似 parent supply 属性及 phandle 目标路径。只检查已有本机副本和已经安装、可信、可审计的只读 FDT 检查工具。
 
-1. ROUND13 已形成第一版 minimal board DTS 和单 fragment rootparam DTBO 草案，位于 `ack18-dby-w09-dts-draft` 分支 `dts/` 目录；文件后缀 `.draft`，不供构建或刷写。
-2. ROUND14 已完成 UFS early-boot Kconfig 依赖审查；对应的 built-in storage-first fragment 位于实现草案分支 `config/dby-w09-ack18-storage-first.fragment.draft`，仍未运行 Kconfig resolution。
-3. 关键架构决定：原 HOS4.3 stock DTBO entry 8 有 145 个 fragment target，引用大量 vendor-only path / symbol，不能直接用于 minimal ACK base DTS。新 DTS 必须搭配单独的最小 DBY-W09 rootparam overlay，ABL 接受性仍 UNKNOWN。
-4. GPT 下一步继续审查 PMIC 输入供电和 rootparam/ABL 契约，并补齐早期 DTS 的 clock / SMMU / PMIC / console 节点依赖；panel、THP、WLAN、audio、camera 等暂不启用。
-5. 只有在 source review 完成后才考虑允许的离线构建环境与静态校验。未真正 dtc/dt-schema/Kconfig/Kleaf 编译、image packaging 或 device boot 时，不得声称验证通过或可启动。
+严格限制：
+- 如果没有现成可信工具可用，直接标记 BLOCKED；不安装工具，不下载 EXE/DLL，不写新 parser，不调用 WSL，不绕过 Windows 执行策略。
+- 不重新解析 ROUND1–ROUND10 已完成的工作，不要扫描 ramdisk/EROFS，不要连接设备。
+- 不执行 ADB/fastboot/刷机/解锁/root/分区写入/模块加载/可写挂载/编译。
+- 不导出或上传 DTB/DTBO/FDT/boot/ramdisk/固件/二进制/完整本地路径/本地 SHA256/设备唯一标识。
+- 只允许上传简短脱敏文本结论：工具是否已存在、检查是否成功、属性名、供电 parent 的非敏感节点路径或“未见/无法确认”。如发现通用电压数值可报告，但不要上传其他硬件全量信息。
+- 对每个未完成检查标记 NOT_RUN / BLOCKED / UNKNOWN，不作缺失推断。
 
-## 何时需要重新下发本地任务
+## ROUND11 完成后
 
-只在工作涉及本机文件、已存在的固件副本、Windows 环境或确有本机只读验证时创建新任务。
-ROUND10 ramdisk BLOCKED 的解除条件是：本机已有可信 Android boot unpack 工具（或可审计的已批准提取工具）并且用户明确授权。不得自写 boot parser、安装未知 EXE/DLL、绕过 Windows 命令安全策略或调用 WSL。
-不要求重新上传固件，也不重复 ROUND1–ROUND10 已完成的 FDT/DTBO 解析。
+把简短文本结果提交至本地 Agent 分支 firmware-audit-v1 的 firmware-analysis/round11/，然后停止，不要触碰 main、DTS 草案分支或 PR。
 
 ## 仓库与安全边界
 
-- 仓库：`hhdy/matepad11-dby-w09-agent-reports`
-- 本地 Agent 分支：`firmware-audit-v1`；GPT 公开研究放 `main`。
+- 仓库：hhdy/matepad11-dby-w09-agent-reports
+- 本地 Agent 分支：firmware-audit-v1；GPT 公开研究放 main。
 - PR #1 必须保持 Draft，未经用户明确授权不得合并。
-- 仅上传脱敏文本 / 源码；不得上传固件、boot/ramdisk、DTB/DTBO/FDT、内核、模块、firmware 二进制、manifest 原件、完整本地 SHA-256、设备序列号/MAC、token/PAT 或私人完整路径。
-- 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统、不编译，直到用户明确改变边界。
-- 未实际执行的动作标记 `NOT_RUN` / `BLOCKED` / `UNKNOWN`，不得虚报完成。
+- 不要求重新上传固件；不重复 ROUND1–ROUND10。
+- 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统、不编译。
+- 未实际执行的动作必须标记 NOT_RUN / BLOCKED / UNKNOWN。

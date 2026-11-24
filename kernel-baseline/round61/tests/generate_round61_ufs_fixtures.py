@@ -48,6 +48,15 @@ def render(
         supplies.append("qcom,vccq-parent-supply = <&vccq_reg>;")
     if vccq_load is not None:
         supplies.append(f"qcom,vccq-parent-max-microamp = <{vccq_load}>;")
+    clock_nodes = "\\n".join(
+        f"    clk{i}: clock-controller-{i} {{ #clock-cells = <0>; }};"
+        for i in range(9)
+    )
+    domain_nodes = "\\n".join(
+        f"    pd{i}: power-domain-{i} {{ #power-domain-cells = <0>; }};"
+        for i in range(3)
+    )
+    supply_nodes = "\\n".join(f"        {line}" for line in supplies)
     return f"""/dts-v1/;
 
 / {{
@@ -58,8 +67,8 @@ def render(
         interrupt-controller;
         #interrupt-cells = <3>;
     }};
-{''.join(f'    clk{i}: clock-controller-{i} {{ #clock-cells = <0>; }};\n' for i in range(9))}
-{''.join(f'    pd{i}: power-domain-{i} {{ #power-domain-cells = <0>; }};\n' for i in range(3))}
+{clock_nodes}
+{domain_nodes}
     vddp_reg: vddp-regulator {{ }};
     vccq_reg: vccq-regulator {{ }};
 
@@ -72,10 +81,10 @@ def render(
         clocks = {clocks};
         clock-names = {clock_names};
         power-domains = {domains};
-{''.join(f'        {line}\n' for line in supplies)}
+{supply_nodes}
     }};
-}};
-"""
+}};"""
+
 
 
 CASES = {

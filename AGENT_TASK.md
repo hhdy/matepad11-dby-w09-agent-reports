@@ -254,3 +254,12 @@ ROUND14 was once the sole active Local Agent task. It has since been completed, 
 
 
 ROUND52 final identities: binding patch c0ac84067a900022a077c748b7abb10345f1295f; VDDP driver patch fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78; report acd35ab048a437e03957cf6a7f5ffd2c82885378; series manifest 3b6a07c2c29b07f3e95af6d342f84117ecb993c9. The HBA/host pointer lifetime check is recorded in ROUND52: devres LIFO releases the later VDDP cleanup action before the earlier variant-host and HBA release actions.
+
+
+## ROUND15 taskbook index — read-only Stage-A build environment inventory (2026-11-24)
+
+- Taskbook: `firmware-analysis/round15/AGENT_TASK.md` on `main`.
+- Purpose: inventory only existing local ACK 6.18.33 source checkouts, already-installed Linux-capable toolchains, and disk capacity.
+- Status: **READY FOR LOCAL AGENT — NOT DISPATCHED; no report uploaded yet.**
+- Allowed result: one sanitized text report at `firmware-analysis/round15/round15_stagea_build_environment_inventory.txt` on `firmware-audit-v1`.
+- Do not install/download/sync/build, start WSL/VM/container, or touch the device. No repeat of ROUND12/13/14; do not overlap the GitHub-connected second AI's ROUND54.

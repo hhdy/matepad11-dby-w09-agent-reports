@@ -26,7 +26,7 @@ Patch: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.pa
 ## 3. VDDP lifecycle driver patch draft
 
 Patch: kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
-- Blob SHA: e288413af5648575c5d53140f6b248425e5a0af6.
+- Blob SHA: fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78.
 - Fixed ACK source blobs reviewed: ufs-qcom.c = a80c6998406dbc88c25dbd9977699ba481207efe; ufs-qcom.h = 5f979daabd5323184eeee137cc8ecc076193979e.
 - Intended patch order: ROUND33 dual-GenPD UFS driver draft first, then ROUND52-0002. Its include hunk expects the post-ROUND33 pm_domain/pm_opp include lines; header fields do not conflict with ROUND33.
 - It reads qcom,vddp-ref-clk-max-microamp, uses devm_regulator_get(dev, "qcom,vddp-ref-clk") when the qcom,vddp-ref-clk-supply property exists, sets the load, and enables the supply before ufs_qcom_setup_clocks() powers up the Qualcomm PHY.
@@ -73,7 +73,7 @@ Stage A ACK 6.18.33 remains the only milestone. Stage B DerpFest stays deferred 
 
 A final fixed-ACK source pass confirms the custom regulator ID in the driver draft is exact:
 - ACK drivers/regulator/of_regulator.c implements of_get_regulator() by constructing `<id>-supply` and parsing that property from the consumer node.
-- Therefore `devm_regulator_get_optional(dev, "qcom,vddp-ref-clk")` resolves the existing board property `qcom,vddp-ref-clk-supply`, matching KONA's use of `devm_regulator_get(dev, vreg->name)` with vreg->name set to `qcom,vddp-ref-clk`.
+- Therefore the final mandatory `devm_regulator_get(dev, "qcom,vddp-ref-clk")` resolves the existing board property `qcom,vddp-ref-clk-supply`, matching KONA's use of `devm_regulator_get(dev, vreg->name)` with vreg->name set to `qcom,vddp-ref-clk`.
 
 The VDDP load-before-enable sequence also has the required ACK DRMS trigger:
 - ACK drivers/regulator/core.c regulator_enable path increments the same handle's enable_count; when it becomes 1 and that handle has a nonzero uA_load, it calls drms_uA_update().

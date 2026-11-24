@@ -214,7 +214,30 @@ This block supersedes historical statements above that described ROUND12 or ROUN
 - ROUND12 AVB metadata report is uploaded on `firmware-audit-v1` and BLOCKED at the trusted-tool gate. Do not repeat it and do not install or download AVB tools.
 - ROUND13 PM8150 UFS regulator mode/DRMS report is uploaded on `firmware-audit-v1` and complete. The local Agent complied with its stop-after-upload requirement. Do not re-run ROUND13 or perform another local FDT parsing pass.
 - GPT has completed public Qualcomm SM8250 source cross-check and updated only the review-only `main` DTS draft, the ROUND48 report, `PROJECT_HANDOFF.md`, and `dts/README.md`.
-- Current local Agent queue: **EMPTY**. No new task book is active. The next work should be performed by GPT from public/pinned sources where possible. Create another local task only when an unresolved question strictly requires an existing local artifact or a trusted local tool that is already available.
+- Current local Agent task: **firmware-analysis ROUND14**. It is narrowly scoped to previously uncaptured HOS4.3 ARC MMCX/MX child power properties and S8 enable/boot policy, using only the existing ROUND3 FDT copy and audited parser. Do not repeat ROUND11 parent phandle extraction or ROUND13 mode/DTBO audit.
 - EROFS, AVB descriptors/footer, and ramdisk remain BLOCKED; no inference or workaround. No device interaction, unlock/root/flash/write, local compile, or protected-branch/PR modification is authorized.
 - `ack18-dby-w09-dts-draft` remains protected and untouched; PR #1 remains Draft. The updated DTS is on `main` and remains DRAFT ONLY.
 - Stage A ACK `android17-6.18.33_r00` remains the sole active project milestone. Do not begin Stage B DerpFest until Stage A actually boots and passes UFS/storage/basic-hardware checks.
+
+---
+
+## Latest queue update — 2026-11-24 (ROUND14 is the sole active local task)
+
+ROUND12 AVB and ROUND13 PM8150 mode/DRMS task states remain unchanged:
+- ROUND12: uploaded / BLOCKED at trusted AVB tool gate; do not repeat or install tools.
+- ROUND13: uploaded / COMPLETE; do not repeat or reparse.
+
+GPT has completed public source review:
+- ROUND49: fixed ACK UFS VDDP / VCCQ-parent lifecycle and devres ordering; public KONA uses VDDP enable/disable but VCCQ-parent load-only. The latter load vote is not proven to trigger DRMS because regulator core only updates load for an enabled consumer handle; ACK S8 has no set_load callback. Protected old patch sketch is not safe to apply.
+- ROUND50: public KONA confirms vendor MMCX ALL/AO parent links to distinct MX children and the ARC min-dropout propagation mechanism. Fixed ACK SM8250 descriptor has no MMCX parent. Do not add a shared SM8250 parent edge without exact local corner/dropout and OPP map evidence.
+- Reports: `kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md` and `kernel-baseline/round50/ack-sm8250-mmcx-mx-arc-parent-semantics-and-remaining-local-gate.md`.
+
+**Current local task: firmware-analysis ROUND14**
+- Task book: `firmware-analysis/round14/AGENT_TASK.md` on main.
+- Output: one sanitized UTF-8 text file, `firmware-analysis/round14/round14_arc_mmcx_mx_power_properties.txt`, on `firmware-audit-v1`.
+- Reuse only the existing ROUND3 base boot-FDT work copy, approved parser, and existing phandle/path indices. Do not repeat ROUND11's parent-link extraction or ROUND13's mode/DTBO scan.
+- Inspect the exact MMXC/MX ARC provider and child properties that ROUND24 says were not captured: resource names, qcom,set, logical min/max corner, init-voltage-level, min-dropout-voltage-level, and proxy fields. Also inspect S8 qcom,init-enable / regulator-boot-on / regulator-always-on fields and provider/child paths.
+- Do not install tools, download, write a parser, re-extract firmware, connect to the device, or modify partitions. If existing input/parser is missing or cannot resolve a path, mark BLOCKED and stop. Upload only the single sanitized text report, then stop.
+- Do not modify main, protected DTS branch, or PR #1 from the Local Agent.
+
+No ROUND15 task is active. Stage A ACK 6.18.33 remains the sole milestone; do not start DerpFest Stage B before actual device boot and UFS/storage/basic-hardware acceptance.

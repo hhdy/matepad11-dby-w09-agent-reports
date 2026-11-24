@@ -221,9 +221,13 @@ jobs:
             grep -Fqi "$expected" "$log"
           }
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
-            "$ufs_fixture_dir/ufs-sm8250-1-domain-valid.dtb"
+            "$ufs_fixture_dir/ufs-sm8250-1-domain-valid.dtb" \
+            > "$RUNNER_TEMP/ufs-sm8250-1-domain-valid-validation.log" 2>&1
+          cat "$RUNNER_TEMP/ufs-sm8250-1-domain-valid-validation.log"
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
-            "$ufs_fixture_dir/ufs-sm8250-2-domains-valid.dtb"
+            "$ufs_fixture_dir/ufs-sm8250-2-domains-valid.dtb" \
+            > "$RUNNER_TEMP/ufs-sm8250-2-domains-valid-validation.log" 2>&1
+          cat "$RUNNER_TEMP/ufs-sm8250-2-domains-valid-validation.log"
           dt_validate_expected_failure ufs-sm8250-7-clock-names-invalid clock-names
           dt_validate_expected_failure ufs-sm8250-9-clock-names-invalid clock-names
           dt_validate_expected_failure ufs-sm8250-3-domains-invalid power-domains
@@ -301,7 +305,7 @@ jobs:
               git -C "$RUNNER_TEMP/ack" status --short
               git -C "$RUNNER_TEMP/ack" diff --stat
             fi
-            for log in round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
+            for log in ufs-sm8250-1-domain-valid-validation.log ufs-sm8250-2-domains-valid-validation.log round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
               if [ -f "$RUNNER_TEMP/$log" ]; then
                 echo
                 echo "## $log"

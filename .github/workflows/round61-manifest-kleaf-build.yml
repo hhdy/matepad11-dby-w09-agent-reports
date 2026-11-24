@@ -1,0 +1,242 @@
+name: ROUND61 manifest-pinned Kleaf target and Image build
+
+on:
+  push:
+    branches:
+      - ai-parallel/stagea-port-until-boot
+    paths:
+      - "kernel-baseline/round61/run-manifest-kleaf-build.txt"
+
+permissions:
+  contents: write
+
+jobs:
+  manifest-kleaf-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout dedicated implementation branch
+        uses: actions/checkout@v4
+        with:
+          ref: ai-parallel/stagea-port-until-boot
+
+      - name: Sync official Android kernel manifest and build the DBY-W09 Image
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACK_COMMIT=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+          MANIFEST_COMMIT=46a1a5274ff0b40419952c861a8958bba5f28cfc
+          WORK="$RUNNER_TEMP/ack-6.18.33"
+          REPORT="$GITHUB_WORKSPACE"
+          ART="$RUNNER_TEMP/round61-artifacts"
+          mkdir -p "$ART"
+          stage="runner preflight"
+          finish() {
+            rc=$?
+            {
+              echo "# ROUND61 hosted manifest/Kleaf build result"
+              echo
+              echo "- Date UTC: $(date -u +%FT%TZ)"
+              echo "- Branch: $GITHUB_REF_NAME"
+              echo "- Trigger commit: $GITHUB_SHA"
+              echo "- Manifest commit: $MANIFEST_COMMIT"
+              echo "- ACK required commit: $ACK_COMMIT"
+              echo "- Last stage: $stage"
+              echo "- Exit code: $rc"
+              echo "- Runner resources: CPUs=$(nproc 2>/dev/null || echo unknown), memory.max=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo unknown)"
+              df -h "$RUNNER_TEMP" 2>/dev/null || true
+              if [ -d "$WORK/.repo" ]; then
+                echo
+                echo "## Source identity"
+                git -C "$WORK/common" rev-parse HEAD 2>/dev/null || true
+                git -C "$WORK/build/kernel" rev-parse HEAD 2>/dev/null || true
+                sha256sum "$WORK/MODULE.bazel.lock" 2>/dev/null || true
+                sha256sum "$ART/manifest-pinned.xml" 2>/dev/null || true
+              fi
+              if [ -f "$RUNNER_TEMP/round61-build.log" ]; then
+                echo
+                echo "## Build log tail"
+                tail -n 160 "$RUNNER_TEMP/round61-build.log" || true
+              fi
+              if [ -f "$RUNNER_TEMP/round61-sync.log" ]; then
+                echo
+                echo "## Repo sync log tail"
+                tail -n 80 "$RUNNER_TEMP/round61-sync.log" || true
+              fi
+              if [ "$rc" -eq 0 ]; then
+                echo
+                echo "BUILD_PASS"
+              else
+                echo
+                echo "BUILD_NOT_PASSED — see the last stage and log excerpts above."
+              fi
+            } > "$RUNNER_TEMP/round61-result.md"
+            exit "$rc"
+          }
+          trap finish EXIT
+
+          echo "=== Resource preflight ==="
+          nproc
+          free -h
+          cat /sys/fs/cgroup/memory.max || true
+          df -h "$RUNNER_TEMP"
+          sudo apt-get update
+          sudo apt-get install -y bc bison flex libelf-dev libssl-dev libncurses-dev libxml2-utils python3-dev python3-venv rsync unzip zip curl git
+
+          stage="install official repo launcher"
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o "$RUNNER_TEMP/repo"
+          sudo install -m 0755 "$RUNNER_TEMP/repo" /usr/local/bin/repo
+          repo --version
+          git config --global user.name "ROUND61 Build Agent"
+          git config --global user.email "round61-build@users.noreply.github.com"
+
+          stage="repo init at immutable manifest commit"
+          mkdir -p "$WORK"
+          cd "$WORK"
+          repo init -u https://android.googlesource.com/kernel/manifest \
+            -b "$MANIFEST_COMMIT" \
+            --repo-url=https://gerrit.googlesource.com/git-repo
+
+          stage="repo sync manifest projects"
+          repo sync -c --depth=1 --no-tags --no-clone-bundle --optimized-fetch -j4 \
+            2>&1 | tee "$RUNNER_TEMP/round61-sync.log"
+
+          stage="record pinned manifest and verify fixed ACK source"
+          git -C common fetch --depth=1 aosp "$ACK_COMMIT"
+          git -C common checkout --detach "$ACK_COMMIT"
+          test "$(git -C common rev-parse HEAD)" = "$ACK_COMMIT"
+          test -z "$(git -C common status --porcelain)"
+          repo manifest -r > "$ART/manifest-pinned.xml"
+          sha256sum "$ART/manifest-pinned.xml" | tee "$ART/manifest-pinned.xml.sha256"
+          git -C build/kernel rev-parse HEAD | tee "$ART/build-kernel.commit"
+          if [ -f MODULE.bazel.lock ]; then
+            sha256sum MODULE.bazel.lock | tee "$ART/MODULE.bazel.lock.sha256"
+          else
+            echo "MODULE.bazel.lock absent before Bazel analysis" | tee "$ART/MODULE.bazel.lock.initial-state.txt"
+          fi
+          tools/bazel --version | tee "$ART/bazel-version.txt"
+          clang_bin="$(find -L prebuilts/clang/host/linux-x86 -type f -path '*/bin/clang' | sort | head -n 1)"
+          rust_bin="$(find -L prebuilts/rust-toolchain/linux-x86 -type f -path '*/bin/rustc' | sort | head -n 1)"
+          test -n "$clang_bin"
+          test -n "$rust_bin"
+          "$clang_bin" --version | tee "$ART/clang-version.txt"
+          "$rust_bin" --version | tee "$ART/rust-version.txt"
+
+          stage="apply ordered UFS, ROUND63 PHY and Kleaf patches"
+          apply_patch() {
+            patch="$1"
+            echo "=== git apply --check: $patch ==="
+            git -C common apply --check "$patch"
+            echo "=== git apply: $patch ==="
+            git -C common apply "$patch"
+            git -C common diff --check
+          }
+          apply_patch "$REPORT/kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft"
+          echo "ROUND57 intentionally superseded: ROUND32 already has a fixed eight-item clock-names list; ACK dt-schema meta-schema rejects redundant minItems/maxItems alongside that items array."
+          apply_patch "$REPORT/kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round52-0001-context-corrected.patch"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round33-checkpatch-clean.patch"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round63-0002-qmp-ufs-phy-binding.patch"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch"
+          apply_patch "$REPORT/kernel-baseline/round61/patches/round58-kleaf-target.patch"
+          git -C common add -N arch/arm64/configs/dby_w09_storage_first.fragment
+          git -C common diff --check
+          git -C common diff --stat | tee "$ART/applied-source-diff-stat.txt"
+          git -C common diff --binary > "$ART/applied-source.diff"
+          sha256sum "$ART/applied-source.diff" | tee "$ART/applied-source.diff.sha256"
+          sha256sum common/arch/arm64/configs/dby_w09_storage_first.fragment \
+            | tee "$ART/storage-first-fragment.sha256"
+
+          stage="strict checkpatch, buildifier and config-helper unit tests"
+          perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict \
+            < "$REPORT/kernel-baseline/round61/patches/round33-checkpatch-clean.patch"
+          perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict \
+            < "$REPORT/kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch"
+          perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict \
+            < "$REPORT/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch"
+          go install github.com/bazelbuild/buildtools/buildifier@latest
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          buildifier -mode=check common/BUILD.bazel
+          PYTHONPATH="$REPORT/kernel-baseline/round61" \
+            python3 -m unittest discover -s "$REPORT/kernel-baseline/round61/tests" -v \
+            2>&1 | tee "$ART/config-helper-tests.log"
+
+          stage="Bazel target query"
+          tools/bazel query //common:dby_w09 2>&1 | tee "$ART/bazel-query.log"
+
+          stage="Bazel target cquery and output inventory"
+          tools/bazel cquery //common:dby_w09 --output=files \
+            2>&1 | tee "$ART/cquery-output-files.txt"
+
+          stage="full DBY-W09 Image build"
+          set -o pipefail
+          tools/bazel build --jobs=3 --verbose_failures //common:dby_w09 \
+            2>&1 | tee "$RUNNER_TEMP/round61-build.log"
+
+          stage="validate final .config and archive kernel outputs"
+          config="$(grep -E '(^|/)\.config$' "$ART/cquery-output-files.txt" | head -n 1)"
+          image="$(grep -E '(^|/)Image$' "$ART/cquery-output-files.txt" | head -n 1)"
+          system_map="$(grep -E '(^|/)System\.map$' "$ART/cquery-output-files.txt" | head -n 1)"
+          vmlinux="$(grep -E '(^|/)vmlinux$' "$ART/cquery-output-files.txt" | head -n 1)"
+          test -n "$config" && test -n "$image" && test -n "$system_map" && test -n "$vmlinux"
+          case "$config" in /*) ;; *) config="$WORK/$config" ;; esac
+          case "$image" in /*) ;; *) image="$WORK/$image" ;; esac
+          case "$system_map" in /*) ;; *) system_map="$WORK/$system_map" ;; esac
+          case "$vmlinux" in /*) ;; *) vmlinux="$WORK/$vmlinux" ;; esac
+          PYTHONPATH="$REPORT/kernel-baseline/round61" \
+            python3 "$REPORT/kernel-baseline/round61/check_dby_w09_config.py" "$config" \
+            2>&1 | tee "$ART/final-config-validation.txt"
+          cp "$config" "$ART/dby_w09.config"
+          cp "$image" "$ART/Image"
+          cp "$system_map" "$ART/System.map"
+          cp "$vmlinux" "$ART/vmlinux"
+          sha256sum "$ART/dby_w09.config" "$ART/Image" "$ART/System.map" "$ART/vmlinux" \
+            | tee "$ART/kernel-artifacts.sha256"
+          stat -c '%n %s bytes' "$ART/Image" "$ART/dby_w09.config" "$ART/System.map" "$ART/vmlinux" \
+            | tee "$ART/kernel-artifacts.sizes.txt"
+          if [ -f MODULE.bazel.lock ]; then
+            sha256sum MODULE.bazel.lock | tee "$ART/MODULE.bazel.lock.final.sha256"
+          fi
+          stage="complete"
+          echo "ROUND61_MANIFEST_KLEAF_IMAGE_BUILD=PASS"
+
+      - name: Publish build result to the dedicated branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "$RUNNER_TEMP/round61-result.md" ]; then
+            printf '# ROUND61 hosted manifest/Kleaf build result\n\nNo result file was produced; runner terminated before the build trap completed.\n' \
+              > "$RUNNER_TEMP/round61-result.md"
+          fi
+          git fetch origin ai-parallel/stagea-port-until-boot
+          git checkout ai-parallel/stagea-port-until-boot
+          git reset --hard FETCH_HEAD
+          cp "$RUNNER_TEMP/round61-result.md" kernel-baseline/round61/hosted-build-latest.md
+          git add kernel-baseline/round61/hosted-build-latest.md
+          if [ -f "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" ]; then
+            cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml" kernel-baseline/round61/manifest-pinned.xml
+            cp "$RUNNER_TEMP/round61-artifacts/manifest-pinned.xml.sha256" kernel-baseline/round61/manifest-pinned.xml.sha256
+            git add kernel-baseline/round61/manifest-pinned.xml kernel-baseline/round61/manifest-pinned.xml.sha256
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --cached --quiet; then
+            git commit -m "ROUND61: publish hosted manifest and Image build result"
+            git push origin HEAD:ai-parallel/stagea-port-until-boot
+          fi
+
+      - name: Upload pinned build evidence and Image artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: round61-ack-6.18.33-image-build
+          path: |
+            ${{ runner.temp }}/round61-artifacts/
+            ${{ runner.temp }}/round61-result.md
+            ${{ runner.temp }}/round61-build.log
+            ${{ runner.temp }}/round61-sync.log
+          if-no-files-found: warn
+          retention-days: 14

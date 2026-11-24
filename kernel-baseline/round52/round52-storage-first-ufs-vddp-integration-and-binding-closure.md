@@ -109,3 +109,22 @@ Result: **all 15 hunks across the seven patch applications matched**. This estab
 
 
 ROUND52 lifetime addendum: fixed ACK `ufshcd_alloc_host()` registers `ufshcd_devres_release()` (scsi_host_put) before `ufshcd_init()` invokes the Qualcomm variant. The variant then devm-allocates `ufs_qcom_host` and registers VDDP cleanup afterwards. Since ACK devres is LIFO, the VDDP cleanup action runs before both the variant host storage and HBA SCSI-host release actions, so `host` and `host->hba` remain valid while cleanup uses them. The callback also runs after `ufshcd_remove()` has shut down generic VCCQ. This closes the UAF concern for the chosen action placement; it remains source review only.
+
+## ROUND52-2 strict hunk-position validation and host lifetime confirmation
+
+The final post-HBA-lifetime patch revision was re-simulated in memory against the exact pinned ACK files and the protected board DTS file fetched read-only. The verifier checked not only old/new hunk line counts and exact old-side context, but also required every hunk's declared new start to equal its old start plus all preceding hunk deltas. No offset/fuzz/nearest-context fallback was used.
+
+Result remains **PASS — 15/15 hunks**:
+- ROUND32 schema: 3/3
+- ROUND36 common schema: 2/2
+- ROUND52-0001 schema: 2/2
+- ROUND33 UFS driver: 2/2
+- ROUND52-0002 UFS header: 1/1
+- ROUND52-0002 post-ROUND33 UFS driver: 3/3
+- ROUND37 protected-board source: 2/2
+
+The final ROUND52-0002 third driver hunk is now correctly anchored at @@ -1584,5 +1656,9 @@ after accounting for the preceding include (+1) and VDDP helper (+71) hunks. This corrects an earlier provisional +1654 header.
+
+The HBA/variant lifetime audit is also complete: fixed ACK ufshcd_alloc_host() registers its scsi_host_put devres action before variant initialization; ufs_qcom_init() then registers the variant's devm_kzalloc() storage and, later, the VDDP cleanup action. Reverse-order devres release therefore runs VDDP cleanup before either host or hba storage is released. It also runs after ufshcd_remove() has completed generic VCCQ shutdown. This establishes that the chosen callback's object pointers remain valid by source lifecycle ordering.
+
+This still is not the kernel's real git apply executable, an actual Git worktree, checkpatch, dt-schema, dtc/dtbs_check, Kconfig resolution or compilation. Those remain NOT_RUN.

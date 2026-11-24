@@ -37,7 +37,7 @@ The workflow compiles each generated DTS with the pinned ACK `dtc` and validates
 
 The SM8150 negative fixture uses its valid nine-clock/two-register layout so the expected failure isolates the non-SM8250 two-domain restriction. The SM8250 nine-clock fixture has nine clock names, including the extra `ice_core_clk`, and nine clock phandles.
 
-ROUND57 is not applied as a separate patch: ROUND32's SM8250 `clock-names.items` list contains exactly eight const entries, and the fixed ACK dt-schema meta-schema rejects redundant `minItems/maxItems` beside that fixed tuple. The 7/9 fixtures test the actual accepted cardinality directly.
+ROUND32 is not applied: the fixed ACK `qcom,sc7180-ufshc.yaml` already selects `qcom,sm8250-ufshc` and defines the eight-clock SM8250 branch. Applying ROUND32 would select the same compatible a second time through `qcom,ufs.yaml`, producing duplicate schema matches. ROUND57 is also not applied: the existing `qcom,sc7180-ufshc.yaml` fixed eight-entry `clock-names.items` list already constrains the tuple, and the ACK dt-schema meta-schema rejects redundant `minItems/maxItems` beside a fixed tuple. The 7/9 fixtures test the actual accepted cardinality directly.
 
 ## ROUND63 PHY fixtures
 
@@ -64,3 +64,10 @@ No fixture PASS/FAIL result is asserted in this report yet. The previous hosted 
 Run `45443538190` passed Phase-A source gates and reached schema validation. The original ACK UFS example's direct `dt-validate` command returned exit code 0 while still printing `power-domains` and `unevaluatedProperties` diagnostics. Therefore a zero exit code is not a sufficient success signal for this validator version. The fixture gate now checks output content: positive fixtures must produce an empty diagnostic log; negative fixtures must produce the expected property diagnostic. The processed schema is retained as an artifact with its SHA-256 for inspection.
 
 The first fixture compile attempt exposed a DTS syntax issue in the generator: root `interrupt-parent` was emitted after a child node. It has been moved into the root property block before all subnodes. The next hosted run will compile all ten UFS fixtures and then test the three PHY fixtures. The original UFS example remains an explicit final gate: any diagnostic output keeps Phase B blocked.
+
+
+## ROUND32 superseded by the pinned ACK's existing SM8250 binding
+
+Source inspection of the exact ACK commit showed `qcom,sc7180-ufshc.yaml` already selects `qcom,sm8250-ufshc`, defines its compatible tuple, and supplies the eight-clock SM8250 branch. The branch-local ROUND32 draft adds the same compatible to `qcom,ufs.yaml`, causing both schemas to select the same SM8250 node. The workflow now skips ROUND32 rather than introducing duplicate schema selection. The canonical ROUND32 draft remains untouched.
+
+ROUND52-0001's four optional supply/load properties and pairing conditions have been moved from `qcom,ufs.yaml` into the shared `qcom,ufs-common.yaml` binding, because the actual SM8250 binding is `qcom,sc7180-ufshc.yaml` and it also references that common schema. This makes the properties available to both Qualcomm UFS binding families without duplicate selection. The branch-local patch still applies after ROUND36; canonical ROUND52 files remain unchanged.

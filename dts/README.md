@@ -5,6 +5,7 @@ This directory contains a **review-only source draft** for the initial DBY-W09 b
 Files:
 - `dby-w09-ack18-board.dts.draft` — minimal SM8250 board identity + PM8150 UFS rails + UFS/QMP enablement.
 - `dby-w09-ack18-rootparam.dtso.draft` — separate minimal DBY-W09 board identity overlay.
+- `../config/dby-w09-ack18-storage-first.fragment.draft` — built-in UFS/QMP/RPMh/SM8250 GCC/SMMU Kconfig fragment for the first storage milestone.
 
 ## Important integration rule
 
@@ -20,6 +21,7 @@ The current overlay omits `huawei,modem_id` pending review of whether ABL requir
 - No UART console, reserved-memory, panel, THP, WLAN, BT, audio, camera, USB-C or DP nodes are enabled.
 - Panel `ACTIVE_PROFILE=UNKNOWN`.
 - The stock HOS4.3 ramdisk remains unread (ROUND10 BLOCKED); module ordering is unknown.
+- The Kconfig fragment's logical-partition filesystem / device-mapper options are intentionally left commented until the ramdisk fstab and full filesystem inventory are known.
 - These files use the suffix `.draft` deliberately. Do not rename them into build input or flash them.
 
 ## Source and evidence basis

@@ -32,7 +32,7 @@ With the current board DTS:
 - Host VDDP contributes 100 uA;
 - these are separate regulator consumers but both point to the same L6 regulator, so regulator core aggregates their enabled load votes.
 
-Expected source-model behavior:
+Conditional source-model behavior, only if ROUND13 confirms DRMS permissions:
 - When the generic VCCQ HPM vote is active, the aggregate is far above 30 mA, so L6 selects HPM.
 - During generic UFS low-power transitions, the core reduces the VCCQ load through ufshcd_config_vreg_lpm(). If only the small VDDP vote and other sub-threshold consumers remain, the aggregate is below 30 mA and L6 can select LPM.
 - The exact result remains dependent on other consumers and any system_load constraint; this is not a runtime observation.
@@ -67,7 +67,7 @@ This remains a patch sketch, not an apply-tested diff. It has not been compiled,
 | Generic VCCQ max-load and low-power load adjustment | SOURCE REVIEWED |
 | L6 PMIC5 NLDO DRMS and threshold | SOURCE REVIEWED |
 | Regulator core sums enabled-consumer votes + system_load | SOURCE REVIEWED |
-| Expected L6 HPM/LPM under source model | DERIVED FROM CODE; NOT RUNTIME TESTED |
+| Expected L6 HPM/LPM under source model | CONDITIONAL ON HOS4.3 DRMS CONSTRAINTS; NOT RUNTIME TESTED |
 | S8 load vote handling | SUCCESSFUL NO-OP IF DRMS OPS ABSENT |
 | Patch apply / compile / schema validation | NOT_RUN |
 | Device boot / actual rail state | NOT_RUN |

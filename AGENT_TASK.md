@@ -22,6 +22,7 @@
 - ROUND35 检查现有 `ack18-dby-w09-dts-draft` 的实际 board DTS：`&ufs_mem_hc` override 没有声明 `power-domains`，所以仍继承 ACK SM8250 UFS Host 的单域 GCC `UFS_PHY_GDSC`；ROUND33 helper 因 `num_domains == 1` 会返回并保留 generic path，MMCX 映射在当前 DTS 下不会启动。下一版集成必须把 MMCX 放 index 0、GCC GDSC 放 index 1，并检查 schema / final DTB。报告只写在 main，未改 protected DTS branch。ROUND35 report path: `kernel-baseline/round35/dby-w09-ufs-dual-genpd-dts-integration-gap.md`。未运行 dtc/schema/build/device test。
 - ROUND36 在固定 ACK tag 的精确 `qcom,ufs-common.yaml` 中确认 `power-domains.maxItems=1`，已新增 compatible-scoped schema draft（SM8250 最多 2，其他 Qualcomm UFS 最多 1）。目标文件 GitHub blob SHA `962dffcd28b44b3489be5615c75e7270a0c45dc4` 与本地测试 fixture `git hash-object` 完全一致；ROUND36 patch（blob SHA `dad87ef8dfefee6141b8a7949982c007c4a03b4a`）在该精确文件 fixture 上 `git apply --check`、`git apply`、`git diff --check` 均 PASS；PyYAML 解析和独立 JSON Schema Draft 7 条件逻辑测试通过。将 ROUND32/36 两个修改后的 schema 条件组合后，JSON Schema Draft 7 逻辑测试也按预期接受 SM8250 八 clocks/单 reg/一至两个 PD，并拒绝多于两个 PD、错误 clock/reg 布局及非 SM8250 双域。没有完整 ACK worktree、未运行 dt-schema/dtc；ROUND33 未做 full-tree apply。报告 `kernel-baseline/round36/sm8250-ufs-power-domain-schema-limit.md`，补丁 `kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft`。
 - ROUND37 新增板级双域 DTS patch draft：显式 include `qcom,gcc-sm8250.h` / `qcom,rpmhpd.h`，在 `&ufs_mem_hc` 增加 MMCX index 0、GCC `UFS_PHY_GDSC` index 1。当前受保护 board DTS 文件 blob `e86c8707c413a9376b1e332a94e292b86acde3e2` 的两个 hunk 旧侧上下文与行数均精确匹配；patch blob SHA `486654c8d0b1b785190253270f5e83f796f07362`。只加在 main，未应用、未修改保护分支、未 dtc/schema 验证。报告 `kernel-baseline/round37/dby-w09-ufs-dual-genpd-board-dts-delta.md`。
+- ROUND38 整理 UFS dual-GenPD patch series manifest：明确固定 ACK commit、ROUND32 + ROUND36 schema patch、ROUND37 board DTS delta、ROUND33 driver patch 的依赖顺序及 SHA。Round32/36 两个 schema patch 已在同一临时目录、使用两个精确 ACK source blobs 按序 `git apply --check` / apply 成功，组合 `git diff --check`、YAML parse 和相关 JSON Schema 条件测试通过；ROUND37/33 仍只有精确 hunk context 验证。报告 `kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md`。完整 dt-schema/DTB/Kconfig/build/device verification 仍未完成。
 
 - 阶段 C 才评估 ColorOS 或其他 ROM。
 - DerpFest Android 17 manifest 当前 `kernel-6.18.xml` 指向 June 2026 branch（6.18.21），不改变本项目 6.18.33 目标；Stage B 必须集成本项目已验证的 DBY-W09 内核和匹配模块。
@@ -38,6 +39,7 @@
 - [ROUND35：DBY-W09 UFS 双 GenPD 的 DTS 集成缺口](./kernel-baseline/round35/dby-w09-ufs-dual-genpd-dts-integration-gap.md)
 - [ROUND36：SM8250 UFS 双域 binding 数量约束](./kernel-baseline/round36/sm8250-ufs-power-domain-schema-limit.md)
 - [ROUND37：DBY-W09 UFS Host 双 GenPD board DTS delta](./kernel-baseline/round37/dby-w09-ufs-dual-genpd-board-dts-delta.md)
+- [ROUND38：UFS dual-GenPD patch series manifest](./kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md)
 - [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)
 - [ROUND31：ACK 6.18.33 存储优先 Kconfig 依赖闭环](./kernel-baseline/round31/ack-6.18.33-storage-first-kconfig-dependency-closure.md)
 - [ROUND30：ACK SM8250 MMCX→MX parent/corner 等价性门槛](./kernel-baseline/round30/sm8250-rpmhpd-mmcx-mx-parent-equivalence-gate.md)

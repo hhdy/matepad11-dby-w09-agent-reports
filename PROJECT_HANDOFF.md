@@ -533,3 +533,59 @@ ROUND16 目标：在 D: 部署 WSL2 + Ubuntu 24.04，安装最小官方 Ubuntu h
 如果 Windows 安全程序仍拦截 WSL，必须停止并报告，不得绕过或关闭安全策略；需要管理员或重启时交由用户处理。ROUND16 结束后，才新建独立的 patch integration + schema + Kconfig + Kleaf build 任务。
 
 ROUND16 当前还没有上传部署结果；不得把 WSL 已部署或 ACK workspace 已准备好写成事实。
+
+
+## 最新状态校正 — ROUND16 BLOCKED；ROUND17/ROUND58 并行派发（2026-11-24）
+
+**本节覆盖上文中“ROUND16 未执行 / ROUND54 未完成 / ROUND16 为当前任务”的旧状态描述。**
+
+### ROUND16 实际结果
+
+ROUND16 已执行并上传，终态为 **BLOCKED_BY_HOST_SECURITY_POLICY**；没有进入部署阶段。报告：
+- `firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt`
+- 分支：`firmware-audit-v1`
+- 报告 SHA256 在本地与上传文件核对一致；报告大小 15,190 B。
+
+准确事实：
+- Store 版 WSL Appx `MicrosoftCorporationII.WindowsSubsystemForLinux 2.7.3.0` 已安装。
+- 注册了一个既有 WSL2 发行版 `Ubuntu`（Version=2），位于 C:；具体发行版 Ubuntu 版本未知，目录探测也 UNKNOWN。
+- `VirtualMachinePlatform` 已启用；HypervisorPresent / VirtualizationFirmwareEnabled 为 true。
+- WSL 程序入口 `C:\Windows\System32\wsl.exe` 被 Windows Security Center 的 Command Security / Program Blacklist 阻止。
+- ROUND16 Agent 当前进程非提升；管理员权限是安装/启用组件时的次级门槛。
+- 未创建新发行版、未 apt、未 Repo sync、未 pin、未编译，也未接触平板。
+- D: 约 325.3 GiB 可用，存储空间不是阻塞原因。
+
+**ROUND15 结论更正：** ROUND15 只是因为无法调用 WSL 而未获得发行版信息，不能据此说“没有 WSL”。ROUND16 才首次确认 Store WSL 2.7.3.0 与已注册的 WSL2 Ubuntu。旧版 `Microsoft-Windows-Subsystem-Linux` 可选功能状态为 Disabled，但不能在没有真实错误的情况下认定 Store WSL2 需要它；`HypervisorPlatform` Disabled 也不能先验判定为 WSL2 问题。不得因 `VMMonitorModeExtensions=False` 建议用户修改 BIOS。
+
+### 下一份本地 Agent 任务：ROUND17
+
+- 任务书：`firmware-analysis/round17/AGENT_TASK.md`
+- 启动指令：`firmware-analysis/round17/START_PROMPT.md`
+- **等待用户前置动作，尚未派发执行。**
+
+用户必须先手动在 Security Center → Command Security → Program Blacklist 中移除/允许 `C:\Windows\System32\wsl.exe`，然后以“以管理员身份运行”的方式重启本地 Agent。Agent 不得代替用户修改黑名单，也不得尝试任何绕过方法；若仍被拦截立即停止。
+
+主 AI 已指定固定方案：保留原有 C 盘 `Ubuntu` 不动，不迁移、不注销、不覆盖；新装独立 `Ubuntu-24.04` 到 `D:\WSL\Ubuntu-24.04`。先验证已安装 Store WSL 2.7.3.0；当前 VMP 已 Enabled，不盲目重装 WSL，不预先启用 legacy WSL/HypervisorPlatform 组件。发行版安装可直接用 Store WSL CLI 的 `--distribution` + `--location`；省略 `--no-launch`，允许首次启动交互式创建 Linux 用户，然后通过 `wsl --list --verbose`、`/etc/os-release`、注册 BasePath 验证。详见 ROUND17。
+
+ROUND17 目标仍为准备 kernel-only 官方 manifest workspace，固定 common 到 ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 并记录 Clang/Rust/Bazel。此轮不打补丁、不编译。
+
+### 第二 AI 新任务：ROUND58 Kleaf 实现，不再只做审查
+
+第二 AI 已完成 ROUND54（独立 UFS 审查报告已上传）；ROUND57 已接纳其 P3 schema 精确计数修正为独立 follow-up draft。现在把新的实际构建准备任务分配给第二 AI：
+
+- 分支：`ai-parallel/round58-kleaf-target-audit`
+- 任务书：`kernel-baseline/round58/ROUND58_TASK.md`
+- 启动指令：`kernel-baseline/round58/START_PROMPT.md`
+
+ROUND58 要求第二 AI 在自己的分支上做可交付实现：基于 pinned ACK / 对应 Kleaf API 创建 no-`base_kernel` full-image Kleaf target patch candidate；制作 storage-first final `.config` 检查脚本和合成配置单元测试；形成 ROUND17 结束后可直接执行的 patch/Kconfig/build runbook。第一轮目标聚焦完整内核 Image 编译，不臆造 DTS/DTB/DTBO/boot image 路径，不声称已经运行 Bazel 或编译。
+
+### 并行分工
+
+| 执行方 | 当前任务 | 目标 |
+|---|---|---|
+| 用户 | 人工解除指定 wsl.exe 黑名单；以管理员方式重启本地 Agent | 解除 ROUND17 前置阻塞 |
+| 本地 Agent | ROUND17（等待用户确认后才执行） | 新装独立 Ubuntu 24.04 到 D:，同步/固定 ACK kernel workspace |
+| 第二 AI | ROUND58（专属 GitHub 分支） | 实现 Kleaf target 候选、配置验证工具与编译 runbook |
+| 主 AI | 审核 ROUND58；继续固定源码 patch 系列集成准备和交接维护 | 合并工作成果前先核验，不写保护分支 |
+
+PR #1 仍须保持 Draft/Open/unmerged；`ack18-dby-w09-dts-draft` 不得修改。Stage A 仍为唯一主线。编译产物不是设备验收，Stage A 实际启动和存储/基础硬件验收前不得进入 DerpFest Stage B。

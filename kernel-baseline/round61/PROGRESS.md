@@ -166,3 +166,10 @@ Added `phase-b-dt-binding-validation.md` with exact command gates and the Round5
 
 
 The UFS negative matrix was extended to test zero VCCQ-parent max-microamp as well as zero VDDP load, so both positive-load constraints are exercised. Current generator has ten cases (two positive, eight negative). Workflow now requires both zero-load values to be rejected.
+
+
+### Actual hosted ROUND63 apply diagnostics
+
+Run `45441391557` fetched exact ACK `8ad08f75...`, verified the prior source blob identities, and applied ROUND32, ROUND36, corrected ROUND52-0001, cleaned ROUND33, cleaned ROUND52-0002 and the ROUND63 PHY binding patch. The ROUND63 driver patch's first include hunk failed at line 16; all later driver hunks applied in diagnostic reject mode. This is a real failure, not a pass.
+
+Corrected the include hunk with broader pinned-source context (including `linux/of_address.h` and the blank line after the include block). Driver implementation hunks unchanged. New run `45442605274` tests the corrected patch. The prior run's evidence-publish push also failed non-fast-forward because the branch advanced after clone; publisher now fetches/resets to the latest branch before commit. Run `45442645017` contains that publication fix. Await these actual results before changing Phase A to PASS.

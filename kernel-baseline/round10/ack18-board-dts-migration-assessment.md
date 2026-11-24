@@ -167,7 +167,7 @@ ROUND9 的 Host clocks 一项仍为 UNKNOWN（parser 导出的 raw 数组为空�
 - [QMP UFS PHY driver](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c)
 - [Qualcomm UFS PHY common support](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/drivers/phy/qualcomm/phy-qcom-ufs.c)
 - [UFS common binding](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/ufs/ufs-common.yaml)
-- [GENI SPI binding](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/spi/qcom,spi-geni-qcom.yaml)
+- [GENI SPI binding](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/spi/qcom,spi-geni-qcom.txt)
 - [FSA4480 binding](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/usb/fcs,fsa4480.yaml)
 - [WCD938x binding](https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/Documentation/devicetree/bindings/sound/qcom,wcd938x.yaml)
 - [Android17 6.18 r8 Kleaf module build targets](https://android.googlesource.com/kernel/common/+/refs/tags/android17-6.18-2026-09_r8/BUILD.bazel)

@@ -104,7 +104,15 @@ The first strict checkpatch attempt on ROUND33 failed for these reasons:
 - WARNING: one commit-description line exceeds 75 columns.
 - CHECK: the continuation indentation for `ufs_qcom_validate_required_opp()` does not align with the opening parenthesis.
 
-The workflow has been updated to run both driver patches independently with `--no-signoff --strict`, capture both logs and report both exit codes. This deliberately skips only the unsigned-draft sign-off requirement; it does not waive source style checks. The next run must establish the actual remaining findings for both patches. The canonical main drafts remain unchanged.
+The no-signoff strict run [45432489540](https://github.com/hhdy/matepad11-dby-w09-agent-reports/actions/runs/45432489540) produced:
+- ROUND33: 0 errors, 1 warning (75-column commit-description line), 1 CHECK (continuation alignment), exit 1.
+- ROUND52-0002: 0 errors, 1 warning (75-column commit-description line), 2 CHECKs (continuation alignment in `of_property_read_u32()` and `devm_regulator_get()`), exit 1.
+
+Two branch-local cleaned copies have been created:
+- `kernel-baseline/round61/patches/round33-checkpatch-clean.patch`: wraps the long commit-description line and corrects the function continuation indentation.
+- `kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch`: wraps the long commit-description lines and aligns both continuation arguments with their opening parentheses.
+
+The workflow now applies and checks these branch-local copies. The changes are formatting/patch-message only; they do not alter driver logic. The next run must confirm both copies still apply and that `--no-signoff --strict` exits 0. The canonical main drafts remain unchanged.
 
 ## 7. Remaining gates
 

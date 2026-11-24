@@ -278,3 +278,18 @@ Key split:
 Current parallel work:
 - Second AI ROUND54: independent UFS patch review, dedicated branch `ai-parallel/round54-ufs-review`; template exists, review not yet completed.
 - Local ROUND15: read-only source/build environment inventory taskbook exists; not yet dispatched/reported.
+
+
+## Current local Agent queue — ROUND16 environment deployment (2026-11-24)
+
+ROUND15 is complete and uploaded. Its result is `NO_EXISTING_BUILD_WORKSPACE_FOUND`; see the sanitized report at `firmware-analysis/round15/round15_stagea_build_environment_inventory.txt` on `firmware-audit-v1`.
+
+The user has explicitly authorized the local Agent to deploy the build environment. The current task is:
+
+- `firmware-analysis/round16/AGENT_TASK.md`
+- Goal: deploy WSL2 Ubuntu 24.04 on D:, install minimal official Ubuntu host packages, synchronize only the official kernel Repo manifest `common-android17-6.18`, pin `common` to ACK commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, record manifest/toolchain versions.
+- Status: **READY FOR LOCAL AGENT — NOT YET REPORTED COMPLETE.**
+- This is the first task allowed to install software and synchronize source, limited strictly to the scope in ROUND16. No security-policy bypass, no Defender/security disabling, no forced reboot, no BIOS modification, no device access, no flashing.
+- It must stop before patch application or kernel compilation. Upload only its sanitized text report to `firmware-audit-v1`, then stop.
+
+ROUND54 remains the separate second-AI source review on `ai-parallel/round54-ufs-review`; do not overlap the tasks.

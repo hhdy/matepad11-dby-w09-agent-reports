@@ -87,3 +87,35 @@ No compilation or device boot is part of ROUND16. The actual board memory handof
 - ROUND16: READY FOR LOCAL AGENT; deployment authorized; execution/report not yet observed.
 - ROUND54: second AI task/branch ready; review template exists; final review report not yet uploaded.
 - Main ACK source baseline and canonical patch drafts remain unchanged.
+
+
+## Status correction — ROUND16 actual outcome (2026-11-24)
+
+ROUND16 was executed and uploaded, with terminal verdict **BLOCKED_BY_HOST_SECURITY_POLICY**. The report is `firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt` on `firmware-audit-v1`, commit `2150bb1c3239630635b24f1265fc7aa1b6fcdac0`.
+
+Corrections to §6 above:
+- WSL is already installed as Store Appx `MicrosoftCorporationII.WindowsSubsystemForLinux 2.7.3.0`.
+- A pre-existing distro named `Ubuntu` is registered as WSL2 on C:, but its Ubuntu release is UNKNOWN.
+- `VirtualMachinePlatform` is Enabled.
+- The normal `wsl.exe` entry point is explicitly blocked by Command Security → Program Blacklist; the Agent's process is not elevated.
+- No new distro or build workspace was deployed; apt, Repo sync, ACK pin and toolchain checks were NOT_ATTEMPTED.
+- D: free space was about 325.3 GiB.
+
+ROUND15 must not be paraphrased as proof WSL was absent; it had not successfully queried the WSL registration. ROUND16 is the first successful registry/Appx inventory.
+
+## Current continuation — ROUND17
+
+The user must manually remove/allow only `C:\Windows\System32\wsl.exe` in Security Center → Command Security → Program Blacklist and relaunch the local Agent in an elevated context. The Agent must not touch the blacklist or use a workaround.
+
+Primary AI fixed the distro decision: retain the existing C: Ubuntu intact; create a second, separate Ubuntu-24.04 at `D:\WSL\Ubuntu-24.04`. Verify the installed Store WSL 2.7.3.0 CLI first. Do not blindly reinstall WSL or enable the legacy WSL / HypervisorPlatform optional features; VMP is already enabled and no actual error currently establishes the need for legacy components.
+
+ROUND17 taskbook: `firmware-analysis/round17/AGENT_TASK.md`; start prompt: `firmware-analysis/round17/START_PROMPT.md`. It resumes source workspace preparation only and ends before patch integration or compilation.
+
+## Parallel second-AI assignment — ROUND58
+
+The second AI is no longer idle after ROUND54. It has a dedicated implementation task on `ai-parallel/round58-kleaf-target-audit`:
+- deliver a concrete no-`base_kernel` full-image Kleaf target patch candidate;
+- deliver a deterministic final .config checker with synthetic unit tests;
+- deliver a build runbook for post-ROUND17 actual integration and Image compilation.
+
+This is source-only candidate work and must not claim Bazel compilation. Board DTS/DTB and boot-image packaging stay separate because final memory handoff / AVB / ramdisk remain unresolved.

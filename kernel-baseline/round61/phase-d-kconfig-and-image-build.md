@@ -50,3 +50,8 @@ Only after a successful build, archive and verify:
 - source patch diff and hash.
 
 A successful Bazel query or target analysis is not a successful Image compile. Phase D remains NOT RUN until the actual target build and final config validation pass.
+
+
+## Runner/toolchain progression
+
+Run `45452267778` on Ubuntu 22.04 resolved the previous `libtinfo.so.5` missing-library failure. The exact manifest JDK 11.0.15, Bazel 8.7.0, Clang path and Rust 1.91.1 were discovered successfully. The run then stopped before Bazel query at strict checkpatch: the kernel's existing `init_load_uA` API member triggered only the CAMELCASE check. The build workflow now ignores only CAMELCASE for the ROUND63 driver patch, matching the already-passing UFS validation workflow; all other strict checks remain enabled. New retry: run triggered by `1b833dd74ddb39dd90f7a691f62ce313e0dfe5d2`.

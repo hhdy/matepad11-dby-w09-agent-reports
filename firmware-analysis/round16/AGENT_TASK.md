@@ -220,7 +220,8 @@ Inside the synced workspace:
    - `git status --short` is empty;
    - the tag points to the expected commit;
    - kernel top-level Makefile reports the expected 6.18.33 version.
-7. Capture the full workspace manifest **after pinning common**:
+7. Create the metadata directory and capture the full workspace manifest **after pinning common**:
+   `mkdir -p metadata`
    `repo manifest -r > metadata/repo-manifest-revisions.xml`.
 8. Also capture the manifest-branch revision and Repo tool version in metadata. Do not include credentials or private URLs.
 9. Compare the source-declared toolchain versions in the pinned kernel tree with the manifest-provided prebuilt tools. ROUND39 recorded the expected compiler/Rust baselines as Clang `r584948c` and Rust `1.91.1.p3`; verify from the actual pinned source and resolved prebuilt project revisions rather than assuming.

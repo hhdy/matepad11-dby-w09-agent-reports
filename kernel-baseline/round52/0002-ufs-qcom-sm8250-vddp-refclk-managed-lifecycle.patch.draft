@@ -48,13 +48,13 @@ diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
-@@ -16,4 +16,5 @@
+@@ -17,4 +17,5 @@
  #include <linux/platform_device.h>
  #include <linux/pm_domain.h>
  #include <linux/pm_opp.h>
 +#include <linux/regulator/consumer.h>
  #include <linux/reset-controller.h>
-@@ -1498,6 +1498,75 @@
+@@ -1497,6 +1498,75 @@
  	return 0;
  }
  
@@ -130,7 +130,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
  /**
   * ufs_qcom_init - bind phy with controller
   * @hba: host controller instance
-@@ -1578,5 +1647,9 @@
+@@ -1584,5 +1654,9 @@
  	err = ufs_qcom_ice_init(host);
  	if (err)
  		goto out_variant_clear;

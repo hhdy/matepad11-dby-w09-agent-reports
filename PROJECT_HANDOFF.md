@@ -802,3 +802,13 @@ ROUND63 board-draft identity correction: after refining the explanatory comment,
 二号 AI继续只写 ai-parallel/stagea-port-until-boot。其已完成真实 Git patch series application，但 UFS schema example validation 仍有 power-domains/unevaluatedProperties diagnostics；Kleaf query、Kconfig 和 Image build 尚未完成。ROUND18 的本地 WSL实测是独立交叉验证，不覆盖它的分支或结果。
 
 Stage A 仍未完成：没有设备启动和 UFS/storage acceptance 证据；Stage B Android 17 DerpFest 仍不得开始。
+
+---
+
+## ROUND18 revision 1 — 修正 ROUND32 补丁集（2026-11-25）
+
+ROUND18 原始任务书第 5 节曾把 ROUND32 的旧 patch blob `efe2d932da34716c631de22d89aba19730cc7f50` 放入 ACK 应用序列。该做法现已废弃：固定 ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 已由 `qcom,sc7180-ufshc.yaml` 选择 SM8250，在 `qcom,ufs.yaml` 重复添加 compatible 会造成重复 schema 选择。
+
+二号 AI 修正版候选 `round32-corrected-sc7180-clock-names.patch`（当时 blob `fade9cb2bdfd544c6736c7595af8380726edf318`）在真实 GitHub Actions Run `45448025597` 的 `git apply --check` 中仍然失败；此前 Run `45447645008` 同样失败。它不能视为可用补丁。ROUND18 本地 Agent 必须在独立 ACK 副本中基于准确上下文重制最小补丁，先单独通过真实 `git apply --check`，再 apply + diff-check，然后执行 ACK 版本 dt-schema 和 7/8/9 clocks 正反例。
+
+当前二号 AI 专属分支仍由它独立维护；本地 ROUND18 仅读取它的候选补丁和报告，不得向该分支写入。ROUND18 其它可独立推进的 Kleaf/Bazel/Kconfig/Image-only 工作不得因 clock schema gate 阻断而停止。主线授权以 `firmware-analysis/round18/AGENT_TASK.md` revision 1 和 `START_PROMPT.md` 为准。

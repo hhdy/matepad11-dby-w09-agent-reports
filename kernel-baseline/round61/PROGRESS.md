@@ -7,11 +7,11 @@
 
 ## Current overall state
 
-**STAGE_A_SOURCE_PATCHES_APPLIED — UFS driver/style checks pass; Kleaf candidate and validator tests pass in the hosted runner; UFS example schema validation still reports errors; no kernel Image or device boot exists.**
+**STAGE_A_SOURCE_PATCHES_BASELINE_PASS — prior UFS source series passed real apply/checkpatch; mandatory ROUND63 PHY patches and manifest-pinned Kleaf/Image build are now wired into hosted workflows but their current-run results are pending; UFS schema remains partial; no kernel Image or device boot is yet evidenced.**
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PASS with branch-local corrections | Run 45435020774: exact ACK fetch/blob checks; ROUND32, ROUND36, corrected ROUND52-0001, cleaned ROUND33 and cleaned ROUND52-0002 applied; ROUND57 intentionally skipped as redundant/invalid; final diff-check pass |
+| A — real Git patch application | PARTIAL: previous UFS series PASS; ROUND63 revalidation pending | Run 45435020774 proves the previous UFS series; current workflow adds the mandatory ROUND63 binding/driver patches and will publish new real apply/diff/checkpatch evidence. ROUND57 remains superseded because ROUND32's fixed eight-item list already expresses exact cardinality and dt-schema rejects redundant min/max constraints |
 | B — UFS binding validation | PARTIAL / BLOCKED | Schema docs and yamllint pass; generated example DTBs exist; qcom,ufs.example.dtb still reports power-domains too short and unevaluatedProperties errors. ACK Makefile returns success despite those example diagnostics; do not mark Phase B PASS |
 | C — Kleaf target validation | PARTIAL | ROUND58 patch applies; buildifier auto-format showed only one missing blank line, now fixed in branch-local patch; current workflow revision requires clean buildifier check. 9 config-validator unit tests pass. No Bazel query/cquery because full manifest workspace and locked build/kernel dependency are unavailable |
 | D — final Kconfig + Image build | NOT_RUN | No manifest-pinned Kleaf workspace, actual .config, or Image build |

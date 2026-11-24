@@ -24,7 +24,7 @@ This is a draft only. dt_binding_check / dtbs_check have not been run.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-@@ -23,6 +23,7 @@ select:
+@@ -24,6 +24,7 @@ select:
            - qcom,sm6125-ufshc
            - qcom,sm6350-ufshc
            - qcom,sm8150-ufshc
@@ -32,7 +32,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
    required:
      - compatible
  
-@@ -38,6 +39,7 @@ properties:
+@@ -39,6 +40,7 @@ properties:
            - qcom,sm6125-ufshc
            - qcom,sm6350-ufshc
            - qcom,sm8150-ufshc
@@ -40,7 +40,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
        - const: qcom,ufshc
        - const: jedec,ufs-2.0
  
-@@ -148,12 +150,35 @@ allOf:
+@@ -148,11 +150,34 @@ allOf:
          reg:
            minItems: 2
            maxItems: 2
@@ -48,7 +48,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
            minItems: 2
        required:
          - reg-names
- 
++
 +  - if:
 +      properties:
 +        compatible:
@@ -72,7 +72,6 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +        reg:
 +          minItems: 1
 +          maxItems: 1
- 
      # TODO: define clock bindings for qcom,msm8994-ufshc
  
    - if:

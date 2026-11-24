@@ -216,3 +216,16 @@ A lightweight scan of the final driver patch's added lines found:
 - zero added lines with trailing whitespace.
 
 This is only text hygiene, **not** `checkpatch.pl` or `git diff --check`.
+
+
+### PHY provider removal boundary — stateless device link
+
+A further pinned-source check found a lifecycle limitation that must remain explicit:
+
+- ACK `drivers/phy/phy-core.c`, blob `04a5a34e7a950ae94fae915673c25d476fc071c1`: `phy_get()` adds a device link with `DL_FLAG_STATELESS`; `phy_put()` removes it.
+- ACK `drivers/base/core.c`, blob `3099dbca234aba38bde00e5f4d2567121c8612d0`: `device_links_unbind_consumers()` ignores links without `DL_FLAG_MANAGED`.
+- ACK `Documentation/driver-api/device_link.rst`, blob `ee913ae1637117b8479cd6670e4cce09ed1bc0ad`: a stateless link is intended when driver presence on the supplier is irrelevant and correct suspend/resume/shutdown ordering is needed; it does not give the core managed consumer-unbind behavior.
+
+Therefore the ROUND63 cleanup action is ordered before the QMP PHY provider's managed regulator handles are released, but the stateless PHY link does **not** prove that manually unbinding the QMP PHY provider will first unbind every UFS consumer. This is a broader generic-PHY supplier-lifetime boundary, not introduced solely by ROUND63.
+
+For normal UFS host removal, the consumer driver is expected to shut down the PHY and release its managed PHY reference before the provider is removed. Do not manually unbind the QMP PHY platform device while the UFS host remains bound. ROUND61 must review the exact normal remove path and device-link behavior, and report this boundary rather than claiming universal supplier-unbind safety. No forced-unbind test is authorized or required for the first boot milestone.

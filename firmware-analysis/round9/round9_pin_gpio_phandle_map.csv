@@ -1,0 +1,101 @@
+﻿subsystem,source_fragment,source_node,property,resolved_target,name_or_gpio,electrical,status,evidence
+UFS_SUPPLY,/fragment@63,/fragment@63/__overlay__,vdda-phy-supply,/soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5,pm8150_l5,min=880000 max=880000 uV; init=880000 uV; max-load=89900 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@63,/fragment@63/__overlay__,vdda-pll-supply,/soc/rsc@18200000/rpmh-regulator-ldoa9/regulator-pm8150-l9,pm8150_l9,min=1200000 max=1200000 uV; init=1200000 uV; max-load=18800 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,vcc-supply,/soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17,pm8150_l17,"min=2496000 max=3008000 uV; init=2496000 uV; max-load=800000 uA; overlay vcc-voltage-level=[2504000, 2950000] uV",RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,vccq-supply,/soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6,pm8150_l6,min=1200000 max=1200000 uV; init=1200000 uV; max-load=800000 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,vccq2-supply,/soc/rsc@18200000/rpmh-regulator-smpa4/regulator-pm8150-s4,pm8150_s4,min=1800000 max=1920000 uV; init=1800000 uV; max-load=800000 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,vdd-hba-supply,"/soc/qcom,gdsc@177004",ufs_phy_gdsc,GDSC; min=N/A max=N/A uV,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,"qcom,vccq-parent-supply",/soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8,pm8150a_s8,min=1200000 max=1400000 uV; init=1200000 uV; max-load=210000 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_SUPPLY,/fragment@64,/fragment@64/__overlay__,"qcom,vddp-ref-clk-supply",/soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6,pm8150_l6,min=1200000 max=1200000 uV; init=1200000 uV; max-load=100 uA,RESOLVED,base __symbols__ via overlay __fixups__ (0xffffffff placeholder not used as target)
+UFS_BASE,base,/soc/ufshc@1d84000,clocks,N/A,phandle array,raw=[],UNKNOWN,ROUND3 base FDT phandle index
+UFS_BASE,base,/soc/ufshc@1d84000,resets,"/soc/qcom,gcc@100000; /soc/thermal-zones/cpu-0-1-step/trips/cpu01-config",phandle array,"raw=[23, 33]",RESOLVED,ROUND3 base FDT phandle index
+UFS_BASE,base,/soc/ufshc@1d84000,phys,/soc/ufsphy_mem@1d87000,phandle array,raw=[119],RESOLVED,ROUND3 base FDT phandle index
+UFS_BASE,base,/soc/ufshc@1d84000,pinctrl-0,/soc/pinctrl@f000000/ufs_dev_reset_assert,phandle array,raw=[120],RESOLVED,ROUND3 base FDT phandle index
+UFS_BASE,base,/soc/ufshc@1d84000,pinctrl-1,/soc/pinctrl@f000000/ufs_dev_reset_deassert,phandle array,raw=[121],RESOLVED,ROUND3 base FDT phandle index
+UFS_BASE,base,/soc/ufsphy_mem@1d87000,clocks,"/soc/rsc@18200000/qcom,rpmhclk; /soc/qcom,gcc@100000; /soc/rsc@18200000/rpmh-regulator-ldoa15/regulator-pm8150-l15",phandle array,"raw=[22, 0, 23, 173]",RESOLVED,ROUND3 base FDT phandle index
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,cs_gpio,/soc/pinctrl@f000000 (tlmm),GPIO43 (native chip-select),raw=<&tlmm 43 0>,RESOLVED,HOS4.3 DTBO entry8 direct GPIO encoding; NOT copied from any Linux DTS
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,irq_gpio,/soc/pinctrl@f000000 (tlmm),GPIO39 (IRQ GPIO),raw=<&tlmm 39 0>,RESOLVED,HOS4.3 DTBO entry8 direct GPIO encoding; NOT copied from any Linux DTS
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,rst_gpio,/soc/pinctrl@f000000 (tlmm),GPIO98 (reset GPIO),raw=<&tlmm 98 0>,RESOLVED,HOS4.3 DTBO entry8 direct GPIO encoding; NOT copied from any Linux DTS
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,interrupts,/soc/pinctrl@f000000 (tlmm),IRQ 39,"raw=[39, 0]",RESOLVED,HOS4.3 overlay direct value
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,pinctrl-0,/fragment@88/__overlay__/pmx_ts_int_active/ts_int_active; /fragment@88/__overlay__/pmx_ts_reset_active/ts_reset_active,default,"GPIO39(int)+GPIO98(rst), drive=8",RESOLVED,overlay-local phandle domain (fragment@88 ts_int_active/ts_reset_active)
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,pinctrl-1,/fragment@88/__overlay__/pmx_ts_int_suspend/ts_int_suspend; /fragment@88/__overlay__/pmx_ts_reset_suspend/ts_reset_suspend,idle,"GPIO39(int)+GPIO98(rst), drive=2",RESOLVED,overlay-local phandle domain (fragment@88 ts_int_suspend/ts_reset_suspend)
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10,spi-max-frequency,(parent SPI14),huawei_thp parent,10000000 Hz,RESOLVED,HOS4.3 overlay direct value; parent 10 MHz
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10/ilitek,spi-max-frequency,(child limit),Novatek/Ilitek child,16000000 Hz,RESOLVED,HOS4.3 overlay direct value
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10/ilitek,rst_gpio,/soc/pinctrl@f000000 (tlmm),GPIO136 (child reset),"raw=[4294967295, 136, 0]",RESOLVED,HOS4.3 overlay direct GPIO encoding
+TOUCH_THP,fragment@89,/fragment@89/__overlay__/spi@880000/huawei_thp@10/novatech,spi-max-frequency,(child limit),Novatek/Ilitek child,16000000 Hz,RESOLVED,HOS4.3 overlay direct value
+TOUCH_THP,base,/soc/spi@880000,compatible,(controller),"qcom,spi-geni","status=ok, parent max=50MHz",RESOLVED,ROUND3 base FDT direct property
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary","qcom,dsi-ctrl","/soc/qcom,mdss_dsi_ctrl0@ae94000",primary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-secondary","qcom,dsi-ctrl","/soc/qcom,mdss_dsi_ctrl0@ae94000",secondary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary","qcom,dsi-phy","/soc/qcom,mdss_dsi_phy0@ae94400",primary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-secondary","qcom,dsi-phy","/soc/qcom,mdss_dsi_phy0@ae94400",secondary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary",vdd-supply,/soc/rsc@18200000/rpmh-regulator-ldoc11/regulator-pm8150a-l11,primary,raw=['EXT'],RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary",vddio-supply,/soc/rsc@18200000/rpmh-regulator-ldoa14/regulator-pm8150-l14,primary,raw=['EXT'],RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary",pinctrl-0,/soc/pinctrl@f000000/pmx_sde/sde_dsi_active,primary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary",pinctrl-1,/soc/pinctrl@f000000/pmx_sde/sde_dsi_suspend,primary,"raw=['EXT', 'UNRESOLVED']",RESOLVED,overlay __fixups__ closure; 0xffffffff entries left UNKNOWN
+PANEL_DSI,fragment@40,"/fragment@40/__overlay__/qcom,dsi-display-primary","qcom,dsi-default-panel",/fragment@82/__overlay__/lcd_kit_debussy_dual_nt36523_video_mode_default,default panel profile,overlay-local phandle,RESOLVED,overlay phandle domain -> fragment@82 profile node
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,iovcc_gpio,(board GPIO / type),IOVCC GPIO,raw=[6],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,lcd_reset_gpio,(board GPIO / type),panel reset GPIO,raw=[38],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,vsp_gpio_id,(board GPIO / type),VSP GPIO,raw=[11],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,vsn_gpio_id,(board GPIO / type),VSN GPIO,raw=[12],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,bl_en_gpio,(board GPIO / type),backlight enable GPIO,raw=[10],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,support_lcd_type,(board GPIO / type),support type,"raw=[1279476831, 1263096832]",RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@83,/fragment@83/__overlay__,gpio_id,(board GPIO / type),gpio id pair,"raw=[13, 152]",RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,iovcc_gpio,(board GPIO / type),IOVCC GPIO,raw=[6],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,lcd_reset_gpio,(board GPIO / type),panel reset GPIO,raw=[38],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,vsp_gpio_id,(board GPIO / type),VSP GPIO,raw=[11],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,vsn_gpio_id,(board GPIO / type),VSN GPIO,raw=[12],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,bl_en_gpio,(board GPIO / type),backlight enable GPIO,raw=[10],RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,support_lcd_type,(board GPIO / type),support type,"raw=[1279476831, 1263096832]",RESOLVED,HOS4.3 overlay direct board property
+PANEL_TYPE,fragment@142,/fragment@142/__overlay__,gpio_id,(board GPIO / type),gpio id pair,"raw=[13, 152]",RESOLVED,HOS4.3 overlay direct board property
+PANEL_PROFILE,fragment@78,/fragment@78/__overlay__,"lcd-kit,lcd-vci",110_20d,"lcd-kit,lcd-vci",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@78,/fragment@78/__overlay__,"lcd-kit,lcd-iovcc",110_20d,"lcd-kit,lcd-iovcc",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@78,/fragment@78/__overlay__,"lcd-kit,lcd-vsp",110_20d,"lcd-kit,lcd-vsp",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@78,/fragment@78/__overlay__,"lcd-kit,lcd-vsn",110_20d,"lcd-kit,lcd-vsn",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@78,/fragment@78/__overlay__,"lcd-kit,lcd-reset",110_20d,"lcd-kit,lcd-reset",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@79,/fragment@79/__overlay__,"lcd-kit,lcd-vci",110_a09,"lcd-kit,lcd-vci",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@79,/fragment@79/__overlay__,"lcd-kit,lcd-iovcc",110_a09,"lcd-kit,lcd-iovcc",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@79,/fragment@79/__overlay__,"lcd-kit,lcd-vsp",110_a09,"lcd-kit,lcd-vsp",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@79,/fragment@79/__overlay__,"lcd-kit,lcd-vsn",110_a09,"lcd-kit,lcd-vsn",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@79,/fragment@79/__overlay__,"lcd-kit,lcd-reset",110_a09,"lcd-kit,lcd-reset",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@22,/fragment@22/__overlay__,"lcd-kit,lcd-iovcc",dual_nt36523,"lcd-kit,lcd-iovcc",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@22,/fragment@22/__overlay__,"lcd-kit,lcd-vsp",dual_nt36523,"lcd-kit,lcd-vsp",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@22,/fragment@22/__overlay__,"lcd-kit,lcd-vsn",dual_nt36523,"lcd-kit,lcd-vsn",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_PROFILE,fragment@22,/fragment@22/__overlay__,"lcd-kit,lcd-reset",dual_nt36523,"lcd-kit,lcd-reset",raw=[],UNKNOWN,HOS4.3 overlay public electrical property; no init payload
+PANEL_REG,fragment@40,/fragment@40/__overlay__/display_gpio_regulator@1,regulator-name,(fixed regulator),display_panel_avdd,5.5V class; pinctrl gpio99,RESOLVED,HOS4.3 overlay direct property
+PANEL_REG,fragment@39,/fragment@39/__overlay__/display_panel_avdd_default/config,pins,(pinctrl gpio99),display avdd enable,raw=gpio99,RESOLVED,overlay pinctrl direct pin
+PANEL_BACKLIGHT,fragment@86/87,/fragment@86/__overlay__/hw_backlight@2c,compatible,(I2C backlight IC),"huawei,hw_lp855x",status=ok,RESOLVED,multiple candidates present; active IC UNKNOWN
+PANEL_BACKLIGHT,fragment@86/87,/fragment@86/__overlay__/hw_mp3314@28,compatible,(I2C backlight IC),"huawei,hw_mp3314",status=ok,RESOLVED,multiple candidates present; active IC UNKNOWN
+PANEL_BACKLIGHT,fragment@86/87,/fragment@86/__overlay__/hw_rt4539@3c,compatible,(I2C backlight IC),"huawei,hw_rt4539",status=ok,RESOLVED,multiple candidates present; active IC UNKNOWN
+PANEL_BACKLIGHT,fragment@86/87,/fragment@86/__overlay__/hw_rt8555@31,compatible,(I2C backlight IC),"huawei,hw_rt8555",status=ok,RESOLVED,multiple candidates present; active IC UNKNOWN
+PANEL_BACKLIGHT,fragment@86/87,/fragment@86/__overlay__/hw_syh62758@2e,compatible,(I2C backlight IC),"huawei,hw_syh62758",status=ok,RESOLVED,multiple candidates present; active IC UNKNOWN
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",wlan-en-gpio,/soc/pinctrl@f000000 (tlmm),GPIO20 (WLAN_EN),"raw=[102, 20, 0]",RESOLVED,ROUND3 base FDT direct GPIO encoding
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000","qcom,bt-en-gpio",/soc/pinctrl@f000000 (tlmm),GPIO21 (BT_EN),"raw=[102, 21, 0]",RESOLVED,ROUND3 base FDT direct GPIO encoding
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000","qcom,sw-ctrl-gpio",/soc/pinctrl@f000000 (tlmm),GPIO124 (SW control),"raw=[102, 124, 0]",RESOLVED,ROUND3 base FDT direct GPIO encoding
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",vdd-wlan-aon-supply,/soc/rsc@18200000/rpmh-regulator-smpa6/regulator-pm8150-s6,aon,raw=[167],RESOLVED,base phandle direct
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",vdd-wlan-dig-supply,/soc/rsc@18200000/rpmh-regulator-smpa6/regulator-pm8150-s6,dig,raw=[167],RESOLVED,base phandle direct
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",vdd-wlan-io-supply,/soc/rsc@18200000/rpmh-regulator-smpa4/regulator-pm8150-s4,io,raw=[168],RESOLVED,base phandle direct
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",vdd-wlan-rfa1-supply,/soc/rsc@18200000/rpmh-regulator-smpa5/regulator-pm8150-s5,rfa1,raw=[169],RESOLVED,base phandle direct
+WLAN_BT,base,"/soc/qcom,cnss-qca6390@b0000000",vdd-wlan-rfa2-supply,/soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8,rfa2,raw=[170],RESOLVED,base phandle direct
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-reset-gpio",/soc/pinctrl@f000000 (tlmm),GPIO21 (BT reset),"raw=[4294967295, 21, 0]",RESOLVED,HOS4.3 overlay direct GPIO encoding
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-indep-ctrl-gpio",/soc/pinctrl@f000000 (tlmm),GPIO145 (BT indep ctrl),"raw=[4294967295, 145, 0]",RESOLVED,HOS4.3 overlay direct GPIO encoding
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-sw-ctrl-gpio",/soc/pinctrl@f000000 (tlmm),GPIO124 (BT sw ctrl),"raw=[4294967295, 124, 0]",RESOLVED,HOS4.3 overlay direct GPIO encoding
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-vdd-aon-supply",/soc/rsc@18200000/rpmh-regulator-smpa6/regulator-pm8150-s6,pm8150_s6,"min=600000 max=1128000 uV; overlay level=[950000, 950000]",RESOLVED,base __symbols__ via overlay __fixups__
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-vdd-asd-supply",/soc/rsc@18200000/rpmh-regulator-ldoa16/regulator-pm8150-l16,pm8150_l16,"min=3024000 max=3304000 uV; overlay level=[3024000, 3304000]",RESOLVED,base __symbols__ via overlay __fixups__
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-vdd-dig-supply",/soc/rsc@18200000/rpmh-regulator-smpa6/regulator-pm8150-s6,pm8150_s6,"min=600000 max=1128000 uV; overlay level=[950000, 950000]",RESOLVED,base __symbols__ via overlay __fixups__
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-vdd-rfa1-supply",/soc/rsc@18200000/rpmh-regulator-smpa5/regulator-pm8150-s5,pm8150_s5,"min=1824000 max=2040000 uV; overlay level=[1900000, 1900000]",RESOLVED,base __symbols__ via overlay __fixups__
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,"qca,bt-vdd-rfa2-supply",/soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8,pm8150a_s8,"min=1200000 max=1400000 uV; overlay level=[1350000, 1350000]",RESOLVED,base __symbols__ via overlay __fixups__
+WLAN_BT,fragment@71,/fragment@71/__overlay__/bt_qca6390,pinctrl-0,/soc/pinctrl@f000000/bt_en_sleep,bt_en_sleep (default),"GPIO21, pull-down drive=2",RESOLVED,overlay __fixups__ -> base pinctrl
+WLAN_BT,fragment@76,/fragment@76/__overlay__,"wifi,chiptype",(HOS info node),WIFI_QUALCOMM_QCA6391,HOS self-report; no stepping inference,RESOLVED,overlay direct string
+WLAN_BT,fragment@77,/fragment@77/__overlay__,"bt,chiptype",(HOS info node),BT_FM_QUALCOMM_QCA6391,HOS self-report; no stepping inference,RESOLVED,overlay direct string
+USB_TYPEC,base,/soc/i2c@884000/fsa4480@43,compatible,(FSA4480 mux),"qcom,fsa4480-i2c",I2C address 0x43,RESOLVED,ROUND3 base FDT direct property
+USB_TYPEC,fragment@66,/fragment@66/__overlay__/redriver@1c,compatible,(redriver),"onnn,redriver",I2C address 0x1c; model kept as HOS raw string,RESOLVED,HOS4.3 overlay direct string; no Linux model substitution
+USB_TYPEC,fragment@66,/fragment@66/__overlay__/redriver@1c,redriver-model,(HOS raw string kept),UNKNOWN,no direct NB7VPQ904M evidence in this FDT; not inferred from Linux port,UNKNOWN,fail-closed
+USB_TYPEC,base,/soc/ssphy@88e8000,compatible,(QMP combo PHY),"qcom,usb-ssphy-qmp-dp-combo","vdd-voltage-level=[0, 912000, 912000]; max-load=[47000] uA",RESOLVED,ROUND3 base FDT direct property
+USB_TYPEC,base,"/soc/qcom,dp_display@ae90000",compatible,(DP display),"qcom,dp-display",max-pclk=[675000] kHz,RESOLVED,ROUND3 base FDT direct property
+USB_TYPEC,fragment@41,/fragment@41/__overlay__,"qcom,usbplug-cc-gpio",/soc/pinctrl@f000000 (tlmm),GPIO65 orientation/CC,"raw=[4294967295, 65, 0]",RESOLVED,HOS4.3 overlay direct GPIO encoding
+USB_TYPEC,fragment@41,/fragment@41/__overlay__,"qcom,dp-aux-switch",/soc/i2c@884000/fsa4480@43,"qcom,dp-aux-switch",raw=['EXT'],RESOLVED,overlay/base phandle domain; unresolved entries left UNKNOWN
+USB_TYPEC,fragment@41,/fragment@41/__overlay__,"qcom,dp-usbpd-detection","/fragment@2/__overlay__/qcom,pm8150b@2/qcom,usb-pdphy@1700","qcom,dp-usbpd-detection",raw=['OVERLAY_LOCAL'],RESOLVED,overlay/base phandle domain; unresolved entries left UNKNOWN
+USB_TYPEC,fragment@41,/fragment@41/__overlay__,"qcom,ext-disp","/fragment@40/__overlay__/qcom,msm-ext-disp","qcom,ext-disp",raw=['OVERLAY_LOCAL'],RESOLVED,overlay/base phandle domain; unresolved entries left UNKNOWN
+USB_TYPEC,fragment@9,/fragment@9/__overlay__,extcon,(extcon linkage),present,"raw=[25, 4294967295]",PARTIAL,extcon phandle target not fully closed with existing parser
+USB_TYPEC,fragment@10,/fragment@10/__overlay__,extcon,(extcon linkage),present,raw=[25],PARTIAL,extcon phandle target not fully closed with existing parser
+USB_TYPEC,fragment@11,/fragment@11/__overlay__,extcon,(extcon linkage),present,raw=[25],PARTIAL,extcon phandle target not fully closed with existing parser

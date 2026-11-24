@@ -8,7 +8,7 @@ do not add suspend/resume rail switching yet.
 
 Register a devm cleanup action after the managed regulator get. On device
 unbind, driver-core devres release occurs after the UFS remove callback has
-completed generic VCCQ shutdown, so this action disables VDDP and then clears
+completed generic VCCQ shutdown. This action disables VDDP and then clears
 its load before the managed regulator handle is put. It also handles failed
 variant initialization after the generic HBA unwind.
 
@@ -94,14 +94,14 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +		return 0;
 +
 +	ret = of_property_read_u32(dev->of_node,
-+			   "qcom,vddp-ref-clk-max-microamp", &load_uA);
++			    "qcom,vddp-ref-clk-max-microamp", &load_uA);
 +	if (ret)
 +		return dev_err_probe(dev, ret, "missing VDDP REF_CLK load\n");
 +	if (!load_uA)
 +		return dev_err_probe(dev, -EINVAL, "invalid zero VDDP REF_CLK load\n");
 +
 +	host->vddp_ref_clk = devm_regulator_get(dev,
-+					"qcom,vddp-ref-clk");
++					 "qcom,vddp-ref-clk");
 +	if (IS_ERR(host->vddp_ref_clk))
 +		return dev_err_probe(dev, PTR_ERR(host->vddp_ref_clk),
 +				     "failed to get VDDP REF_CLK supply\n");

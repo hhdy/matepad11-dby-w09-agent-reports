@@ -6,3 +6,4 @@ retry=absolute-jdk-path-and-corrected-sm8250-schema-patch
 retry=explicit-power-domain-range-minitems
 retry=round52-before-power-domain-range-fix
 retry=sm8250-conditional-minitems-in-both-schema-layers
+retry=single-file-multi-hunk-power-domain-patch

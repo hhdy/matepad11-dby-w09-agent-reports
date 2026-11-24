@@ -125,7 +125,7 @@ The candidate uses the pinned SM8250 values already present in ACK's static regu
 
 Driver candidate:
 - `kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft`
-- current Git blob SHA: `b0f6b5f72d773bf9797b527ff4d2ab71060b6d54`
+- current Git blob SHA: `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`
 - adds optional property state, managed teardown, and separate regulator enable/disable handling when the property is present.
 
 Binding candidate:
@@ -175,3 +175,20 @@ The exact order between independent QMP PHY and UFS Host patch files can be chos
 This does not block the independent Image-only build work, except that the final QMP driver integration must be compiled before a boot candidate can be considered.
 
 **Conclusion:** do not silently omit HOS4.3 `vdda-phy-always-on`. The ACK driver and binding currently lack the property. ROUND63 supplies a source-based candidate adaptation, but it remains unvalidated until real apply, schema, compile and hardware checks pass.
+
+
+## 9. Static candidate hardening update (2026-11-24)
+
+Before recording this update, the QMP candidate was rechecked against additional pinned header/source contracts:
+
+- All **15** `regulator_bulk_data` lists in pinned `phy-qcom-qmp-ufs.c` put `vdda-phy` at index 0 and `vdda-pll` at index 1. The current SM8250 entries are 89900µA and 18800µA. The candidate still validates that the first supply is `vdda-phy` before using this special path.
+- Pinned `include/linux/regulator/consumer.h` blob `56fe2693d9b2284d04ebae50165f9aa7b1b3fee4` confirms `regulator_bulk_data.init_load_uA` is a public field documented as the initial load applied by the bulk-get API.
+- Pinned `include/linux/device.h` blob `26eb9a0157f836be303513eb2ffda7d492ca40ff` includes `linux/device/devres.h`; that header blob is `8c5f57e0d613492fd0b2ec97dd384181608192fc` and declares `devm_add_action_or_reset()`. The QMP source already includes `linux/platform_device.h`, which pulls in the device header. The candidate additionally adds explicit `linux/string.h` for its `strcmp()` validation.
+- The final driver patch blob is now `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5` (after correcting new-file anchors following the explicit string header addition).
+
+A deterministic in-memory exact-context replay of the final candidate against the exact pinned blobs succeeded:
+- Driver: **5/5 hunks exact**, declared old/new counts match, no nearest-context fallback.
+- Binding: **1/1 hunk exact**, declared old/new counts match.
+- Source blobs were `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3` (driver) and `fba7b2549ddee7ee4e048277a11a7da053d52887` (binding).
+
+This replay is not Git's `git apply --check` or an actual disposable-worktree application. It proves only that the candidate hunk contexts and line anchors match the fetched pinned text. No checkpatch, dt_binding_check, compile or hardware test has run.

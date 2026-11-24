@@ -139,7 +139,11 @@ jobs:
           dt-doc-validate -u Documentation/devicetree/bindings \
             Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
             Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+          yamllint -f parsable -c Documentation/devicetree/bindings/.yamllint \
+            Documentation/devicetree/bindings/ufs/qcom,ufs.yaml \
+            Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
           test -f Documentation/devicetree/bindings/processed-schema.json
+          test -s Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
           find Documentation/devicetree/bindings/ufs -maxdepth 1 \
             -name 'qcom,ufs*.example.dtb' -print
 

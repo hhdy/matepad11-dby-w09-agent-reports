@@ -329,7 +329,7 @@ jobs:
               git -C "$RUNNER_TEMP/ack" status --short
               git -C "$RUNNER_TEMP/ack" diff --stat
             fi
-            for log in ufs-sm8250-1-domain-valid-validation.log ufs-sm8250-2-domains-valid-validation.log round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
+            for log in round63-phy-legacy-validation.log round63-phy-positive-validation.log ufs-sm8250-1-domain-valid-validation.log ufs-sm8250-2-domains-valid-validation.log round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
               if [ -f "$RUNNER_TEMP/$log" ]; then
                 echo
                 echo "## $log"

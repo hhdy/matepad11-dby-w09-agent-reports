@@ -13,16 +13,14 @@
 CONFIG_ARM64=y
 CONFIG_ARCH_QCOM=y
 CONFIG_OF=y
-CONFIG_OF_RESERVED_MEM=y
 
 # SCSI block layer / Qualcomm UFS host
-# ACK .33 Kconfig: SCSI_UFSHCD requires SCSI + SCSI_DMA and selects
-# PM_DEVFREQ; PM_DEVFREQ in turn selects hidden PM_OPP. The UFS OPP path
-# therefore depends on resolving this chain to built-in, not on manually
-# forcing the hidden CONFIG_PM_OPP symbol.
+# ACK .33 Kconfig: SCSI selects hidden SCSI_DMA when HAS_DMA (provided by
+# arm64); SCSI_UFSHCD depends on SCSI + SCSI_DMA and selects PM_DEVFREQ.
+# PM_DEVFREQ in turn selects hidden PM_OPP. Do not assign hidden dependency
+# symbols directly; let the real Kconfig selection chain resolve them.
 CONFIG_BLOCK=y
 CONFIG_SCSI=y
-CONFIG_SCSI_DMA=y
 CONFIG_BLK_DEV_SD=y
 CONFIG_SCSI_UFSHCD=y
 CONFIG_SCSI_UFSHCD_PLATFORM=y

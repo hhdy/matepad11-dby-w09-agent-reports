@@ -237,7 +237,7 @@ ROUND30's MMCX-to-MX parent/corner equivalence remains a separate unresolved pow
 
 Full report: kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
 
-Next sequence: harden ROUND33, maintain the ROUND38 patch order (ROUND32 schema → ROUND36 common binding → ROUND37 board DTS → ROUND33 driver), then run complete disposable-tree patch/schema/DTB/Kconfig/build checks only after the AVB and memory/boot-chain gates are addressed. ROUND12 remains the only active local Agent task. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware validation.
+Next sequence: harden ROUND33, maintain the ROUND38 patch order (ROUND32 schema → ROUND36 common binding → ROUND37 board DTS → ROUND33 driver), then run complete disposable-tree patch/schema/DTB/Kconfig/build checks only after the AVB and memory/boot-chain gates are addressed. ROUND12 AVB remains BLOCKED; ROUND13 and ROUND14 are complete, and the Local Agent queue is currently empty. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware validation.
 
 
 ## 11. Latest progress — ROUND45 all-entry UFS OPP validation hardening
@@ -258,7 +258,7 @@ Updated ROUND33 patch:
 
 This is not full-tree git apply, checkpatch, C compilation, dt-schema, DTB, Kconfig, Kleaf or device validation. ROUND45 report: kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md.
 
-ROUND30 MMCX-to-MX, ROUND42/43 Huawei final memory handoff, ROUND12 AVB and ROUND40 UFS companion-supply teardown remain separate open gates. ROUND12 remains the only active local Agent task. No protected DTS branch, firmware audit branch or PR #1 was modified. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware acceptance.
+ROUND30 MMCX-to-MX, ROUND42/43 Huawei final memory handoff, ROUND12 AVB and ROUND40 UFS companion-supply teardown remain separate open gates. ROUND12 AVB remains BLOCKED; ROUND13 and ROUND14 are complete, and the Local Agent queue is currently empty. No protected DTS branch, firmware audit branch or PR #1 was modified. Stage B DerpFest work remains deferred until Stage A 6.18.33 actually boots and passes storage/basic-hardware acceptance.
 
 
 ROUND45 supplemental Kconfig call-site review against the exact .33_r00 source confirmed the new helper's OPP/GenPD API dependencies are covered by the planned fragment chain: SCSI_UFSHCD → PM_DEVFREQ → PM_OPP; SM_GCC_8250 → QCOM_GDSC → PM_GENERIC_DOMAINS (when PM=y); PM_GENERIC_DOMAINS_OF is auto-enabled with OF; QCOM_RPMHPD depends on QCOM_RPMH + QCOM_COMMAND_DB, both already requested. drivers/Makefile also includes the pmdomain subtree under PM_GENERIC_DOMAINS. No additional direct config symbol was identified, but final Kleaf .config resolution remains NOT_RUN.
@@ -314,94 +314,51 @@ HOS4.3 `regulator-initial-mode`, `regulator-allowed-modes`, `regulator-allow-set
 ROUND47 is public-source review only. No local FDT/DTBO was re-parsed, and no regulator mode was read at runtime. Full-tree apply, DTS/schema, DTB, Kconfig, Kleaf build and device boot remain NOT_RUN. ROUND12 continues independently; no new Agent task was started. Stage A ACK 6.18.33 remains the only active project stage; DerpFest Stage B stays deferred.
 
 
-## 14. Latest local evidence status — ROUND12 blocked; firmware-analysis ROUND13 queued
+## 14. Local evidence status — ROUND12 AVB blocked; ROUND13/14 complete
 
 Updated: 2026-11-24.
 
-The Local Agent uploaded `firmware-analysis/round12/round12_avb_metadata_findings.txt` to `firmware-audit-v1`. Outcome: **BLOCKED at the trusted-tool gate**:
-- `avbtool` / `avbtool.py` and candidate Python modules were not present.
-- Previously reviewed ROUND2/3 scripts do not parse AVB footer metadata or vbmeta descriptors.
-- The bounded search stopped at the local command safety policy and was not retried.
-- No footer check, original-image-size extraction, hash/hashtree descriptor listing or chain-descriptor mapping was performed.
-- No tool was installed/downloaded; no WSL, security policy, device or partition action occurred.
+- ROUND12 AVB metadata report is uploaded but BLOCKED at the trusted-tool gate. No trusted AVB footer/vbmeta descriptor inspector was available; footer presence, original-image size, descriptor list and chain remain UNKNOWN. Do not install tools or repeat the blocked scan.
+- ROUND13 PM8150 mode/DRMS audit is complete and uploaded to `firmware-audit-v1`.
+- ROUND14 MMCX/MX ARC corner/dropout/proxy and S8 enable-field extraction is complete and uploaded to `firmware-audit-v1`. It reused only the approved ROUND3 base-FDT work copy/parser and existing phandle/path indices; it did not redo ROUND11/13, reparse DTBO or touch EROFS/AVB/ramdisk/device.
+- ROUND51 reconciles ROUND11's four-edge list with the fifth edge confirmed by ROUND14. At least five base-FDT parent-supply edges are known; the full graph count remains unverified. It also establishes ARC symbolic corner semantics, signed -1 dropout handling, the MMCX ALL temporary TURBO..MAX proxy request, and the conservative S8 policy.
+- No local Agent task is active. Do not repeat ROUND11/13/14 FDT parsing. A future task is justified only for a distinct local-only fact that cannot be resolved from the existing reports and public fixed source.
+- AVB, ramdisk and EROFS remain independently blocked; memory/reserved-memory final handoff, selected DTBO and physical PMIC input tree remain separate gates.
 
-Therefore:
-- boot.img / ramdisk.img / dtbo.img file sizes are COMPLETE only as previously reported in ROUND2.
-- AVB footer presence and original-image-size remain BLOCKED.
-- vbmeta descriptor coverage / chained vbmeta relations remain UNKNOWN.
-- Do not infer footer/descriptor state from AVB0 magic or image size; keep boot packaging and dm-verity/FEC decisions blocked.
+Stage A ACK 6.18.33 remains the only project stage. Stage B DerpFest is deferred until actual kernel boot and UFS/storage/basic-hardware acceptance.
+  
+## ROUND48 / ROUND51 regulator-mode decision — corrected final state (2026-11-24)
 
-The next local task is now `firmware-analysis/round13/AGENT_TASK.md` on `main`, distinct from the historical `kernel-baseline/round13` ACK DTS design. It reuses only the previously reviewed ROUND3 FDT parser, ROUND9 indexing approach and existing ROUND7/8 FDT/DTBO work copies. It inspects mode/DRMS/suspend properties for PM8150 S4/L5/L6/L9/L17 and PM8150L S8, retaining DTBO fragment-to-target relationships. No new parser/tool is allowed. Only a sanitized text report may be uploaded to `firmware-audit-v1`; the Local Agent must stop after upload.
+ROUND13 supplied HOS4.3's actual vendor mode fields; ROUND48 translated vendor enum semantics to fixed ACK symbols. The final current DTS proposal is:
+- S4: no forced mode because HOS4.3 mode metadata was not found in inspected scope.
+- L5/L9: HPM initial, LPM/HPM allowed, DRMS enabled; no permanent `regulator-system-load`, because public KONA proxy-consumer removes its temporary boot request at late_initcall_sync and ACK has no equivalent helper.
+- L6/L17: LPM initial, LPM/HPM allowed, DRMS enabled.
+- S8: RET initial, RET/AUTO allowed. ROUND48's interim AUTO fallback was withdrawn in ROUND51 after ROUND14 showed no static enable/boot-on/always-on property and fixed ACK HFSMPS510 was shown to have no DRMS load callback. Do not force S8 enable; runtime enable state remains UNKNOWN.
 
-GPT-side ROUND47 already records the pinned ACK 6.18.33 regulator semantics. ROUND13 will supply the missing HOS4.3 property values; it is not allowed to assume the HOS4.2 public DTS settings are HOS4.3 facts.
+The old Qualcomm vendor enum is PASS=0, RET=1, LPM=2, AUTO=3, HPM=4; fixed ACK uses RET=0, LPM=1, AUTO=2, HPM=3. DTS uses ACK symbolic constants, never raw HOS values.
 
-ROUND12 remains an unresolved AVB gate. ROUND13 does not close AVB, MMCX-to-MX, Huawei final memory handoff or VCCQ-parent/VDDP teardown gates. Stage A ACK 6.18.33 remains the only project stage; DerpFest Stage B is deferred until actual kernel boot and storage/basic-hardware acceptance.
+Reports:
+- `kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md`
+- `kernel-baseline/round51/round14-arc-value-semantics-proxy-vote-and-round11-edge-reconciliation.md`
 
-## ROUND48 最新交接（2026-11-24）：HOS4.3 PMIC5 mode 已解析并更新主分支 DTS
+The board file is a review-only draft on main. No full-tree apply, dtc/dt-schema, Kconfig resolver, Kleaf build, packaging or device test has been run. Protected branch and PR #1 remain untouched.
 
-ROUND13 本地 Agent 报告已上传并停止：
-- 分支：`firmware-audit-v1`
-- 报告：`firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt`
-- upstream 属性名 `regulator-initial-mode / regulator-allowed-modes / regulator-allow-set-load / regulator-system-load` 以及 regulator-state suspend nodes 均为 `NOT_FOUND_IN_INSPECTED_SCOPE`，不是全局缺失；HOS4.3 使用 vendor `qcom,*` 属性。
-- 六条关键 rail 的真实 vendor 值见 ROUND13 报告和 ROUND48。DTBO 9 个 entries 都未触碰 RSC regulator 子树，但选中 entry 未解析，effective post-overlay 仍 UNKNOWN。
+## ROUND49 / ROUND50 / ROUND51 — UFS rails and ARC graph final decisions (2026-11-24)
 
-ROUND48 已用公开 Qualcomm SM8250 KONA vendor source 交叉验证 mode enum，并追加核验 proxy-consumer 临时投票生命周期：
-- OnePlusOSS `android_kernel_oneplus_sm8250` commit `cad09e061ef6cf689a4a1e54d27562e0f042236a` 的 `qcom,rpmh-regulator-levels.h` 定义旧 vendor enum PASS=0, RET=1, LPM=2, AUTO=3, HPM=4；同仓库 RPMh driver 和 `kona-regulators.dtsi` 对应 rail 配置与 ROUND13 的 L5/L6/L9/L17/S8 结构及原始值吻合。
-- 固定 ACK `android17-6.18.33_r00` header 是另一套枚举：RET=0, LPM=1, AUTO=2, HPM=3。DTS 必须按 mode 语义转换并使用 ACK 符号常量，不能复制 HOS 的旧 vendor 数字。
-- ROUND47 的 fixed ACK capability 结论不变：L5/L6/L9/L17 有 LDO DRMS callbacks；S4/S8 的 HFSMPS510 无 DRMS load callbacks。
+### ROUND49/51 — UFS optional rail lifecycle
+- VDDP REF_CLK/L6 is the only optional rail consumed by the first ACK UFS driver patch: set the board's 100µA load, enable before Qualcomm PHY power-up, and defer disable + load-clear until after generic UFS VCCQ is shut down during `ufshcd_remove()`.
+- S8/VCCQ-parent is not acquired or voted by the first ACK UFS driver. Its 210mA load-only request is a no-op on fixed ACK HFSMPS510; do not add enable/disable, voltage vote, boot-on or always-on. Runtime enable state remains UNKNOWN.
+- ROUND52 uses `devm_regulator_get(dev, "qcom,vddp-ref-clk")` when the DTS supply property is present, matching KONA's mandatory get semantics. The cleanup action is registered immediately after the managed get, with flags set only after successful load/enable, so all subsequent failure paths are covered.
+- Full lifecycle details: `kernel-baseline/round49/ack-ufs-vddp-parent-devres-lifecycle-redesign.md` (canonical report name is `ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md`).
 
-主分支 review-only DTS 已更新：
-`dts/dby-w09-ack18-board.dts.draft`
-- S4：删除旧 HPM initial-mode；HOS4.3 没有 mode metadata，不再猜测。
-- L5/L9：HPM initial；允许 LPM/HPM；启用 DRMS；不添加 `regulator-system-load`。ROUND48 追加核验公开 KONA `proxy-consumer.c` 后确认 100mA proxy vote 是 regulator 注册时建立、`late_initcall_sync` 在设备 probe 完成后撤销的临时启动投票，永久 system-load 会错误地把它变为常驻负载。ACK 尚无等价临时 proxy helper，故启动期 proxy 投票是明确缺口。
-- L6/L17：改为 HOS 证据所示 LPM initial；允许 LPM/HPM；启用 ACK 支持的 DRMS。
-- S8：HOS 为 RET/AUTO、200mA threshold、initial RET；因 ACK HFSMPS510 无 DRMS callback，且 UFS parent 最大 load vote 210mA，DTS 使用 hardware AUTO 初始模式并允许 RET/AUTO，作为保守功能回退；明确它不是 HOS software threshold policy 的等价实现，也未 runtime 验证。
-- upstream property 字符串在 HOS4.3 里 NOT_FOUND_IN_INSPECTED_SCOPE，不应把它写成 HOS 实际字段；这里只是 ACK DTS 对 vendor mode policy 的翻译。
+### ROUND50/51 — MMCX/MX ARC
+- ROUND14 raw values resolve to RETENTION=16, LOW_SVS=64, TURBO=384 and MAX=65535; qcom,set 1/2/3 mean ACTIVE/SLEEP/ALL. These are logical corners, not microvolts.
+- Raw min-dropout 0xffffffff is stored as signed -1 by the fixed KONA implementation and added along the ARC logical-level supply propagation path; it is not a no-dropout sentinel.
+- ROUND11 identified four edges; ROUND14 confirmed a fifth MX MMCX-supply -> CX MMCX-supply edge. At least five are now known, but a complete parent-edge census is not claimed.
+- MMCX ALL has a temporary proxy-consumer-enable request at TURBO..MAX. ACK has no equivalent generic helper. Do not convert it into permanent always-on/system-load.
+- Identical canonical corner numbers do not prove that ACK shared SM8250 GenPD has full HOS ARC equivalence. Do not add MMCX->MX to the shared qcom,sm8250-rpmhpd descriptor.
 
-新增报告：
-`kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md`
-
-ROUND48 只是源码交叉比对和 DTS 文本设计更新；其中曾提出的 L5/L9 system-load 静态近似已由 proxy 生命周期审查纠正并从 DTS 移除；尚未执行 full-tree apply、dtc、dt-schema、Kconfig resolver、Kleaf、编译、打包、启动或实机验证。没有更改 `firmware-audit-v1`、受保护 `ack18-dby-w09-dts-draft` 分支或 PR #1；PR #1 保持 Draft。
-
-当前本地 Agent 队列为空：ROUND12 已上传但因无可信 AVB 工具 BLOCKED；ROUND13 已上传完成。暂不创建新本地任务：AVB / ramdisk / EROFS 项当前仍被工具或输入门槛阻塞，其他可进行的工作优先由 GPT 通过固定 ACK / 公共源码自行完成。Stage A ACK 6.18.33 仍是唯一主线；Stage A 启动和 UFS/基础硬件验收前不启动 Stage B DerpFest。
-
-ROUND48 proxy lifecycle correction: public Qualcomm KONA `drivers/regulator/core.c` invokes `regulator_proxy_consumer_register()` while registering each regulator; the helper applies the 100mA current/enable request. `drivers/regulator/proxy-consumer.c` removes all boot proxy requests at `late_initcall_sync`, after device probing. Therefore the temporary 100mA proxy vote on L5/L9 must NOT be converted to permanent `regulator-system-load`. The DTS draft has been corrected: no system-load properties are present; HPM initial + LPM/HPM allowed + ACK DRMS are retained, while an equivalent temporary ACK proxy helper remains an explicit boot-handoff gap. See updated ROUND48 erratum.
-
-
-## ROUND49 / ROUND50 最新进展（2026-11-24）
-
-### ROUND49 — UFS optional rails 生命周期设计
-报告：kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md
-
-固定 ACK .33_r00 与公开 SM8250 KONA UFS 驱动对照后，结论是：
-- VDDP REF_CLK/L6 是真正的 UFS regulator enable 引用：设置 100µA load，然后 enable；应平衡 disable。
-- VCCQ-parent/S8 在 KONA UFS 驱动里仅提交/撤销 load request，不显式 regulator_enable/disable，也不提交单独的电压 vote。不能因为属性名 parent 就擅自给它加 enable 引用。
-- KONA 的 load-only 请求有重要限制：固定 KONA regulator core 只有在这个消费者 handle 的 enable_count 非零时才调用 DRMS 更新；而 UFS parent handle 本身未 enable。因此该 load vote 在没有其他使能引用/框架差异的情况下只是缓存值，不证明 S8 真的切换模式。ACK S8 又没有 set_load/get_optimum_mode，所以当前 210mA vote 明确是 no-op。
-- ACK removal 顺序已精确确认：generic VCCQ 启用后才调用 Qualcomm variant；remove 时 ufshcd_hba_exit() 先调用 variant exit，再关闭 generic VCCQ；platform .remove() 返回后才走 driver-core devres release。devres LIFO 可让一个在 devm regulator-get 之后注册的 cleanup action 在 regulator_put 前执行，且在 generic VCCQ 已经关闭之后清理 optional supplies。
-- 推荐 storage-first 策略：VDDP/L6 正常 set-load + enable；S8 只 load-vote、不 enable/disable/voltage-vote；二者都用延迟的 devm cleanup action 释放，且不在 ufs_qcom_exit() 里提前放掉 parent-side request。S8 初始使能与实际物理父供电仍待本机 FDT 证据。
-
-### ROUND50 — MMCX→MX ARC 与 ACK RPMHPD 的语义差异
-报告：kernel-baseline/round50/ack-sm8250-mmcx-mx-arc-parent-semantics-and-remaining-local-gate.md
-
-公开 KONA DTS/驱动证实 vendor MMCX ARC 组把 ALL/AO 两个 child 指向不同的 MX parent child；ARC child 的 qcom,min-dropout-voltage-level 会进入 regulator descriptor 的 min-dropout，再由 regulator core 在 child voltage 之外请求 parent voltage。公共 KONA 示例在 MMCX ALL/AO child 上写 -1，但不能据此认定 DBY-W09 HOS4.3 也是 -1，也不能把它解释成未经验证的特殊枚举。
-
-固定 ACK rpmhpd.c 的 SM8250 descriptor 用 plain MMCX/MMCX_AO，没有 MMCX→MX parent。通用 GenPD parent 传播走 OPP performance-state translation；它不是 vendor regulator parent-supply 的物理/逻辑 voltage propagation，更不会自动实现未捕获的 dropout delta 和 ALL/AO target distinctions。
-
-因此当前不应给共享的 qcom,sm8250-rpmhpd descriptor 直接加 MMCX→MX parent：这会影响所有 SM8250 boards；也不应未经 local property proof 就新建 DBY-W09 特殊 compatible 或移植完整 ARC provider。继续保留 UFS-first ACK RPMHPD/OPP 路线，并把 ARC 等价性作为后续单独 gate。
-
-### 新的本机证据门槛：firmware-analysis ROUND14
-
-ROUND11 已完成 parent/proxy phandle 解析，ROUND24 明确记录 ARC provider/child 的 qcom,resource-name、qcom,set、qcom,init-voltage-level、qcom,min-dropout-voltage-level 未被既有 ROUND7 inventory capture。ROUND13 亦未检查 S8 的 qcom,init-enable / regulator boot-on/always-on 状态。ROUND49/50 的公开源码审查不能代替这些精确本机值。
-
-**当前唯一活动本地任务改为 firmware-analysis ROUND14**：
-- 任务书：firmware-analysis/round14/AGENT_TASK.md（在 main）。
-- 仅用 ROUND3 原有 base FDT work copy、已审核 parser 与既有 phandle/path 索引；不重新解析 ROUND11 parent 图，不重新扫描 ROUND13 mode/DTBO 全集。
-- 重点查 rpmh-regulator-mmcxlvl / rpmh-regulator-mxlvl 的资源名、ALL/AO/SO child 的 set/逻辑 corner/init/dropout/proxy 字段，以及 S8 的 qcom,init-enable / regulator-boot-on / regulator-always-on 等现有字段；只上传脱敏文本。
-- 不安装工具、不下载、不写新 parser、不重提取固件、不连接设备、不写分区。按任务书一份文本上传后即停止。
-- 该任务完成前，不再创建 ROUND15 或其他本地任务；GPT 仍可继续公开源码研究，但应优先使用 ROUND14 返回的 local facts 决定 ARC/S8 的最终方案。
-
-ROUND49/50 只完成固定 ACK / 公开 KONA 源码审查与设计报告。UFS driver patch 仍未 full-tree apply、checkpatch、dt-schema、Kconfig resolver、Kleaf 编译或设备测试；MMCX→MX parent equivalence 尚未建立。ROUND12 AVB 仍 BLOCKED，ramdisk / EROFS 仍 BLOCKED，memory handoff、physical PMIC input network、UFS teardown/runtime power gates 仍独立开放。PR #1 保持 Draft，保护分支未修改。Stage A ACK 6.18.33 仍是唯一主线，Stage B DerpFest 继续等待真实启动与 UFS/基础硬件验收。
-
+Reports: ROUND49, ROUND50 and ROUND51 under `kernel-baseline/round49`, `round50`, `round51`.
 
 ## 最新状态更正 — ROUND14 / ROUND51（2026-11-24）
 
@@ -441,13 +398,13 @@ ROUND49/50 只完成固定 ACK / 公开 KONA 源码审查与设计报告。UFS d
 
 ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查，并在 main 新增两份设计草案：
 
-- 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md
+- 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md（最新报告内容 SHA bf957c3b66a541bc149822310440a8c923db20f3）
 - Binding patch：kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft（blob 9dd8c2b92b852f0841b70422a8a1a781b6330754）
-- Driver patch：kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft（blob 6bd32efec93bec52fe19746c116f6f0b613141e6）
+- Driver patch：kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft（blob bf60bdda7cf0c679b35a4f8dac1676c63a9e3ce0）
 
 核心决策：
 - ACK qcom,ufs.yaml 没有显式文档化 qcom,vddp-ref-clk-supply/max-microamp 和 qcom,vccq-parent-supply/max-microamp；ROUND52-0001 将四个扩展属性显式加入 schema。
-- VDDP/L6：ROUND52-0002 在 ufs_qcom_init() PHY 上电前获取 qcom,vddp-ref-clk，按 DTS max-microamp 设置负载并 enable；devm cleanup 在 ufshcd_remove() 完成通用 VCCQ 关闭后、regulator_put 前 disable 并清零负载。
+- VDDP/L6：ROUND52-0002 在 ufs_qcom_init() PHY 上电前使用必需的 devm_regulator_get("qcom,vddp-ref-clk")，按 DTS max-microamp 设置负载并 enable；devm cleanup 在 ufshcd_remove() 完成通用 VCCQ 关闭后、regulator_put 前 disable 并清零负载。
 - S8/VCCQ-parent：不 acquire、不 set_load、不 enable/disable、不 set_voltage。qcom,vccq-parent-supply 仅是已定义的源拓扑属性；首版 ACK UFS driver 不消费它。
 - ROUND52 patch series 预期排在 ROUND32/36 schema、ROUND37 board DTS、ROUND33 dual-GenPD driver 之后。该顺序和 patch hunk 行数已经静态复核，但 combined full-tree apply / checkpatch / dt-schema / build 均 NOT_RUN。
 

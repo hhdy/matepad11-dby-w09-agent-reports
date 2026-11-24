@@ -1,0 +1,29 @@
+From: DBY-W09 Stage-A implementation
+Subject: [PATCH DRAFT] dt-bindings: ufs: cap SM8250 clock-names at eight
+
+The pinned ACK source already selects qcom,sm8250-ufshc through
+qcom,sc7180-ufshc.yaml. Do not add that compatible to qcom,ufs.yaml:
+doing so selects two independent strict schemas for the same node.
+
+The SM8250 branch is the non-SC7180 branch in qcom,sc7180-ufshc.yaml.
+It already requires at least eight clock names and limits clocks to eight;
+cap clock-names at eight as well so the two arrays have matching cardinality.
+
+This branch-local correction supersedes the misplaced ROUND32/ROUND57
+qcom,ufs.yaml edits. It does not alter compatible selection or other SoCs.
+
+---
+ Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml b/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+--- a/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+@@ -89,6 +89,7 @@
+         clocks:
+           minItems: 8
+         clock-names:
+           minItems: 8
++          maxItems: 8
+ 
+--

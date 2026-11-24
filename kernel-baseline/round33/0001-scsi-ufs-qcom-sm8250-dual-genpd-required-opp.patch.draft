@@ -167,7 +167,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
   * ufs_qcom_probe - probe routine of the driver
   * @pdev: pointer to Platform device handle
   *
-  * Return: zero on success and non-zero for failure.
+  * Return: zero for success and non-zero for failure.
   */
  static int ufs_qcom_probe(struct platform_device *pdev)
  {

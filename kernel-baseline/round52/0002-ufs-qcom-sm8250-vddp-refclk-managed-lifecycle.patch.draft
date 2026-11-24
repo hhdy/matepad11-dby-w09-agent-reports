@@ -23,9 +23,9 @@ include hunk is written against the post-ROUND33 include list.
 Draft only: not applied to a full tree, checkpatched, compiled, or tested.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 73 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.c | 74 ++++++++++++++++++++++++++++++++++++++++++++++
  drivers/ufs/host/ufs-qcom.h | 4 ++++
- 2 files changed, 77 insertions(+)
+ 2 files changed, 78 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
 --- a/drivers/ufs/host/ufs-qcom.h
@@ -130,7 +130,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
  /**
   * ufs_qcom_init - bind phy with controller
   * @hba: host controller instance
-@@ -1578,5 +1647,8 @@
+@@ -1578,5 +1647,9 @@
  	err = ufs_qcom_ice_init(host);
  	if (err)
  		goto out_variant_clear;

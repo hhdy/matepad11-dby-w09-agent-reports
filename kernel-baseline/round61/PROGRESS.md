@@ -266,3 +266,8 @@ Run 45448394286 applied every patch successfully and completed all pre-schema ga
 ### Patch ordering correction after ROUND52-0001 full-file update
 
 The latest hosted UFS run 45449480649 passed ROUND36, the ROUND52-0001 shared-schema patch, and the new power-domain/clock-count correction only when applied in the correct sequence; the initial workflow sequence had placed the minItems correction before ROUND52-0001, whose full-file replacement overwrote it. Reordered both UFS validation and manifest-build workflows to apply ROUND36 → ROUND52-0001 → explicit minItems=1 range correction → SM8250 clock-names maxItems correction. The earlier run failed at the subsequent ROUND52 patch because of this ordering, not because of the correction hunk itself. Fresh UFS and manifest runs are pending.
+
+
+### Conditional branch lower-bound correction
+
+The latest processed-schema artifact from run 45449803857 confirms the shared property now emits minItems: 1, maxItems: 2, but the SM8250 conditional's own then.properties.power-domains.maxItems: 2 is independently converted to minItems: 2. The previous correction therefore did not fully restore the intended one-or-two range. Extended round36-corrected-power-domain-range.patch to add minItems: 1 in both the shared property and the SM8250 then-branch. The non-SM8250 else branch remains exactly one. Fresh UFS validation and manifest-pinned build runs are pending after this patch update.

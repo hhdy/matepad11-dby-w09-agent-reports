@@ -50,7 +50,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +#include <dt-bindings/power/qcom,rpmhpd.h>
 +
  #include <soc/qcom/ice.h>
-@@ -2802,15 +2808,128 @@
+@@ -2802,15 +2808,141 @@
  	.tx_eqtr_notify		= ufs_qcom_tx_eqtr_notify,
  };
  
@@ -68,7 +68,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +	struct dev_pm_domain_list *pd_list;
 +	struct dev_pm_opp_config opp_config = {};
 +	struct device_node *opp_np, *opp, *req_opp_np;
-+	struct device_node *req_table_np, *req_pd_np;
++	struct device_node *req_table_np, *req_pd_np, *provider_table_np;
 +	struct of_phandle_args pd_args;
 +	int num_domains, num_required_opps, ret;
 +
@@ -137,15 +137,28 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +	}
 +	req_table_np = of_get_parent(req_opp_np);
 +	req_pd_np = req_table_np ? of_get_parent(req_table_np) : NULL;
-+	of_node_put(req_table_np);
++	provider_table_np = req_pd_np ?
++		of_parse_phandle(req_pd_np, "operating-points-v2", 0) : NULL;
 +	of_node_put(req_opp_np);
 +	of_node_put(opp);
-+	if (!req_pd_np || !of_device_is_compatible(req_pd_np, "qcom,sm8250-rpmhpd")) {
-+		of_node_put(req_pd_np);
-+		return dev_err_probe(dev, -EINVAL,
-+				     "UFS required-opps target is not SM8250 RPMhPD\n");
-+	}
++
++	/*
++	 * Validate both the provider and the exact OPP table advertised by it.
++	 * A matching compatible alone must not accept an unrelated OPP table.
++	 */
++	if (!req_table_np || !req_pd_np ||
++	    !of_device_is_compatible(req_pd_np, "qcom,sm8250-rpmhpd") ||
++	    !provider_table_np || provider_table_np != req_table_np)
++		ret = -EINVAL;
++	else
++		ret = 0;
+++
++	of_node_put(provider_table_np);
 +	of_node_put(req_pd_np);
++	of_node_put(req_table_np);
++	if (ret)
++		return dev_err_probe(dev, ret,
++				     "UFS required-opps table is not SM8250 RPMhPD table\n");
 +
 +	ret = devm_pm_domain_attach_list(dev, &pd_data, &pd_list);
 +	if (ret < 0)

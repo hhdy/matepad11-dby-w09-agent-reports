@@ -44,11 +44,11 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
          reg:
            minItems: 2
            maxItems: 2
-+        reg-names:
-+          minItems: 2
-+      required:
-+        - reg-names
-+
+         reg-names:
+           minItems: 2
+       required:
+         - reg-names
+ 
 +  - if:
 +      properties:
 +        compatible:

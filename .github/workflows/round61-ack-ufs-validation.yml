@@ -286,13 +286,12 @@ jobs:
             echo "Report checkout unavailable; cannot publish validation summary."
             exit 0
           fi
-          git -C "$report" fetch origin "$GITHUB_REF_NAME"
-          git -C "$report" reset --hard FETCH_HEAD
-          out="$report/kernel-baseline/round61/hosted-ufs-validation-latest.md"
+          out="$RUNNER_TEMP/hosted-ufs-validation-latest.md"
           {
             echo "# ROUND61 hosted UFS / ROUND63 PHY validation"
             echo
             echo "- Workflow commit: $GITHUB_SHA"
+            echo "- Workflow run ID: $GITHUB_RUN_ID"
             echo "- Branch: $GITHUB_REF_NAME"
             echo "- Job status: $JOB_STATUS"
             echo "- Fixed ACK commit: $ACK_COMMIT"
@@ -324,11 +323,28 @@ jobs:
           git -C "$report" config user.name "github-actions[bot]"
           git -C "$report" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C "$report" remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git"
-          git -C "$report" add kernel-baseline/round61/hosted-ufs-validation-latest.md
-          if ! git -C "$report" diff --cached --quiet; then
+          for attempt in 1 2 3; do
+            git -C "$report" fetch origin ai-parallel/stagea-port-until-boot
+            git -C "$report" reset --hard FETCH_HEAD
+            current="$report/kernel-baseline/round61/hosted-ufs-validation-latest.md"
+            existing_id="$(awk -F': ' '/Workflow run ID:/ { print $2; exit }' "$current" 2>/dev/null || true)"
+            if [[ "$existing_id" =~ ^[0-9]+$ ]] && (( existing_id > GITHUB_RUN_ID )); then
+              echo "A newer UFS validation result already exists (run $existing_id); leaving it intact."
+              exit 0
+            fi
+            cp "$out" "$current"
+            git -C "$report" add kernel-baseline/round61/hosted-ufs-validation-latest.md
+            if git -C "$report" diff --cached --quiet; then
+              exit 0
+            fi
             git -C "$report" commit -m "ROUND61: publish hosted UFS and PHY validation evidence"
-            git -C "$report" push origin HEAD:ai-parallel/stagea-port-until-boot
-          fi
+            if git -C "$report" push origin HEAD:ai-parallel/stagea-port-until-boot; then
+              exit 0
+            fi
+            echo "Branch moved during validation publication; retrying ($attempt/3)."
+            sleep 2
+          done
+          exit 1
 
       - name: Upload UFS and PHY validation logs
         if: always()

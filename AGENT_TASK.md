@@ -61,4 +61,4 @@
 - [ROUND6 本机工具探测](./AGENT_TASK_ROUND6.md)
 - [ROUND7 FDT 属性 inventory](./AGENT_TASK_ROUND7.md)
 
-本地 Agent 完成 ROUND9 后，只回传可安全解析的供电/pinctrl/GPIO/camera/USB属性摘要。随后由 ChatGPT 继续把这些字段与 ACK 6.18.33 的实际设备树/驱动绑定核对；不重复进行已完成的公开研究。
+本地 Agent 完成 ROUND10 后，只回传可安全解析的 boot ramdisk / boot-chain 脱敏静态摘要。随后由 ChatGPT 继续整理 ACK board DTS / boot-chain 迁移计划；不重复 ROUND3/ROUND8/ROUND9 FDT 解析，不读取 EROFS。

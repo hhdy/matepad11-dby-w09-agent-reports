@@ -1,0 +1,44 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] arm64: dts: qcom: DBY-W09 UFS Host dual GenPD topology
+
+The SM8250 UFS Host's existing required-opps entries point to RPMHPD
+performance levels, while the inherited Host node is attached only to GCC
+UFS_PHY_GDSC. For DBY-W09, declare both consumers explicitly and keep the
+ordering required by the companion ROUND33 UFS driver change:
+
+  index 0: RPMHPD MMCX
+  index 1: GCC UFS_PHY_GDSC
+
+The UFS PHY itself remains attached to GCC UFS_PHY_GDSC. This does not add
+an MMCX-to-MX parent relationship or claim HOS4.3 ARC corner equivalence.
+
+This patch targets the repository's review-only board DTS draft, not a
+production kernel DTS path. It is not applied to the protected
+ack18-dby-w09-dts-draft branch and has not been compiled or schema-validated.
+
+---
+ dts/dby-w09-ack18-board.dts.draft | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/dts/dby-w09-ack18-board.dts.draft b/dts/dby-w09-ack18-board.dts.draft
+--- a/dts/dby-w09-ack18-board.dts.draft
++++ b/dts/dby-w09-ack18-board.dts.draft
+@@ -19,6 +19,8 @@
+ /dts-v1/;
+ 
+ #include <dt-bindings/arm/qcom,ids.h>
++#include <dt-bindings/clock/qcom,gcc-sm8250.h>
++#include <dt-bindings/power/qcom,rpmhpd.h>
+ #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+ 
+ #include "sm8250.dtsi"
+@@ -211,7 +213,11 @@
+  *     verified HOS VCC operating window is 2.504–2.950 V.
+  */
+ &ufs_mem_hc {
++	power-domains = <&rpmhpd RPMHPD_MMCX>,
++			<&gcc UFS_PHY_GDSC>;
+ 	vcc-supply = <&vreg_l17a_3p0>;
+ 	vcc-voltage-level = <2504000 2950000>;
+ 	vcc-max-microamp = <800000>;
+-- 

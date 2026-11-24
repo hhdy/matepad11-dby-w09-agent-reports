@@ -589,3 +589,21 @@ ROUND58 要求第二 AI 在自己的分支上做可交付实现：基于 pinned 
 | 主 AI | 审核 ROUND58；继续固定源码 patch 系列集成准备和交接维护 | 合并工作成果前先核验，不写保护分支 |
 
 PR #1 仍须保持 Draft/Open/unmerged；`ack18-dby-w09-dts-draft` 不得修改。Stage A 仍为唯一主线。编译产物不是设备验收，Stage A 实际启动和存储/基础硬件验收前不得进入 DerpFest Stage B。
+
+
+## ROUND17 policy-path correction (2026-11-24)
+
+The previous ROUND17 draft told the user to navigate to "Security Center → Command Security → Program Blacklist". This was an unsupported inference from the error phrase "configured Program Blacklist"; the ROUND16 report did not identify the product or policy owner. The user confirmed no such menu exists. **That UI path is withdrawn and must not be repeated.**
+
+Only proven fact: a local Agent invocation of `wsl.exe` was blocked by a sandbox/program-execution policy, but the enforcement layer is UNKNOWN. It may belong to the Agent execution host, a managed policy, endpoint protection or another layer; do not assume Windows Security Center / Defender / any named vendor.
+
+ROUND17 has been rewritten to passive diagnosis only:
+- identify local Agent product/version and execution mode from existing UI/metadata/logs;
+- identify policy owner and supported authorization flow using official docs for that exact product/version;
+- do not call `wsl.exe` again until the block source and authorized approval path are understood;
+- no alternate shell, wrappers, renamed/copy binaries, bypasses or security disabling;
+- do not launch the whole Agent elevated preemptively; elevation only if a specific official install step demonstrably requires it.
+
+Ask the user for the local Agent product name/version and a screenshot of the block message if passive metadata cannot identify it.
+
+Fixed eventual distro plan remains: preserve current C: Ubuntu, install a separate Ubuntu-24.04 on D: only after supported WSL execution is authorized. ROUND58 second-AI Kleaf implementation continues independently.

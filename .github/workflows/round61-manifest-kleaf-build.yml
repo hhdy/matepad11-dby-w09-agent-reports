@@ -134,7 +134,7 @@ jobs:
           export PATH="$JAVA_HOME/bin:$PATH"
           "$JAVA_HOME/bin/java" -version 2>&1 | tee "$ART/java-version.txt"
           stage="run manifest-provided Bazel wrapper"
-          tools/bazel --version 2>&1 | tee "$ART/bazel-version.txt"
+          tools/bazel version 2>&1 | tee "$ART/bazel-version.txt"
           stage="locate manifest-provided Clang"
           clang_bin="$(find -L prebuilts/clang/host/linux-x86 -type f -path '*/bin/clang' | sort | head -n 1)"
           test -n "$clang_bin"

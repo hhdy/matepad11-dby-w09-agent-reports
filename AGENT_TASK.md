@@ -123,3 +123,21 @@ GPT 已完成 ROUND44：在固定 ACK android17-6.18.33_r00 commit 8ad08f75ddf05
 - kernel-baseline/round44/ack-ufs-dual-genpd-probe-contract-review.md
 
 本轮没有改变本地 Agent 队列：ROUND12 仍是唯一活动任务；没有修改 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1；没有运行完整内核构建或设备测试。
+
+
+## 最新公开源码/补丁进度：ROUND45（2026-11-24）
+
+ROUND45 已更新 ROUND33 UFS 双 GenPD 驱动补丁：
+- 遍历 UFS OPP 表的所有可用子节点，不再只检查第一个。
+- 每个条目必须恰好有一个 required-opps；目标节点必须可用，属于 operating-points-v2 表；表的父节点必须是 qcom,sm8250-rpmhpd；provider 唯一的 operating-points-v2 phandle 必须指向完全相同的表节点。
+- 补齐 OF 节点引用的错误路径/成功路径释放，并拒绝空 OPP 表。
+- 明确 fail-closed 双域策略：单域沿用 generic path；双域只支持 MMCX index 0 + GCC UFS_PHY_GDSC index 1；未知双域布局失败，不得静默继续。
+
+更新补丁：
+- kernel-baseline/round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft
+- 当前 blob SHA：2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5
+- 新增 205 行；两个 hunk 的数量和固定 ACK 源码旧侧上下文均复核 PASS（12/18；15/214）。
+
+ROUND45 仅完成补丁文本/hunk/source-context 静态核验。完整 ACK 工作树 git apply、checkpatch、编译、dt-schema、dtc/dtbs_check、Kconfig、Kleaf 和设备验证均 NOT_RUN。完整报告：kernel-baseline/round45/ack-ufs-dual-genpd-all-opp-validation.md。
+
+本地 Agent 队列不变：ROUND12 仍是唯一活动任务。不得改动 firmware-audit-v1、ack18-dby-w09-dts-draft 或 PR #1。Stage A 仍是唯一主线，Stage A 通过设备启动与存储验收前不得开始完整 DerpFest Stage B。

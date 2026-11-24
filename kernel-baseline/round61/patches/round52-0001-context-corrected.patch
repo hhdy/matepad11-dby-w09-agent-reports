@@ -24,7 +24,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 @@ -47,5 +47,22 @@ properties:
    qcom,ice:
      $ref: /schemas/types.yaml#/definitions/phandle
-      description: phandle to the Inline Crypto Engine node
+     description: phandle to the Inline Crypto Engine node
  
 +  qcom,vddp-ref-clk-supply:
 +    description:

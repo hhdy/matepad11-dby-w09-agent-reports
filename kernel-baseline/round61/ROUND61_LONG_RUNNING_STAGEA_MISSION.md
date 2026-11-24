@@ -372,3 +372,10 @@ ROUND63 board-draft identity correction: after refining the explanatory comment,
 
 
 ROUND63 scope clarification: the QMP `vdda-phy-always-on` candidate does **not** implement the separate HOS4.3 temporary 100mA ARC proxy-consumer votes on PM8150 L5/L9 recorded by ROUND48/51. It is not a substitute for the vendor `late_initcall_sync` proxy removal semantics, and must not be translated into a permanent `regulator-system-load` or always-on vote. The unresolved HOS ARC/proxy boot handoff and PM8150 L5 physical input supply remain separate Stage-A gates.
+
+
+### ROUND63 device-link boundary — do not overclaim provider-unbind safety
+
+Pinned ACK `phy_get()` in `drivers/phy/phy-core.c` adds a `DL_FLAG_STATELESS` link, and `device_links_unbind_consumers()` ignores non-managed links. The device-link documentation says stateless links provide suspend/resume/shutdown ordering where supplier driver presence is not enforced. Thus ROUND63's devres cleanup is ordered before QMP regulator-handle release, but this alone does not prove that manually unbinding the QMP PHY provider first will auto-unbind every UFS consumer.
+
+Review the normal UFS Host remove path and document expected consumer-first shutdown/phy_put order. Do not manually unbind the QMP PHY platform device while the UFS Host remains bound. Do not claim universal provider-unbind safety; treat the stateless-link limitation as a boundary of this candidate. No forced-unbind test is required for initial Stage-A bring-up.

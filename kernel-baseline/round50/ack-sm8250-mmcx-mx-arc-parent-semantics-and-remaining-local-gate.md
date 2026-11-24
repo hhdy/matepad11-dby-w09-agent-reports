@@ -50,13 +50,13 @@ The public KONA example writes `qcom,min-dropout-voltage-level = <(-1)>` on the 
 
 ### 1.3 Same-device local evidence still incomplete
 
-ROUND11 already resolved the DBY-W09 HOS4.3 parent graph:
+ROUND11 already resolved the initial DBY-W09 HOS4.3 MMCX ALL/AO parent edges:
 - MMCX `pm8150a_s4_level` → MX `regulator-pm8150a-s3-mmcx-sup-level`
 - MMCX AO `pm8150a_s4_level_ao` → MX AO `regulator-pm8150a-s3-level-ao`
 
-ROUND24 explicitly states the selected ROUND7 property inventory did not export the exact parent groups' `qcom,resource-name`, child `qcom,set`, `qcom,init-voltage-level`, or `qcom,min-dropout-voltage-level`. Its min/max summary by regulator name is not enough to reconstruct the exact phandle target child's full constraints because similar child names appear under different provider groups.
+ROUND14 later extracted the exact MMCX/MX provider resources, ALL/AO/SO set values, logical min/max/init corners, dropout and proxy fields from the existing ROUND3 FDT work copy. It also found a fifth parent-supply property on the MX provider that points to the CX MMCX-supply child. ROUND51 validates the provider-level property naming and interprets the raw dropout value against public KONA source.
 
-Therefore, the DBY-W09 local ARC parent graph's complete voltage/corner contract remains UNKNOWN. No second local FDT pass has been performed in ROUND50.
+The key base-FDT values are therefore no longer missing. However, ROUND14 intentionally did not re-enumerate the entire graph; at least five parent edges are confirmed, not an exact total. Selected DTBO identity/effective overlay, runtime RPMh votes and full Command DB level maps remain separate unknowns. No second local FDT parse was performed in ROUND50.
 
 ## 2. What fixed ACK SM8250 RPMHPD does
 

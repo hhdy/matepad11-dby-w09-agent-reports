@@ -80,3 +80,8 @@ ROUND52-0001's four optional supply/load properties and pairing conditions have 
 - Corrected schema patch: `kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch`. It adds `maxItems: 8` to the non-SC7180 branch of `qcom,sc7180-ufshc.yaml`; this is the schema selected for `qcom,sm8250-ufshc` in pinned ACK. The initial patch hunk-count mismatch was fixed; real `git apply --check` is pending in run 45448394286.
 - The extracted `qcom,ufs.example.dtb` standalone validation diagnostics are retained but are not used as a gate because its example has unresolved external provider phandles. `dt_binding_check` still extracts and compiles the example; the self-contained provider-backed fixtures remain the authoritative validation gate.
 - Current Phase B status remains PENDING until the latest hosted run completes all UFS and PHY positive/negative cases and the kernel `dt_binding_check` command.
+
+
+### ROUND36 cardinality correction discovered from processed schema
+
+The hosted run 45448394286 successfully applied the patch series and passed all pre-schema gates, but the one-domain SM8250 fixture failed. Inspection of the retained processed-schema.json showed that dtschema 2023.9 expands maxItems: 2 without an explicit minItems into minItems: 2, maxItems: 2. This contradicted ROUND36's stated intent to allow either one or two domains. Added round61/patches/round36-corrected-power-domain-range.patch to set minItems: 1 on the shared power-domains property; the SM8250 conditional then caps it at two, while the non-SM8250 else branch caps it at one. Both UFS validation and manifest-pinned build workflows apply this correction immediately after ROUND36. Latest UFS run is pending.

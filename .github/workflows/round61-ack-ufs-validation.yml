@@ -185,6 +185,14 @@ jobs:
             -name 'qcom,ufs*.example.dtb' -print
           find Documentation/devicetree/bindings/phy -maxdepth 1 \
             -name 'qcom,sc8280xp-qmp-ufs-phy.example.dtb' -print
+          set +e
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb \
+            > "$RUNNER_TEMP/round61-ufs-example-validation.log" 2>&1
+          ufs_example_rc=$?
+          set -e
+          cat "$RUNNER_TEMP/round61-ufs-example-validation.log"
+          printf 'ROUND61_UFS_EXAMPLE_DT_VALIDATE_RC=%s (nonzero remains a Phase-B blocker)\n' "$ufs_example_rc"
           printf '\n=== dt-validate CLI ===\n'
           dt-validate --help
           fixture_dir="$report/kernel-baseline/round61/fixtures"

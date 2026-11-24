@@ -374,3 +374,26 @@ The current ROUND17 taskbook is diagnostic-first and supersedes all previous ROU
 - ROUND57 hunk defect fixed: current canonical patch blob is `3656f05ad01d54452b83591b762faaa71a16f592`, header `@@ -165,13 +165,15 @@`. Do not use prior blob `f282a695...`.
 - The local Agent product is known: WorkBuddy, model DeepSeek V4.1 Flash. ROUND17 should let WorkBuddy identify its own command execution policy/approval mechanism from its own app context. Do not direct the user to the unverified Windows Security Center menu and do not blindly ask for elevation.
 - The second AI remains assigned ROUND58 on `ai-parallel/round58-kleaf-target-audit`.
+
+
+## 最新状态 — ROUND17 WorkBuddy blocker identified；ROUND58 / ROUND60 done (2026-11-24)
+
+ROUND17 report is uploaded to `firmware-audit-v1`:
+`firmware-analysis/round17/round17_wsl_ack_workspace_deployment.txt`, blob `8efd13aa67774dceeef5c243f53044d474e3a37f`.
+
+Actual blocker: WorkBuddy 5.11.3.0's own command-safety layer / sandbox-cli 5.11.4 default Program Blacklist. It is not Windows Defender or OS Program Blacklist. The exact user action is owned by WorkBuddy app. ROUND17 remains `BLOCKED_PENDING_USER_OR_ADMIN_APPROVAL`; no WSL invocation occurred in this round and no deployment/source sync was done. User said let WorkBuddy handle it; do not continue asking the user to navigate menus or provide app details.
+
+Second AI completed ROUND58 implementation on `ai-parallel/round58-kleaf-target-audit`:
+- Kleaf target patch candidate;
+- storage-first final .config checker;
+- 9 synthetic unit tests (second AI reports pass);
+- implementation/build runbook.
+No actual Bazel, Kconfig, Git worktree apply or Image compile occurred.
+
+Primary AI completed ROUND60 review:
+`kernel-baseline/round60/round60_primary_review_round58_kleaf_and_config_validator.md`.
+Candidate source context and 132-line copied fragment match exact pinned source/artifact IDs. The no-`base_kernel` Image-first build design and post-defconfig fragment stage are source-consistent. ROUND60 notes the future command runner must preserve Bazel exit codes with `set -o pipefail`; avoid duplicate identical build commands.
+
+ROUND59 complete UFS series exact-context replay remains in `kernel-baseline/round59`; corrected ROUND57 hunk blob is `3656f05ad01d54452b83591b762faaa71a16f592`.
+
+No build/boot has yet occurred. Next real gate remains a disposable exact ACK .33_r00 worktree, real Git patch application, schema/Kconfig validation, Kleaf target query/config and custom Image build after the local environment becomes available.

@@ -3,30 +3,33 @@
 This directory contains a **review-only source draft** for the initial DBY-W09 board DTS and its minimal ABL rootparam overlay.
 
 Files:
-- `dby-w09-ack18-board.dts.draft` — minimal SM8250 board identity + PM8150 UFS rails + UFS/QMP enablement.
-- `dby-w09-ack18-rootparam.dtso.draft` — separate minimal DBY-W09 board identity overlay.
-- `../config/dby-w09-ack18-storage-first.fragment.draft` — built-in UFS/QMP/RPMh/SM8250 GCC/SMMU Kconfig fragment for the first storage milestone.
+- `dby-w09-ack18-board.dts.draft` — minimal SM8250 board identity + HOS4.3 PM8150 UFS rails + UFS/QMP enablement.
+- `dby-w09-ack18-rootparam.dtso.draft` — separate minimal DBY-W09 board identity overlay, including the stock `huawei,modem_id` sentinel.
+- `../config/dby-w09-ack18-storage-first.fragment.draft` — built-in UFS/QMP/RPMh clock/regulator/SM8250 GCC/interconnect/SMMU Kconfig fragment for the first storage milestone.
 
 ## Important integration rule
 
-Do **not** apply the stock HOS4.3 DTBO entry 8 to this minimal base. ROUND8 resolved 145 stock fragments targeting many nodes absent from this minimal DTS. The source reference for the minimal one-fragment ABL rootparam overlay is the same-device svesnav project:
+Do **not** apply the stock HOS4.3 DTBO entry 8 to this minimal base. ROUND8 resolved 145 stock fragments targeting many nodes absent from this minimal DTS. Use a separately built and ABL-validated minimal DBY-W09 overlay.
+
+The local ROUND7 DTBO inventory shows that all nine stock entries carry the same generic `huawei,modem_id = <0xffffffff 0>` sentinel. The same-device Linux reference preserves that field in its minimal overlay:
 https://github.com/svesnav/linux-dby-w09/blob/main/dby-w09-rootparam.dtso
 
-The current overlay omits `huawei,modem_id` pending review of whether ABL requires that property and what safe value/source is appropriate. Therefore this overlay is not yet a boot-ready replacement.
+The draft now preserves that known stock value. This is stronger evidence than omitting it, but it does **not** prove that a newly packed DTBO header / entry table is accepted by the user's current ABL.
 
 ## Current limits
 
-- No source sync, dtc invocation, dt-schema validation, compile, boot-image packing or hardware test has been done.
-- PMIC input topology (`vph_pwr` / `apps_rsc`) is provisional and must be reconciled with the exact HOS4.3 PMIC facts and ACK binding.
+- No source sync, dtc invocation, dt-schema validation, Kconfig resolution, compile, boot-image packing or hardware test has been done.
+- PM8150 UFS output regulators are mapped from local HOS4.3 data. Their upstream input-supply topology is **not modeled yet**: ROUND7's property inventory does not contain the PMIC parent-supply properties. The same-device 3.7 V `vph_pwr` arrangement is a HOS4.2/public-reference clue only, not a verified HOS4.3 fact.
+- SPMI PMIC GPIO/PON/arbiter nodes are intentionally absent from this minimal UFS-only base.
 - No UART console, reserved-memory, panel, THP, WLAN, BT, audio, camera, USB-C or DP nodes are enabled.
 - Panel `ACTIVE_PROFILE=UNKNOWN`.
 - The stock HOS4.3 ramdisk remains unread (ROUND10 BLOCKED); module ordering is unknown.
-- The Kconfig fragment's logical-partition filesystem / device-mapper options are intentionally left commented until the ramdisk fstab and full filesystem inventory are known.
+- Logical-partition filesystem / device-mapper options remain commented until the ramdisk fstab and full filesystem inventory are known.
 - These files use the suffix `.draft` deliberately. Do not rename them into build input or flash them.
 
 ## Source and evidence basis
 
-- Google ACK `android17-6.18` SM8250 DTSI.
-- Local ROUND9 UFS regulator closure.
-- Local ROUND8 overlay target map and /rootparam identity.
-- Public same-device Linux DTS / rootparam overlay, used as cross-reference, not copied as a complete Android/ACK solution.
+- Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC, RPMh XO clock, IOMMU and interconnect topology.
+- Local ROUND7/ROUND9 HOS4.3 facts: stock DTBO rootparam values and UFS rail closure.
+- Local ROUND8 overlay target map: stock entry 8 has 145 fragments and is incompatible with a minimal ACK base.
+- Public same-device Linux DTS / rootparam overlay, used as a cross-reference only, not copied as a complete Android/ACK solution.

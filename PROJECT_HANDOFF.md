@@ -452,3 +452,6 @@ ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查�
 - ROUND52 patch series 预期排在 ROUND32/36 schema、ROUND37 board DTS、ROUND33 dual-GenPD driver 之后。该顺序和 patch hunk 行数已经静态复核，但 combined full-tree apply / checkpatch / dt-schema / build 均 NOT_RUN。
 
 当前无本地 Agent 任务。ROUND52 使用已知 ACK 源码和 ROUND13/14 数据，不需要重跑 FDT。需要真实完整 ACK worktree 才能完成下一阶段 combined git apply、checkpatch、dt-schema、最终 Kconfig 和 Kleaf build；本地 Agent 当前的只读限制并不授权它编译或修改源码。
+
+
+ROUND52 source-contract addendum: fixed ACK of_regulator.c constructs the consumer property as <id>-supply, so regulator ID "qcom,vddp-ref-clk" resolves exactly to DTS property "qcom,vddp-ref-clk-supply". Fixed ACK regulator_enable() invokes drms_uA_update() on the consumer's first enable when it already has a nonzero load; therefore VDDP set_load(100µA) then enable is an effective L6 DRMS request. S8 load-only remains ineffective due its handle not enabled and missing HFSMPS510 DRMS callbacks. See ROUND52 report addendum and source links. ROUND52 patch hunk counts were rechecked: binding 1/1 and driver 4/4 hunks have declared counts equal to actual context/addition counts. This remains textual/static verification, not git apply or build.

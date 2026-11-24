@@ -18,7 +18,7 @@ Fixed ACK qcom,ufs.yaml explicitly sets unevaluatedProperties: false. Its refere
 - qcom,vccq-parent-supply and qcom,vccq-parent-max-microamp.
 
 Patch: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft
-- Blob SHA: 949798446f6135844f5e2d841fca06a0d25ea6d6
+- Blob SHA: c0ac84067a900022a077c748b7abb10345f1295f
 - Depends on ROUND32 adding qcom,sm8250-ufshc to the qcom,ufs.yaml compatible list.
 - Exact pristine source blob reviewed: qcom,ufs.yaml = 1dd41f6d5258014d59c8c8005bc54f7994351a52.
 - Its two unified-diff hunks were checked against the patch text (5/26 and 3/16 context/new-line counts); no full-tree apply or dt_binding_check was run.
@@ -26,7 +26,7 @@ Patch: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.pa
 ## 3. VDDP lifecycle driver patch draft
 
 Patch: kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft
-- Blob SHA: bf60bdda7cf0c679b35a4f8dac1676c63a9e3ce0.
+- Blob SHA: 79cb9d9e7372835d8f68fa2269dfb317b6c1d98c.
 - Fixed ACK source blobs reviewed: ufs-qcom.c = a80c6998406dbc88c25dbd9977699ba481207efe; ufs-qcom.h = 5f979daabd5323184eeee137cc8ecc076193979e.
 - Intended patch order: ROUND33 dual-GenPD UFS driver draft first, then ROUND52-0002. Its include hunk expects the post-ROUND33 pm_domain/pm_opp include lines; header fields do not conflict with ROUND33.
 - It reads qcom,vddp-ref-clk-max-microamp, uses devm_regulator_get(dev, "qcom,vddp-ref-clk") when the qcom,vddp-ref-clk-supply property exists, sets the load, and enables the supply before ufs_qcom_setup_clocks() powers up the Qualcomm PHY.
@@ -105,4 +105,4 @@ Driver sequence:
 Board sequence:
 - ROUND37 -> pristine protected-branch board DTS draft: 2/2 hunks matched. This was an in-memory simulation only; the protected branch was not changed.
 
-Result: **all 13 hunks across the seven patch applications matched**. This establishes patch-context/order consistency for these exact source blobs. It is not the Git `git apply` implementation, not an actual disposable Git worktree, and does not substitute for full-tree `git apply --check`, dt-schema, dtc/dtbs_check, checkpatch or compilation. Those remain NOT_RUN.
+Result: **all 15 hunks across the seven patch applications matched**. This establishes patch-context/order consistency for these exact source blobs. It is not the Git `git apply` implementation, not an actual disposable Git worktree, and does not substitute for full-tree `git apply --check`, dt-schema, dtc/dtbs_check, checkpatch or compilation. Those remain NOT_RUN.

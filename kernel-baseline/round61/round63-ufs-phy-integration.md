@@ -69,3 +69,15 @@ Three minimal, self-contained DTS fixtures now exercise the optional property ag
 The hosted workflow compiles these with `dtc`, runs `dt-validate -s processed-schema.json` on the first two, and asserts that the malformed-type fixture fails with a diagnostic naming `vdda-phy-always-on`. It also captures the explicit UFS example `dt-validate` return code separately, because the current UFS composition errors remain a known Phase-B blocker and must not prevent the independent PHY fixture gate from running.
 
 Workflow updates through commit `de431840a025a3f66ff8bb3de74eae4e59edb863`. These fixtures are committed but their hosted execution result is not yet available in this session.
+
+
+## 7. Independent regulator-list and bulk-helper source check
+
+I independently re-fetched pinned `phy-qcom-qmp-ufs.c` and parsed every static `regulator_bulk_data` list in the exact source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`. Result: **15/15 lists** contain exactly two entries, ordered `vdda-phy` then `vdda-pll`. This independently confirms the first-entry guard and the remaining-rail bulk operation for the currently pinned driver.
+
+I also inspected pinned ACK `drivers/regulator/core.c`:
+- `regulator_bulk_enable()` waits for all consumers and unwinds every successfully enabled consumer if any entry fails.
+- `regulator_bulk_disable()` restores already-disabled entries if a later disable fails.
+- `regulator_set_load()` updates the consumer load and restores the old value if DRMS update fails.
+
+These contracts support the candidate's remaining-rail failure unwind and load-vote handling. They are source-level contracts only; no live regulator state was measured.

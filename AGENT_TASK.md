@@ -30,23 +30,20 @@
 - UFS 的直接 UFS_PHY_GDSC 由 GCC 提供；但 ACK 的 ufs_opp_table 通过 required-opps 引用 RPMhPD OPP，因此当前配置保留 QCOM_RPMHPD 以满足 UFS OPP 缩放路径。
 - Panel ACTIVE_PROFILE=UNKNOWN；ROUND10 ramdisk BLOCKED；EROFS 内容 BLOCKED；system/cust/hw_product filesystem 类型和完整 fstab 未明。
 
-## ROUND11 — 本地 Agent 唯一任务
+## ROUND11 — 已完成
 
-任务文件：[firmware-analysis/round11/AGENT_TASK.md](./firmware-analysis/round11/AGENT_TASK.md)
+任务书：[firmware-analysis/round11/AGENT_TASK.md](./firmware-analysis/round11/AGENT_TASK.md)
 
-只读核验 HOS4.3 base boot FDT 的 PM8150 RPMh regulator 输入供电 parent topology，重点是 apps_rsc 下 regulator group 的 vdd-s*-supply / vin-supply / 类似 parent supply 属性及 phandle 目标路径。只检查已有本机副本和已经安装、可信、可审计的只读 FDT 检查工具。
+脱敏结果：[round11_pmic_parent_supply_findings.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round11/round11_pmic_parent_supply_findings.txt)
 
-严格限制：
-- 如果没有现成可信工具可用，直接标记 BLOCKED；不安装工具，不下载 EXE/DLL，不写新 parser，不调用 WSL，不绕过 Windows 执行策略。
-- 不重新解析 ROUND1–ROUND10 已完成的工作，不要扫描 ramdisk/EROFS，不要连接设备。
-- 不执行 ADB/fastboot/刷机/解锁/root/分区写入/模块加载/可写挂载/编译。
-- 不导出或上传 DTB/DTBO/FDT/boot/ramdisk/固件/二进制/完整本地路径/本地 SHA256/设备唯一标识。
-- 只允许上传简短脱敏文本结论：工具是否已存在、检查是否成功、属性名、供电 parent 的非敏感节点路径或“未见/无法确认”。如发现通用电压数值可报告，但不要上传其他硬件全量信息。
-- 对每个未完成检查标记 NOT_RUN / BLOCKED / UNKNOWN，不作缺失推断。
+结论摘要：
+- 4 条 `*-parent-supply` 属于 HOS4.3 legacy RPMh ARC level groups，不是 PM8150 VRM 物理输入。
+- 6 条 `proxy-supply` 属于 ARC proxy 机制，不是外部输入 supply。
+- 全 FDT 扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。
+- 所有 11 条 phandle 均已解析；BLOCKED=NONE，UNKNOWN=NONE。
+- ACK 不支持把 vendor `qcom,rpmh-arc-regulator` 节点直接搬入上游 VRM regulator；性能级使用 ACK SM8250 rpmhpd/OPP 模型。完整 MMCX/CX/MX corner 等价性仍未建立。
 
-## ROUND11 完成后
-
-把简短文本结果提交至本地 Agent 分支 firmware-audit-v1 的 firmware-analysis/round11/，然后停止，不要触碰 main、DTS 草案分支或 PR。
+**当前本地 Agent：暂无待执行任务。** GPT 继续负责公开源码核对与草案迭代；只有确实需要本机独有证据时才下发新任务。不要重复 ROUND1–ROUND11。
 
 ## 仓库与安全边界
 

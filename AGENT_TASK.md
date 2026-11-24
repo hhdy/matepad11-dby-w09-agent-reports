@@ -1,64 +1,63 @@
-# AGENT_TASK.md — DBY-W09 GKI / ACK 内核移植调研总入口
+# AGENT_TASK.md — DBY-W09 / Android 17 / ACK 6.18 内核移植总入口
 
-> **当前本地 Agent 唯一任务：阅读 AGENT_TASK_ROUND10.md。** ROUND9 已完成，4 份脱敏文本已上传至 firmware-audit-v1。ROUND10 仅检查已有 boot.img / ramdisk 的 boot-chain 静态信息，不重复 FDT/DTBO 解析、不读取 EROFS、不进行设备操作。
+> **当前本地 Agent：暂无待执行任务。** ROUND10 已完成并上传。下一阶段是 GPT 负责的公开源码核对与 ACK 6.18 板级 DTS 设计，不需要本地 Agent 重复解析 FDT/DTBO，也不需要重新上传固件。
 
-## 当前任务
+## 当前项目目标
 
-- [AGENT_TASK_ROUND10.md](./AGENT_TASK_ROUND10.md)：当前唯一本地任务。仅检查已有 boot.img / ramdisk 静态内容、boot-chain mount/module/firmware 路径和可能的 display selector 线索；不重解析 FDT/DTBO、不读取 EROFS、不连接设备。
-- [ROUND9 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round9)：已完成，4 份脱敏文本；UFS supply 8/8 闭环，ACTIVE_PROFILE、camera model、redriver model 仍 UNKNOWN。
-- [ROUND9 ChatGPT 独立驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)：HOS4.3 / 同型号 Linux / Linux v6.18 对照背景。
-- [ROUND10 ACK DTS 兼容性与迁移评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)：已吸收 ROUND9 本机 rails/GPIO/pinctrl；列出 compatible、UFS rail 语义、reset-cell 纠错和 panel 证据边界。
-- [AGENT_TASK_ROUND8.md](./AGENT_TASK_ROUND8.md)：已完成 145/145 fragment target 解析，确认 fragment@143 -> /rootparam，并确认 entry 8 的 fragment@63/@64 修改 UFS PHY/Host；只作历史任务参考。
-- [ROUND8 HOS4.3 与同型号 Linux 对照](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)：历史阶段报告，target 解析前版本。
-- [ROUND7 本地 FDT 属性清单](./AGENT_TASK_ROUND7.md)：已完成，13/13 FDT VALID，9 个 DTBO entries 已有属性清单。
-- [ROUND6 上游 GKI 基线报告](./kernel-baseline/round6/upstream-baseline-research.md)：由 ChatGPT 完成，区分 6.18.33 活跃源码分支和 6.18.32 已发布 GKI release；Android 12 / Android 17 兼容风险、Kleaf/KMI 已调查。ROUND6 PATH 工具探测不是 ROUND8 前置条件，暂时不阻塞。
+- 设备：Huawei MatePad 11 DBY-W09，KONA / SM8250 v2.1 / Snapdragon 865。
+- ROM 目标：Android 17 DerpFest。
+- 内核目标：ACK `android17-6.18`，当前研究基线目标 6.18.33。
+- 第一阶段优先完成 DBY-W09 ACK 派生设备内核的 DTS / UFS / legacy boot-chain 基础。
+- 注意：现有设备是 boot header v2 + 独立 ramdisk 分区，未发现 vendor_boot / init_boot。使用 ACK 6.18 源码不自动等于官方 GKI 合规。先按 ACK 6.18 派生的 DBY-W09 定制内核推进，除非后续证明能安全完成标准 GKI 启动架构 retrofit。
 
-## 已完成阶段
+## 当前公开研究报告
 
-- ROUND1：Android 12 / API 31、原内核 4.19.157-perf+、KONA / SM8250、传统 boot + 独立 ramdisk；固件 43 项清单。
-- ROUND2：DTBO 头修复验证和 9 个 entries；super.img sparse 结构识别。
-- ROUND3：sparse / LP metadata / DTBO / boot DTB 只读解析；确认 vendor、odm 等逻辑分区。
-- ROUND4：vendor / odm 已在本地独立提取；两者 EROFS 签名识别通过。
-- ROUND5：可信 EROFS 工具链不可用，内容枚举 BLOCKED；模块、firmware、VINTF、KMI 兼容性 UNKNOWN。
-- ROUND7：读取现成的 13 个 FDT 工作副本，13/13 结构有效；7937 行属性 inventory；9 个 DTBO board-id 已校验。
-- ROUND8：entry 8 的 145 个 fragment target 全部解析，fragment@143 指向 /rootparam；UFS Host / PHY overlay 修改事实已确认。
-- ROUND9：复用 ROUND3 parser 完成 UFS supply、THP/panel/WLAN/BT GPIO、camera 和 USB-C 只读补充核验；4 份脱敏文本已上传至 firmware-audit-v1/firmware-analysis/round9/。
-- 同型号主线 Linux 公开参考项目：svesnav Linux 7.0.14、youzjuzi Linux 7.2.10、CoWave Linux 7.3.4；只作硬件资料/bring-up 参考，不是可直接复用的 Android GKI 包。
+- [ROUND12：ROUND10 boot-chain 证据更新与 ACK DTS 基础](./kernel-baseline/round12/round10-boot-chain-update-and-ack18-dts-foundation.md)
+- [ROUND11：Android 17 / ACK 6.18 内核优先移植方案](./kernel-baseline/round11/android17-6.18-dby-w09-kernel-port-plan.md)
+- [ROUND10：ACK 6.18 板级 DTS 兼容性评估](./kernel-baseline/round10/ack18-board-dts-migration-assessment.md)
+- [ROUND9：ACK 6.18 驱动兼容矩阵](./kernel-baseline/round9/dby-w09-6.18-driver-compatibility-matrix.md)
+- [ROUND8：HOS4.3 硬件参考对照](./kernel-baseline/round8/harmonyos43-hardware-reference-comparison.md)
+- [ROUND6：上游 GKI 基线研究](./kernel-baseline/round6/upstream-baseline-research.md)
 
-## 当前关键技术判断
+## 本地 Agent 历史结果
 
-- Huawei board-id 0x206a / DBY_W09_VG 与本机 HOS 4.3 DTBO entry 8 对应；ROUND8 已解析 145/145 fragment，fragment@143 确认为 /rootparam。
-- ROUND8 entry 8 fragment@63/@64 将 UFS PHY/Host status 设为 ok 并配置供电属性；Linux v6.18 有 SM8250 UFS host + QMP UFS PHY，HOS PHY compatible 与主线 match 字符串不同，板级 DTS 必须规范化。
-- 同型号 port 证据表明 THP / panel / audio / camera / USB-C 有较多 Huawei 专属适配；本机活动 panel profile、部分 GPIO/pinctrl、camera sensor model 尚未全部由本地 HOS4.3 属性闭环。
-- Round9 driver compatibility matrix 已列出主要 upstream-compatible 字符串差异与 vendor firmware/configuration 阻塞。
-- EROFS 内容层仍 BLOCKED；没有 vendor/odm 模块清单、vermagic、firmware、VINTF 或供应商 KMI 证据。
-- Android 12 userspace + android17-6.18 不在 Google 官方支持矩阵中；项目最终 platform target 仍需后续产品决策。
-- 详细对照见 ROUND6 / ROUND7 / ROUND8 ChatGPT research reports。
+- [ROUND10 本机 boot/ramdisk 报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round10)：2 份文本，`COMPLETE_WITH_BLOCKED_SUBITEMS`。
+  - cmdline 范围：`NO_PANEL_SELECTOR_FOUND_IN_CMDLINE_SCOPE`。
+  - ramdisk：`BLOCKED`，未读取，不得写成全局无 selector。
+  - mount/fstab/module/firmware 路径：`NOT_READ_BLOCKED`。
+  - `ACTIVE_PROFILE=UNKNOWN`。
+- [ROUND9 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round9)：4 份文本，UFS supply 8/8 闭环；panel ACTIVE_PROFILE、camera model、redriver model 仍 UNKNOWN。
+- [ROUND8 本机报告](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/firmware-audit-v1/firmware-analysis/round8)：3 份文本，145/145 overlay target resolved，fragment@143 -> /rootparam。
+- ROUND7：13/13 FDT valid，9 个 DTBO board-id 已校验。
+- ROUND5：EROFS 内容枚举 BLOCKED；vendor/odm 模块、firmware、VINTF、KMI 仍 UNKNOWN。
 
-## 仓库和安全边界
+## 当前重点技术事实
 
-- 仓库：hhdy/matepad11-dby-w09-agent-reports
-- 本地 Agent 历史分析分支：firmware-audit-v1
-- ChatGPT 公开研究和任务书放在 main。
-- PR #1 仍 Draft；未经用户明确授权不得合并。
-- 优先由 ChatGPT 完成公开资料、GitHub、源码阅读、对照、架构分析和任务规划。
-- 只有本机文件系统、本地固件内容、本机工具环境和本地只读测试交给 Agent。
-- 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统。
-- 不上传固件/分区/boot/DTB/DTBO/FDT/内核/模块/firmware 二进制、manifest 原件、完整本地 SHA-256、设备序列号/MAC、token/PAT 或私人完整路径。
-- 不绕过 Windows 命令安全策略、不修改执行策略、不关闭安全软件、不调用 WSL、不下载来源不明的 EXE。
-- 未实际执行的操作标记 NOT_RUN / BLOCKED / UNKNOWN，不得虚报成功。
+- Google ACK 源码父分支为 `android17-6.18`；先前 branch HEAD Makefile 识别为 6.18.33。但 Google Android 17 GKI release page 当前公开的 2026-09 认证 release 是 6.18.32；源码分支/Tag 不能当成已认证 GKI image。
+- ACK SM8250 DTSI 已有 UFS Host `ufs_mem_hc`、QMP PHY `ufs_mem_phy` / `ufs_mem_phy_lanes`、SPI14 `spi14`，可按 ROUND9 HOS4.3 事实制定板级 enable/rail mapping。
+- UFS host 的 ACK SoC 节点使用 GCC UFS PHY BCR reset 和 UFS_PHY_GDSC power-domain；PHY 的 reset specifier 是 `<&ufs_mem_hc 0>`。
+- UFS rails 需按 ROUND9 的 PM8150 rail map迁移；`vdd-hba` 映射到 GDSC，不应重复作为通用 regulator，`qcom,vccq-parent-supply` 是下游扩展。
+- HOS `qcom,dsi-default-panel` 指向 overlay 域 CSOT NT36523 默认候选，不代表 runtime active。ROUND10 cmdline scan only 没有 selector；ramdisk scan blocked；ACTIVE_PROFILE 继续 UNKNOWN。
+- 当前 boot layout 为 v2 + 独立 ramdisk，不存在标准 vendor_boot/init_boot 证据。ACK 6.18 kernel image 与 GKI boot architecture retrofit 是两个独立问题。
 
-## 历史任务书
+## 下一阶段由 GPT 负责
 
-- [ROUND10](./AGENT_TASK_ROUND10.md)
-- [ROUND9](./AGENT_TASK_ROUND9.md)
-- [ROUND8](./AGENT_TASK_ROUND8.md)
-- [ROUND2](./AGENT_TASK_ROUND2.md)
-- [ROUND3](./AGENT_TASK_ROUND3.md)
-- [Xiaomi ZIP 审计](./AGENT_TASK_XIAOMI_ZIP.md)
-- [ROUND4](./AGENT_TASK_ROUND4.md)
-- [ROUND5](./AGENT_TASK_ROUND5.md)
-- [ROUND6 本机工具探测](./AGENT_TASK_ROUND6.md)
-- [ROUND7 FDT 属性 inventory](./AGENT_TASK_ROUND7.md)
+1. 从 ACK `android17-6.18` 及公开同型号 Linux 资料，形成 minimal DBY-W09 board DTS 草案。
+2. 以 ROUND9 已确认 rails 和 ROUND7/8 overlay/rootparam 事实为准；panel、THP、WLAN、audio、camera 等未闭环设备先禁用/隔离。
+3. 针对原厂 DTBO 目标和 `__symbols__` / `__fixups__`，说明新 DTS 必须满足的兼容条件；不假定旧 DTBO 自动适用于新 DTB。
+4. 再决定是否建立独立实现分支。未真正同步源码/编译/启动测试时，不得声称 build pass 或 bootable。
 
-本地 Agent 完成 ROUND10 后，只回传可安全解析的 boot ramdisk / boot-chain 脱敏静态摘要。随后由 ChatGPT 继续整理 ACK board DTS / boot-chain 迁移计划；不重复 ROUND3/ROUND8/ROUND9 FDT 解析，不读取 EROFS。
+## 何时需要重新下发本地任务
+
+只在工作涉及本机文件、已存在的固件副本、Windows 环境或确有本机只读验证时创建新任务。
+ROUND10 ramdisk BLOCKED 的解除条件是：本机已有可信 Android boot unpack 工具（或可审计的已批准提取工具）并且用户明确授权。不得自写 boot parser、安装未知 EXE/DLL、绕过 Windows 命令安全策略或调用 WSL。
+不要求重新上传固件，也不重复 ROUND1–ROUND10 已完成的 FDT/DTBO 解析。
+
+## 仓库与安全边界
+
+- 仓库：`hhdy/matepad11-dby-w09-agent-reports`
+- 本地 Agent 分支：`firmware-audit-v1`；GPT 公开研究放 `main`。
+- PR #1 必须保持 Draft，未经用户明确授权不得合并。
+- 仅上传脱敏文本 / 源码；不得上传固件、boot/ramdisk、DTB/DTBO/FDT、内核、模块、firmware 二进制、manifest 原件、完整本地 SHA-256、设备序列号/MAC、token/PAT 或私人完整路径。
+- 不刷机、不解锁、不连接设备、不 root、不写分区、不加载模块、不挂载可写文件系统、不编译，直到用户明确改变边界。
+- 未实际执行的动作标记 `NOT_RUN` / `BLOCKED` / `UNKNOWN`，不得虚报完成。

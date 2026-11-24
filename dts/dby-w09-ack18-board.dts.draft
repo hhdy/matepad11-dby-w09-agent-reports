@@ -1,0 +1,173 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Huawei MatePad 11 (2021), DBY-W09 — ACK android17-6.18 board DTS draft.
+ *
+ * DRAFT ONLY: not dtc-compiled, schema-validated, boot-tested or approved
+ * for packaging. This is the first minimal-storage bring-up skeleton.
+ *
+ * Source basis:
+ *   - local HOS4.3 ROUND7–ROUND9 static inventory and regulator map;
+ *   - ACK android17-6.18 SM8250 SoC DTSI;
+ *   - same-device public Linux DTS used only as a structural cross-reference.
+ *
+ * The original HOS4.3 DTBO entry 8 is NOT compatible with this minimal base:
+ * it contains 145 fragment targets into many Huawei vendor-only nodes.
+ * Pair this base only with a separately reviewed minimal DBY-W09 rootparam
+ * DTBO draft. Do not apply the stock entry 8 to this base.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/arm/qcom,ids.h>
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+
+#include "sm8250.dtsi"
+#include "pm8150.dtsi"
+
+/ {
+	model = "Huawei MatePad 11 (2021) DBY-W09";
+	compatible = "huawei,dby-w09", "qcom,sm8250";
+	chassis-type = "tablet";
+
+	/*
+	 * Local ROUND3 identity: MSM-ID [356, 131073] = SM8250 v2.1.
+	 * Keep the SoC DTB board-id at zero; the separate DBY-W09 DTBO is
+	 * selected by board-id 0x206a and fills /rootparam for Huawei ABL.
+	 */
+	qcom,msm-id = <QCOM_ID_SM8250 0x20001>;
+	qcom,board-id = <0 0>;
+
+	/*
+	 * The label is required by dby-w09-ack18-rootparam.dtso.draft.
+	 * Board identity values are populated by the matching DTBO.
+	 * The HOS huawei,modem_id property is intentionally not reproduced:
+	 * its exact requirements/value have not been approved for publication.
+	 */
+	rootparam: rootparam {
+	};
+};
+
+/*
+ * Provisional PMIC input source copied structurally from the public
+ * same-device Linux DTS reference. Its exact input topology must be
+ * reconciled with the HOS4.3 PMIC tree before this file can be considered
+ * build-ready. Voltage/load values for the five UFS rails below are taken
+ * from the local HOS4.3 ROUND9 phandle-resolution report.
+ */
+vph_pwr: vph-pwr-regulator {
+	compatible = "regulator-fixed";
+	regulator-name = "vph_pwr";
+	regulator-min-microvolt = <3700000>;
+	regulator-max-microvolt = <3700000>;
+	regulator-always-on;
+};
+
+&apps_rsc {
+	regulators-0 {
+		compatible = "qcom,pm8150-rpmh-regulators";
+		qcom,pmic-id = "a";
+
+		vdd-s1-supply = <&vph_pwr>;
+		vdd-s2-supply = <&vph_pwr>;
+		vdd-s3-supply = <&vph_pwr>;
+		vdd-s4-supply = <&vph_pwr>;
+		vdd-s5-supply = <&vph_pwr>;
+		vdd-s6-supply = <&vph_pwr>;
+		vdd-s7-supply = <&vph_pwr>;
+		vdd-s8-supply = <&vph_pwr>;
+		vdd-s9-supply = <&vph_pwr>;
+		vdd-s10-supply = <&vph_pwr>;
+
+		/* HOS4.3: PM8150 S4, 1.8–1.92 V, initial level 1.8 V. */
+		vreg_s4a_1p8: smps4 {
+			regulator-name = "pm8150_s4";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1920000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* HOS4.3: PM8150 L5, fixed 0.88 V. */
+		vreg_l5a_0p88: ldo5 {
+			regulator-name = "pm8150_l5";
+			regulator-min-microvolt = <880000>;
+			regulator-max-microvolt = <880000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* HOS4.3: PM8150 L6, fixed 1.2 V; shared by VCCQ and PHY refclk. */
+		vreg_l6a_1p2: ldo6 {
+			regulator-name = "pm8150_l6";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* HOS4.3: PM8150 L9, fixed 1.2 V. */
+		vreg_l9a_1p2: ldo9 {
+			regulator-name = "pm8150_l9";
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1200000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+
+		/* HOS4.3: PM8150 L17, 2.496–3.008 V. */
+		vreg_l17a_3p0: ldo17 {
+			regulator-name = "pm8150_l17";
+			regulator-min-microvolt = <2496000>;
+			regulator-max-microvolt = <3008000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
+	};
+};
+
+/*
+ * The SoC DTSI already defines all SM8250 UFS register, clock, reset,
+ * interconnect, lane and power-domain resources. Only board-level supplies
+ * and enable status are added here.
+ *
+ * Deliberately omitted:
+ *   - vdd-hba-supply: HOS maps this to UFS_PHY_GDSC, already expressed by
+ *     the SoC power-domains property; it is not a regulator.
+ *   - qcom,vccq-parent-supply: HOS downstream-only extension without an
+ *     equivalent generic upstream UFS consumer property.
+ *   - vcc-low-voltage-sup: not translated to vcc-supply-1p8 because the
+ *     verified HOS VCC operating window is 2.504–2.950 V.
+ */
+&ufs_mem_hc {
+	vcc-supply = <&vreg_l17a_3p0>;
+	vcc-voltage-level = <2504000 2950000>;
+	vcc-max-microamp = <800000>;
+
+	vccq-supply = <&vreg_l6a_1p2>;
+	vccq-max-microamp = <800000>;
+
+	vccq2-supply = <&vreg_s4a_1p8>;
+	vccq2-max-microamp = <800000>;
+
+	status = "okay";
+};
+
+&ufs_mem_phy {
+	vdda-phy-supply = <&vreg_l5a_0p88>;
+	vdda-phy-max-microamp = <89900>;
+
+	vdda-pll-supply = <&vreg_l9a_1p2>;
+	vdda-pll-max-microamp = <18800>;
+
+	/* Optional QMP UFS PHY refclk rail; HOS maps it to the same PM8150 L6. */
+	vddp-ref-clk-supply = <&vreg_l6a_1p2>;
+	vddp-ref-clk-max-microamp = <100>;
+
+	status = "okay";
+};
+
+/*
+ * Later stages, intentionally not enabled in this minimal draft:
+ *   &uart6 / GENI console
+ *   &qupv3_id_2 / &spi14 / Huawei THP
+ *   panel / dual DSI / backlight
+ *   PCIe / QCA6391 WLAN + UART Bluetooth
+ *   ADSP / audio / camera / USB-C / DP
+ *
+ * Do not select a panel profile here: ACTIVE_PROFILE remains UNKNOWN.
+ */

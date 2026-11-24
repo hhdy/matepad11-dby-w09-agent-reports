@@ -17,7 +17,7 @@ Status: **SCHEMA PATCH PAIR APPLIES TO EXACT PINNED SOURCE FILES; BOARD DTS AND 
 |---|---|---|---|---|
 | 32 | `round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft` | ACK `qcom,ufs.yaml` | source blob `1dd41f6d5258014d59c8c8005bc54f7994351a52`; patch blob `efe2d932da34716c631de22d89aba19730cc7f50` | Exact-file apply PASS |
 | 36 | `round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft` | ACK `qcom,ufs-common.yaml` | source blob `962dffcd28b44b3489be5615c75e7270a0c45dc4`; patch blob `dad87ef8dfefee6141b8a7949982c007c4a03b4a` | Exact-file apply PASS |
-| 37 | `round37/0001-dby-w09-ufs-host-dual-genpd-dts.patch.draft` | Protected board DTS draft file | source blob `e86c8707c413a9376b1e332a94e292b86acde3e2`; patch blob `486654c8d0b1b785190253270f5e83f796f07362` | Both hunk contexts match; not applied |
+| 37 | `round37/0001-dby-w09-ufs-host-dual-genpd-dts.patch.draft` | Protected board DTS draft file | source blob `e86c8707c413a9376b1e332a94e292b86acde3e2`; patch blob `486654c8d0b1b785190253270f5e83f796f07362` | Exact single-file fixture `git apply --check` / apply / diff-check PASS; protected branch unchanged |
 | 33 | `round33/0001-scsi-ufs-qcom-sm8250-dual-genpd-required-opp.patch.draft` | ACK `drivers/ufs/host/ufs-qcom.c` | source blob `a80c6998406dbc88c25dbd9977699ba481207efe`; patch blob `454a4443035cf3451c87e2735f0b876d65d52f8b` | Both hunk contexts match; not applied |
 
 Related reports:
@@ -65,7 +65,7 @@ Both source files were then parsed with PyYAML. The relevant ROUND32 SM8250 cloc
 ### Driver and board source context
 
 - ROUND33's include and probe hunks match the exact pinned `ufs-qcom.c` source at the declared old line positions; hunk old/new counts match.
-- ROUND37's two hunks match the full current protected board DTS draft text at the declared old line positions; hunk old/new counts match.
+- ROUND37's complete board DTS source fixture hash matched the protected source blob exactly; its exact patch file also matched the patch blob. `git apply --check`, `git apply`, and `git diff --check` passed on the isolated one-file fixture; the protected branch itself was not changed.
 - ROUND34 confirms from pinned-source API review that the two-domain attach-list / required-dev mapping order is consistent with the UFS OPP initialization order and devres unwind sequence; repeated OPP configs use independent tokens and the later clock-only config does not clear required_dev.
 
 ## 5. What has NOT passed
@@ -98,3 +98,7 @@ The dual-domain UFS request-routing change and MMCX→MX corner equivalence are 
 - No device connection, unlocking, flashing, partition writing, or boot testing was performed.
 
 **Conclusion:** the schema patch pair is now a viable exact-source candidate and the UFS dual-domain integration has a precise patch order and validation matrix. This is not yet a compiled kernel, validated DTB, working MMCX vote, or bootable DBY-W09 image.
+
+## 8. ROUND37 exact-blob board-DTS patch application update
+
+The entire protected board DTS source blob (`e86c8707c413a9376b1e332a94e292b86acde3e2`) was reconstructed in a local temporary fixture and verified byte-for-byte with `git hash-object`. The repository's ROUND37 patch (`486654c8d0b1b785190253270f5e83f796f07362`) was also reconstructed and its hash matched. On this isolated exact-file fixture, `git apply --check`, `git apply`, and `git diff --check` all passed. The resulting temporary DTS contains the intended MMCX-first / GCC-GDSC-second ordering. This is a single-file exact-blob apply result, not a full ACK tree build or DT validation. The protected DTS branch remains untouched.

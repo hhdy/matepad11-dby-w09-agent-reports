@@ -42,7 +42,7 @@ ROUND15 did not prove WSL absent; ROUND16 later established the Store WSL packag
 
 The user reports there is no "Command Security → Program Blacklist" menu. That is expected because the prior taskbook guessed the product/UI incorrectly.
 
-Before continuing any installation, ask the user to identify the local Agent application or host (name and version, e.g. the actual product they use) and, where possible, provide a screenshot or exact unredacted block dialog text without tokens or personal data. Do not assume Codex, VS Code, an endpoint antivirus, Defender, or any particular product.
+Known local Agent product: **WorkBuddy**, configured to use model **DeepSeek V4.1 Flash**. This is user-provided context. WorkBuddy is the execution host; DeepSeek is the selected model. The model name does not identify which layer enforces local command execution. WorkBuddy must inspect its own current version/build, execution mode, command sandbox/approval settings, available local logs and the supported administrative approval route. Do not send the user to a guessed Windows settings page. If WorkBuddy's own context cannot identify the policy owner, report the precise unknown and ask the user only for a screenshot of the WorkBuddy block dialog or visible WorkBuddy version/settings. Do not ask again which local Agent product is being used.
 
 This is an information request, not a demand to change settings. User may simply share the app name/screenshot. Do not ask for passwords, account tokens, keys or private policy files.
 
@@ -119,3 +119,9 @@ It independently prepares a pinned-source full-image Kleaf target, final .config
 After ROUND17 produces a pinned workspace and ROUND58 is reviewed, primary AI will coordinate an actual disposable-source patch integration, Kconfig/schema verification and first Image build.
 
 Stage A ACK 6.18.33 first; Android 17 DerpFest Stage B only after Stage-A boot and storage/basic hardware acceptance.
+
+## User-provided WorkBuddy identification (2026-11-24)
+
+The local Agent is **WorkBuddy** and the user selected **DeepSeek V4.1 Flash** as its model. This supersedes any request in earlier text to ask the user which Agent application they use.
+
+WorkBuddy is the local execution host; DeepSeek V4.1 Flash is the language model selection. Do not infer WorkBuddy's sandbox behavior, security-policy owner, or approval mechanism from the model provider/name. WorkBuddy itself should inspect its version/build, command-runner/sandbox mode, logs and official supported command-approval settings. No unsupported Windows Security Center route may be suggested. No wsl.exe retry or bypass is allowed before this policy is identified and legitimately authorized.

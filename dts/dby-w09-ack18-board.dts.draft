@@ -178,6 +178,22 @@
 };
 
 /*
+ * Memory / reserved-memory is deliberately not reconstructed here yet.
+ *
+ * ROUND7's HOS4.3 base-FDT inventory has no /memory node or device_type
+ * property, but does contain 34 reserved-memory child nodes in multiple
+ * classes (hyp/XBL/AOP/SMEM/mailbox handoff, PIL firmware carveouts,
+ * reusable DSP/QSEE/secure/CMA pools and crash records). Physical addresses
+ * are redacted from the public inventory. The same-device Linux 7.0 board
+ * DTS also has no explicit /memory node and only four reserved-memory nodes;
+ * it is based on HOS4.2, not this HOS4.3 image.
+ *
+ * ABL may populate the usable-memory node dynamically, but that is not
+ * proven for the new ACK DTB. Do not infer the final live FDT from the stock
+ * boot-image base FDT, and do not copy HOS4.2 splash/DFPS addresses into this
+ * HOS4.3 tree. The memory map and reservation handoff are a separate gate
+ * before any build/boot attempt or enabling DSP/display/GPU consumers.
+ *
  * Later stages, intentionally not enabled in this minimal draft:
  *   &uart2 / GENI debug console (qcom,geni-debug-uart)
  *   &uart6 / normal GENI UART (qcom,geni-uart; possible BT serdev)

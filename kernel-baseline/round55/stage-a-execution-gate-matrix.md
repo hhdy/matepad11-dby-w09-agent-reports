@@ -179,3 +179,27 @@ The user explicitly authorized environment deployment. ROUND16 is now the active
 It provisions WSL2 Ubuntu 24.04 on D:, installs minimal official Ubuntu host packages, syncs only the official `common-android17-6.18` kernel manifest and pins the common source to the immutable ACK .33_r00 commit. It reserves at least 100 GiB free on D: and stops before patch application or compilation. It must not bypass the host security block if it recurs.
 
 The second AI's ROUND54 review remains independent and must be completed on its dedicated branch. No kernel compile or device boot is claimed.
+
+
+## Status correction — ROUND16 blocked; ROUND17 / ROUND58 parallel work (2026-11-24)
+
+ROUND16 has now completed with terminal verdict **BLOCKED_BY_HOST_SECURITY_POLICY**. Its sanitized report is uploaded at `firmware-analysis/round16/round16_wsl_ack_workspace_deployment.txt` on `firmware-audit-v1`. No distro install, apt, repo sync, ACK pin, source patch, Kconfig, schema, build or device operation occurred.
+
+ROUND16 corrected ROUND15's earlier uncertainty:
+- Store WSL Appx 2.7.3.0 is installed.
+- A WSL2 distribution named Ubuntu is already registered on C:; its distro release is UNKNOWN.
+- VirtualMachinePlatform is Enabled.
+- wsl.exe is blocked by the endpoint's Program Blacklist.
+- the local Agent process was not elevated.
+- D: had about 325.3 GiB free.
+Do not call this a no-WSL system. The older legacy WSL optional feature and HypervisorPlatform being disabled are not proven blockers.
+
+**Current local Agent work is ROUND17, not ROUND16.** User must manually clear only the wsl.exe Program Blacklist entry and relaunch the Agent elevated before ROUND17 may run. The existing C: Ubuntu must be preserved; install a separate Ubuntu-24.04 at D:\WSL\Ubuntu-24.04. Round17 taskbook and start prompt: `firmware-analysis/round17/AGENT_TASK.md` and `START_PROMPT.md`. Store WSL should first be verified; do not blindly reinstall/enable legacy features. Round17 still stops before patch application and compilation.
+
+**Second AI active implementation task is ROUND58** on `ai-parallel/round58-kleaf-target-audit`:
+- create a concrete pinned-source no-`base_kernel` full-image Kleaf target patch candidate;
+- provide a tested final .config validation helper and tests;
+- prepare exact post-ROUND17 patch/config/Image build runbook.
+The first target must not invent DTB/DTBO/boot-image inputs because board DTS integration and memory handoff remain unresolved. It must work only on its dedicated branch.
+
+Primary AI will review ROUND58 and prepare the canonical integration path. The next actual local build round after ROUND17 is expected to apply the ordered series (ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 once a real DTS path is ready → ROUND33 → ROUND52-0002), validate schemas and Kconfig, then compile the full DBY-W09 Image using the custom Kleaf target. No kernel compile is claimed yet.

@@ -61,3 +61,39 @@ Run 45435020774:
 3. Archive the final applied diff and validation logs.
 4. Only then proceed to Kleaf workspace/Bazel query and Kconfig/Image build once the manifest-pinned `build/kernel` workspace is available.
 5. Keep ROUND37 excluded until Phase E evidence is supplied. Do not start DerpFest Stage B.
+
+
+## 2026-11-25 ROUND63 mandatory integration
+
+**Branch HEAD after this progress update:** pending commit SHA (this file update).  
+**Active phase:** Phase A/B/C source integration; hosted validation required.
+
+- Read the updated full ROUND61 mission, ROUND63 primary report, ROUND62 boot-chain cross-reference, ROUND59 exact-source integration report, ROUND60 Kleaf/config review, and ROUND58 target/helper artifacts.
+- Copied the exact main-branch ROUND63 candidates into this branch without editing their canonical originals:
+  - Driver candidate source blob: `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`.
+  - Binding candidate source blob: `a6668eebe293f9a35e9c08d6be4f37c4340e7ddd`.
+- Added both patches to the real pinned-ACK GitHub Actions apply sequence after the existing UFS binding/driver patch items. The workflow now runs strict checkpatch on the ROUND63 driver patch and includes the QMP UFS PHY binding in the filtered dt_binding_check, direct dt-doc-validate and yamllint command sets.
+- Independent lifecycle review recorded in `round63-ufs-phy-integration.md`: managed cleanup is registered after regulator acquisition and therefore runs before regulator-handle release; ordinary UFS consumer removal powers off/exits the PHY before releasing the PHY reference; the stateless PHY device link does not guarantee forced provider-first unbind safety.
+- The ROUND63 candidate does not resolve HOS ARC 100mA proxy votes or the physical PM8150 L5 input-supply parent. Neither is guessed or silently marked closed.
+
+### Current ROUND63 validation status
+
+| Check | Status |
+|---|---|
+| Exact source candidate copied into dedicated branch | PASS |
+| Independent source/lifecycle review | PASS (review only) |
+| Real `git apply --check` / apply on pinned ACK | PENDING hosted run |
+| `git diff --check` | PENDING hosted run |
+| Strict checkpatch | PENDING hosted run |
+| QMP UFS PHY `dt_binding_check` / direct example validation | PENDING hosted run |
+| QMP UFS PHY object / full Image compile | BLOCKED pending manifest-pinned Repo/Kleaf toolchain |
+| Runtime power/load transition test | BLOCKED pending device and approved local test |
+
+The workflow's earlier UFS example diagnostics remain unresolved. Phase B is still PARTIAL/BLOCKED; do not treat a successful make target exit as proof while direct example validation is not clean.
+
+### Next concrete actions
+
+1. Inspect the new hosted workflow run and fix any actual ROUND63 patch, checkpatch, buildifier or schema errors on this branch.
+2. Add direct QMP PHY example validation with positive/negative fixtures after confirming the installed `dt-validate` CLI and generated example paths.
+3. Resolve UFS schema-composition diagnostics and add the mission-required clock/domain/supply negative fixtures.
+4. Continue to the next unblocked build/source work; do not wait for the local memory/AVB/device gates.

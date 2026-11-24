@@ -3,9 +3,9 @@
 # DRAFT ONLY. Layer over a frozen ACK base config; do not use as a standalone
 # defconfig. Kconfig resolution has NOT been run and no kernel has been built.
 #
-# First milestone: make the internal UFS device enumerate before Android
-# system/vendor logical partitions are mounted. ROUND10 ramdisk module order
-# is BLOCKED, so the complete UFS dependency chain stays built-in.
+# First milestone: enumerate internal UFS, then create Android logical partitions
+# and mount the confirmed EROFS vendor/odm filesystems. ROUND10 ramdisk module
+# layout is BLOCKED, so the complete UFS dependency chain stays built-in.
 #
 # This is an ACK-derived custom device-kernel fragment, not a certified GKI
 # config. Built-in composition can differ from the published GKI module ABI.
@@ -70,17 +70,31 @@ CONFIG_ARM_SMMU_QCOM=y
 # UFS rail providers are under apps_rsc and use RPMh, not the SPMI arbiter.
 
 # ---------------------------------------------------------------------------
-# Android mount-stage candidates — do NOT freeze until ROUND10 ramdisk/fstab
-# and all partition filesystem types are known.
+# Android first-stage mount support — confirmed baseline + pending AVB/filesystem
 #
-# vendor and odm local image signatures are EROFS, so EROFS support is needed
-# for those filesystems; these options are candidates for built-in because
-# ramdisk module loading is currently unknown.
+# HOS4.3 super.img contains the Android logical partitions (system/vendor/odm/
+# cust/hw_product). Android first-stage maps logical partitions through the
+# device-mapper linear target. In this ACK source, dm-linear is part of
+# dm-mod; there is NO CONFIG_DM_LINEAR symbol.
+CONFIG_BLK_DEV_DM=y
 #
-# CONFIG_BLK_DEV_DM=y
-# CONFIG_DM_LINEAR=y
+# ROUND4 confirmed EROFS filesystem signatures on vendor and odm logical
+# partition images. First-stage must mount these before switching root, so
+# keep EROFS built-in until a compatible ramdisk module tree is proven.
+CONFIG_EROFS_FS=y
+#
+# Android first-stage init can load pre-mount drivers from /lib/modules when
+# the initramfs contains a kernel-release/page-size matching module directory,
+# modules.dep/softdep/alias/options and modules.load. ROUND10 ramdisk contents
+# are still unread, and DBY-W09's legacy ABL separate-ramdisk composition is
+# not yet proven to expose this exact layout. Therefore UFS/QMP stays built-in.
+#
+# AVB hashtree evidence and first-stage fstab options are pending ROUND12:
 # CONFIG_DM_VERITY=y
-# CONFIG_EROFS_FS=y
+# CONFIG_DM_VERITY_FEC=y     # only if the AVB descriptor/fstab requires FEC
+#
+# Do not enable other filesystem drivers until the corresponding partition
+# signatures and first-stage fstab types are known:
 # CONFIG_EXT4_FS=y
 # CONFIG_F2FS_FS=y
 #

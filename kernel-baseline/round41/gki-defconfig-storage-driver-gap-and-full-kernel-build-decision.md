@@ -137,3 +137,24 @@ The docs describe `pre_defconfig_fragments` as typically used for in-tree module
 **Decision for the full no-`base_kernel` DBY-W09 target:** put ROUND31's storage-first fragment as the single item in `post_defconfig_fragments`, not `pre_defconfig_fragments`. This makes the intended built-in options (`=y`) requests after the GKI defconfig is generated, allows Kconfig to resolve dependencies via `olddefconfig`, and makes Kleaf fail if a required option was silently dropped or downgraded. Do not add `# nocheck` to required storage-chain entries.
 
 This is a source-backed configuration design decision, but the fragment has not yet been run through Kleaf. The eventual target still needs to audit the generated final `.config` for every ROUND31 symbol, including selected/derived symbols such as `ARM_SMMU_QCOM` and hidden dependencies such as `PM_OPP`. A fragment request is not a resolver PASS.
+
+
+## 12. KMI / ABI monitoring is a separate target, not inherited automatically
+
+The exact pinned `BUILD.bazel` illustrates a distinct ABI workflow in its `fips140` example:
+- `kernel_build(name = "fips140", base_kernel = ":kernel_aarch64", kmi_symbol_list = "gki/aarch64/symbols/fips140", ...)`
+- separate `kernel_abi(name = "fips140_abi", kernel_build = ":fips140", kmi_symbol_list_add_only = True)`.
+
+The full `yukawa` target used as the DBY-W09 image-build pattern does **not** itself declare `kmi_symbol_list` or a `kernel_abi` target. Thus, using its full-image pattern does not by itself establish GKI KMI enforcement.
+
+The Kleaf ABI documentation for the manifest's `main-kernel-2026` build tools describes:
+- a device-specific `kmi_symbol_list` on the `kernel_build`;
+- a separate `kernel_abi` target referencing the kernel build;
+- an optional `kmi_enforced` setting on `kernel_abi`, which makes KMI checking fail when differences are detected.
+
+For DBY-W09, do not copy the tiny stock base symbol list or invent a device symbol list now. First decide which kernel modules will be shipped with the 6.18.33 image, finish the full `.config` and module output list, and identify which vendor/device modules must consume exported symbols. Then create a DBY-W09-specific symbol list and ABI target from the actual module symbol usage. Enable enforcement only after a reviewed ABI baseline exists. Until then, describe the result as an ACK-derived full custom kernel and report ABI status as NOT_CONFIGURED / NOT_VERIFIED.
+
+This preserves the distinction between:
+- **GKI-based source/config lineage:** the build starts from the pinned ACK tree and `gki_defconfig`;
+- **device KMI monitoring:** a device symbol list and `kernel_abi` target track module ABI;
+- **official GKI certification:** a separate release / certification status, which this custom DBY-W09 target does not automatically acquire.

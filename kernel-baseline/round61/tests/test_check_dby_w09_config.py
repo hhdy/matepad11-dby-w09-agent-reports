@@ -46,6 +46,15 @@ class ConfigCheckerTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("CONFIG_SCSI_UFS_QCOM is missing", output)
 
+    def test_block_layer_disabled_fails(self) -> None:
+        text = self.config.read_text(encoding="utf-8").replace(
+            "CONFIG_BLOCK=y", "# CONFIG_BLOCK is not set"
+        )
+        self.config.write_text(text, encoding="utf-8")
+        code, output = self.invoke()
+        self.assertEqual(code, 1)
+        self.assertIn("CONFIG_BLOCK is =n", output)
+
     def test_module_value_fails(self) -> None:
         text = self.config.read_text(encoding="utf-8").replace(
             "CONFIG_PHY_QCOM_QMP_UFS=y", "CONFIG_PHY_QCOM_QMP_UFS=m"

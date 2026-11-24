@@ -1,0 +1,30 @@
+From: DBY-W09 Stage-A primary-source review
+Subject: [PATCH DRAFT] dt-bindings: phy: qcom-qmp-ufs: document vdda-phy-always-on
+
+The SM8250 board firmware's UFS PHY overlay carries vdda-phy-always-on.
+Document the optional boolean consumed by the companion QMP UFS PHY driver
+change. The property is optional and is not required for other Qualcomm UFS
+PHY nodes.
+
+Candidate only. No dt_binding_check has run.
+
+Pinned source: ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Source blob: fba7b2549ddee7ee4e048277a11a7da053d52887
+
+---
+ Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml | candidate
+diff --git a/Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+--- a/Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
++++ b/Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+@@ -72,6 +72,11 @@
+       - const: ufsphy
+ 
+   vdda-phy-supply: true
++
++  vdda-phy-always-on:
++    type: boolean
++    description:
++      Keep the vdda-phy regulator output enabled when the PHY is powered off.
+ 
+   vdda-pll-supply: true
+ 

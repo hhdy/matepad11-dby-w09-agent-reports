@@ -72,25 +72,31 @@
  * LDO allowed modes and set-load permission are enabled only where ACK
  * hardware ops implement DRMS.
  *
- * S8's HOS4.3 policy is RET initial with RET/AUTO support and a 200mA
- * threshold. ACK's PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, while
- * the UFS parent rail advertises up to 210mA. To avoid pinning this rail in
- * fixed RET, this draft selects hardware AUTO as the conservative ACK
- * fallback. This differs from HOS initial RET and does not reproduce its
- * mode-threshold policy.
+ * S8's HOS4.3 static policy is RET initial with RET/AUTO support and a 200mA
+ * threshold. ACK's PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, and
+ * the UFS VCCQ-parent load-only request is ineffective/no-op in this ACK
+ * implementation. Therefore the earlier AUTO fallback has no valid trigger
+ * and is withdrawn: preserve the evidenced initial RET mode. Do not add
+ * regulator-boot-on/always-on or a forced UFS enable; ROUND14 found no such
+ * S8 enable property, and runtime enable state remains UNKNOWN.
  */
 
 /*
  * HOS4.3 ROUND11 parent/proxy topology result:
  *
- * The local base FDT contains four *-parent-supply links under the legacy
- * qcom,rpmh-arc-regulator level groups:
+ * ROUND11 identified four *-parent-supply links; ROUND14 confirmed a fifth
+ * one on the MX provider. At least five HOS4.3 base-FDT parent edges are now
+ * established (the full count is still unverified):
  *   - cxlvl: pm8150_s3_level -> mxlvl / regulator-pm8150a-s3-level
  *   - cxlvl: pm8150_s3_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
  *   - mmcxlvl: pm8150a_s4_level -> mxlvl / regulator-pm8150a-s3-mmcx-sup-level
  *   - mmcxlvl: pm8150a_s4_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
- * ROUND11 also found six proxy-supply links, which are ARC proxy requests,
- * not external input supplies.
+ *   - mxlvl: pm8150a_s3_mmcx_sup_level -> cxlvl /
+ *     regulator-pm8150-s3-mmcx-sup-level (newly resolved in ROUND14)
+ * ROUND11 also identified six proxy-supply links, a separate ARC proxy
+ * mechanism rather than external input supplies. ROUND14 confirms MMCX ALL
+ * has a self-target proxy-supply and temporary TURBO..MAX enable/voltage
+ * request; this is not an always-on constraint.
  *
  * These are virtual voltage-level relationships, not PM8150 VRM input
  * connections. The full HOS4.3 base-FDT property scan found no vdd-s1..s10,
@@ -104,17 +110,21 @@
  * file on that upstream model and do not copy vendor ARC nodes/properties.
  *
  * Important porting limit: the upstream SM8250 rpmhpd descriptor has a
- * CX->MX parent relationship, while its MMCX descriptor does not mirror
- * every HOS4.3 ARC parent edge. This first storage draft therefore does
- * not claim a one-to-one translation of the complete vendor ARC graph.
- * Revisit per subsystem if later consumers need MMCX/CX/MX corner behavior.
+ * CX->MX parent relationship, while its selected MMCX descriptor has no MX
+ * parent. ROUND14 now confirms matching canonical corner numbers (MMCX
+ * LOW_SVS=64, MX RETENTION=16, min-dropout raw 0xffffffff interpreted by
+ * KONA as signed -1), but HOS has separate logical child-supply edges,
+ * including MX MMCX-supply -> CX MMCX-supply, and a temporary MMCX proxy
+ * request. A domain-level GenPD parent is not a proven one-to-one replacement.
+ * Do not alter the shared SM8250 domain table based on numeric corner overlap.
  *
  * The PM8150 VRM outputs below include the UFS main rails (S4/L5/L6/L9/L17)
  * plus the independent VCCQ parent rail (PM8150L S8). Their output windows
  * and consumer links are mapped from HOS4.3 evidence; their own physical
  * input-parent paths are NOT locally resolved. ROUND11 found four ARC level
- * parent-supply edges and six proxy-supply edges, but no vdd-s1..s10-supply,
- * vin-supply or vph-pwr-supply in the complete base FDT.
+ * parent-supply edges and ROUND14 confirmed a fifth (full parent-edge total
+ * remains unverified), plus six proxy-supply edges. No vdd-s1..s10-supply,
+ * vin-supply or vph-pwr-supply was found in the inspected base-FDT scope.
  *
  * ACK's upstream PM8150 VRM table assigns vdd-s4, grouped LDO supply names,
  * and vdd-s8 as each regulator's physical input requirements. On a populated
@@ -140,9 +150,12 @@
  * direct child of apps_rsc because ACK rpmh_write() uses the immediate parent
  * RSC driver data. The SoC rpmhpd/OPP provider remains a separate system
  * performance-domain mechanism, not a one-to-one substitute.
- * The six proxy-supply phandles are also not self-implementing: ACK lacks the
- * vendor boot-time proxy-consumer helper. Their matching proxy request flags
- * have not yet been verified in the local FDT report scope.
+ * The six proxy-supply phandles are not self-implementing: ACK lacks the
+ * vendor boot-time proxy-consumer helper. ROUND14 confirms MMCX ALL's
+ * proxy-consumer-enable plus voltage range 384..65535 (TURBO..MAX), with no
+ * current vote; it is a temporary boot request in the public KONA helper,
+ * not a permanent system-load/always-on setting. No equivalent ACK helper is
+ * implemented in this storage-first draft.
  */
 &apps_rsc {
 	regulators-0 {
@@ -206,9 +219,12 @@
 	 * HOS4.3 identifies this resource as smpc8 / pmic5-hfsmps (the
 	 * child label "pm8150a" is legacy naming), 1.2–1.4 V, supported vendor
 	 * modes RET/AUTO, initial RET, 200mA threshold. ACK has no HFSMPS DRMS
-	 * set_load callback; AUTO is selected as the hardware-autonomous fallback
-	 * because the UFS parent consumer can request up to 210mA. See ROUND48.
-	 * No allow-set-load or guessed vdd-s8-supply is added.
+	 * set_load callback, so the UFS parent's 210mA load-only request is a no-op.
+	 * ROUND14 finds no qcom,init-enable, regulator-boot-on or
+	 * regulator-always-on on S8 in the inspected base FDT. Preserve the evidenced
+	 * RET initial mode; do not invent an enable/boot-on reference. Runtime enable
+	 * state is UNKNOWN. See ROUND51. No allow-set-load or guessed vdd-s8-supply
+	 * is added.
 	 */
 	regulators-1 {
 		compatible = "qcom,pm8150l-rpmh-regulators";
@@ -218,7 +234,7 @@
 			regulator-name = "pm8150l_s8";
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1400000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_RET>;
 			regulator-allowed-modes = <RPMH_REGULATOR_MODE_RET
 						   RPMH_REGULATOR_MODE_AUTO>;
 		};
@@ -235,8 +251,10 @@
  *     the SoC power-domains property; it is not a regulator.
  *   - qcom,vccq-parent-supply and qcom,vddp-ref-clk-supply are
  *     downstream Qualcomm UFS Host extensions. HOS4.3 resolves them to
- *     PM8150A S8 and PM8150 L6 respectively. The board draft preserves both,
- *     but upstream ACK UFS ignores them until the companion driver patch.
+ *     PM8150A S8 and PM8150 L6 respectively. The first storage patch consumes
+ *     VDDP/L6 only. S8/VCCQ-parent is retained as topology metadata but is not
+ *     consumed by the initial ACK UFS patch: its load vote is a no-op and no
+ *     enable policy is justified by the base FDT. See ROUND51.
  *   - vddp-ref-clk is the UFS device REF_CLK pad supply, not a QMP PHY rail.
  *   - vcc-low-voltage-sup: not translated to vcc-supply-1p8 because the
  *     verified HOS VCC operating window is 2.504–2.950 V.

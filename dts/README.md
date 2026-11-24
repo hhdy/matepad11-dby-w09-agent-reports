@@ -40,3 +40,6 @@ The draft now preserves that known stock value. This is stronger evidence than o
 - Local ROUND7/ROUND9 HOS4.3 facts: stock DTBO rootparam values and UFS rail closure.
 - Local ROUND8 overlay target map: stock entry 8 has 145 fragments and is incompatible with a minimal ACK base.
 - Public same-device Linux DTS / rootparam overlay, used as a cross-reference only, not copied as a complete Android/ACK solution.
+
+
+ARC corner note: legacy ARC regulator-min/max-microvolt are logical RPMH_REGULATOR_LEVEL identifiers, not physical microvolts. The base FDT's example values 16/48/64 and 65535 are corner constraints. The exact resource-name/qcom,set/init-level data are not yet recovered from the existing selected property inventory. Do not add ARC child nodes to this storage-first DTS until its provider and binding are ported.

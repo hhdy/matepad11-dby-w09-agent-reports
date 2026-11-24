@@ -153,3 +153,11 @@ The VDDP patch uses mandatory `devm_regulator_get(dev, "qcom,vddp-ref-clk")` onl
 
 
 ROUND52-0002 lifetime refinement: the cleanup callback's `host` and `host->hba` remain valid during devres release. `ufshcd_alloc_host()` registers its `scsi_host_put` action before variant init; the variant's `devm_kzalloc()` action and then the VDDP cleanup action are registered later. ACK devres releases LIFO, so cleanup runs before either object storage is released, while also running after `ufshcd_remove()` has completed generic VCCQ shutdown.
+
+## ROUND52 final hunk-position correction
+
+The latest ROUND52-0002 driver patch blob is fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78. Its final third C-file hunk is anchored at @@ -1584,5 +1656,9 @@, after the +1 include and +71 VDDP-helper deltas. The earlier provisional new line 1654 has been corrected.
+
+The final strict in-memory application pass requires each hunk to match both its declared old-side context at the precise old line plus accumulated preceding deltas and its declared newStart equal to oldStart plus accumulated deltas. All 15 hunk applications pass without fuzz/nearest-match fallback. This is not a real git apply or full worktree test; full-tree apply, checkpatch, schemas, DTB, Kconfig and build remain NOT_RUN.
+
+The VDDP cleanup callback's host and host->hba pointers also remain valid during devres: the HBA release action and variant devm allocation are registered before the VDDP cleanup action, so reverse-order release runs cleanup first, after generic UFS VCCQ teardown but before either object storage is freed.

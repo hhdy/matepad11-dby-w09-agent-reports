@@ -136,7 +136,10 @@ jobs:
           go install github.com/bazelbuild/buildtools/buildifier@latest
           export PATH="$(go env GOPATH)/bin:$PATH"
           buildifier -version
+          buildifier -mode=diff BUILD.bazel || true
+          buildifier -mode=fix BUILD.bazel
           buildifier -mode=check BUILD.bazel
+          git diff -- BUILD.bazel
           report="$RUNNER_TEMP/report"
           PYTHONPATH="$report/kernel-baseline/round61" \
             python3 -m unittest discover \

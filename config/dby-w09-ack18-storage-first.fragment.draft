@@ -88,5 +88,7 @@ CONFIG_ARM_SMMU_QCOM=y
 # Deferred board / feature drivers:
 # - SPMI PMIC MFD / PMIC arbiter / PMIC pinctrl: no SPMI consumers enabled yet.
 # - PINCTRL_SM8250: add when board GPIO/pinctrl consumers are enabled.
-# - GENI UART / console: exact ACK node and console mapping are not settled.
+# - GENI UART / console: ACK distinguishes qcom,geni-debug-uart (ttyMSM / earlycon) from
+#   qcom,geni-uart (ttyHS); uart2 is the debug node, uart6 the regular UART. The
+#   HOS androidboot.console property and earlycon key do not yet prove physical mapping.
 # - panel / THP / WLAN / BT / audio / camera / USB-C / DP: later stages.

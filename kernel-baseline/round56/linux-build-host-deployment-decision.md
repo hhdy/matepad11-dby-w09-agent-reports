@@ -119,3 +119,12 @@ The second AI is no longer idle after ROUND54. It has a dedicated implementation
 - deliver a build runbook for post-ROUND17 actual integration and Image compilation.
 
 This is source-only candidate work and must not claim Bazel compilation. Board DTS/DTB and boot-image packaging stay separate because final memory handoff / AVB / ramdisk remain unresolved.
+
+
+## Correction — identify the actual command sandbox before user action
+
+The older note "Security Center → Command Security → Program Blacklist" is withdrawn. It was an unsupported guess from the phrase "configured Program Blacklist" in the ROUND16 command sandbox error. The user confirmed that no such menu exists.
+
+The local Agent report does not name the enforcement product or policy control point. Do not attribute the block to Windows Security Center, Defender or a third-party endpoint product without evidence. Current blocker owner/source is UNKNOWN.
+
+ROUND17 was rewritten to collect passive identification of the local Agent product/version/execution mode and the source of the sandbox policy, using its official docs. Do not retry `wsl.exe` or use workarounds. Do not preemptively elevate the Agent; only obtain elevation for an exact official step if required later. Ask the user for the Agent product name/version and a screenshot of the block dialog if logs/metadata cannot identify it.

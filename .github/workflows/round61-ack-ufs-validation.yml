@@ -65,7 +65,13 @@ jobs:
           apply_patch() {
             local patch="$1"
             printf '\n=== git apply --check: %s ===\n' "$patch"
-            git -C "$ack" apply --check "$report/$patch"
+            if ! git -C "$ack" apply --check "$report/$patch"; then
+              printf '\n=== failure diagnostics for %s ===\n' "$patch"
+              nl -ba "$ack/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml" | sed -n '35,125p' || true
+              git -C "$ack" apply --reject --verbose "$report/$patch" || true
+              find "$ack" -name '*.rej' -type f -print -exec cat {} \; || true
+              exit 1
+            fi
             printf '=== git apply: %s ===\n' "$patch"
             git -C "$ack" apply "$report/$patch"
             git -C "$ack" diff --check

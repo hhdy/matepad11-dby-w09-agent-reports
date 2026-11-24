@@ -237,6 +237,6 @@ The pinned ACK removal path provides a normal consumer-first shutdown sequence:
 
 1. `drivers/ufs/host/ufshcd-pltfrm.c`, blob `5ac7afe759346debfc2910fb219d8e491ba08b64`: `ufshcd_pltfrm_remove()` calls `ufshcd_remove(hba)`.
 2. `drivers/ufs/core/ufshcd.c`, blob `2cf7aa8e0a9472f9024d4251ac2f9d7da830e219`: `ufshcd_remove()` stops the HBA and calls `ufshcd_hba_exit()`; the latter calls `ufshcd_variant_hba_exit()` before generic regulator/clock/HBA-supply teardown.
-3. `drivers/ufs/host/ufs-qcom.c`, blob `a80c699840dff?\u0000`: Qualcomm `ufs_qcom_exit()` calls `phy_power_off()` and `phy_exit()`. The UFS device's devm PHY reference and stateless link are released during the subsequent devres unwind after the remove callback.
+3. `drivers/ufs/host/ufs-qcom.c`, blob `a80c6998406dbc88c25dbd9977699ba481207efe`: Qualcomm `ufs_qcom_exit()` calls `phy_power_off()` and `phy_exit()`. The UFS device's devm PHY reference and stateless link are released during the subsequent devres unwind after the remove callback.
 
 This proves the normal UFS host remove callback requests PHY power-off/exit before its `devm_phy_get()` reference is released. It does not make the stateless link a managed supplier-presence dependency; a separate manual unbind of the QMP PHY provider while UFS remains bound is still unsupported and must not be used as a test path. QMP provider removal after UFS consumer removal runs the ROUND63 cleanup action before its managed regulator handles are freed.

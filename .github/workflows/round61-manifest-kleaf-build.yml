@@ -46,6 +46,9 @@ jobs:
               echo "- Last stage: $stage"
               echo "- Exit code: $rc"
               echo "- Runner resources: CPUs=$(nproc 2>/dev/null || echo unknown), memory.max=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo unknown)"
+              echo "- JAVA_HOME: ${JAVA_HOME:-unset}"
+              echo "- Clang path: ${clang_bin:-unset}"
+              echo "- Rust path: ${rust_bin:-unset}"
               df -h "$RUNNER_TEMP" 2>/dev/null || true
               if [ -d "$WORK/.repo" ]; then
                 echo
@@ -120,12 +123,25 @@ jobs:
           else
             echo "MODULE.bazel.lock absent before Bazel analysis" | tee "$ART/MODULE.bazel.lock.initial-state.txt"
           fi
-          tools/bazel --version | tee "$ART/bazel-version.txt"
+          stage="verify manifest-provided Bazel and JDK linkfiles"
+          ls -l tools/bazel build/kernel/kleaf/bazel.sh MODULE.bazel
+          test -x tools/bazel
+          stage="locate and activate manifest-provided JDK"
+          jdk_java="$(find -L prebuilts/jdk/jdk11 -type f -path '*/bin/java' | sort | head -n 1)"
+          test -n "$jdk_java"
+          JAVA_HOME="$(dirname "$(dirname "$jdk_java")")"
+          export JAVA_HOME
+          export PATH="$JAVA_HOME/bin:$PATH"
+          "$JAVA_HOME/bin/java" -version 2>&1 | tee "$ART/java-version.txt"
+          stage="run manifest-provided Bazel wrapper"
+          tools/bazel --version 2>&1 | tee "$ART/bazel-version.txt"
+          stage="locate manifest-provided Clang"
           clang_bin="$(find -L prebuilts/clang/host/linux-x86 -type f -path '*/bin/clang' | sort | head -n 1)"
-          rust_bin="$(find -L prebuilts/rust-toolchain/linux-x86 -type f -path '*/bin/rustc' | sort | head -n 1)"
           test -n "$clang_bin"
-          test -n "$rust_bin"
           "$clang_bin" --version | tee "$ART/clang-version.txt"
+          stage="locate manifest-provided Rust"
+          rust_bin="$(find -L prebuilts/rust-toolchain/linux-x86 -type f -path '*/bin/rustc' | sort | head -n 1)"
+          test -n "$rust_bin"
           "$rust_bin" --version | tee "$ART/rust-version.txt"
 
           stage="apply ordered UFS, ROUND63 PHY and Kleaf patches"

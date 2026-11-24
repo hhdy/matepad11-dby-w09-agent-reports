@@ -1,0 +1,38 @@
+From: DBY-W09 primary port review
+Subject: [PATCH DRAFT] dt-bindings: ufs: constrain SM8250 clock-names count
+
+The ROUND54 independent review found that the SM8250-specific branch fixes
+the clocks array at exactly eight entries and enumerates eight clock names,
+but leaves the clock-names array length inherited from qcom,ufs-common.yaml
+(7..9). Add the matching exact count in the SM8250 branch.
+
+Apply this follow-up immediately after ROUND32, before the remaining UFS
+binding patches. It is a separate follow-up so the original ROUND32 artifact
+and its historical blob identity remain intact.
+
+This is a source-reviewed draft only. No dt_binding_check / dtbs_check or
+full-tree application has been run.
+
+---
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+--- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+@@ -163,6 +163,8 @@
+         clocks:
+           minItems: 8
+           maxItems: 8
+         clock-names:
++          minItems: 8
++          maxItems: 8
+           items:
+             - const: core_clk
+             - const: bus_aggr_clk
+             - const: iface_clk
+             - const: core_clk_unipro
+             - const: ref_clk
+             - const: tx_lane0_sync_clk
+             - const: rx_lane0_sync_clk
+             - const: rx_lane1_sync_clk

@@ -144,9 +144,12 @@ ROUND52 adds the downstream UFS supply binding and VDDP lifecycle changes. The i
 
 ROUND52 artifacts:
 - `kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft` — blob `c0ac84067a900022a077c748b7abb10345f1295f`.
-- `kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft` — blob `79cb9d9e7372835d8f68fa2269dfb317b6c1d98c`.
+- `kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft` — blob `e288413af5648575c5d53140f6b248425e5a0af6`.
 - Design report: `kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md`.
 
 A source-backed in-memory unified-diff simulation was performed against exact pinned ACK pristine files and the protected branch's unchanged board DTS file (read-only). In the order above, all patch contexts and declared line counts matched: ROUND32 3/3 hunks; ROUND36 2/2; ROUND52-0001 2/2; ROUND37 2/2; ROUND33 2/2; ROUND52-0002 header 1/1 and driver 3/3. This is **context/order simulation only**, not an actual Git worktree `git apply`, schema validation or build. Full-tree apply/checkpatch/dt-schema/dtc/Kconfig/Kleaf build/boot remain NOT_RUN.
 
 The VDDP patch uses mandatory `devm_regulator_get(dev, "qcom,vddp-ref-clk")` only when `qcom,vddp-ref-clk-supply` exists. It registers its state-flagged cleanup action immediately after the managed get; the action is released after `ufshcd_remove()` has shut down generic VCCQ and before `regulator_put()`. S8 has no enable or mode vote in this first driver patch.
+
+
+ROUND52-0002 lifetime refinement: the cleanup callback's `host` and `host->hba` remain valid during devres release. `ufshcd_alloc_host()` registers its `scsi_host_put` action before variant init; the variant's `devm_kzalloc()` action and then the VDDP cleanup action are registered later. ACK devres releases LIFO, so cleanup runs before either object storage is released, while also running after `ufshcd_remove()` has completed generic VCCQ shutdown.

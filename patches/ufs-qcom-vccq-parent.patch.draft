@@ -63,13 +63,13 @@ load-to-mode policy.
 +		ret = regulator_set_load(host->vccq_parent, 0);
 +		if (ret)
 +			dev_warn(host->hba->dev,
-+				 "failed to clear VCCQ parent load: %d\\n", ret);
++				 "failed to clear VCCQ parent load: %d\n", ret);
 +	}
 +
 +	ret = regulator_disable(host->vccq_parent);
 +	if (ret) {
 +		dev_warn(host->hba->dev,
-+			 "failed to disable VCCQ parent rail: %d\\n", ret);
++			 "failed to disable VCCQ parent rail: %d\n", ret);
 +		return;
 +	}
 +
@@ -90,20 +90,20 @@ load-to-mode policy.
 +				   &host->vccq_parent_max_uA);
 +	if (err)
 +		return dev_err_probe(dev, err,
-+				     "missing VCCQ parent max-load property\\n");
++				     "missing VCCQ parent max-load property\n");
 +
 +	host->vccq_parent = devm_regulator_get_optional(dev, "qcom,vccq-parent");
 +	if (IS_ERR(host->vccq_parent)) {
 +		err = PTR_ERR(host->vccq_parent);
 +		host->vccq_parent = NULL;
 +		return dev_err_probe(dev, err,
-+				     "failed to get VCCQ parent regulator\\n");
++				     "failed to get VCCQ parent regulator\n");
 +	}
 +
 +	err = regulator_enable(host->vccq_parent);
 +	if (err)
 +		return dev_err_probe(dev, err,
-+				     "failed to enable VCCQ parent rail\\n");
++				     "failed to enable VCCQ parent rail\n");
 +
 +	host->vccq_parent_enabled = true;
 +
@@ -118,7 +118,7 @@ load-to-mode policy.
 +		if (err) {
 +			ufs_qcom_disable_vccq_parent(host);
 +			return dev_err_probe(dev, err,
-+					     "failed to vote VCCQ parent load\\n");
++					     "failed to vote VCCQ parent load\n");
 +		}
 +	}
 +

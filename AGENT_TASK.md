@@ -12,6 +12,7 @@
 
 ## 当前公开研究报告
 
+- [ROUND24：ACK UFS VDDP REF_CLK 与 L6 DRMS 负载聚合](./kernel-baseline/round24/ack-ufs-vddp-refclk-and-l6-drms-review.md)
 - [ROUND23：UFS VCCQ parent rail 与 ACK 驱动适配](./kernel-baseline/round23/ufs-vccq-parent-rail-and-ack-driver-adaptation.md)
 - [ROUND23：UFS VCCQ parent rail 与 ACK 驱动适配](./kernel-baseline/round23/ufs-vccq-parent-rail-and-ack-driver-adaptation.md)
 - [ROUND23：ACK ARC provider 设备结构与请求聚合设计](./kernel-baseline/round23/ack-arc-provider-device-and-aggregation-design.md)
@@ -31,11 +32,11 @@
 
 ## 当前重点事实
 
-- UFS HOS4.3 supply map：ROUND9 已完成 8/8 的 Host/PHY 主电源闭合：VCC/L17、VCCQ/L6、VCCQ2/S4、VDDA-PHY/L5、VDDA-PLL/L9、VDDP-REF-CLK/L6、HBA/GCC UFS_PHY_GDSC；另有独立 UFS Host VCCQ parent rail PM8150A S8（1.2–1.4V，210mA）。ROUND23 已将它映射到 ACK PM8150L S8（ROUND7 三个有效 boot-FDT 候选均有此节点），并添加 qcom,vccq-parent consumer 属性与驱动 patch sketch。ACK S8 VRM ops 不支持 DRMS set_load，210mA load vote 可能 no-op；实际 enable/power 和 HOS suspend/resume 等价尚未 runtime 验证。
+- UFS HOS4.3 supply map：ROUND9 已完成 Host/PHY rails 映射：VCC/L17、VCCQ/L6、VCCQ2/S4、VDDA-PHY/L5、VDDA-PLL/L9、UFS device REF_CLK pad VDDP/L6（100µA）、HBA/GCC UFS_PHY_GDSC；另有 UFS Host VCCQ parent rail PM8150A S8（1.2–1.4V，210mA）。ROUND23/24 已将 S8 映射到 ACK PM8150L SMPS8，并将 VDDP 与 VCCQ-parent 两项 vendor consumer 属性统一放在 `&ufs_mem_hc`；QMP PHY 只保留 VDDA-PHY/VDDA-PLL。L6 uses pmic5_nldo DRMS, HPM threshold 30mA aggregated: UFS VCCQ max800mA plus VDDP100µA votes combine; S8 uses pmic5_hfsmps510 without DRMS set_load, so its 210mA request may no-op. Patch sketch covers both but remains unapplied/uncompiled; power behavior unverified.
 - ROUND7 确认 PM8150 S4/L5/L6/L9/L17 的 regulator 节点和输出电压；ROUND11 对完整 HOS4.3 base FDT 复核后发现四条 parent-supply 全属于 ARC level groups、六条 proxy-supply 属于 ARC proxy 机制，并全 FDT 确认 vdd-s1..s10/vin/vph-pwr 属性零命中。物理 PMIC 输入 supply 仍未确定。
 - 同型号公开 Linux 7.0 DTS 使用固定 3.7 V vph_pwr 和 PM8150 vdd-s1..s10-supply links；其头部说明该部分参考 HOS4.2，因此不能直接当作本设备 HOS4.3 已证实事实。当前 ACK DTS 草案已暂时移除这些未确认输入链接。
 - ROUND7 的本机脱敏 DTBO inventory 显示 9 个 stock DTBO entry 都有相同的通用哨兵 huawei,modem_id = <0xffffffff 0>；当前最小 rootparam overlay 已保留该字段。它不是设备唯一编号，但新 DTBO 的 ABL 接受性仍未知。
-- ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect；其 OPP 表有 RPMhPD required-opps。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA、QCOM_RPMHPD 等。UFS `qcom,vccq-parent-supply` 上游驱动未支持，ROUND23 的 source patch draft 会补充可选 regulator enable/load handling；PM8150L S8 没有 set_load op，210mA vote 可能 no-op。HOS4.3 ARC parent/proxy 不能照搬到 ACK VRM group，且完整 MMCX/CX/MX corner equivalence 尚未建立。
+- ACK SM8250 UFS 节点依赖 GCC UFS_PHY_GDSC、RPMh XO clock、apps_smmu 及 ufs-ddr/cpu-ufs interconnect；其 OPP 表有 RPMhPD required-opps。Kconfig 草案已加上 QCOM_CLK_RPMH、SM8250 interconnect、SCSI DMA、QCOM_RPMHPD 等。上游 ACK Host driver 原本不消费 `qcom,vddp-ref-clk` / `qcom,vccq-parent`，ROUND23/24 patch sketch 补充两者的可选 regulator get/load/enable/cleanup。L6 具 DRMS 聚合负载；S8 没有 DRMS set_load，210mA vote may no-op。HOS4.3 ARC parent/proxy 不能照搬到 ACK VRM group，且完整 MMCX/CX/MX corner equivalence 尚未建立。
 - UFS 的直接 UFS_PHY_GDSC 由 GCC 提供；但 ACK 的 ufs_opp_table 通过 required-opps 引用 RPMhPD OPP，因此当前配置保留 QCOM_RPMHPD 以满足 UFS OPP 缩放路径。
 - UART：ACK 将 uart2(qcom,geni-debug-uart) 作为 ttyMSM/earlycon console 候选，将 uart6(qcom,geni-uart) 作为 ttyHS 普通串口；HOS4.3 androidboot.console 与物理串口映射尚未证实，两个节点均暂缓启用。见 ROUND17。
 - Legacy boot：HOS4.3 本机文件大小与同型号公开项目的 boot 96 MiB、ramdisk 2 MiB、DTBO 24 MiB 一致；同型号公开流程保留 boot header v2 + 嵌入 ramdisk，另更新 ramdisk 分区及 /rootparam DTBO。HOS4.3 boot/ramdisk/dtbo AVB footer 与 vbmeta descriptor 覆盖范围尚待 ROUND12 只读核验。

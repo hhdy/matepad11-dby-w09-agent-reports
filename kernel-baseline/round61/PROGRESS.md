@@ -54,3 +54,5 @@ ROUND37 remains excluded until Phase E has a real board DTS path backed by trust
 
 Primary AI found an HOS4.3 UFS PHY `vdda-phy-always-on` lifecycle difference vs pinned ACK QMP UFS PHY and created driver + binding candidates on main. These are not validated. Mission now includes real git apply, schema, checkpatch, compile and regulator lifecycle tests for both property-present and absent paths. Physical PM8150 L5 input supply remains unresolved. See main report `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`.
 
+
+ROUND63 candidate follow-up: final primary driver patch blob is `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`; QMP driver and PHY binding have exact in-memory hunk replay PASS (5/5 + 1/1) only. Real patch apply, checkpatch, dt_binding_check and compile remain NOT_RUN. All 15 pinned ACK QMP UFS vreg lists use vdda-phy index 0, vdda-pll index 1. Independently rerun all real checks.

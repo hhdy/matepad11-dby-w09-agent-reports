@@ -12,6 +12,7 @@
 
 ## 当前公开研究报告
 
+- [ROUND26：HOS4.3 PM8150 regulator mode/DRMS 属性证据边界](./kernel-baseline/round26/hos43-pm8150-regulator-mode-property-evidence.md)
 - [ROUND25：ACK UFS core 电源顺序与 VCCQ/L6 DRMS 聚合](./kernel-baseline/round25/ack-ufs-core-vccq-l6-drms-order-review.md)
 - [ROUND24：ACK UFS VDDP REF_CLK 与 L6 DRMS 负载聚合](./kernel-baseline/round24/ack-ufs-vddp-refclk-and-l6-drms-review.md)
 - [ROUND23：UFS VCCQ parent rail 与 ACK 驱动适配](./kernel-baseline/round23/ufs-vccq-parent-rail-and-ack-driver-adaptation.md)

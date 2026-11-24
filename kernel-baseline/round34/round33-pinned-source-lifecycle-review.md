@@ -47,6 +47,19 @@ Consequently, ROUND33's explicit `devm_pm_opp_set_config()` before `ufshcd_pltfr
 
 The `devm_pm_opp_set_config()` wrapper returns 0 on success and an error otherwise (pinned `drivers/opp/core.c`, around lines 2681–2706). ROUND33 correctly treats nonzero as failure; this differs from the positive token returned by the non-devm `dev_pm_opp_set_config()` API.
 
+### 4.1 Multiple OPP config calls are additive, not destructive
+
+A potential concern was that ROUND33's early `required_dev` configuration might be overwritten when `ufshcd_parse_operating_points()` later configures UFS clock names through another `devm_pm_opp_set_config()` call.
+
+The exact pinned `drivers/opp/core.c` rules out that concern:
+- `dev_pm_opp_set_config()` explicitly documents that it may be called multiple times for one OPP table (around lines 2525–2540).
+- Each call allocates a separate `opp_config_data`, initializes its own `flags` to zero, and only sets flags for fields present in that call's config object (around lines 2542–2635).
+- The required-dev call sets `OPP_CONFIG_REQUIRED_DEV`; the later UFS clock call sets `OPP_CONFIG_CLK`. The clock-only call does not clear or replace the previously configured `required_devs[0]`.
+- `_opp_clear_config()` releases only fields recorded in that token's flags (around lines 2505–2523). Thus clearing the clock token does not clear the required-dev mapping; that is handled by the earlier required-dev token.
+- `devm_pm_opp_set_config()` creates one devres cleanup action per successful token (around lines 2692–2702), consistent with the LIFO cleanup order in §5.
+
+This makes the explicit required-dev mapping and the existing UFS clock OPP setup compatible within one OPP table. It is still a source-level result, not a runtime validation.
+
 ## 5. Device-managed lifetime ordering
 
 The pinned implementations register devres actions in this order for the proposed flow:

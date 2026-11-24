@@ -349,7 +349,7 @@ The board file is a review-only draft on main. No full-tree apply, dtc/dt-schema
 - VDDP REF_CLK/L6 is the only optional rail consumed by the first ACK UFS driver patch: set the board's 100µA load, enable before Qualcomm PHY power-up, and defer disable + load-clear until after generic UFS VCCQ is shut down during `ufshcd_remove()`.
 - S8/VCCQ-parent is not acquired or voted by the first ACK UFS driver. Its 210mA load-only request is a no-op on fixed ACK HFSMPS510; do not add enable/disable, voltage vote, boot-on or always-on. Runtime enable state remains UNKNOWN.
 - ROUND52 uses `devm_regulator_get(dev, "qcom,vddp-ref-clk")` when the DTS supply property is present, matching KONA's mandatory get semantics. The cleanup action is registered immediately after the managed get, with flags set only after successful load/enable, so all subsequent failure paths are covered.
-- Full lifecycle details: `kernel-baseline/round49/ack-ufs-vddp-parent-devres-lifecycle-redesign.md` (canonical report name is `ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md`).
+- Full lifecycle details: `kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md`.
 
 ### ROUND50/51 — MMCX/MX ARC
 - ROUND14 raw values resolve to RETENTION=16, LOW_SVS=64, TURBO=384 and MAX=65535; qcom,set 1/2/3 mean ACTIVE/SLEEP/ALL. These are logical corners, not microvolts.
@@ -396,7 +396,7 @@ Reports: ROUND49, ROUND50 and ROUND51 under `kernel-baseline/round49`, `round50`
 
 ## 最新公开源码集成草案 — ROUND52（2026-11-24）
 
-ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查，并在 main 新增两份设计草案：
+ROUND52 已完成固定 ACK UFS binding / variant driver 的公开源码检查，并在 main 新增两份设计草案；binding 补丁最终增加了 positive-load 与 supply/max-load 配对约束：
 
 - 报告：kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md（最新报告内容 SHA bf957c3b66a541bc149822310440a8c923db20f3）
 - Binding patch：kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft（blob 949798446f6135844f5e2d841fca06a0d25ea6d6；34 insertions；两处 hunk 均完成文本行数复核）

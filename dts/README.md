@@ -76,4 +76,4 @@ The nine stock DTBO entries do not target the relevant RSC regulator subtree, bu
 
 ### ROUND52 final ordered source-context simulation
 
-The intended patch order is recorded in kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. A source-backed in-memory simulation matched all 13 hunks across ROUND32, ROUND36, ROUND52-0001, ROUND37, ROUND33 and ROUND52-0002 in dependency order. This did not modify the protected branch and is not equivalent to git apply in a full kernel worktree. Full-tree apply, checkpatch, schema validation, dtc/dtbs_check and Kleaf build remain NOT_RUN.
+The intended patch order is recorded in kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. A source-backed in-memory simulation matched all 15 hunks across ROUND32, ROUND36, ROUND52-0001, ROUND37, ROUND33 and ROUND52-0002 in dependency order. This did not modify the protected branch and is not equivalent to git apply in a full kernel worktree. Full-tree apply, checkpatch, schema validation, dtc/dtbs_check and Kleaf build remain NOT_RUN.

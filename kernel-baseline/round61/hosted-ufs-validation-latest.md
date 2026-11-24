@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 9e9150407175f0addc1e80d46737afc0c93ba6c2
-- Workflow run ID: 45445453376
+- Workflow commit: f203b96575e06a61549b8aad4b227e3bcc9c8038
+- Workflow run ID: 45445601147
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-708da65d8927841d3024bae7cbea3efb67b429c161d1d1209db2ebfacaff2291  /home/runner/work/_temp/round61-processed-schema.json
+c8e48550ab557e8f3b5b402895cce89aa95ceb7e3cd92b20545a07f2b2f1e5fc  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 3e46b9a47922243671eb49883a767a857ac2ff0edd32fc8f6a04f98ae9914438  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -78,22 +78,22 @@ NOTE: Ignored message types: CAMELCASE
   LINT    ./Documentation/devicetree/bindings
   DTEX    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
   DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
   DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
   DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
 Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): power-domains: [[4294967295, 2]] is too short
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
 Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interconnect-names', 'interconnects', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
-  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
   DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
   DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
 Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
 Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
-  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
-  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
 
 ## round61-ufs-example-validation.log
 Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
@@ -102,4 +102,4 @@ Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm
 	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
 
 ## dt_binding_check log SHA-256
-4bba6eb9b751a8571403c2d217f32dd329712f537c61cc6c6656e154353053f7  /home/runner/work/_temp/round61-dt-binding-check.log
+442fc6840f776f2cfc1228e4db1ccb6ac6f0463ecc58a9d71d3edd2f85e5bb59  /home/runner/work/_temp/round61-dt-binding-check.log

@@ -142,3 +142,10 @@ Added a one-shot GitHub-hosted build workflow (triggered only by `run-manifest-k
 ROUND57 remains deliberately superseded rather than applied: ROUND32's fixed eight-entry `clock-names.items` list already expresses exact cardinality, while ACK dt-schema rejects redundant minItems/maxItems on that list. The earlier schema diagnostics and the rationale are documented above.
 
 **Status: TRIGGER COMMITTED / RESULT NOT YET AVAILABLE.** No repo sync, Bazel query, final Kconfig resolution or Image build is claimed until the hosted workflow writes `hosted-build-latest.md`. If the workflow cannot complete because the hosted environment cannot access the manifest or dependencies, that exact external blocker will be recorded there. No local firmware, device, boot image or partition was accessed.
+
+
+### Hosted validation result publication added
+
+The UFS/PHY validation workflow was hardened to publish its actual runner evidence to `kernel-baseline/round61/hosted-ufs-validation-latest.md` and upload its logs as an Actions artifact. Its push-path filter now excludes progress/result documents, preventing a report commit from retriggering the same validation job. The workflow has `contents: write` only for this evidence publication; no other branch is targeted.
+
+Workflow update commit: `35c71f9299165443586fe7e27cc196bcaab7382b`. This update itself triggers the narrowed validation workflow. The result file is not present yet, so patch/schema/fixture outcomes remain PENDING rather than assumed.

@@ -1,0 +1,46 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] dt-bindings: ufs: describe Qualcomm VDDP and VCCQ-parent supplies
+
+Document the downstream Qualcomm UFS host supply extensions used by the
+DBY-W09 board description. VDDP is consumed by the storage-first driver
+patch as a load-plus-enable reference-clock pad supply. VCCQ-parent is
+retained as source-topology metadata for now; the initial ACK driver patch
+does not acquire it or submit its 210mA load-only vote because ACK S8 has no
+DRMS callback and no proven enable policy.
+
+Apply after ROUND32 has added qcom,sm8250-ufshc to the schema compatible list.
+Draft only; dt_binding_check has not been run.
+
+---
+ Documentation/devicetree/bindings/ufs/qcom,ufs.yaml | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+--- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
++++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+@@ -45,5 +45,24 @@ properties:
+   qcom,ice:
+     $ref: /schemas/types.yaml#/definitions/phandle
+     description: phandle to the Inline Crypto Engine node
+ 
+   reg:
++    $ref: /schemas/types.yaml#/definitions/phandle
++    description:
++      Supply for the UFS device reference-clock pad. The Qualcomm host
++      driver requests the configured load and enables this supply.
++
++  qcom,vddp-ref-clk-max-microamp:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    description: Maximum load requested from the UFS device reference-clock supply.
++
++  qcom,vccq-parent-supply:
++    $ref: /schemas/types.yaml#/definitions/phandle
++    description:
++      Legacy Qualcomm UFS host VCCQ-parent rail. This is a separate host
++      consumer supply and does not imply an enable or voltage request.
++
++  qcom,vccq-parent-max-microamp:
++    $ref: /schemas/types.yaml#/definitions/uint32
++    description: Maximum load associated with the VCCQ-parent host consumer.
++  reg:
+--

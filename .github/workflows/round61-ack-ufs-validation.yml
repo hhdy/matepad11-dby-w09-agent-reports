@@ -217,17 +217,22 @@ jobs:
             rc=$?
             set -e
             cat "$log"
-            test "$rc" -ne 0
+            if [ "$rc" -ne 0 ] && [ ! -s "$log" ]; then
+              echo "dt-validate failed before producing the expected diagnostic for $name"
+              exit 1
+            fi
             grep -Fqi "$expected" "$log"
           }
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
             "$ufs_fixture_dir/ufs-sm8250-1-domain-valid.dtb" \
             > "$RUNNER_TEMP/ufs-sm8250-1-domain-valid-validation.log" 2>&1
           cat "$RUNNER_TEMP/ufs-sm8250-1-domain-valid-validation.log"
+          test ! -s "$RUNNER_TEMP/ufs-sm8250-1-domain-valid-validation.log"
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
             "$ufs_fixture_dir/ufs-sm8250-2-domains-valid.dtb" \
             > "$RUNNER_TEMP/ufs-sm8250-2-domains-valid-validation.log" 2>&1
           cat "$RUNNER_TEMP/ufs-sm8250-2-domains-valid-validation.log"
+          test ! -s "$RUNNER_TEMP/ufs-sm8250-2-domains-valid-validation.log"
           dt_validate_expected_failure ufs-sm8250-7-clock-names-invalid clock-names
           dt_validate_expected_failure ufs-sm8250-9-clock-names-invalid clock-names
           dt_validate_expected_failure ufs-sm8250-3-domains-invalid power-domains
@@ -246,6 +251,16 @@ jobs:
             "$RUNNER_TEMP/round63-phy-legacy-no-property.dtb"
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
             "$RUNNER_TEMP/round63-phy-always-on-valid.dtb"
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            "$RUNNER_TEMP/round63-phy-legacy-no-property.dtb" \
+            > "$RUNNER_TEMP/round63-phy-legacy-validation.log" 2>&1
+          cat "$RUNNER_TEMP/round63-phy-legacy-validation.log"
+          test ! -s "$RUNNER_TEMP/round63-phy-legacy-validation.log"
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            "$RUNNER_TEMP/round63-phy-always-on-valid.dtb" \
+            > "$RUNNER_TEMP/round63-phy-positive-validation.log" 2>&1
+          cat "$RUNNER_TEMP/round63-phy-positive-validation.log"
+          test ! -s "$RUNNER_TEMP/round63-phy-positive-validation.log"
           set +e
           dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
             "$RUNNER_TEMP/round63-phy-always-on-invalid-type.dtb" \
@@ -253,9 +268,16 @@ jobs:
           negative_rc=$?
           set -e
           cat "$RUNNER_TEMP/round63-phy-negative-validation.log"
-          test "$negative_rc" -ne 0
+          if [ "$negative_rc" -ne 0 ] && [ ! -s "$RUNNER_TEMP/round63-phy-negative-validation.log" ]; then
+            echo "dt-validate failed before producing the expected PHY property diagnostic"
+            exit 1
+          fi
           grep -qi 'vdda-phy-always-on' "$RUNNER_TEMP/round63-phy-negative-validation.log"
           printf 'ROUND63_PHY_FIXTURES=PASS (legacy absent, boolean present, malformed type rejected)\n'
+          if [ -s "$RUNNER_TEMP/round61-ufs-example-validation.log" ]; then
+            echo "ROUND61 UFS example still emits schema diagnostics; Phase B remains blocked."
+            exit 1
+          fi
 
       - name: Summarize validation evidence
         if: always()

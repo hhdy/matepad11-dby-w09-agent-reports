@@ -41,7 +41,7 @@ This follows the existing ACK PMIC RPMh platform-child pattern but adds ARC-spec
 The ARC provider should not call RPMh once per regulator child with a private unaggregated request. Instead:
 1. Each consumer updates its endpoint's requested logical voltage level and pseudo-enable state.
 2. Under the aggregate resource mutex, the provider calculates the maximum required ARC hardware level across all children for active and sleep sets independently.
-3. Translate the regulator-framework logical level to the hardware ARC level using Command DB AUX data for that exact resource.
+3. Treat regulator-min/max-microvolt as RPMH_REGULATOR_LEVEL corner identifiers, not physical microvolts; qcom,set chooses active/sleep participation. Translate the selected logical corner through that resource's Command DB AUX table to a hardware ARC level.
 4. Send only changed register words, with the ARC level register at the ARC base address. The ARC pseudo-enable field is a software aggregation input, not a real hardware enable register.
 5. Wait for an acknowledgement on power-increasing ACTIVE_ONLY requests; retain old state and roll back the local vote if the request fails.
 6. Cache SLEEP and WAKE_ONLY requests through ACK RPMh APIs as appropriate. The old optional AWAKE path must not be copied into ACK's enum.
@@ -90,6 +90,10 @@ The ARC provider requires:
 Existing ROUND14 already includes the first three boot-critical regulator/RPMh dependencies. No new Kconfig setting has been added for ARC in this round.
 
 Command DB readiness is already a hard dependency in ACK rpmh-rsc probe: the parent RSC returns deferred/error before populating child platform devices if Command DB is not ready. The ARC child can still validate its own ARC slave ID, resource address and AUX mapping during probe.
+
+## 6.5 Logical corner contract (ROUND24)
+
+ARC regulator children use voltage-selector operations. The legacy binding defines regulator-min/max-microvolt as logical RPMH_REGULATOR_LEVEL identifiers, qcom,set as the required active/sleep set mask, and qcom,init-voltage-level as an optional logical initial corner. The corresponding AUX map translates these logical corner IDs to hardware ARC levels 0–15. Never interpret these ARC min/max values as physical microvolts or copy a PMIC VRM voltage range into an ARC node. ROUND7 locally shows example minima 16, 48 and 64 with 65535 maxima, while the qcom,set and resource-name values remain outside that inventory's selected property set. See ROUND24.
 
 ## 7. Verification status
 

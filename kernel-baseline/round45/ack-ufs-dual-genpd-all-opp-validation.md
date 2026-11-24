@@ -124,3 +124,19 @@ The protected branch ack18-dby-w09-dts-draft, firmware-audit-v1 and PR #1 were n
 6. Do not start full DerpFest device/vendor/system integration until the 6.18.33 kernel has actually booted and passed Stage A acceptance.
 
 **Conclusion:** The ROUND33 patch draft now validates every available UFS OPP entry and has exact hunk-count/source-context agreement with the pinned ACK driver file. The implementation remains uncompiled and untested; MMCX-to-MX, memory handoff and AVB are still separate gates.
+
+
+## 8. Additional Kconfig call-site availability re-check
+
+A focused reread of the exact pinned ACK Kconfig and Makefile files confirms that the new helper's OPP and GenPD APIs have a source-declared route from the existing storage-first fragment:
+
+- `drivers/ufs/Kconfig`: `SCSI_UFSHCD` selects `PM_DEVFREQ`.
+- `drivers/devfreq/Kconfig`: `PM_DEVFREQ` selects hidden bool `PM_OPP`.
+- `drivers/clk/qcom/Kconfig`: hidden `QCOM_GDSC` selects `PM_GENERIC_DOMAINS` when `PM=y); `SM_GCC_8250` selects `QCOM_GDSC`.
+- `kernel/power/Kconfig`: `PM_GENERIC_DOMAINS_OF` is `def_bool y` when `PM_GENERIC_DOMAINS && OF`.
+- `drivers/pmdomain/qcom/Kconfig`: `QCOM_RPMHPD` depends on both `QCOM_RPMH` and `QCOM_COMMAND_DB`, which are already requested by the storage-first fragment.
+- `drivers/Makefile`: the `pmdomain/` subtree is included under `CONFIG_PM_GENERIC_DOMAINS`; therefore the GCC-selected generic-domain framework is important not only for the UFS GCC GDSC but also for compiling the Qualcomm RPMhPD provider subtree.
+
+The current fragment sets `PM=y`, `OF=y`, `SM_GCC_8250=y`, `QCOM_RPMH=y`, `QCOM_COMMAND_DB=y`, `QCOM_RPMHPD=y`, and the UFS base symbols needed by this chain. No additional direct fragment symbol was identified for the new helper APIs.
+
+This is source-level dependency closure only. Kleaf/Kconfig resolution and the final .config audit remain NOT_RUN.

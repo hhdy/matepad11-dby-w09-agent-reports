@@ -18,10 +18,10 @@ The draft now preserves that known stock value. This is stronger evidence than o
 
 ## Current limits
 
-- ROUND11 is complete; its sanitized findings are documented in ROUND16. No source sync, dtc invocation, dt-schema validation, Kconfig resolution, compile, boot-image packing or hardware test has been done.
+- ROUND11 is complete; its sanitized findings are documented in ROUND16. ROUND17 records the ACK GENI UART/console distinction and why both candidate UART nodes remain disabled. No source sync, dtc invocation, dt-schema validation, Kconfig resolution, compile, boot-image packing or hardware test has been done.
 - PM8150 UFS output regulators are mapped from local HOS4.3 data. ROUND11 completely scanned the base FDT and found four internal ARC *-parent-supply edges plus six ARC proxy-supply links, but no vdd-s1..s10-supply, vin-supply or vph-pwr-supply anywhere in the FDT. The ARC edges are virtual level dependencies, not physical PM8150 VRM input-supply links. Do not restore the HOS4.2 public-reference vph_pwr=3.7 V wiring.
 - SPMI PMIC GPIO/PON/arbiter nodes are intentionally absent from this minimal UFS-only base.
-- No UART console, reserved-memory, panel, THP, WLAN, BT, audio, camera, USB-C or DP nodes are enabled.
+- No UART console, reserved-memory, panel, THP, WLAN, BT, audio, camera, USB-C or DP nodes are enabled. ACK maps uart2 to the GENI debug-console path (ttyMSM / earlycon) and uart6 to the regular GENI UART path (ttyHS); the same-device Linux reference uses uart6 with a Bluetooth child. Do not assume serial0=uart6 makes it ttyMSM0 under ACK 6.18. The HOS androidboot.console=ttyMSM0 property is not by itself a proven ACK console-to-pin mapping.
 - Panel `ACTIVE_PROFILE=UNKNOWN`.
 - The stock HOS4.3 ramdisk remains unread (ROUND10 BLOCKED); module ordering is unknown.
 - Logical-partition filesystem / device-mapper options remain commented until the ramdisk fstab and full filesystem inventory are known.

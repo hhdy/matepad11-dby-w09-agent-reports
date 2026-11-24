@@ -167,3 +167,15 @@ The second AI's dedicated branch currently has a report template, not a complete
 4. Then move to Gate 1–4 in a disposable ACK workspace while keeping AVB/memory/ramdisk as first-boot gates.
 
 **Bottom line:** The project has enough pinned-source design to stop endlessly expanding the research backlog. The next acceleration comes from confirming the existing build environment, completing the independent UFS review in parallel, and executing the real disposable-worktree validation sequence. No kernel compile or device boot is claimed by ROUND55.
+
+
+## Status correction — ROUND15 complete; ROUND16 authorized (2026-11-24)
+
+ROUND15 has now completed and uploaded its report. It found no existing ACK worktree and no evidenced Linux build host/toolchain; verdict `NO_EXISTING_BUILD_WORKSPACE_FOUND`. D: had 325.4 GiB free at scan time. The WSL distribution listing remained NOT_RUN because the host security program blocked the query.
+
+The user explicitly authorized environment deployment. ROUND16 is now the active local Agent task:
+`firmware-analysis/round16/AGENT_TASK.md`.
+
+It provisions WSL2 Ubuntu 24.04 on D:, installs minimal official Ubuntu host packages, syncs only the official `common-android17-6.18` kernel manifest and pins the common source to the immutable ACK .33_r00 commit. It reserves at least 100 GiB free on D: and stops before patch application or compilation. It must not bypass the host security block if it recurs.
+
+The second AI's ROUND54 review remains independent and must be completed on its dedicated branch. No kernel compile or device boot is claimed.

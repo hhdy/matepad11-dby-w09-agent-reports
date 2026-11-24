@@ -65,7 +65,7 @@ Therefore the source proves that the KONA UFS code *submits and later clears* a 
 
 For DBY-W09 ACK this caveat is even more restrictive: ROUND47 establishes that ACK PM8150L S8 is `pmic5_hfsmps510` with no `set_load` or `get_optimum_mode` callback. Its 210mA `regulator_set_load()` vote is therefore a successful no-op in the current fixed ACK driver. It does not enable S8 and does not implement HOS4.3's 200mA RET→AUTO policy.
 
-This makes S8 boot enable state and physical parent supply status a separate unresolved gate. ROUND13 did not export the S8 `qcom,init-enable`, `regulator-boot-on`, `regulator-always-on`, or complete physical input-parent context. The next local property scan must read only these already-existing fields from the approved FDT work copy.
+ROUND14 has now exported the missing static S8 fields from the approved base-FDT work copy: `qcom,init-enable`, `regulator-boot-on`, `regulator-always-on` and the inspected suspend-state nodes are NOT_FOUND_IN_INSPECTED_SCOPE. This does not establish live enable state or the physical S8 input path. Do not schedule another FDT scan for these properties; ROUND14 is complete.
 
 ## 3. ACK teardown ordering
 
@@ -96,29 +96,28 @@ The regulator API documents that every `regulator_enable()` must be balanced by 
 This is the recommended *design* for the initial storage milestone. It deliberately does not attempt to reproduce downstream runtime suspend/BKOPS policy yet.
 
 ### VDDP / L6
-- Use `devm_regulator_get_optional(dev, "qcom,vddp-ref-clk")`.
-- Apply the 100µA load vote; use the board's fixed 1.2V L6 constraint rather than inventing a new voltage range.
-- Call `regulator_enable()`; set an explicit state flag only after success.
-- Immediately register a `devm_add_action_or_reset()` cleanup action after the successful enable. The action must call `regulator_disable()` and clear the load vote, with error logging.
-- Because the action executes after `ufshcd_remove()` returns, generic VCCQ's L6 consumer is already off before the VDDP enable reference is removed. The later devm regulator-put action then releases the handle.
+- Read/require `qcom,vddp-ref-clk-supply` to decide whether the downstream extension is present; when present, use mandatory `devm_regulator_get(dev, "qcom,vddp-ref-clk")`. If the phandle is declared but the regulator is not available, allow probe defer/failure instead of silently skipping it.
+- Require a positive `qcom,vddp-ref-clk-max-microamp` value. The DBY-W09 board value is 100µA; use the board's fixed 1.2V L6 constraint rather than inventing a new voltage range.
+- Register `devm_add_action_or_reset()` immediately after the managed regulator get, before load/enable. Then call `regulator_set_load()`, set the load flag only on success, call `regulator_enable()`, and set the enable flag only on success.
+- The cleanup action disables VDDP, then clears its load. If disable fails, log and retain the load vote rather than clearing load while the enable reference may remain.
+- On device removal, generic VCCQ has shut down before the action runs. The action also runs before `regulator_put()`; because the UFS core's HBA release and the variant host allocation actions were registered earlier, devres LIFO keeps both `hba` and `ufs_qcom_host` alive during the callback.
 
 ### VCCQ-parent / S8
-- Use `devm_regulator_get_optional(dev, "qcom,vccq-parent")`.
-- Follow KONA's load-only shape: request the 210mA load, do **not** call `regulator_enable()` or `regulator_disable()`, and do not set a separate voltage.
-- Register a deferred cleanup action that clears the load vote before the regulator handle is put.
-- Explicitly document that fixed ACK HFSMPS510 lacks `set_load`; the vote is currently a no-op. Do not claim it enables the rail or reproduces HOS mode switching.
-- Do not force S8 AUTO or RET from the UFS driver; its static mode choice is held in the DTS draft and still awaits confirmation of local S8 enable/power-tree semantics.
+- **Do not acquire S8 in the first ACK UFS driver patch.** Do not call `regulator_set_load()`, `regulator_enable()`, `regulator_disable()`, or `regulator_set_voltage()` for VCCQ-parent.
+- ROUND14 found no static S8 init-enable / boot-on / always-on declaration in the inspected base FDT; fixed ACK HFSMPS510 has no DRMS callbacks, so a 210mA load-only request would be a no-op.
+- Preserve `qcom,vccq-parent-supply` and its max-current metadata in the board binding only as a documented downstream topology extension, not as an initial driver action. The board S8 node keeps RET initial and RET/AUTO allowed; runtime enable state remains UNKNOWN.
 
 ### Error unwind
 
-- If the second (VCCQ-parent) get or load setup fails after VDDP has been enabled, return the error. The devm action will run after the generic UFS init unwind has disabled generic supplies.
-- If custom cleanup action registration fails, `devm_add_action_or_reset()` executes the cleanup immediately. This is safe for VDDP while generic VCCQ still owns a separate L6 enable reference; for S8 it only clears the load vote.
-- Never manually call the same cleanup path from `ufs_qcom_exit()` as well as a devm action; avoid double-disable / double-clear.
-- If cleanup `regulator_disable()` fails, log it; do not silently mark the rail disabled. This failure case still needs review in a real patch because the managed regulator put will follow and the regulator API warns about unbalanced enable references.
+- If VDDP load setup fails after the cleanup action has been registered, the enable flag remains false and the deferred action has no rail-enable reference to drop.
+- If VDDP enable fails after the load vote was accepted, the load flag remains true and the deferred action clears it.
+- If `devm_add_action_or_reset()` registration itself fails, the action runs immediately while both state flags are still false.
+- Do not call the cleanup path from `ufs_qcom_exit()` as well as the devm action; avoid double-disable / double-clear.
+- If cleanup `regulator_disable()` fails, log it and retain the load vote; the subsequent managed regulator put will warn if the enable count remains non-zero. This failure recovery remains a known code-review limitation, not a runtime-tested condition.
 
 ### Suspend/resume for first boot
 
-Do not add link-off suspend/resume voting in the first storage patch. Keep VDDP enabled and the VCCQ-parent load request stable while the UFS HBA is bound; release both only after generic UFS rail shutdown at remove. This is a conservative bring-up policy, not an assertion that it is the final power-saving policy. Once storage works, the downstream KONA suspend/BKOPS policy can be considered separately and adapted against exact ACK callbacks.
+Do not add link-off suspend/resume voting in the first storage patch. Keep the VDDP/L6 reference enabled while the UFS HBA is bound and release it only after generic UFS rail shutdown at remove. The first ACK driver patch does not acquire or vote S8/VCCQ-parent at all. This is a conservative storage bring-up policy, not an assertion that it is the final power-saving policy. Once storage works, downstream KONA suspend/BKOPS behavior can be considered separately against exact ACK callbacks.
 
 ## 5. Rejected old implementation
 
@@ -130,9 +129,9 @@ The protected branch remains untouched. This report and any future replacement s
 
 ## 6. Remaining evidence and verification gates
 
-- S8 local `qcom,init-enable`, `regulator-boot-on`, `regulator-always-on`, and full power-parent facts are not yet present in the ROUND13 report. Need targeted local read-only extraction from the existing FDT work copy.
-- HOS4.3 exact S8 runtime enable status is UNKNOWN; static FDT properties cannot be treated as live reads.
-- ACK S8 has no DRMS callback; 210mA vote may be a no-op.
+- ROUND14 completed the static S8 field extraction: no `qcom,init-enable`, `regulator-boot-on`, `regulator-always-on` or suspend-state nodes were found in the inspected base-FDT scope. Do not repeat that local scan.
+- HOS4.3 live S8 enable state remains UNKNOWN; static FDT properties are not runtime reads. The physical S8 input-parent network remains unresolved.
+- ACK S8 has no DRMS callback; the 210mA load-only vote would be a no-op, so it is omitted from the first ACK UFS driver patch.
 - L6 input parent remains electrically unresolved; a regulator-core dummy supply does not establish the physical power tree.
 - Full-tree apply, checkpatch, binding schema, dtc/dtbs_check, Kconfig resolution, Kleaf build, UFS boot, suspend/resume, and runtime regulator traces are all NOT_RUN.
 - Stage A ACK 6.18.33 remains the only project milestone. Stage B DerpFest is deferred.

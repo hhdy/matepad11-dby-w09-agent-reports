@@ -221,29 +221,11 @@ This block supersedes historical statements above that described ROUND12 or ROUN
 
 ---
 
-## Latest queue update — 2026-11-24 (ROUND14 is the sole active local task)
+## Historical task dispatch record — ROUND14 (superseded)
 
-ROUND12 AVB and ROUND13 PM8150 mode/DRMS task states remain unchanged:
-- ROUND12: uploaded / BLOCKED at trusted AVB tool gate; do not repeat or install tools.
-- ROUND13: uploaded / COMPLETE; do not repeat or reparse.
+ROUND14 was once the sole active Local Agent task. It has since been completed, uploaded to `firmware-audit-v1`, and superseded by the current empty-queue status below. The detailed task book and original instructions are retained for audit history only; **do not execute or repeat them**.
 
-GPT has completed public source review:
-- ROUND49: fixed ACK UFS VDDP / VCCQ-parent lifecycle and devres ordering; public KONA uses VDDP enable/disable but VCCQ-parent load-only. The latter load vote is not proven to trigger DRMS because regulator core only updates load for an enabled consumer handle; ACK S8 has no set_load callback. Protected old patch sketch is not safe to apply.
-- ROUND50: public KONA confirms vendor MMCX ALL/AO parent links to distinct MX children and the ARC min-dropout propagation mechanism. Fixed ACK SM8250 descriptor has no MMCX parent. Do not add a shared SM8250 parent edge without exact local corner/dropout and OPP map evidence.
-- Reports: `kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md` and `kernel-baseline/round50/ack-sm8250-mmcx-mx-arc-parent-semantics-and-remaining-local-gate.md`.
-
-**Current local task: firmware-analysis ROUND14**
-- Task book: `firmware-analysis/round14/AGENT_TASK.md` on main.
-- Output: one sanitized UTF-8 text file, `firmware-analysis/round14/round14_arc_mmcx_mx_power_properties.txt`, on `firmware-audit-v1`.
-- Reuse only the existing ROUND3 base boot-FDT work copy, approved parser, and existing phandle/path indices. Do not repeat ROUND11's parent-link extraction or ROUND13's mode/DTBO scan.
-- Inspect the exact MMXC/MX ARC provider and child properties that ROUND24 says were not captured: resource names, qcom,set, logical min/max corner, init-voltage-level, min-dropout-voltage-level, and proxy fields. Also inspect S8 qcom,init-enable / regulator-boot-on / regulator-always-on fields and provider/child paths.
-- Do not install tools, download, write a parser, re-extract firmware, connect to the device, or modify partitions. If existing input/parser is missing or cannot resolve a path, mark BLOCKED and stop. Upload only the single sanitized text report, then stop.
-- Do not modify main, protected DTS branch, or PR #1 from the Local Agent.
-
-No ROUND15 task is active. Stage A ACK 6.18.33 remains the sole milestone; do not start DerpFest Stage B before actual device boot and UFS/storage/basic-hardware acceptance.
-
-
----
+-
 
 ## Latest queue/status correction — ROUND14 complete; ROUND51 reviewed (2026-11-24)
 

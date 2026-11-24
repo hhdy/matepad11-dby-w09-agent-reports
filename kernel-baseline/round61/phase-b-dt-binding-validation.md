@@ -57,3 +57,10 @@ It also uploads the generated DTBs and validation logs as an Actions artifact. I
 ## Current result boundary
 
 No fixture PASS/FAIL result is asserted in this report yet. The previous hosted run `45435020774` proved the earlier UFS patch application and some schema tooling, but it predates ROUND63 integration and these explicit UFS/PHY fixture tests. Wait for the new branch-published result and fix any actual schema/test failures before marking Phase B complete.
+
+
+## Hosted run 83 diagnostics and harness correction
+
+Run `45443538190` passed Phase-A source gates and reached schema validation. The original ACK UFS example's direct `dt-validate` command returned exit code 0 while still printing `power-domains` and `unevaluatedProperties` diagnostics. Therefore a zero exit code is not a sufficient success signal for this validator version. The fixture gate now checks output content: positive fixtures must produce an empty diagnostic log; negative fixtures must produce the expected property diagnostic. The processed schema is retained as an artifact with its SHA-256 for inspection.
+
+The first fixture compile attempt exposed a DTS syntax issue in the generator: root `interrupt-parent` was emitted after a child node. It has been moved into the root property block before all subnodes. The next hosted run will compile all ten UFS fixtures and then test the three PHY fixtures. The original UFS example remains an explicit final gate: any diagnostic output keeps Phase B blocked.

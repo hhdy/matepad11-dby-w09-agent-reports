@@ -143,8 +143,8 @@ ROUND52 adds the downstream UFS supply binding and VDDP lifecycle changes. The i
 6. ROUND52-0002: VDDP/L6 managed get + load + enable + deferred cleanup. It is written against the post-ROUND33 `ufs-qcom.c` include block and leaves S8/VCCQ-parent unconsumed by the initial ACK driver.
 
 ROUND52 artifacts:
-- `kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft` — blob `949798446f6135844f5e2d841fca06a0d25ea6d6`.
-- `kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft` — blob `bf60bdda7cf0c679b35a4f8dac1676c63a9e3ce0`.
+- `kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft` — blob `c0ac84067a900022a077c748b7abb10345f1295f`.
+- `kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft` — blob `79cb9d9e7372835d8f68fa2269dfb317b6c1d98c`.
 - Design report: `kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md`.
 
 A source-backed in-memory unified-diff simulation was performed against exact pinned ACK pristine files and the protected branch's unchanged board DTS file (read-only). In the order above, all patch contexts and declared line counts matched: ROUND32 3/3 hunks; ROUND36 2/2; ROUND52-0001 2/2; ROUND37 2/2; ROUND33 2/2; ROUND52-0002 header 1/1 and driver 3/3. This is **context/order simulation only**, not an actual Git worktree `git apply`, schema validation or build. Full-tree apply/checkpatch/dt-schema/dtc/Kconfig/Kleaf build/boot remain NOT_RUN.

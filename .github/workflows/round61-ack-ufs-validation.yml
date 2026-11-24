@@ -88,6 +88,7 @@ jobs:
           }
           printf 'Original ROUND32/ROUND57 qcom,ufs.yaml edits are superseded: pinned ACK already selects SM8250 in qcom,sc7180-ufshc.yaml.\n'
           apply_patch kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
+          apply_patch kernel-baseline/round61/patches/round36-corrected-power-domain-range.patch
           apply_patch kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch
           apply_patch kernel-baseline/round61/patches/round52-0001-context-corrected.patch
           apply_patch kernel-baseline/round61/patches/round33-checkpatch-clean.patch

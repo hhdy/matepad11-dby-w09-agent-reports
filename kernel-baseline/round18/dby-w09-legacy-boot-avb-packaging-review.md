@@ -34,7 +34,7 @@ ROUND2 local report records:
 - dtbo.img file size 25,165,824 bytes (24 MiB), table version 0, nine entries.
 - vbmeta images exist (root and chained names), but ROUND2 only identified AVB_VBMETA image magic; it did not enumerate descriptors or footer coverage.
 
-The public same-device Linux project expects the same total file sizes for stock boot (96 MiB) and ramdisk (2 MiB). The same user ROUND2 inventory also reports a 24 MiB DTBO partition, matching the public board family context.
+The public same-device Linux project expects the same total file sizes for stock boot (96 MiB) and ramdisk (2 MiB). The same user ROUND2 inventory also reports a 24 MiB DTBO partition, matching the public board family context. ROUND2 further records that all nine stock DTBO table entries have id=0 and rev=0; the public same-device one-entry packer also writes zero id/rev/custom fields. This corroborates the table-entry metadata convention, but it does not prove ABL accepts the new overlay, table total-size/alignment, or AVB coverage.
 
 This size match is corroborating evidence for the partition envelope, not proof of AVB descriptor content, ABL policy or Android ramdisk compatibility.
 
@@ -97,6 +97,7 @@ The public Linux 7.0 port's README says fastboot boot is refused. Thus an eventu
 | Same-device public boot repacker behavior | SOURCE REVIEWED |
 | Same-device public separate ramdisk + AVB footer handling | SOURCE REVIEWED |
 | User ROUND2 boot/ramdisk/DTBO file sizes | EXISTING LOCAL REPORT REVIEWED |
+| ROUND2 stock DTBO entry id/rev fields | ALL NINE = 0/0; PUBLIC PACKER ALSO USES ZERO ENTRY FIELDS |
 | HOS4.3 boot.img AVB footer | UNKNOWN / ROUND12 |
 | HOS4.3 ramdisk.img AVB footer and original image size | UNKNOWN / ROUND12 |
 | HOS4.3 dtbo.img AVB footer | UNKNOWN / ROUND12 |

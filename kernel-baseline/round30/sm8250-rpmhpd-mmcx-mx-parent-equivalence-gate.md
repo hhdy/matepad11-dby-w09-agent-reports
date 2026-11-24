@@ -59,6 +59,23 @@ In rpmhpd_probe(), ACK initializes each descriptor as a GenPD and calls pm_genpd
 
 The driver aggregates active/sleep peer votes for each RPMh resource. GenPD parent propagation is a separate hierarchy mechanism; one resource's vote does not automatically create another resource's parent relationship merely because HOS ARC had one.
 
+### Exact parent performance-state translation in ACK .33
+
+The generic ACK GenPD implementation was also inspected. When a GenPD child has a parent link and its performance state changes, _genpd_set_parent_state() calls genpd_xlate_performance_state(child, parent, state) before applying the parent request.
+
+In the exact .33 OPP core, dev_pm_opp_xlate_performance_state() returns the incoming pstate unchanged when the source GenPD OPP table has no required_opp_count. The SM8250 RPMHPD provider uses one operating-points-v2 table containing the shared RETENTION / MIN_SVS / LOW_SVS / SVS / NOM / TURBO opp-level entries; those entries do not contain required-opps mappings to another GenPD table. Consequently, if a custom MMCX descriptor were given an MX parent link while retaining this OPP table, generic GenPD would pass the same performance-state value to MX (one-to-one), not calculate a HOS-specific dropout delta.
+
+
+
+**ROUND30 refinement — parent state translation:** ACK .33 generic GenPD propagates a child's state to a parent when a parent link exists, using dev_pm_opp_xlate_performance_state(). The SM8250 RPMHPD provider uses the same operating-points-v2 table for its domains, whose entries have opp-level values but no required-opps map to a parent table. The generic helper therefore passes the same pstate to the MX parent (one-to-one). A descriptor parent pointer alone does not reproduce a non-zero HOS qcom,min-dropout-voltage-level delta. That HOS property is still UNKNOWN / NOT_CAPTURED, so the parent/corner gate remains open.
+
+This narrows the possible port:
+- Adding a parent pointer alone would make ACK propagate the same OPP state to MX.
+- It would not implement a non-zero HOS qcom,min-dropout-voltage-level rule unless an explicit OPP-level translation or a deliberately reviewed driver mechanism supplied that mapping.
+- The local HOS4.3 value of qcom,min-dropout-voltage-level remains UNKNOWN / NOT_CAPTURED.
+
+The new GenPD source review therefore does not close the HOS equivalence gate; it describes exactly what a simple descriptor change would and would not do.
+
 ## 4. What this means for ROUND29
 
 ROUND29 proposes:
@@ -129,6 +146,9 @@ GPT-side source work should:
 | ACK .33 SM8250 selects CX-with-MX-parent | SOURCE REVIEWED |
 | ACK .33 SM8250 selects plain MMCX without MX parent | SOURCE REVIEWED |
 | ACK .33 has an MMCX-with-CX-parent variant for other SoCs | SOURCE REVIEWED |
+| ACK .33 generic GenPD parent state propagation | SOURCE REVIEWED |
+| ACK .33 RPMHPD child/parent OPP translation with current shared table | SOURCE-REVIEWED ONE-TO-ONE pstate when no required-opps mapping exists |
+| HOS4.3 parent dropout delta and equivalence to ACK one-to-one pstate | UNKNOWN / NOT_CAPTURED |
 | ROUND29 UFS request can be routed to MMCX | DESIGN CANDIDATE / SOURCE-REVIEWED |
 | ROUND29 UFS request also reproduces HOS MMCX→MX edge | NOT ESTABLISHED |
 | New DBY-W09-specific MMCX→MX RPMHPD descriptor | POSSIBLE DESIGN ONLY / NOT IMPLEMENTED |

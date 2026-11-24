@@ -64,3 +64,11 @@ The nine stock DTBO entries do not target the relevant RSC regulator subtree, bu
 - [ROUND51 ROUND14 ARC value semantics, parent-edge reconciliation and S8 policy](../kernel-baseline/round51/round14-arc-value-semantics-proxy-vote-and-round11-edge-reconciliation.md): confirms 0xffffffff behaves as signed -1 in the KONA ARC parent request path, reconciles at least five known parent edges, identifies the MMCX ALL TURBO..MAX temporary proxy request, and corrects S8 to RET initial with no guessed enable.
 - ROUND14 local task is COMPLETE and uploaded to firmware-audit-v1. No new local task is active. No new local FDT parse was performed.
 - Do not modify the protected DTS branch or PR #1. ROUND49/50/51 are source-review/design reports; no full-tree apply, dtc/schema, Kconfig, build, boot, or runtime trace has been run.
+
+
+### ROUND52 — storage-first UFS optional supply implementation drafts
+
+- ROUND52 adds explicit qcom,ufs.yaml definitions for qcom VDDP REF_CLK and VCCQ-parent consumer properties.
+- The first ACK UFS driver draft consumes VDDP/L6 only: set the DTS load, enable before PHY power-up, and defer disable + load-clear until after ufshcd_remove() has shut down generic UFS VCCQ.
+- S8/VCCQ-parent is not acquired or voted by the first ACK driver patch. ACK HFSMPS510 has no DRMS callback and HOS4.3 has no static enable declaration in the inspected scope; runtime rail enable remains UNKNOWN. Do not force enable.
+- Artifacts: kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md and the two 0001/0002 patch drafts. Hunk counts/context were source-reviewed; full-tree apply, checkpatch, dt-schema and build remain NOT_RUN.

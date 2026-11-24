@@ -95,6 +95,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 
 - ROUND31：ACK .33_r00 UFS/QMP/SM8250 GCC/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig 依赖闭环；storage-first fragment 的隐藏依赖注释已更新，最终 Kconfig 解析仍 NOT_RUN。
 - [ROUND33：SM8250 UFS 双 GenPD driver patch 草案](./kernel-baseline/round33/sm8250-ufs-dual-genpd-patch-design.md)：在 `ufs_qcom_probe()` / 通用 init 之前只对 SM8250 双域 MMCX→GCC UFS_PHY_GDSC 拓扑 attach domains，并将 UFS 唯一 `required-opps` slot 0 明确绑定到 MMCX。还检查 required-opps 目标 OPP provider 为 qcom,sm8250-rpmhpd；单域设备路径保留。patch 尚未应用/编译/checkpatch/运行；两个 hunk 已对照固定 ACK 源码做了逐行上下文和行数核对，但没有在完整内核工作树上执行 git apply。
+- [ROUND34：ROUND33 UFS 双 GenPD 补丁的固定 ACK 源码与生命周期审查](./kernel-baseline/round34/round33-pinned-source-lifecycle-review.md)：按 `android17-6.18.33_r00` 精确复核 GenPD 多域自动附着规则、attach-list 返回值与 `PD_FLAG_DEV_LINK_ON` 链路标志、OPP required-dev 的初始化时序，以及 devres 逆序清理。审查未发现已核实的 API/生命周期冲突；这只是源码审查通过，不代表补丁已应用、编译或设备验证。
 - [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：ACK .33 及当前上游的 qcom,ufs.yaml 都遗漏 qcom,sm8250-ufshc；SM8250 节点实际为 8 clocks、无 ICE 窗口、单 reg。独立 schema-only patch 草案位于 round32；三个 hunk 已逐行匹配固定 ACK 原始 YAML，old/new 行数声明一致，但未执行 git apply；dt_binding_check/dtbs_check 未运行，且未包含 dual-GenPD 变更。
 
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
@@ -175,7 +176,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### GPT 侧（当前继续工作）
 
-- 以 ROUND28 锁定的 `android17-6.18.33_r00` 和 ROUND29 方案继续完成 UFS 双 GenPD patch 草案、DTS binding/order 检查和 probe defer/runtime-PM 生命周期审查；方案未经编译和实机验证，不能标为完成。
+- ROUND34 已完成 ROUND33 UFS 双 GenPD patch 的固定 ACK 源码和 devres 生命周期审查；当前未发现已核实的 API/清理顺序冲突。下一步继续审查最终 DTS/provider/OPP 节点一致性，并在完整 ACK 工作树可用时执行 `git apply --check`、checkpatch、dt-schema、Kconfig resolver 和编译；未通过这些验证前仍为 draft。
 - 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。

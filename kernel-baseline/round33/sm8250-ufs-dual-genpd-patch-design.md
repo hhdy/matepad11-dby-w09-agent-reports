@@ -27,7 +27,7 @@ It checks the exact provider and argument order:
 
 If the node has one domain, the existing generic attach path is preserved. A missing power-domains property is also left on the pre-existing path. More than two domains, or a two-domain layout with different providers/order, fails clearly rather than silently routing required OPP to the wrong supplier.
 
-The patch reads the UFS OPP description, verifies that the first available OPP contains exactly one required-opps phandle, follows that phandle to its containing OPP table and provider node, and requires that provider to be qcom,sm8250-rpmhpd. This avoids applying the index-0 MMCX mapping to an unrelated required-OPP provider. The current SM8250 OPP table has two entries, each with one RPMHPD OPP reference.
+The patch reads the UFS OPP description, verifies that the first available OPP contains exactly one required-opps phandle, follows that phandle to its containing OPP table and provider node, and requires that provider to be qcom,sm8250-rpmhpd. The latest revision also parses the provider node's operating-points-v2 phandle and requires it to resolve to the exact same table node containing the required-OPP target. This avoids mapping the UFS OPP to a different table merely because it is nested under a compatible RPMhPD provider. The current SM8250 OPP table has two entries, each with one RPMHPD OPP reference.
 
 ## 3. Probe order
 
@@ -82,3 +82,11 @@ On 2026-11-24, the complete ROUND33 draft was re-read from `main` and both unifi
 - Probe hunk `@@ -2802,15 +2808,128 @@`: 15 old / 128 new lines; every old-side line matches the pinned source.
 
 This is full-file source-context and hunk-count verification, not `git apply` on a full kernel worktree. No checkpatch, compile, dt-schema, DTB, runtime-PM, or device validation is claimed.
+
+## 8. Latest provider-table identity hardening
+
+ROUND38 added a source-level check that the required-OPP target's ancestor provider node advertises the exact same containing OPP table through its operating-points-v2 property. This is stricter than a provider-compatible check and prevents a false match to an unrelated table below a node with the correct compatible.
+
+Updated patch blob SHA: `565090acbfe9aad00200b3cccbd64a8a45c7c4c3`.
+
+The updated include and probe hunk old-side source contexts and declared old/new counts match the exact pinned ACK `ufs-qcom.c` source. This remains a source-context check only; full-tree application, checkpatch, compile and hardware tests remain NOT_RUN. See ROUND38: `../round38/rpmhpd-provider-registration-and-ufs-opp-table-identity.md`.

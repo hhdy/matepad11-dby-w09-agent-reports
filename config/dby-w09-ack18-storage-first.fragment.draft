@@ -60,7 +60,9 @@ CONFIG_ARM_SMMU=y
 
 # The Host's explicit UFS_PHY_GDSC power-domain is supplied by SM_GCC_8250.
 # Separately, ufs_opp_table contains required-opps references to
-# rpmhpd_opp_low_svs / rpmhpd_opp_nom. Keep RPMhPD built-in for this OPP path.
+# rpmhpd_opp_low_svs / rpmhpd_opp_nom. Keep RPMHPD built-in as the SoC
+# provider for future/explicit domain routes; ROUND27 shows that the current
+# UFS GDSC attachment does not yet prove an RPMHPD vote.
 # ROUND11's HOS4.3 ARC parent/proxy graph is vendor-specific; do not translate
 # its *-parent-supply or proxy-supply properties into PM8150 VRM supply links.
 # ACK uses the upstream SM8250 rpmhpd/OPP model for performance-level votes.

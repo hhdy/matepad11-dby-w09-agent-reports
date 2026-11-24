@@ -91,7 +91,7 @@ The dual-domain UFS request-routing change and MMCX→MX corner equivalence are 
 ## 7. Branch / device safety
 
 - All ROUND32–38 reports and patch drafts are on `main`.
-- `ack18-dby-w09-dts-draft` remains unchanged; ROUND37 has not been applied.
+- `ack18-dby-w09-dts-draft` remains unchanged; ROUND37 was applied only to a local exact-blob fixture, not to the protected branch.
 - PR #1 remains open / Draft / unmerged.
 - `firmware-audit-v1` remains unchanged; ROUND12 AVB metadata report has not appeared.
 - ROUND12 remains the only local Agent task. Do not start more local tasks or change device state.

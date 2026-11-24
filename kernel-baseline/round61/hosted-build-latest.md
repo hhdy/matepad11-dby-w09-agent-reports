@@ -1,16 +1,19 @@
 # ROUND61 hosted manifest/Kleaf build result
 
-- Date UTC: 2026-11-24T17:01:52Z
+- Date UTC: 2026-11-24T17:11:43Z
 - Branch: ai-parallel/stagea-port-until-boot
-- Trigger commit: 9934bf735a31c565456fd7a1c5c8d67121e8a541
-- Workflow run ID: 45442933079
+- Trigger commit: 82f218ad5b042c89596d58b6fd9563c4f9fc3324
+- Workflow run ID: 45444678133
 - Manifest commit: 46a1a5274ff0b40419952c861a8958bba5f28cfc
 - ACK required commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
-- Last stage: record pinned manifest and verify fixed ACK source
+- Last stage: run manifest-provided Bazel wrapper
 - Exit code: 1
 - Runner resources: CPUs=4, memory.max=unknown
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/root       145G   89G   57G  62% /
+- JAVA_HOME: prebuilts/jdk/jdk11/linux-x86
+- Clang path: unset
+- Rust path: unset
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/mapper/cow-root  145G   85G   60G  59% /
 
 ## Source identity
 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a

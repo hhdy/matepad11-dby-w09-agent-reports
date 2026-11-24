@@ -108,21 +108,37 @@ ROUND16 实测 WSL VM 可见内存约 7.3 GiB，Windows 宿主约 15.16 GiB。�
 
 | 顺序 | 内容 | 采用文件与 Git blob |
 |---|---|---|
-| 1 | ROUND32：SM8250 UFS compatible/schema 覆盖 | main: kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft；efe2d932da34716c631de22d89aba19730cc7f50 |
-| 2 | ROUND36：SM8250 dual power-domain schema exception | main: kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft；dad87ef8dfefee6141b8a7949982c007c4a03b4a |
-| 3 | ROUND52-0001：VDDP/VCCQ-parent binding | 二号 AI 分支 ai-parallel/stagea-port-until-boot 的 kernel-baseline/round61/patches/round52-0001-context-corrected.patch；889760d69c12ebf193c32d5fdf218075c5544b15。不要直接使用 main 上未经 ROUND61 修正的 c0ac8406... |
-| 4 | ROUND33：UFS dual-GenPD / required-OPP driver | 二号 AI分支 kernel-baseline/round61/patches/round33-checkpatch-clean.patch；f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 |
-| 5 | ROUND52-0002：VDDP managed lifecycle | 二号 AI分支 kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch；7e5df841b756dfef803edec486d9a5e3e753f47b |
-| 6 | ROUND63-0002：QMP UFS PHY binding 的 vdda-phy-always-on | main: kernel-baseline/round63/0002-dt-bindings-phy-qmp-ufs-vdda-phy-always-on.patch.draft；a6668eebe293f9a35e9c08d6be4f37c4340e7ddd |
-| 7 | ROUND63-0001：QMP UFS PHY always-on regulator lifecycle | main: kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft；a06b7d3fc19e0b23895b0013ab9ac322d84cdda5 |
+| 1 | ROUND36：SM8250 dual power-domain schema exception | main: kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft；dad87ef8dfefee6141b8a7949982c007c4a03b4a |
+| 2 | ROUND18-local：SM8250 clock-names 精确八项约束（必须先修正并实测） | 不直接应用旧 ROUND32。检查 ACK `qcom,sc7180-ufshc.yaml` 后，在 ROUND18 副本内生成最小修正版；候选参考二号 AI `kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch` blob `fade9cb2bdfd544c6736c7595af8380726edf318`，但该候选在 Actions Run `45448025597` 中 `git apply --check` 未通过，**禁止原样应用**。 |
+| 3 | ROUND52-0001：VDDP/VCCQ-parent binding | 二号 AI 分支 `ai-parallel/stagea-port-until-boot` 的 `kernel-baseline/round61/patches/round52-0001-context-corrected.patch`；以该分支当前文件 blob 为准，须复核。历史 blob `889760d69c12ebf193c32d5fdf218075c5544b15` 已被后续 schema composition 修改取代，不得盲用旧 blob。 |
+| 4 | ROUND33：UFS dual-GenPD / required-OPP driver | 二号 AI 分支 `kernel-baseline/round61/patches/round33-checkpatch-clean.patch`；f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 |
+| 5 | ROUND52-0002：VDDP managed lifecycle | 二号 AI 分支 `kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch`；7e5df841b756dfef803edec486d9a5e3e753f47b |
+| 6 | ROUND63-0002：QMP UFS PHY binding 的 vdda-phy-always-on | main: `kernel-baseline/round63/0002-dt-bindings-phy-qmp-ufs-vdda-phy-always-on.patch.draft`；a6668eebe293f9a35e9c08d6be4f37c4340e7ddd |
+| 7 | ROUND63-0001：QMP UFS PHY always-on regulator lifecycle | main: `kernel-baseline/round63/0001-phy-qcom-qmp-ufs-preserve-vdda-phy-always-on.patch.draft`；a06b7d3fc19e0b23895b0013ab9ac322d84cdda5 |
 
 必须从相应 GitHub ref/path 取得补丁并核对 SHA-1 Git blob 身份；不得因为文件路径相同而从错误分支读取旧版本。
+
+### ROUND32 原始补丁已废弃；必须先修正新候选
+
+主线旧补丁 `kernel-baseline/round32/0001-dt-bindings-ufs-add-sm8250-compatible.patch.draft`（blob `efe2d932da34716c631de22d89aba19730cc7f50`）**从 ROUND18 应用序列中永久移除**，不得下载、检查后应用或以其它方式合入。固定 ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 已在 `Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml` 的 `select` 中选择 `qcom,sm8250-ufshc`；在 `qcom,ufs.yaml` 再添加该 compatible 会造成重复 schema 选择，方向错误。
+
+二号 AI 后续生成的修正版候选 `kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch`（它在二号 AI 分支中的 blob `fade9cb2bdfd544c6736c7595af8380726edf318`）**尚未被接受**：真实 Actions Run `45448025597` 的 `git apply --check` 在 `qcom,sc7180-ufshc.yaml` 的 `clock-names/minItems: 8` 上下文匹配失败；此前 Run `45447645008` 同样因该 hunk 失败。不得把该 patch blob 或其“修正版”描述成已通过。
+
+ROUND18 必须按以下顺序处理这个目标：
+
+1. 从固定 ACK 副本读取并保存 `qcom,sc7180-ufshc.yaml` 的原始 blob/SHA 和目标上下文；确认八个有序 `clock-names.items` 常量及 SM8250 所在条件分支。
+2. 在 ROUND18 副本中重新制作一个最小、上下文正确的本地补丁；它只能修改正确的 ACK 选中 schema，不得再次把 SM8250 compatible 添加到 `qcom,ufs.yaml`，不得改变其它 SoC 的规则。
+3. 在实际固定 ACK worktree 中先运行单补丁 `git apply --check`。失败时只修 hunk/上下文并重复；**在该命令真实返回 0 前不得执行 git apply，也不得将它加入有序补丁序列**。
+4. `git apply --check` 通过后才真实 `git apply`，随即 `git diff --check`；记录 patch 文件 SHA-256、ACK 前后 Git blob、退出码和 diff。
+5. 再使用 ACK 绑定依赖版本对修改后的 schema 执行 `dt-doc-validate` / `dt_binding_check`，用自包含正反例确认 7/8/9 项：8 项必须接受，7 和 9 项必须拒绝。若 `maxItems: 8` 触发 meta-schema 问题，必须寻找与 ACK dt-schema 兼容的替代表达，不能跳过检查或弱化 strict schema。
+
+如果本地无法在合理的 schema 方案上完成，记录 `ROUND32_CLOCK_SCHEMA=BLOCKED` 并继续其它不依赖该 gate 的 Kleaf query、Kconfig、Image-only 构建。不得因这一项提前停止整个 ROUND18。
 
 ### ROUND57：本轮明确不应用
 
 ROUND57 patch blob 3656f05ad01d54452b83591b762faaa71a16f592 在二号 AI 的真实 dt-schema 流程中发现，对固定八项 clock-names.items 列表额外增加 minItems/maxItems 会触发 schema meta-schema 不兼容。因此本轮不应用 ROUND57，不得屏蔽 meta-schema 错误。
 
-ROUND32 已列出八个有序 const clock names。必须用正反例确认 7 项、9 项被拒绝，8 项被接受。如果现有 schema 无法精确约束数量，研究与当前 ACK dt-schema meta-schema 兼容的最小表达方式，先验证该表达的 meta-schema，再运行 dt-validate。禁止重复 ROUND57 的无效限制。
+固定 ACK 的正确选中 schema 已列出八个有序 const clock names，但现有规则只有 minItems: 8，仍需用 7/8/9 项正反例验证上限。按上方 ROUND32 废弃/修正版门槛，在真实 git apply 通过后才验证精确八项约束；若 maxItems 与 ACK meta-schema 冲突，研究兼容表达。禁止重复 ROUND57 的无效限制。
 
 ### ROUND37：本轮明确排除
 
@@ -143,6 +159,7 @@ ROUND37 board DTS patch blob 486654c8d0b1b785190253270f5e83f796f07362 仍然只�
 目标 binding：
 
 - Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
+- Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml（ROUND18-local SM8250 clock-names 修正版目标）
 - Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
 - Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
 
@@ -192,7 +209,7 @@ QMP UFS PHY：
 - unevaluatedProperties 将 interrupts、iommus、phys/phy-names、resets、regulator supplies 等通用 UFS 属性误判为未评估属性。
 - Makefile/example target 即使返回 0 也可能吞掉相关 diagnostics。
 
-必须沿 schema composition、allOf、引用 common schema 的实际验证路径定位并修复，保持 ROUND32/36/52 原始设计意图。不允许删除 unevaluatedProperties: false、全面放宽 schema、屏蔽错误、删除 example 或跳过 dt-validate。修复后重新跑正反例和直接 dt-validate。
+必须沿 schema composition、allOf、引用 common schema 的实际验证路径定位并修复，保持 SM8250 clock-names 八项约束、ROUND36 双 GenPD 和 ROUND52 supply/load 规则的设计意图；旧 ROUND32 的重复 compatible 选择不属于要保留的设计。不允许删除 unevaluatedProperties: false、全面放宽 schema、屏蔽错误、删除 example 或跳过 dt-validate。修复后重新跑正反例和直接 dt-validate。
 
 ## 7. Kleaf / Bazel / config validator
 
@@ -318,3 +335,11 @@ path: firmware-analysis/round18/round18_patch_schema_kconfig_first_build.txt
 本轮不要求执行设备启动。不得自动进入 Stage B DerpFest。Stage A 必须等到 ACK 6.18.33 内核在平板实际上机启动，并通过 UFS/storage/basic hardware 验收后才算完成。
 
 **立即从 ROUND16 已存在的工作区开始；本轮不包含任何环境部署或重新 Repo sync 步骤。**
+
+---
+
+## ROUND18 revision 1 — ROUND32 schema ownership correction（2026-11-25）
+
+本 revision 覆盖本任务旧版第 5 节中 ROUND32 的原始补丁条目及旧应用顺序。旧 ROUND32 blob `efe2d932da34716c631de22d89aba19730cc7f50` 已废弃；二号 AI 修正版 blob `fade9cb2bdfd544c6736c7595af8380726edf318` 也在真实 apply-check 中失败，不能原样应用。详细依据及本地重新制作、先 check 后 apply 的强制门槛见本 revision 上方专节。
+
+本任务 revision 不改变 Stage A/Stage B 顺序、ACK pin、workspace 隔离、Image-only 范围、设备安全边界或报告目的地。二号 AI 专属分支继续由二号 AI 独立维护；ROUND18 只读取它已提交的补丁作为候选/参考，不向该分支写入任何内容。

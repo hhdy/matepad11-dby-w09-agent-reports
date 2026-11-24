@@ -235,6 +235,7 @@ jobs:
           dt_validate_expected_failure ufs-sm8250-vddp-missing-load-invalid qcom,vddp-ref-clk-max-microamp
           dt_validate_expected_failure ufs-sm8250-vccq-parent-missing-load-invalid qcom,vccq-parent-max-microamp
           dt_validate_expected_failure ufs-sm8250-vddp-zero-load-invalid qcom,vddp-ref-clk-max-microamp
+          dt_validate_expected_failure ufs-sm8250-vccq-parent-zero-load-invalid qcom,vccq-parent-max-microamp
           printf 'ROUND61_UFS_FIXTURES=PASS (SM8250 1/2 domains; 7/9 clocks, 3 domains, non-SM8250 dual domain, supply/load pair and zero load rejected)\n'
           fixture_dir="$report/kernel-baseline/round61/fixtures"
           for fixture in round63-phy-legacy-no-property round63-phy-always-on-valid round63-phy-always-on-invalid-type; do

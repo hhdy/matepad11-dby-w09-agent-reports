@@ -271,3 +271,31 @@ The latest hosted UFS run 45449480649 passed ROUND36, the ROUND52-0001 shared-sc
 ### Conditional branch lower-bound correction
 
 The latest processed-schema artifact from run 45449803857 confirms the shared property now emits minItems: 1, maxItems: 2, but the SM8250 conditional's own then.properties.power-domains.maxItems: 2 is independently converted to minItems: 2. The previous correction therefore did not fully restore the intended one-or-two range. Extended round36-corrected-power-domain-range.patch to add minItems: 1 in both the shared property and the SM8250 then-branch. The non-SM8250 else branch remains exactly one. Fresh UFS validation and manifest-pinned build runs are pending after this patch update.
+
+
+## 2026-11-25 — Phase B closed; manifest build host compatibility fix
+
+### Phase B — PASS (latest hosted run 45451513173)
+
+- Exact ACK source: `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`.
+- Real ordered patch application, `git diff --check`, strict checkpatch, buildifier and all 9 config-helper unit tests passed.
+- `make ARCH=arm64 dt_binding_check` completed with dtschema 2023.9.
+- UFS fixtures: 2/2 positive cases passed (SM8250 one/two power domains); 8/8 negative cases rejected as expected (7/9 clocks, 3 domains, non-SM8250 dual domain, missing/zero VDDP and VCCQ-parent load pairs).
+- ROUND63 PHY fixtures: 2/2 positive cases passed (legacy absent property and valid boolean); malformed cell-valued boolean rejected as expected.
+- Artifact ID `14947424627`; processed-schema SHA-256 `da083e8307d1f903d5784392b3cba29542343f49964482882b84f13a478447f6`.
+- The schema log notes two unrelated malformed upstream YAML files ignored by the scanner; the changed schemas and explicit fixtures passed. Phase B is closed for this patch set.
+
+### Phase C/D — manifest-pinned build retry after identified runner ABI gap
+
+Run `45450833773` successfully synced the official `common-android17-6.18` manifest, verified the exact ACK common commit and build/kernel revision, and successfully invoked manifest Bazel 8.7. It then failed before Bazel query because the manifest-provided Clang 3289846 requires `libtinfo.so.5`, which is absent from the Ubuntu-latest (Ubuntu 26.04) runner. Exact log: `clang.real: error while loading shared libraries: libtinfo.so.5: cannot open shared object file` (exit 127). This is a runner userspace compatibility failure, not a source/compiler error.
+
+Corrected `.github/workflows/round61-manifest-kleaf-build.yml` to pin `ubuntu-22.04` and install the real `libtinfo5` compatibility package rather than creating an unsafe symlink to libtinfo.so.6. Retry trigger commit: `4a2db7667b14d1fb83477e692b6f38d6e5c126b2`. Await the new run before claiming Bazel query, cquery, Kconfig resolution or Image compilation.
+
+### Current gate summary
+
+- Phase A: PASS — exact-source real patch application, whitespace/style checks, BUILD syntax/buildifier and config-helper tests.
+- Phase B: PASS — authoritative pinned-version schema validation plus positive/negative UFS and ROUND63 PHY fixtures.
+- Phase C/D: IN PROGRESS — manifest sync and exact source pin pass; prior build attempt blocked at Clang runtime dependency before Bazel analysis; Ubuntu 22.04 + libtinfo5 retry queued.
+- Phase E: BLOCKED — actual HOS4.3 final post-ABL memory handoff and PM8150 physical supply-parent evidence unavailable.
+- Phase F: BLOCKED — trusted AVB footer/descriptor and exact HOS4.3 packaging metadata unavailable.
+- Phase G: NOT RUN — no device operation or boot authorization.

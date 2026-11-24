@@ -166,3 +166,23 @@ Still NOT_RUN:
 - Run the actual pinned Kleaf full-image `kernel_build` path and inspect produced vmlinux/Image/modules/config artifacts.
 
 The next real Kconfig gate requires the full ACK source worktree and pinned build environment. It does not require another local firmware scan. The Local Agent queue remains empty; no ROUND15 task was created.
+
+
+## 11. ROUND53 follow-up — built-in UFS MSI dependency origin
+
+A follow-up reread resolved the `GENERIC_MSI_IRQ` dependency that `SCSI_UFS_QCOM` requires.
+
+- Pinned `arch/arm64/Kconfig` selects `ARM_GIC_V3` and selects `ARM_GIC_V3_ITS` when `PCI` is enabled.
+- Pinned `drivers/irqchip/Kconfig` makes `ARM_GIC_V3_ITS` select hidden `GENERIC_MSI_IRQ` and `IRQ_MSI_LIB`.
+- The pinned base `gki_defconfig` has `CONFIG_PCI=y`.
+- `SCSI_UFS_QCOM` in `drivers/ufs/host/Kconfig` depends on `GENERIC_MSI_IRQ`.
+
+Therefore the symbol is already derived by the arm64 + PCI/GICv3-ITS chain. The previous explicit `CONFIG_GENERIC_MSI_IRQ=y` assignment in the device fragment was unnecessary and could misleadingly imply that a hidden symbol should be user-assigned. It has been removed; the fragment now documents the architecture selection chain instead.
+
+The source blob identities checked in this follow-up:
+- `arch/arm64/Kconfig`: `e23acc322a214daf7fd1f635c18ca6baa1442ad0`
+- `drivers/irqchip/Kconfig`: `5dddb4c9442adc8bd84b4e0bc2df8877bd926c0b`
+- `drivers/ufs/host/Kconfig`: `48ee7e9b665efcb376f32746b49fbe437e7dd618`
+- Base `gki_defconfig`: `a3e1c0d60d5220b6be8b306157a331fc1696afb0` (`CONFIG_PCI=y`, `CONFIG_ARCH_QCOM=y`).
+
+This remains a static source dependency proof. Actual `.config` resolution remains NOT_RUN.

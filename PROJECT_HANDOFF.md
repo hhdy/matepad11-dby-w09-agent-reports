@@ -345,7 +345,7 @@ ROUND13 本地 Agent 报告已上传并停止：
 - upstream 属性名 `regulator-initial-mode / regulator-allowed-modes / regulator-allow-set-load / regulator-system-load` 以及 regulator-state suspend nodes 均为 `NOT_FOUND_IN_INSPECTED_SCOPE`，不是全局缺失；HOS4.3 使用 vendor `qcom,*` 属性。
 - 六条关键 rail 的真实 vendor 值见 ROUND13 报告和 ROUND48。DTBO 9 个 entries 都未触碰 RSC regulator 子树，但选中 entry 未解析，effective post-overlay 仍 UNKNOWN。
 
-ROUND48 已用公开 Qualcomm SM8250 KONA vendor source 交叉验证 mode enum：
+ROUND48 已用公开 Qualcomm SM8250 KONA vendor source 交叉验证 mode enum，并追加核验 proxy-consumer 临时投票生命周期：
 - OnePlusOSS `android_kernel_oneplus_sm8250` commit `cad09e061ef6cf689a4a1e54d27562e0f042236a` 的 `qcom,rpmh-regulator-levels.h` 定义旧 vendor enum PASS=0, RET=1, LPM=2, AUTO=3, HPM=4；同仓库 RPMh driver 和 `kona-regulators.dtsi` 对应 rail 配置与 ROUND13 的 L5/L6/L9/L17/S8 结构及原始值吻合。
 - 固定 ACK `android17-6.18.33_r00` header 是另一套枚举：RET=0, LPM=1, AUTO=2, HPM=3。DTS 必须按 mode 语义转换并使用 ACK 符号常量，不能复制 HOS 的旧 vendor 数字。
 - ROUND47 的 fixed ACK capability 结论不变：L5/L6/L9/L17 有 LDO DRMS callbacks；S4/S8 的 HFSMPS510 无 DRMS load callbacks。
@@ -353,7 +353,7 @@ ROUND48 已用公开 Qualcomm SM8250 KONA vendor source 交叉验证 mode enum�
 主分支 review-only DTS 已更新：
 `dts/dby-w09-ack18-board.dts.draft`
 - S4：删除旧 HPM initial-mode；HOS4.3 没有 mode metadata，不再猜测。
-- L5/L9：HPM initial；允许 LPM/HPM；启用 DRMS；用标准 `regulator-system-load=<100000>` 近似 HOS proxy-consumer-current=100mA。此为静态负载近似，不等价重建原 vendor proxy consumer enable/disable 生命周期。
+- L5/L9：HPM initial；允许 LPM/HPM；启用 DRMS；不添加 `regulator-system-load`。ROUND48 追加核验公开 KONA `proxy-consumer.c` 后确认 100mA proxy vote 是 regulator 注册时建立、`late_initcall_sync` 在设备 probe 完成后撤销的临时启动投票，永久 system-load 会错误地把它变为常驻负载。ACK 尚无等价临时 proxy helper，故启动期 proxy 投票是明确缺口。
 - L6/L17：改为 HOS 证据所示 LPM initial；允许 LPM/HPM；启用 ACK 支持的 DRMS。
 - S8：HOS 为 RET/AUTO、200mA threshold、initial RET；因 ACK HFSMPS510 无 DRMS callback，且 UFS parent 最大 load vote 210mA，DTS 使用 hardware AUTO 初始模式并允许 RET/AUTO，作为保守功能回退；明确它不是 HOS software threshold policy 的等价实现，也未 runtime 验证。
 - upstream property 字符串在 HOS4.3 里 NOT_FOUND_IN_INSPECTED_SCOPE，不应把它写成 HOS 实际字段；这里只是 ACK DTS 对 vendor mode policy 的翻译。
@@ -361,6 +361,8 @@ ROUND48 已用公开 Qualcomm SM8250 KONA vendor source 交叉验证 mode enum�
 新增报告：
 `kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md`
 
-ROUND48 只是源码交叉比对和 DTS 文本设计更新；尚未执行 full-tree apply、dtc、dt-schema、Kconfig resolver、Kleaf、编译、打包、启动或实机验证。没有更改 `firmware-audit-v1`、受保护 `ack18-dby-w09-dts-draft` 分支或 PR #1；PR #1 保持 Draft。
+ROUND48 只是源码交叉比对和 DTS 文本设计更新；其中曾提出的 L5/L9 system-load 静态近似已由 proxy 生命周期审查纠正并从 DTS 移除；尚未执行 full-tree apply、dtc、dt-schema、Kconfig resolver、Kleaf、编译、打包、启动或实机验证。没有更改 `firmware-audit-v1`、受保护 `ack18-dby-w09-dts-draft` 分支或 PR #1；PR #1 保持 Draft。
 
 当前本地 Agent 队列为空：ROUND12 已上传但因无可信 AVB 工具 BLOCKED；ROUND13 已上传完成。暂不创建新本地任务：AVB / ramdisk / EROFS 项当前仍被工具或输入门槛阻塞，其他可进行的工作优先由 GPT 通过固定 ACK / 公共源码自行完成。Stage A ACK 6.18.33 仍是唯一主线；Stage A 启动和 UFS/基础硬件验收前不启动 Stage B DerpFest。
+
+ROUND48 proxy lifecycle correction: public Qualcomm KONA `drivers/regulator/core.c` invokes `regulator_proxy_consumer_register()` while registering each regulator; the helper applies the 100mA current/enable request. `drivers/regulator/proxy-consumer.c` removes all boot proxy requests at `late_initcall_sync`, after device probing. Therefore the temporary 100mA proxy vote on L5/L9 must NOT be converted to permanent `regulator-system-load`. The DTS draft has been corrected: no system-load properties are present; HPM initial + LPM/HPM allowed + ACK DRMS are retained, while an equivalent temporary ACK proxy helper remains an explicit boot-handoff gap. See updated ROUND48 erratum.

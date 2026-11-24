@@ -15,3 +15,9 @@ WSL VM 约 7.3 GiB 内存。首次构建使用保守 jobs=2；不得修改 .wslc
 - 二号 AI 的修正版候选 blob `fade9cb2bdfd544c6736c7595af8380726edf318` 也真实 `git apply --check` 失败，禁止原样应用。必须在 ROUND18 副本基于固定 ACK 文件上下文重新制作最小补丁，先确认 `git apply --check` 返回 0，再执行 apply/diff-check，再做 schema 验证。
 - 如 clock schema gate 暂时无法通过，准确记录 BLOCKED，仍继续 Kleaf/Bazel/Kconfig 和 Image-only 构建。
 - ROUND18 任务书为 revision 1；执行前以 main 当前 `firmware-analysis/round18/AGENT_TASK.md` 为准。二号 AI 分支保持只读，不得修改。
+
+ROUND18 revision 2 追加要求（以 main 最新任务书为准）：
+- 二号 AI 已修正 clock patch hunk count；当前观察候选 blob `2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb`，但尚未有该最新 blob 的真实 apply PASS。旧候选 `fade9cb2...` 已废弃。ROUND18 必须先真实 `git apply --check`，通过才 apply。
+- 必须使用新补丁顺序：ROUND36 → ROUND52-0001 → ROUND36 corrected range（blob `a6e8eeaf9303e428e644245749e6daec4d0e38ac`）→ ROUND32 corrected clock count → ROUND33 → ROUND52-0002 → ROUND63 PHY binding/driver。ROUND52-0001 是 full-file schema rewrite，会覆盖提前应用的 ROUND36 range correction。
+- ROUND36 corrected range 把 power-domains 显式设为 minItems:1、maxItems:2；需验证一域、二域接受，三域及非 SM8250 二域拒绝。
+- dt_binding_check / dt-doc-validate 目标现包含 qcom,ufs.yaml、qcom,sc7180-ufshc.yaml、qcom,ufs-common.yaml、QMP UFS PHY schema 四个相关文件。

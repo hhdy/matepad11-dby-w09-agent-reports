@@ -129,3 +129,24 @@ Do not merge the existing source sketch with ROUND33 yet. The supply patch needs
 ROUND45 updated the ROUND33 driver artifact to Git blob SHA `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`. It validates every available UFS OPP entry rather than only the first available child, checks the target OPP node is available, requires the provider's single `operating-points-v2` table to be the exact target-containing table node, and balances OF node references on error and success paths.
 
 The source-compatible hunk check against the pinned ACK `drivers/ufs/host/ufs-qcom.c` passed for both hunks (12/18 include lines; 15/214 probe/helper lines). Diffstat: 205 insertions. This remains a source-context verification, not full-tree `git apply`, checkpatch, compile, schema or runtime verification. Unknown SM8250 UFS two-domain layouts are explicitly fail-closed; the currently supported order is MMCX index 0, GCC UFS_PHY_GDSC index 1. Full details: `../round45/ack-ufs-dual-genpd-all-opp-validation.md`.
+
+
+## ROUND52 integration series update (2026-11-24)
+
+ROUND52 adds the downstream UFS supply binding and VDDP lifecycle changes. The intended end-to-end source sequence is now:
+
+1. ROUND32: add `qcom,sm8250-ufshc` selection/compatible and its clock/reg description in `qcom,ufs.yaml`.
+2. ROUND36: allow the SM8250-specific two-domain UFS Host layout in `qcom,ufs-common.yaml` while retaining one domain for other Qualcomm compatibles.
+3. ROUND52-0001: add and type `qcom,vddp-ref-clk-supply`, `qcom,vddp-ref-clk-max-microamp`, `qcom,vccq-parent-supply`, and `qcom,vccq-parent-max-microamp`; require positive max-load values when their supply phandles are present.
+4. ROUND37: DBY-W09 board DTS delta, MMCX domain index 0 + GCC UFS_PHY_GDSC index 1, plus the board's VDDP/VCCQ-parent supply declarations.
+5. ROUND33: UFS dual-GenPD attach and required-opps -> MMCX mapping in `ufs-qcom.c`.
+6. ROUND52-0002: VDDP/L6 managed get + load + enable + deferred cleanup. It is written against the post-ROUND33 `ufs-qcom.c` include block and leaves S8/VCCQ-parent unconsumed by the initial ACK driver.
+
+ROUND52 artifacts:
+- `kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft` — blob `949798446f6135844f5e2d841fca06a0d25ea6d6`.
+- `kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft` — blob `bf60bdda7cf0c679b35a4f8dac1676c63a9e3ce0`.
+- Design report: `kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md`.
+
+A source-backed in-memory unified-diff simulation was performed against exact pinned ACK pristine files and the protected branch's unchanged board DTS file (read-only). In the order above, all patch contexts and declared line counts matched: ROUND32 3/3 hunks; ROUND36 2/2; ROUND52-0001 2/2; ROUND37 2/2; ROUND33 2/2; ROUND52-0002 header 1/1 and driver 3/3. This is **context/order simulation only**, not an actual Git worktree `git apply`, schema validation or build. Full-tree apply/checkpatch/dt-schema/dtc/Kconfig/Kleaf build/boot remain NOT_RUN.
+
+The VDDP patch uses mandatory `devm_regulator_get(dev, "qcom,vddp-ref-clk")` only when `qcom,vddp-ref-clk-supply` exists. It registers its state-flagged cleanup action immediately after the managed get; the action is released after `ufshcd_remove()` has shut down generic VCCQ and before `regulator_put()`. S8 has no enable or mode vote in this first driver patch.

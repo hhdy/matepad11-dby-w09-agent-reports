@@ -79,3 +79,15 @@ The second AI likewise did not run these tests. This follow-up is not represente
 - ROUND15 local environment inventory: completed; no existing build workspace found.
 - ROUND16 WSL2 + Ubuntu 24.04 + pinned ACK workspace deployment: taskbook and start prompt prepared; execution report not yet uploaded.
 - Stage A remains ACK 6.18.33 first; Stage B DerpFest begins only after actual Stage-A boot and storage/basic-hardware acceptance.
+
+## ROUND59 integration correction and result (2026-11-24)
+
+The first strict ordered-series parse found the previous ROUND57 patch blob `f282a695ed1201298f29a54ff0871084d995b3f2` had an invalid unified-diff hunk declaration: it declared 6 old / 8 new lines, while the hunk body contains 13 old lines and 15 new lines. It also used an old line anchor 163, while the ROUND32-applied SM8250 clock block begins at line 165.
+
+The canonical patch has been corrected:
+- Hunk header: `@@ -165,13 +165,15 @@`
+- Current patch blob SHA: `3656f05ad01d54452b83591b762faaa71a16f592`
+
+ROUND59 replayed the complete ordered series against exact pinned ACK file blobs. ROUND57 now passes 1/1 exact hunk after ROUND32. All seven patches / 16 hunks pass the in-memory exact-context and line-anchor simulation. This is **not** real `git apply`, `git diff --check`, dt_binding_check or a build. See `kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`.
+
+The old blob SHA is retained only as historical provenance; use the current canonical blob SHA above.

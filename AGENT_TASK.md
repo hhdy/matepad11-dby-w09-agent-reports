@@ -441,3 +441,6 @@ main 新增两个 candidate patch：
 主 DTS review-only draft 已同步 `vdda-phy-always-on;`，并删除 ACK static config 已固定的 max-microamp 重复属性。DTS blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`。这些仍是草案，不能声称真实 patch apply/schema/build 已通过。
 
 二号 AI ROUND61 长期任务已加入 ROUND63 要求：把 QMP PHY binding/driver 补丁纳入真实 patch apply、checkpatch、dt_binding_check、Kleaf 编译；必须验证带/不带 property 两条路径、第一次 power-on、power-off 后 vdda-phy 保持 enabled 且负载为 0、再次 power-on 恢复 load、driver unbind cleanup 平衡 regulator enable。不能把未验证的 DTBO entry8 说成当前启动必选。
+
+
+ROUND63 board-draft identity correction: after refining the explanatory comment, the current main review-only `dts/dby-w09-ack18-board.dts.draft` blob is `c209d519614fb0ff89b042ce274191b20120a09a`. This supersedes the earlier intermediate blob `ceb12e3d869225f10e9d8d2beb277d66b4bb709c`; the protected DTS branch remains unchanged.

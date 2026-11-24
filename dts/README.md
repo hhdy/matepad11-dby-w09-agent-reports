@@ -72,3 +72,8 @@ The nine stock DTBO entries do not target the relevant RSC regulator subtree, bu
 - The first ACK UFS driver draft consumes VDDP/L6 only: set the DTS load, enable before PHY power-up, and defer disable + load-clear until after ufshcd_remove() has shut down generic UFS VCCQ.
 - S8/VCCQ-parent is not acquired or voted by the first ACK driver patch. ACK HFSMPS510 has no DRMS callback and HOS4.3 has no static enable declaration in the inspected scope; runtime rail enable remains UNKNOWN. Do not force enable.
 - Artifacts: kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md and the two 0001/0002 patch drafts. Hunk counts/context were source-reviewed; full-tree apply, checkpatch, dt-schema and build remain NOT_RUN.
+
+
+### ROUND52 final ordered source-context simulation
+
+The intended patch order is recorded in kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. A source-backed in-memory simulation matched all 13 hunks across ROUND32, ROUND36, ROUND52-0001, ROUND37, ROUND33 and ROUND52-0002 in dependency order. This did not modify the protected branch and is not equivalent to git apply in a full kernel worktree. Full-tree apply, checkpatch, schema validation, dtc/dtbs_check and Kleaf build remain NOT_RUN.

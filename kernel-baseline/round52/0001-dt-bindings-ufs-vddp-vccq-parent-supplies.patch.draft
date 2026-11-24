@@ -21,7 +21,7 @@ Draft only; dt_binding_check has not been run.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-@@ -45,5 +45,26 @@ properties:
+@@ -47,5 +47,26 @@ properties:
    qcom,ice:
      $ref: /schemas/types.yaml#/definitions/phandle
      description: phandle to the Inline Crypto Engine node
@@ -48,7 +48,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +    minimum: 1
 +    description: Maximum load associated with the VCCQ-parent host consumer.
    reg:
-@@ -62,3 +83,16 @@
+@@ -64,3 +85,16 @@
  allOf:
    - $ref: qcom,ufs-common.yaml
  

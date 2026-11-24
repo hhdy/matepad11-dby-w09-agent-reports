@@ -47,12 +47,12 @@ ROUND13 confirms HOS4.3 uses vendor properties, not the upstream `regulator-*` m
 
 Current `dby-w09-ack18-board.dts.draft` proposal:
 - S4: no forced mode; local HOS4.3 has no mode metadata.
-- L5/L9: HPM initial, LPM/HPM allowed, DRMS enabled, `regulator-system-load=<100000>` to approximate each 100mA vendor proxy-consumer vote.
+- L5/L9: HPM initial, LPM/HPM allowed, DRMS enabled, but no synthetic `regulator-system-load`. Public KONA proxy-consumer code removes the boot-time 100mA proxy request at `late_initcall_sync`; ACK has no equivalent temporary proxy helper, so this remains a boot-handoff gap.
 - L6/L17: LPM initial, LPM/HPM allowed, DRMS enabled.
 - S8: HOS reports RET/AUTO and initial RET, but ACK HFSMPS510 has no DRMS load callback; draft selects hardware AUTO as a safer fixed fallback for the UFS parent rail's 210mA max vote. This is a deliberate non-equivalence and remains untested.
 
 ROUND13 report: [round13_pm8150_mode_drms_findings.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt)
 
-ROUND48 design report: [ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md](../kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md)
+ROUND48 design report (including proxy lifecycle correction): [ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md](../kernel-baseline/round48/ack-hos43-pmic5-mode-enum-translation-and-dts-decision.md)
 
 The nine stock DTBO entries do not target the relevant RSC regulator subtree, but entry selection remains UNKNOWN; do not call the proposed rail settings effective post-overlay values. Full-tree DTS compile/schema/build/boot checks remain NOT_RUN. EROFS, AVB and ramdisk gates remain BLOCKED.

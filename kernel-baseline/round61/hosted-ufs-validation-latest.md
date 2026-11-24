@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: f203b96575e06a61549b8aad4b227e3bcc9c8038
-- Workflow run ID: 45445601147
+- Workflow commit: f6e6894ed062d144ad992c5a43afd9d2782fc409
+- Workflow run ID: 45446071024
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-c8e48550ab557e8f3b5b402895cce89aa95ceb7e3cd92b20545a07f2b2f1e5fc  /home/runner/work/_temp/round61-processed-schema.json
+af678c04f8b8642eaa6f00c376995b401c30592deaa468fd3f0889c12a1d1472  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 3e46b9a47922243671eb49883a767a857ac2ff0edd32fc8f6a04f98ae9914438  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -30,12 +30,12 @@ ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 ## ufs-sm8250-1-domain-valid-validation.log
 
 ## ufs-sm8250-2-domains-valid-validation.log
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10], [0], [11], [0]] is too long
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): power-domains: [[10], [0], [11], [0]] is too long
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000 (qcom,sm8250-ufshc): Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000: power-domains: [[10], [0], [11], [0]] is too long
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000: power-domains: [[10], [0], [11], [0]] is too long
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#
+/home/runner/work/_temp/round61-ufs-fixtures/ufs-sm8250-2-domains-valid.dtb: ufs@1d84000: Unevaluated properties are not allowed ('interrupts', 'power-domains', 'qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml#
 
 ## round33-checkpatch.log
 total: 0 errors, 0 warnings, 0 checks, 232 lines checked
@@ -59,6 +59,7 @@ NOTE: Ignored message types: CAMELCASE
 ## round61-dt-binding-check.log
   SCHEMA  Documentation/devicetree/bindings/processed-schema.json
 /home/runner/work/_temp/ack/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml: ignoring, error parsing file
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/iommu/pkvm,pviommu.yaml: ignoring, error parsing file
   HOSTCC  scripts/basic/fixdep
   HOSTCC  scripts/dtc/dtc.o
   HOSTCC  scripts/dtc/flattree.o
@@ -77,29 +78,41 @@ NOTE: Ignored message types: CAMELCASE
   CHKDT   ./Documentation/devicetree/bindings
   LINT    ./Documentation/devicetree/bindings
   DTEX    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
   DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
-  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
-  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
   DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
   DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
-Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): power-domains: [[4294967295, 2]] is too short
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb: ufs@1d84000 (qcom,sm8450-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interconnect-names', 'interconnects', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,sc7180-ufshc.yaml
-  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
-  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
-Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
-Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
   DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
   DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
 
 ## round61-ufs-example-validation.log
-Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
-Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
-	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000: power-domains: [[4294967295, 3]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml#
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000: Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml#
 
 ## dt_binding_check log SHA-256
-442fc6840f776f2cfc1228e4db1ccb6ac6f0463ecc58a9d71d3edd2f85e5bb59  /home/runner/work/_temp/round61-dt-binding-check.log
+a87faad1f06f6db6839b141aeeec6dffd241e8e3444a39c21cbe687af053cb2e  /home/runner/work/_temp/round61-dt-binding-check.log

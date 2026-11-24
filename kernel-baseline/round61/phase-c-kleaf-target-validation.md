@@ -61,3 +61,10 @@ Phase C remains open until the retry proves all of the following with the manife
 5. The resulting `.config` output is a real target artifact, not a guessed path.
 
 Do not mark Phase C PASS from patch application, buildifier or Bazel version output alone.
+
+
+## Second runner attempt — pre-build checkpatch harness mismatch
+
+Run `45452267778` on Ubuntu 22.04 successfully resolved the previous Clang ABI blocker: manifest JDK 11.0.15, Bazel 8.7.0, Clang path and Rust 1.91.1 were located. It applied the full ordered UFS/ROUND63/Kleaf patch set and passed both prior code-patch checks, then stopped in strict checkpatch because the ROUND63 patch references the existing kernel API member `regulator_bulk_data.init_load_uA`, which upstream checkpatch labels CAMELCASE. The independent UFS validation workflow already narrowly ignores only this known CAMELCASE false positive for the same patch; it reports 0 errors / 0 warnings after that ignore.
+
+Aligned the manifest build workflow with the same narrow `--ignore CAMELCASE` handling for ROUND63 only. No other checkpatch category is ignored. Retry trigger commit: `1b833dd74ddb39dd90f7a691f62ce313e0dfe5d2`. Await new run before claiming target query/cquery.

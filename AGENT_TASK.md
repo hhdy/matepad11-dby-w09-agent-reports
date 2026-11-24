@@ -12,6 +12,7 @@
 
 ## 当前公开研究报告
 
+- [ROUND24：HOS4.3 ARC 逻辑 corner 与 DT 约束语义](./kernel-baseline/round24/hos43-arc-logical-corner-dt-semantics.md)
 - [ROUND23：ACK ARC provider 的 RSC 设备层级与请求上下文设计](./kernel-baseline/round23/ack-arc-provider-rsc-device-hierarchy.md)
 - [ROUND23：ACK ARC provider 的 RSC 设备层级与请求上下文设计](./kernel-baseline/round23/ack-arc-provider-rsc-device-hierarchy.md)
 - [ROUND26：HOS4.3 PM8150 regulator mode/DRMS 属性证据边界](./kernel-baseline/round26/hos43-pm8150-regulator-mode-property-evidence.md)

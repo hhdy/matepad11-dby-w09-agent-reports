@@ -366,3 +366,38 @@ ROUND48 只是源码交叉比对和 DTS 文本设计更新；其中曾提出的 
 当前本地 Agent 队列为空：ROUND12 已上传但因无可信 AVB 工具 BLOCKED；ROUND13 已上传完成。暂不创建新本地任务：AVB / ramdisk / EROFS 项当前仍被工具或输入门槛阻塞，其他可进行的工作优先由 GPT 通过固定 ACK / 公共源码自行完成。Stage A ACK 6.18.33 仍是唯一主线；Stage A 启动和 UFS/基础硬件验收前不启动 Stage B DerpFest。
 
 ROUND48 proxy lifecycle correction: public Qualcomm KONA `drivers/regulator/core.c` invokes `regulator_proxy_consumer_register()` while registering each regulator; the helper applies the 100mA current/enable request. `drivers/regulator/proxy-consumer.c` removes all boot proxy requests at `late_initcall_sync`, after device probing. Therefore the temporary 100mA proxy vote on L5/L9 must NOT be converted to permanent `regulator-system-load`. The DTS draft has been corrected: no system-load properties are present; HPM initial + LPM/HPM allowed + ACK DRMS are retained, while an equivalent temporary ACK proxy helper remains an explicit boot-handoff gap. See updated ROUND48 erratum.
+
+
+## ROUND49 / ROUND50 最新进展（2026-11-24）
+
+### ROUND49 — UFS optional rails 生命周期设计
+报告：kernel-baseline/round49/ack-ufs-vddp-vccq-parent-devres-lifecycle-redesign.md
+
+固定 ACK .33_r00 与公开 SM8250 KONA UFS 驱动对照后，结论是：
+- VDDP REF_CLK/L6 是真正的 UFS regulator enable 引用：设置 100µA load，然后 enable；应平衡 disable。
+- VCCQ-parent/S8 在 KONA UFS 驱动里仅提交/撤销 load request，不显式 regulator_enable/disable，也不提交单独的电压 vote。不能因为属性名 parent 就擅自给它加 enable 引用。
+- KONA 的 load-only 请求有重要限制：固定 KONA regulator core 只有在这个消费者 handle 的 enable_count 非零时才调用 DRMS 更新；而 UFS parent handle 本身未 enable。因此该 load vote 在没有其他使能引用/框架差异的情况下只是缓存值，不证明 S8 真的切换模式。ACK S8 又没有 set_load/get_optimum_mode，所以当前 210mA vote 明确是 no-op。
+- ACK removal 顺序已精确确认：generic VCCQ 启用后才调用 Qualcomm variant；remove 时 ufshcd_hba_exit() 先调用 variant exit，再关闭 generic VCCQ；platform .remove() 返回后才走 driver-core devres release。devres LIFO 可让一个在 devm regulator-get 之后注册的 cleanup action 在 regulator_put 前执行，且在 generic VCCQ 已经关闭之后清理 optional supplies。
+- 推荐 storage-first 策略：VDDP/L6 正常 set-load + enable；S8 只 load-vote、不 enable/disable/voltage-vote；二者都用延迟的 devm cleanup action 释放，且不在 ufs_qcom_exit() 里提前放掉 parent-side request。S8 初始使能与实际物理父供电仍待本机 FDT 证据。
+
+### ROUND50 — MMCX→MX ARC 与 ACK RPMHPD 的语义差异
+报告：kernel-baseline/round50/ack-sm8250-mmcx-mx-arc-parent-semantics-and-remaining-local-gate.md
+
+公开 KONA DTS/驱动证实 vendor MMCX ARC 组把 ALL/AO 两个 child 指向不同的 MX parent child；ARC child 的 qcom,min-dropout-voltage-level 会进入 regulator descriptor 的 min-dropout，再由 regulator core 在 child voltage 之外请求 parent voltage。公共 KONA 示例在 MMCX ALL/AO child 上写 -1，但不能据此认定 DBY-W09 HOS4.3 也是 -1，也不能把它解释成未经验证的特殊枚举。
+
+固定 ACK rpmhpd.c 的 SM8250 descriptor 用 plain MMCX/MMCX_AO，没有 MMCX→MX parent。通用 GenPD parent 传播走 OPP performance-state translation；它不是 vendor regulator parent-supply 的物理/逻辑 voltage propagation，更不会自动实现未捕获的 dropout delta 和 ALL/AO target distinctions。
+
+因此当前不应给共享的 qcom,sm8250-rpmhpd descriptor 直接加 MMCX→MX parent：这会影响所有 SM8250 boards；也不应未经 local property proof 就新建 DBY-W09 特殊 compatible 或移植完整 ARC provider。继续保留 UFS-first ACK RPMHPD/OPP 路线，并把 ARC 等价性作为后续单独 gate。
+
+### 新的本机证据门槛：firmware-analysis ROUND14
+
+ROUND11 已完成 parent/proxy phandle 解析，ROUND24 明确记录 ARC provider/child 的 qcom,resource-name、qcom,set、qcom,init-voltage-level、qcom,min-dropout-voltage-level 未被既有 ROUND7 inventory capture。ROUND13 亦未检查 S8 的 qcom,init-enable / regulator boot-on/always-on 状态。ROUND49/50 的公开源码审查不能代替这些精确本机值。
+
+**当前唯一活动本地任务改为 firmware-analysis ROUND14**：
+- 任务书：firmware-analysis/round14/AGENT_TASK.md（在 main）。
+- 仅用 ROUND3 原有 base FDT work copy、已审核 parser 与既有 phandle/path 索引；不重新解析 ROUND11 parent 图，不重新扫描 ROUND13 mode/DTBO 全集。
+- 重点查 rpmh-regulator-mmcxlvl / rpmh-regulator-mxlvl 的资源名、ALL/AO/SO child 的 set/逻辑 corner/init/dropout/proxy 字段，以及 S8 的 qcom,init-enable / regulator-boot-on / regulator-always-on 等现有字段；只上传脱敏文本。
+- 不安装工具、不下载、不写新 parser、不重提取固件、不连接设备、不写分区。按任务书一份文本上传后即停止。
+- 该任务完成前，不再创建 ROUND15 或其他本地任务；GPT 仍可继续公开源码研究，但应优先使用 ROUND14 返回的 local facts 决定 ARC/S8 的最终方案。
+
+ROUND49/50 只完成固定 ACK / 公开 KONA 源码审查与设计报告。UFS driver patch 仍未 full-tree apply、checkpatch、dt-schema、Kconfig resolver、Kleaf 编译或设备测试；MMCX→MX parent equivalence 尚未建立。ROUND12 AVB 仍 BLOCKED，ramdisk / EROFS 仍 BLOCKED，memory handoff、physical PMIC input network、UFS teardown/runtime power gates 仍独立开放。PR #1 保持 Draft，保护分支未修改。Stage A ACK 6.18.33 仍是唯一主线，Stage B DerpFest 继续等待真实启动与 UFS/基础硬件验收。

@@ -201,6 +201,8 @@ jobs:
           printf 'ROUND61_UFS_EXAMPLE_DT_VALIDATE_RC=%s (nonzero remains a Phase-B blocker)\n' "$ufs_example_rc"
           printf '\n=== dt-validate CLI ===\n'
           dt-validate --help
+          cp Documentation/devicetree/bindings/processed-schema.json "$RUNNER_TEMP/round61-processed-schema.json"
+          sha256sum "$RUNNER_TEMP/round61-processed-schema.json" > "$RUNNER_TEMP/round61-processed-schema.sha256"
           ufs_fixture_dir="$RUNNER_TEMP/round61-ufs-fixtures"
           python3 "$report/kernel-baseline/round61/tests/generate_round61_ufs_fixtures.py" --out "$ufs_fixture_dir"
           for source in "$ufs_fixture_dir"/*.dts; do
@@ -318,6 +320,11 @@ jobs:
             echo "- Job status: $JOB_STATUS"
             echo "- Fixed ACK commit: $ACK_COMMIT"
             echo
+            if [ -f "$RUNNER_TEMP/round61-processed-schema.sha256" ]; then
+              echo
+              echo "## Processed schema SHA-256"
+              cat "$RUNNER_TEMP/round61-processed-schema.sha256"
+            fi
             echo "## Patch application"
             if [ -f "$RUNNER_TEMP/round61-ufs-applied.diff" ]; then
               sha256sum "$RUNNER_TEMP/round61-ufs-applied.diff"
@@ -375,6 +382,8 @@ jobs:
           name: round61-ufs-phy-validation
           path: |
             ${{ runner.temp }}/round61-ufs-applied.diff
+            ${{ runner.temp }}/round61-processed-schema.json
+            ${{ runner.temp }}/round61-processed-schema.sha256
             ${{ runner.temp }}/round61-dt-binding-check.log
             ${{ runner.temp }}/round61-ufs-example-validation.log
             ${{ runner.temp }}/round63-phy-negative-validation.log

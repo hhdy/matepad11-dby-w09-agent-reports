@@ -1,13 +1,13 @@
 # ROUND13 — DBY-W09 ACK 6.18 initial DTS draft and DTBO compatibility decision
 
 Date: 2026-11-24
-Status: source-side draft only. No source sync, dtc, schema validation, compile, image packaging, boot, flash or hardware test.
+Status: source-side draft only; partially superseded by ROUND15 on rootparam sentinel handling and PMIC parent-supply modeling. No source sync, dtc, schema validation, compile, image packaging, boot, flash or hardware test.
 
 ## 1. Result of this design pass
 
 A minimal DBY-W09 ACK-derived board DTS is now drafted on a dedicated review branch. It enables only the verified SM8250 UFS Host and QMP UFS PHY path plus the PM8150 rails they consume. A separate minimal DBY-W09 rootparam DTBO is drafted to preserve the ABL board-identity contract.
 
-These files are deliberately marked draft and are not declared buildable. PMIC parent-source details, ABL semantics, the modem_id field requirement, memory reservations, exact DTS/DTBO compile flags and stock ABL acceptance still need review.
+These files are deliberately marked draft and are not declared buildable. PMIC parent-source details, exact ABL semantics / DTBO packaging, memory reservations and stock ABL acceptance still need review. ROUND15 restores the huawei,modem_id stock sentinel after confirming it is present in all nine local stock DTBO entries.
 
 ## 2. Critical DTBO finding: do not reuse stock entry 8 against a minimal ACK DTS
 
@@ -26,12 +26,12 @@ Local DBY-W09 facts:
 - SoC identity: KONA / SM8250 v2.1; local MSM-ID `[356, 131073]`.
 - Board id for DBY-W09 entry 8: 8298 decimal = `0x206a`.
 - Root identity fields: boardid digits `[8,2,9,8]`, board name `DBY_W09_VG`, product `DBY-W09`, hardware version `SH1DBSLM`.
-- No device-unique values are added to the draft. `huawei,modem_id` is intentionally omitted pending a proof of whether ABL requires the property and an approved non-sensitive representation.
+- The minimal overlay includes huawei,modem_id = <0xffffffff 0x00>: ROUND7's sanitized local DTBO property inventory shows the same sentinel in all nine stock entries. It is a common stock sentinel, not a per-device modem identifier. This preserves the stock rootparam shape; it still does not prove newly packaged DTBO acceptance.
 
 Public same-device DTS:
 https://github.com/svesnav/linux-dby-w09/blob/main/sm8250-huawei-dby-w09.dts
 
-The draft uses the board/SoC include pattern from that BSD-3-Clause reference but only carries the minimal SoC, PMIC and UFS portions needed for first review. It does not copy its Linux 7.0 display, Wi-Fi, audio or touch configuration into ACK.
+The draft uses the board/SoC include pattern from that BSD-3-Clause reference but only carries the minimal SoC and UFS-provider portions needed for first review. It does not copy its Linux 7.0 display, Wi-Fi, audio or touch configuration into ACK. Its HOS4.2-derived vph_pwr 3.7 V and vdd-s*-supply wiring is deliberately excluded until HOS4.3 local evidence confirms the PMIC input topology.
 
 ## 4. UFS mapping from ROUND9 local HOS4.3 data
 
@@ -80,7 +80,7 @@ ACK `android17-6.18` SoC DTSI defines:
 Source view:
 https://android.googlesource.com/kernel/common/+/refs/heads/android17-6.18/arch/arm64/boot/dts/qcom/sm8250.dtsi
 
-The first draft enables the existing SoC UFS nodes by label and supplies board-specific regulators. It does not rewrite SoC register/clock/reset definitions.
+The first draft enables the existing SoC UFS nodes by label and supplies board-specific regulators. The board draft does not model the regulators' upstream input-supply links yet: ROUND7's CSV inventory confirms the regulator outputs and voltage constraints but does not contain those parent links, so their presence/absence in the raw base FDT remains unverified. It does not rewrite SoC register/clock/reset definitions.
 
 ## 6. Files created on review branch
 
@@ -111,6 +111,7 @@ The DTS files are intentionally suffixed `.draft` so they cannot be mistaken for
 | Reviewed against ROUND9 UFS map | YES |
 | Reviewed against ACK SM8250 topology | SOURCE REVIEW ONLY |
 | Reviewed original DTBO fragment-target compatibility | YES — original DTBO is incompatible with minimal base strategy |
+| Stock huawei,modem_id sentinel reproduced | YES — ROUND7 inventory shows same value in all nine entries |
 | Fresh minimal DTBO ABL acceptance | UNKNOWN / NOT_TESTED |
 | dtc compile | NOT_RUN |
 | dt-schema validation | NOT_RUN |
@@ -121,4 +122,4 @@ The DTS files are intentionally suffixed `.draft` so they cannot be mistaken for
 
 ## 9. Next engineering step
 
-Review the draft's PMIC input topology, DTBO ABL requirements and exact ACK source labels. Then add the next essential boot dependencies (console / regulators / clocks / pinctrl as justified), run only source/static checks in an explicitly approved build environment, and compile offline once the environment is available. No local Agent task is needed for this source-only work.
+ROUND15 records the source-side corrections and creates a narrowly scoped local read-only check for PMIC input-supply parent links in the existing HOS4.3 base FDT. After that result, resume the console/remaining early-boot dependency review. No compile or static build validation is claimed.

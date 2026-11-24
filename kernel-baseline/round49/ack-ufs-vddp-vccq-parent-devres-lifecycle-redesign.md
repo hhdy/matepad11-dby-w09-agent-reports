@@ -76,9 +76,9 @@ Fixed ACK .33 source proves this removal order:
 3. On normal HBA exit, `ufshcd_hba_exit()` calls `ufshcd_variant_hba_exit()` **before** `ufshcd_setup_vreg(hba, false)`.
 4. The platform driver's remove path calls `ufshcd_remove(hba)`.
 5. The driver core's unbind sequence calls the platform/bus `.remove()` callback before `device_unbind_cleanup()`; that cleanup then calls `devres_release_all()`.
-6. ACK devres releases its recorded actions in reverse order. A custom action registered after `devm_regulator_get_optional()` therefore runs before the managed regulator handle is put.
+6. ACK devres releases its recorded actions in reverse order. A custom action registered after the managed regulator get therefore runs before the managed regulator handle is put.
 
-This gives a safe place for final optional-supply cleanup: a devm action that runs only after `ufshcd_remove()` has completed generic UFS VCCQ shutdown, but before devm regulator handles are put.
+This gives a safe place for final managed VDDP cleanup: a devm action that runs only after `ufshcd_remove()` has completed generic UFS VCCQ shutdown, but before devm regulator handles are put.
 
 Fixed-source anchors:
 - ACK `drivers/ufs/core/ufshcd.c`, blob `2cf7aa8e0a9472f9024d4251ac2f9d7da830e219`

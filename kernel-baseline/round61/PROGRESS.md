@@ -199,3 +199,8 @@ Run `45443538190` (commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`) has comple
 - all 9 config-helper unit tests.
 
 At the time of this update the same run is installing dtschema prerequisites; the schema and fixture step has not yet completed. Phase A is now PASS. Phase C is still PARTIAL until manifest-pinned Bazel query/cquery and Image build complete.
+
+
+### Phase B run-83 result: validator diagnostics are output-based
+
+Run `45443538190` passed source patch/checkpatch/buildifier/unit-test gates, then exposed two harness facts: the direct UFS example `dt-validate` command returned 0 despite printing schema diagnostics, and the generated UFS fixture DTS had root `interrupt-parent` after a subnode (invalid DTS property ordering). Fixed the fixture generator to place all root properties before subnodes. Updated validation so positive DTBs require empty diagnostic logs and negative DTBs must contain the expected property diagnostic, independent of dt-validate's exit status. The original UFS example diagnostics are now a final failure gate. The processed schema is also retained as a hashed artifact for inspection. New run is pending.

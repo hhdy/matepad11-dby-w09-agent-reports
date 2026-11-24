@@ -206,7 +206,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
 -
 -	/* Put PHY into POWER DOWN state: active low */
 -	qphy_clrbits(qmp->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
--		     SW_PWRDN);
+-			SW_PWRDN);
 -
 -	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
 -
@@ -223,7 +223,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
 +
 +	/* Put PHY into POWER DOWN state: active low */
 +	qphy_clrbits(qmp->pcs, cfg->regs[QPHY_PCS_POWER_DOWN_CONTROL],
-+			SW_PWRDN);
++		     SW_PWRDN);
 +
 +	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
 +

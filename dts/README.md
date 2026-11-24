@@ -35,7 +35,7 @@ The draft now preserves that known stock value. This is stronger evidence than o
 
 ## Source and evidence basis
 
-- Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC GDSC, RPMh XO clock and RPMh OPP references, IOMMU and interconnect topology. ROUND27 qualifies the OPP path: UFS Host is attached to GCC UFS_PHY_GDSC; the inspected GCC/GDSC source does not connect that GDSC to RPMHPD, so required-opps is not proof of an actual MMCX RPMh vote.
+- Google ACK `android17-6.18` SM8250 DTSI: UFS host, QMP PHY, GCC GDSC, RPMh XO clock and RPMh OPP references, IOMMU and interconnect topology. ROUND27 qualifies the OPP path: UFS Host is attached to GCC UFS_PHY_GDSC; the inspected GCC/GDSC source does not connect that GDSC to RPMHPD, so required-opps is not proof of an actual MMCX RPMh vote. A targeted dual-GenPD attach-list route is available in ACK, but the UFS driver must explicitly map the single required-opps index to the RPMHPD virtual domain before OPP table parsing; PD_FLAG_REQUIRED_OPP on both domains would fail index validation.
 - ACK does not use the legacy vendor qcom,rpmh-arc-regulator graph in its upstream PMIC regulator driver. Its SM8250 power-level representation uses the SoC rpmhpd provider and OPP table. The upstream SM8250 RPMhPD domain descriptor does not mirror every HOS4.3 MMCX ARC edge, so full corner equivalence remains a later subsystem validation item.
 - Local ROUND7/ROUND9 HOS4.3 facts: stock DTBO rootparam values and UFS rail closure.
 - Local ROUND8 overlay target map: stock entry 8 has 145 fragments and is incompatible with a minimal ACK base.

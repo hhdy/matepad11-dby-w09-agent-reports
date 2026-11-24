@@ -257,3 +257,13 @@ No ROUND15 task is active. Stage A ACK 6.18.33 remains the sole milestone; do no
 - No ROUND15 local task is active. Do not prepare another Local Agent task unless subsequent implementation demonstrably needs a distinct fact that cannot be obtained from fixed/public source.
 - Main-only draft/report updates are recorded in PROJECT_HANDOFF.md and dts/README.md. Protected ack18-dby-w09-dts-draft branch remains untouched; PR #1 remains Draft.
 - All full-tree apply, checkpatch, dt-schema, dtc/dtbs_check, final Kconfig/.config, Kleaf build, boot packaging, device boot, UFS/storage and basic hardware validation remain NOT_RUN. Stage A ACK 6.18.33 is the sole active milestone; Stage B DerpFest waits for successful Stage A device acceptance.
+
+
+## Latest public-source design — ROUND52 (2026-11-24)
+
+- ROUND52 report: kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md.
+- New binding draft: kernel-baseline/round52/0001-dt-bindings-ufs-vddp-vccq-parent-supplies.patch.draft.
+- New UFS driver draft: kernel-baseline/round52/0002-ufs-qcom-sm8250-vddp-refclk-managed-lifecycle.patch.draft.
+- Intended series order after ROUND32/36/37/33 is documented in ROUND52. VDDP/L6 gets a managed load+enable reference; cleanup runs after generic UFS VCCQ shutdown and before regulator_put. S8 has no get/load/enable/disable or voltage request in the initial ACK driver patch.
+- ROUND52's patch hunk counts were statically checked, but no complete source-tree apply/checkpatch/schema/build was run.
+- No Local Agent task is active or needed for ROUND52. The next complete integration/build gate requires a full ACK worktree and an authorized build environment; do not ask the read-only Agent to compile or modify source.

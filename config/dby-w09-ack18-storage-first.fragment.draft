@@ -1,0 +1,120 @@
+# DBY-W09 ACK android17-6.18 — storage-first built-in fragment
+#
+# DRAFT ONLY. Layer over a frozen ACK base config; do not use as a standalone
+# defconfig. Kconfig resolution has NOT been run and no kernel has been built.
+#
+# First milestone: enumerate internal UFS, then create Android logical partitions
+# and mount the confirmed EROFS vendor/odm filesystems. ROUND10 ramdisk module
+# layout is BLOCKED, so the complete UFS dependency chain stays built-in.
+#
+# This is an ACK-derived custom device-kernel fragment, not a certified GKI
+# config. Built-in composition can differ from the published GKI module ABI.
+
+CONFIG_ARM64=y
+CONFIG_ARCH_QCOM=y
+CONFIG_OF=y
+CONFIG_OF_RESERVED_MEM=y
+
+# SCSI block layer / Qualcomm UFS host
+CONFIG_BLOCK=y
+CONFIG_SCSI=y
+CONFIG_SCSI_DMA=y
+CONFIG_BLK_DEV_SD=y
+CONFIG_SCSI_UFSHCD=y
+CONFIG_SCSI_UFSHCD_PLATFORM=y
+CONFIG_SCSI_UFS_QCOM=y
+
+# Qualcomm QMP UFS PHY
+CONFIG_GENERIC_PHY=y
+CONFIG_PHY_QCOM_QMP=y
+CONFIG_PHY_QCOM_QMP_UFS=y
+
+# SM8250 GCC supplies UFS clocks and the UFS_PHY_GDSC power domain.
+# RPMh clock controller supplies RPMH_CXO_CLK referenced by the UFS node.
+CONFIG_COMMON_CLK=y
+CONFIG_COMMON_CLK_QCOM=y
+CONFIG_QCOM_CLK_RPMH=y
+CONFIG_SM_GCC_8250=y
+CONFIG_RESET_CONTROLLER=y
+CONFIG_PM=y
+
+# The ACK SM8250 UFS node declares two ICC paths (ufs-ddr, cpu-ufs).
+# The SM8250 interconnect driver selects its RPMh + BCM-voter backends.
+CONFIG_INTERCONNECT=y
+CONFIG_INTERCONNECT_QCOM=y
+CONFIG_INTERCONNECT_QCOM_SM8250=y
+
+# RPMh regulator provider for the HOS4.3 PM8150 UFS rails.
+CONFIG_QCOM_COMMAND_DB=y
+CONFIG_QCOM_RPMH=y
+CONFIG_QCOM_RPMHPD=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_QCOM_RPMH=y
+
+# UFS Host has apps_smmu stream IDs in the ACK SM8250 DTSI.
+CONFIG_GENERIC_MSI_IRQ=y
+CONFIG_IOMMU_SUPPORT=y
+CONFIG_ARM_SMMU=y
+# ARM_SMMU_QCOM is def_tristate y under ARM_SMMU && ARCH_QCOM;
+# its Kconfig selects QCOM_SCM automatically.
+
+# The Host's explicit UFS_PHY_GDSC power-domain is supplied by SM_GCC_8250.
+# Separately, ufs_opp_table contains required-opps references to
+# rpmhpd_opp_low_svs / rpmhpd_opp_nom. Keep RPMhPD built-in for this OPP path.
+# ROUND11's HOS4.3 ARC parent/proxy graph is vendor-specific; do not translate
+# its *-parent-supply or proxy-supply properties into PM8150 VRM supply links.
+# ACK uses the upstream SM8250 rpmhpd/OPP model for performance-level votes.
+#
+# SPMI_MSM_PMIC_ARB / MFD_SPMI_PMIC / PMIC SPMI pinctrl are deferred:
+# this minimal DTS does not include PM8150 SPMI GPIO/PON peripherals. The
+# UFS rail providers are under apps_rsc and use RPMh, not the SPMI arbiter.
+
+# ---------------------------------------------------------------------------
+# Android first-stage mount support — confirmed baseline + pending AVB/filesystem
+#
+# HOS4.3 super.img contains the Android logical partitions (system/vendor/odm/
+# cust/hw_product). Android first-stage maps logical partitions through the
+# device-mapper linear target. In this ACK source, dm-linear is part of
+# dm-mod; there is NO CONFIG_DM_LINEAR symbol.
+CONFIG_BLK_DEV_DM=y
+#
+# ROUND4 confirmed EROFS filesystem signatures on vendor and odm logical
+# partition images. First-stage must mount these before switching root, so
+# keep EROFS built-in until a compatible ramdisk module tree is proven.
+CONFIG_EROFS_FS=y
+#
+# Android first-stage init can load pre-mount drivers from /lib/modules when
+# the initramfs contains a kernel-release/page-size matching module directory,
+# modules.dep/softdep/alias/options and modules.load. ROUND10 ramdisk contents
+# are still unread, and DBY-W09's legacy ABL separate-ramdisk composition is
+# not yet proven to expose this exact layout. Therefore UFS/QMP stays built-in.
+#
+# AVB hashtree evidence and first-stage fstab options are pending ROUND12:
+# CONFIG_DM_VERITY=y
+# CONFIG_DM_VERITY_FEC=y     # only if the AVB descriptor/fstab requires FEC
+#
+# Do not enable other filesystem drivers until the corresponding partition
+# signatures and first-stage fstab types are known:
+# CONFIG_EXT4_FS=y
+# CONFIG_F2FS_FS=y
+#
+# ---------------------------------------------------------------------------
+# Deferred board / feature drivers:
+# - Vendor HOS4.3 RPMh ARC groups: ACK's qcom-rpmh-regulator currently binds
+#   VRM/XOB only. ROUND22 defines an ARC-capable port as future work; it needs
+#   Command DB AUX voltage-level mapping, active/sleep aggregation, ARC
+#   enable-as-level-zero semantics, resource/parent links, and ACK rpmh API
+#   adaptation. New provider must be a direct apps_rsc child because ACK
+#   rpmh_write() resolves its RSC from dev->parent. Do NOT add vendor ARC
+#   nodes or invent a Kconfig symbol yet.
+# - Vendor HOS4.3 proxy-supply groups: ROUND22 found ACK has no
+#   REGULATOR_PROXY_CONSUMER symbol/source/core hook. The six proxy-supply
+#   phandles are known, but local proxy-consumer-enable/voltage/current
+#   flags have not been verified. Do NOT add proxy consumer behavior until
+#   those flags and whether UFS boot requires the proxy votes are established.
+# - SPMI PMIC MFD / PMIC arbiter / PMIC pinctrl: no SPMI consumers enabled yet.
+# - PINCTRL_SM8250: add when board GPIO/pinctrl consumers are enabled.
+# - GENI UART / console: ACK distinguishes qcom,geni-debug-uart (ttyMSM / earlycon) from
+#   qcom,geni-uart (ttyHS); uart2 is the debug node, uart6 the regular UART. The
+#   HOS androidboot.console property and earlycon key do not yet prove physical mapping.
+# - panel / THP / WLAN / BT / audio / camera / USB-C / DP: later stages.

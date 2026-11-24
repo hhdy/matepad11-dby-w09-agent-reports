@@ -125,13 +125,35 @@ Sources:
 - Legacy Kconfig option: https://android.googlesource.com/kernel/msm/%2B/299339a73b9bff8dcc510eadb88a20e023343b62/drivers/regulator/Kconfig
 - Legacy proxy header: https://android.googlesource.com/kernel/msm/%2B/android-wear-6.0.1_r0.2/include/linux/regulator/proxy-consumer.h
 
+## 4.2 ACK RPMh write API: resource aggregation must stay in the ARC provider
+
+ROUND23 source review adds an important API detail. ACK drivers/soc/qcom/rpmh.c stores one cached wake_val and one sleep_val per command address. RPMH_ACTIVE_ONLY_STATE and RPMH_WAKE_ONLY_STATE replace the cached wake value with the new command data; RPMH_SLEEP_STATE replaces the sleep value. Active-only requests are sent immediately, while sleep/wake requests are buffered for controller flush. These cache entries are not a collection of independent Linux regulator-client votes and the RPMh API does not compute a maximum across multiple child regulator requests that share one ARC resource.
+
+The legacy ARC provider explicitly owns that layer: one aggregate object per RPMh ARC resource; multiple regulator framework children attached to the shared resource; per-child active/sleep request state and qcom,set membership; independent max aggregation across child requests; ARC pseudo-enable handling after aggregation; and only changed aggregate values submitted to RPMh.
+
+Therefore an ACK ARC port must not have each child regulator callback call rpmh_write() directly with its own selector. The last callback to write the same address would replace the AP-side cached value and could lower the requested corner while another child still requires a higher level.
+
+The ACK device hierarchy supports a clean implementation: rpmh-rsc calls devm_of_platform_populate() on the RSC device, creating apps_rsc children as direct child platform devices. rpmh_write() finds the controller through dev->parent. An ARC provider as a direct child of apps_rsc can pass its own pdev->dev without modifying the RSC core.
+
+Proposed provider structure (design only):
+- One shared arc_resource object per top-level ARC provider node, holding the direct-child device, resource name/address, validated AUX level map, mutex, child regulator array, previous active/sleep aggregates and validity masks.
+- One child arc_vreg request record per regulator subnode, holding regulator_dev, regulator-name, selector, active/sleep participation, pseudo-enable state and parent/dropout configuration.
+- On each regulator callback: lock the shared resource; snapshot and update the child request; recompute active and sleep max aggregation across all children; apply the level-zero OFF rule; send changed aggregate requests using the current ACK state API; roll back the child request if an acknowledged write fails; unlock.
+
+Sources:
+- ACK RPMh cache implementation: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh.c
+- ACK direct-child population and parent controller lookup: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/drivers/soc/qcom/rpmh-rsc.c
+- ACK RPMh API and TCS states: https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/rpmh.h and https://github.com/aosp-mirror/kernel_common/blob/android17-6.18/include/soc/qcom/tcs.h
+- Legacy ARC max aggregation: https://android.googlesource.com/kernel/msm/%2B/28f2b66a16e50693a0796b323d652ed1669115b1/drivers/regulator/rpmh-regulator.c
+
 ## 5. Recommended port sequence
 
 1. Do not change the current storage-first DTB yet. Keep its PM8150 VRM outputs and consumer supply links; do not add vendor ARC groups or guessed PMIC input rails.
-2. Prototype/review an ARC-capable provider against the ACK regulator framework and current cmd_db_read_aux_data() / device-based RPMh API. Preserve multi-child shared-resource aggregation, active/sleep state separation, AUX-level translation, pseudo-enable and parent-supply dependency behavior.
+2. Prototype/review an ARC-capable provider against the ACK regulator framework and current cmd_db_read_aux_data() / device-based RPMh API. The provider must be one direct child device of apps_rsc per ARC group and must retain its own max aggregation across sibling regulator children; ACK RPMh cache is last-value-per-address, not an ARC client vote aggregator. Preserve active/sleep state separation, AUX-level translation, pseudo-enable and parent-supply dependency behavior.
 3. Add a Devicetree binding for the ARC provider and validate it against the exact ACK schema. Keep it separate from the existing PM8150 VRM binding.
 4. Verify which HOS4.3 qcom,proxy-consumer-* flags exist and whether they matter before deciding whether to port the optional proxy helper and regulator-core hooks.
-5. Only after source and schema review decide whether the ARC provider belongs in the first storage milestone or can be deferred to the first consumer that needs CX/MMCX/MX performance votes.
+5. The current ROUND7/ROUND11 reports do not establish all required ARC group properties such as qcom,resource-name, qcom,set, qcom,send-defaults, qcom,init-voltage-level, or qcom,min-dropout-voltage-level. A future targeted local scan should collect only those properties from the three existing ARC provider nodes and their children; do not repeat the ROUND11 supply graph or scan unrelated hardware.
+6. Only after source and schema review decide whether the ARC provider belongs in the first storage milestone or can be deferred to the first consumer that needs CX/MMCX/MX performance votes.
 
 This is a source feasibility plan, not an implemented driver. No code or DTS ARC nodes have been added.
 
@@ -145,6 +167,8 @@ This is a source feasibility plan, not an implemented driver. No code or DTS ARC
 | Legacy ARC parent-supply property mapping | SOURCE REVIEWED |
 | ACK Command DB ARC ID / AUX data interfaces | SOURCE REVIEWED / AVAILABLE |
 | ACK device-based RPMh write interfaces | SOURCE REVIEWED / AVAILABLE |
+| ACK RPMh controller lookup via direct device parent | SOURCE REVIEWED; supports an apps_rsc direct-child provider |
+| ACK RPMh per-address cache aggregation | LAST-VALUE cache only; ARC provider must aggregate sibling votes itself |
 | Old rpmh_client API | ADAPTATION REQUIRED |
 | Old RPMH_AWAKE_STATE branch | NOT IN ACK enum; upstream SM8250 apps_rsc has ACTIVE_TCS=2 and AMC path, so use ACTIVE_ONLY unless HOS-specific RSC evidence differs |
 | ACK upstream PMIC regulator has ARC match/provider | NO |
@@ -152,6 +176,7 @@ This is a source feasibility plan, not an implemented driver. No code or DTS ARC
 | ACK proxy-consumer source/Kconfig/core hook | ABSENT IN ACK SOURCE REVIEW |
 | ROUND11 six proxy-supply phandles | COMPLETE / RESOLVED |
 | HOS4.3 qcom,tcs-config / RSC awake-mode override | NOT_CAPTURED in ROUND7 partial property inventory |
+| HOS4.3 ARC group resource-name / set / init / default / dropout properties | NOT_ESTABLISHED from existing partial inventory |
 | HOS4.3 qcom,proxy-consumer-* request flags | UNKNOWN (not in ROUND11 scope) |
 | Whether UFS depends on a boot proxy vote | UNKNOWN |
 | ARC driver port / new DT binding / Kconfig / schema | NOT_IMPLEMENTED |
@@ -159,4 +184,4 @@ This is a source feasibility plan, not an implemented driver. No code or DTS ARC
 
 ## 7. Next step
 
-Continue source-side driver design and inspect the exact ACK OPP/RPMh controller path for SM8250. If a new local property scan is later required, keep it narrowly limited to the existing base-FDT qcom,proxy-consumer-* request flags; do not reparse the ARC supply graph. ROUND12 AVB metadata remains the only current Agent task. Keep PR #1 Draft; no device operation, image writes, compile or flash.
+ROUND23 has established the direct-child provider layout and shared aggregation requirement. Continue source-side driver design. After the current ROUND12 AVB task is complete, a targeted local property scan may be needed for the three existing ARC groups' qcom,resource-name, qcom,set, init/default/dropout flags and proxy-consumer request flags; do not reparse the ARC parent/proxy phandle graph. ROUND12 AVB metadata remains the only current Agent task. Keep PR #1 Draft; no device operation, image writes, compile or flash.

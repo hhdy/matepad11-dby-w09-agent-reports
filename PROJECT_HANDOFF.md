@@ -95,7 +95,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 
 - ROUND31：ACK .33_r00 UFS/QMP/SM8250 GCC/RPMh/GenPD/ICC/SMMU/DM/EROFS Kconfig 依赖闭环；storage-first fragment 的隐藏依赖注释已更新，最终 Kconfig 解析仍 NOT_RUN。
 - [ROUND33：SM8250 UFS 双 GenPD driver patch 草案](./kernel-baseline/round33/sm8250-ufs-dual-genpd-patch-design.md)：在 `ufs_qcom_probe()` / 通用 init 之前只对 SM8250 双域 MMCX→GCC UFS_PHY_GDSC 拓扑 attach domains，并将 UFS 唯一 `required-opps` slot 0 明确绑定到 MMCX。还检查 required-opps 目标 OPP provider 为 qcom,sm8250-rpmhpd；单域设备路径保留。patch 尚未应用/编译/checkpatch/运行；两个 hunk 已对照固定 ACK 源码做了逐行上下文和行数核对，但没有在完整内核工作树上执行 git apply。
-- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：ACK .33 及当前上游的 qcom,ufs.yaml 都遗漏 qcom,sm8250-ufshc；SM8250 节点实际为 8 clocks、无 ICE 窗口、单 reg。独立 schema-only patch 草案位于 round32；未运行 dt_binding_check/dtbs_check，未包含 dual-GenPD 变更。
+- [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：ACK .33 及当前上游的 qcom,ufs.yaml 都遗漏 qcom,sm8250-ufshc；SM8250 节点实际为 8 clocks、无 ICE 窗口、单 reg。独立 schema-only patch 草案位于 round32；三个 hunk 已逐行匹配固定 ACK 原始 YAML，old/new 行数声明一致，但未执行 git apply；dt_binding_check/dtbs_check 未运行，且未包含 dual-GenPD 变更。
 
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
 

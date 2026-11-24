@@ -125,3 +125,23 @@ A follow-up read of the exact pinned ACK source confirms the normal UFS consumer
 - The ROUND63 cleanup action is registered after `devm_regulator_bulk_get_const()`, so devres LIFO ordering runs the action before the managed regulator handles are released.
 
 This supports normal consumer-first removal and regulator-handle cleanup ordering. It does **not** establish forced provider-unbind safety. Do not manually unbind the QMP PHY provider while the UFS Host remains bound; no forced-unbind test is required for initial bring-up. Runtime regulator measurements and actual PHY power-cycle/suspend-resume testing remain hardware gates.
+
+
+## Re-run after validator hardening — PASS (run 45457083961)
+
+A later hosted run repeated the full source/schema gate at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` and published `hosted-ufs-validation-latest.md` with **Job status: success**.
+
+- Exact ACK source identity verified.
+- All ordered UFS, ROUND63 PHY and ROUND58 Kleaf patches applied; final diff check passed.
+- Strict checkpatch passed (ROUND63 only ignores the known upstream `CAMELCASE` classification for `init_load_uA`).
+- Buildifier passed.
+- Updated config-helper **11-test suite passed**, including `CONFIG_BLOCK` and `CONFIG_ARM_SMMU_QCOM` missing/module rejection tests.
+- `make ARCH=arm64 dt_binding_check` completed successfully with dtschema 2023.9.
+- UFS fixtures: 2/2 positives clean; 8/8 negatives rejected with expected diagnostics.
+- PHY fixtures: 2/2 positives clean; malformed boolean fixture rejected with expected diagnostic.
+- Extracted upstream UFS example standalone validation log is empty.
+- Processed schema SHA-256: `da994937d63cca2176a5065e8119be7ecd8b45c4939729f1810a8a8f5cc8dc50`.
+- Applied diff SHA-256: `b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90`.
+- Artifact: `round61-ufs-phy-validation`, ID `14951770706`.
+
+The scanner again noted two unrelated malformed upstream YAML files that it ignored (`firmware/gunyah-cma-mem.yaml` and `iommu/pkvm,pviommu.yaml`). The modified UFS/PHY schema and explicit fixture gates passed. This re-run closes the schema/source validation for the current patch set; it does not prove final board DTS, hardware regulator behavior, or a compiled Image.

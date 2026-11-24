@@ -352,3 +352,16 @@ Current status: **READY FOR LOCAL AGENT — deployment result not yet uploaded.*
 4. 主 AI 独立准备并审核实际 patch/build 集成。
 
 PR #1 保持 Draft/Open/unmerged；Stage A ACK 6.18.33 先于 Stage B Android 17 DerpFest。
+
+
+## Correction to ROUND17 security-policy instructions (2026-11-24)
+
+Do not follow the older appended note that directs the user to "Security Center → Command Security → Program Blacklist". That menu path was inferred without identifying the policy product and is now explicitly withdrawn. The user confirmed the menu is not present.
+
+ROUND16 wording proves only that the local Agent's sandbox blocked execution of `wsl.exe`; it does not prove the block belongs to Windows Security Center, Microsoft Defender or a named endpoint product. The policy owner is UNKNOWN.
+
+The current ROUND17 taskbook is diagnostic-first and supersedes all previous ROUND17 instructions:
+- passively identify local Agent app/version/execution mode and policy source;
+- use the exact product's official docs to find any supported authorization procedure;
+- do not retry wsl.exe, do not use alternate shells/wrappers/copies/renames, do not bypass or disable security;
+- do not launch the whole Agent elevated until a later step actually requires elevation.

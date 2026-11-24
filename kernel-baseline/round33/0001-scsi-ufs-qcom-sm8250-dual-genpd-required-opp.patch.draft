@@ -10,12 +10,12 @@ Map the single required-opps entry in the existing UFS OPP table to the
 MMCX virtual GenPD device before ufshcd_pltfrm_init() adds the OPP table.
 Keep the ordinary one-domain SM8250 path unchanged.
 
-The code validates both provider compatibles, provider argument IDs, and the
-required-opps provider compatible before attaching the list. It uses
-PD_FLAG_DEV_LINK_ON so the attached suppliers are runtime-active while the
-UFS consumer is active. It deliberately does not use PD_FLAG_REQUIRED_OPP,
-because this OPP table has one required-OPP slot, not one slot for each
-attached domain.
+The code validates both power-domain provider compatibles, the provider
+argument IDs, and the OPP required-opps provider compatible before attaching
+the list. It uses PD_FLAG_DEV_LINK_ON so the attached suppliers are
+runtime-active while the UFS consumer is active. It deliberately does not use
+PD_FLAG_REQUIRED_OPP, because this OPP table has one required-OPP slot, not
+one slot for each attached domain.
 
 This patch does not implement MMCX-to-MX parent propagation. ROUND30 records
 that this remains a separate unresolved HOS4.3 corner-equivalence gate.
@@ -25,8 +25,8 @@ hardware. It must be reviewed together with the separate SM8250 binding and
 DTS changes.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 99 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 99 insertions(+)
+ drivers/ufs/host/ufs-qcom.c | 118 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 118 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c
@@ -50,8 +50,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +#include <dt-bindings/power/qcom,rpmhpd.h>
 +
  #include <soc/qcom/ice.h>
-
-@@ -2802,15 +2808,107 @@
+@@ -2802,15 +2808,127 @@
  	.tx_eqtr_notify		= ufs_qcom_tx_eqtr_notify,
  };
  
@@ -163,12 +162,12 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +
 +	return 0;
 +}
-
+ 
  /**
   * ufs_qcom_probe - probe routine of the driver
   * @pdev: pointer to Platform device handle
   *
-  * Return: zero on success and non-zero on failure.
+  * Return: zero on success and non-zero for failure.
   */
  static int ufs_qcom_probe(struct platform_device *pdev)
  {
@@ -180,5 +179,4 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +		return err;
 +
  	/* Perform generic probe */
-
 -- 

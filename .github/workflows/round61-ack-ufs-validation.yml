@@ -87,7 +87,7 @@ jobs:
             git -C "$ack" diff --check
           }
           printf 'ROUND32 superseded: fixed ACK qcom,sc7180-ufshc.yaml already selects qcom,sm8250-ufshc and defines its eight-clock branch; applying ROUND32 would select the same compatible twice.\n'
-          printf 'ROUND57 superseded: the eight-entry clock-names items list already fixes the SM8250 count; its redundant minItems/maxItems hunk is rejected by the ACK dt-schema meta-schema.\n'
+          printf 'ROUND57 superseded: the fixed ACK qcom,sc7180-ufshc.yaml binding already defines the SM8250 eight-entry clock-names list; its redundant minItems/maxItems hunk is rejected by the ACK dt-schema meta-schema.\n'
           apply_patch kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
           apply_patch kernel-baseline/round61/patches/round52-0001-context-corrected.patch
           apply_patch kernel-baseline/round61/patches/round33-checkpatch-clean.patch

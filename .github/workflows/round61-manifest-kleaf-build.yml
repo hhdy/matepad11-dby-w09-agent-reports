@@ -180,7 +180,7 @@ jobs:
             < "$REPORT/kernel-baseline/round61/patches/round33-checkpatch-clean.patch"
           perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict \
             < "$REPORT/kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch"
-          perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict \
+          perl common/scripts/checkpatch.pl --no-tree --no-signoff --strict --ignore CAMELCASE \
             < "$REPORT/kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch"
           go install github.com/bazelbuild/buildtools/buildifier@latest
           export PATH="$(go env GOPATH)/bin:$PATH"

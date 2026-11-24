@@ -124,6 +124,6 @@ Main branch:
 
 ## 6. Next engineering step
 
-No new local Agent task is required for this source-side update. Continue GPT-side review of the early UART/console path and other ACK SoC dependencies. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or a permitted runtime validation can close it.
+ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. Continue GPT-side review of the remaining storage-first DTS/Kconfig and legacy boot packaging path. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
 
 Keep every file suffixed .draft. Keep PR #1 Draft. No device connection, flash, write, root, compile or image packaging.

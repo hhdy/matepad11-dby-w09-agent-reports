@@ -20,7 +20,7 @@ full-tree application has been run.
 diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 --- a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
 +++ b/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml
-@@ -163,6 +163,8 @@
+@@ -165,13 +165,15 @@
          clocks:
            minItems: 8
            maxItems: 8

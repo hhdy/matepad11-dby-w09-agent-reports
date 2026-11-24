@@ -1,0 +1,73 @@
+# DBY-W09 ACK android17-6.18 — storage-first built-in fragment
+#
+# DRAFT ONLY. Layer over a frozen ACK base config; do not use as a standalone
+# defconfig. Kconfig resolution has NOT been run and no kernel has been built.
+#
+# First milestone: make the internal UFS storage path available before the
+# Android system/vendor logical partitions are mounted. Because ROUND10
+# ramdisk module-loading order is BLOCKED, keep the entire UFS dependency chain
+# built-in for this custom ACK-derived device kernel.
+#
+# This is not a certified GKI config. Built-in composition may diverge from
+# the published GKI module ABI. Official GKI/KMI compliance is a separate goal.
+
+CONFIG_ARM64=y
+CONFIG_ARCH_QCOM=y
+CONFIG_OF=y
+CONFIG_OF_RESERVED_MEM=y
+
+# Block / SCSI / Qualcomm UFS host
+CONFIG_BLOCK=y
+CONFIG_SCSI=y
+CONFIG_BLK_DEV_SD=y
+CONFIG_SCSI_UFSHCD=y
+CONFIG_SCSI_UFSHCD_PLATFORM=y
+CONFIG_SCSI_UFS_QCOM=y
+
+# Qualcomm QMP UFS PHY
+CONFIG_GENERIC_PHY=y
+CONFIG_PHY_QCOM_QMP=y
+CONFIG_PHY_QCOM_QMP_UFS=y
+
+# Qualcomm clocks, reset and power domain
+CONFIG_COMMON_CLK=y
+CONFIG_COMMON_CLK_QCOM=y
+CONFIG_SM_GCC_8250=y
+CONFIG_RESET_CONTROLLER=y
+CONFIG_PM=y
+CONFIG_PM_GENERIC_DOMAINS=y
+
+# RPMh regulator / GDSC infrastructure
+CONFIG_QCOM_COMMAND_DB=y
+CONFIG_QCOM_RPMH=y
+CONFIG_QCOM_RPMHPD=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_QCOM_RPMH=y
+
+# UFS Host uses generic MSI interfaces; SoC IOMMU references are present
+# directly in the ACK SM8250 UFS Host DTS node.
+CONFIG_GENERIC_MSI_IRQ=y
+CONFIG_IOMMU_SUPPORT=y
+CONFIG_ARM_SMMU=y
+
+# ---------------------------------------------------------------------------
+# Android mount-stage candidates — do NOT freeze until ROUND10 ramdisk/fstab
+# and the filesystem types of system/cust/hw_product are known.
+#
+# vendor and odm local image signatures are EROFS, so EROFS support is needed
+# for those filesystems; these options are candidates for built-in because
+# ramdisk module loading is currently unknown.
+#
+# CONFIG_BLK_DEV_DM=y
+# CONFIG_DM_LINEAR=y
+# CONFIG_DM_VERITY=y
+# CONFIG_EROFS_FS=y
+# CONFIG_EXT4_FS=y
+# CONFIG_F2FS_FS=y
+#
+# ---------------------------------------------------------------------------
+# Deferred board/feature drivers:
+# - SPMI / PMIC MFD / SPMI arbiter: defer until PMIC GPIO/PON nodes are enabled.
+# - PINCTRL_SM8250: add when board GPIO/pinctrl consumers are enabled.
+# - GENI UART / console: exact ACK node and console mapping are not settled.
+# - panel / THP / WLAN / audio / camera / USB-C / DP: later feature stages.

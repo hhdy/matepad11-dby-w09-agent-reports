@@ -47,14 +47,36 @@
 };
 
 /*
- * Mode-policy evidence boundary:
- * ROUND7's filtered property inventory exports regulator names and voltage
- * constraints but not regulator-initial-mode / allowed-modes / allow-set-load.
- * The same-device HOS4.2 public Linux DTS uses HPM initial mode on the PM8150
- * S4/L5/L6/L9/L17 rails and does not expose DRMS permissions for this group.
- * This storage-first draft retains HPM as a conservative cross-reference,
- * but does not enable DRMS on L5/L6/L9 until ROUND13 confirms HOS4.3 mode
- * properties in the original base FDT + stock DTBO entry 8.
+ * Mode-policy evidence and ACK translation (local ROUND13 + public ROUND48):
+ *
+ * ROUND13 scanned the HOS4.3 base FDT and all nine stock DTBO entries. The
+ * upstream regulator-* property spellings are NOT_FOUND_IN_INSPECTED_SCOPE;
+ * this firmware uses Qualcomm vendor qcom,supported-modes /
+ * qcom,mode-threshold-currents at provider level and qcom,init-mode at child
+ * level. All nine DTBO entries leave the target RSC regulator subtree
+ * untouched, but the selected entry is still UNKNOWN.
+ *
+ * Public Qualcomm SM8250 KONA vendor source at OnePlusOSS commit
+ * cad09e061ef6cf689a4a1e54d27562e0f042236a defines the vendor enum as
+ * PASS=0, RET=1, LPM=2, AUTO=3, HPM=4, and its driver maps PMIC5 LDO / HFSMPS
+ * modes by regulator type. This matches ROUND13's LDO <2 4> and HFSMPS
+ * <1 3>. The fixed ACK binding uses a different enum (RET=0, LPM=1,
+ * AUTO=2, HPM=3); use its symbolic constants below, never copy vendor
+ * integers directly.
+ *
+ * HOS4.3 initial modes: L5/L9=HPM, L6/L17=LPM; S4 has no mode metadata.
+ * L5/L9 each carry a 100mA vendor proxy-consumer vote. ACK has no equivalent
+ * vendor proxy helper, so regulator-system-load=100000 approximates that
+ * persistent load for standard DRMS aggregation; this is not an exact
+ * proxy-consumer lifecycle translation. LDO allowed modes and set-load
+ * permission are enabled only where the ACK hardware ops implement DRMS.
+ *
+ * S8's HOS4.3 policy is RET below 200mA and AUTO at/above 200mA. ACK's
+ * PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, while the UFS parent
+ * rail advertises up to 210mA. To avoid pinning this rail in RET when a
+ * higher load is requested, this draft selects hardware AUTO as the
+ * conservative ACK fallback. This intentionally differs from HOS initial
+ * RET and does not claim software-equivalent threshold switching.
  */
 
 /*
@@ -131,7 +153,7 @@
 			regulator-name = "pm8150_s4";
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1920000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			/* ROUND13: HOS4.3 has no mode metadata for S4; leave mode untouched. */
 		};
 
 		/* HOS4.3: PM8150 L5, fixed 0.88 V. */
@@ -140,6 +162,10 @@
 			regulator-min-microvolt = <880000>;
 			regulator-max-microvolt = <880000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+			regulator-system-load = <100000>; /* HOS proxy-consumer-current */
+			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L6, fixed 1.2 V; shared by VCCQ and PHY refclk. */
@@ -147,7 +173,10 @@
 			regulator-name = "pm8150_l6";
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_LPM>;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L9, fixed 1.2 V. */
@@ -156,6 +185,10 @@
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+			regulator-system-load = <100000>; /* HOS proxy-consumer-current */
+			regulator-allow-set-load;
 		};
 
 		/* HOS4.3: PM8150 L17, 2.496–3.008 V. */
@@ -163,18 +196,20 @@
 			regulator-name = "pm8150_l17";
 			regulator-min-microvolt = <2496000>;
 			regulator-max-microvolt = <3008000>;
-			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_LPM>;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
+						   RPMH_REGULATOR_MODE_HPM>;
+			regulator-allow-set-load;
 		};
 	};
 
 	/*
-	 * HOS4.3 base FDT identifies pm8150a_s8 at 1.2–1.4 V.
-	 * The same-device public board DTS maps this legacy resource name to
-	 * PM8150L S8 (pmic-id "c", smps8). Use the local HOS4.3 voltage window,
-	 * not the HOS4.2 cross-reference's narrower 1.35–1.4 V window.
-	 *
-	 * No initial-mode, allow-set-load, always-on or vdd-s8-supply property
-	 * is added: those facts are not established by the HOS4.3 evidence.
+	 * HOS4.3 identifies this resource as smpc8 / pmic5-hfsmps (the
+	 * child label "pm8150a" is legacy naming), 1.2–1.4 V, supported vendor
+	 * modes RET/AUTO, initial RET, 200mA threshold. ACK has no HFSMPS DRMS
+	 * set_load callback; AUTO is selected as the hardware-autonomous fallback
+	 * because the UFS parent consumer can request up to 210mA. See ROUND48.
+	 * No allow-set-load or guessed vdd-s8-supply is added.
 	 */
 	regulators-1 {
 		compatible = "qcom,pm8150l-rpmh-regulators";
@@ -184,6 +219,9 @@
 			regulator-name = "pm8150l_s8";
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1400000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
+			regulator-allowed-modes = <RPMH_REGULATOR_MODE_RET
+						   RPMH_REGULATOR_MODE_AUTO>;
 		};
 	};
 };

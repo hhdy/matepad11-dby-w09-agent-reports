@@ -95,7 +95,7 @@ Branch: ack18-dby-w09-dts-draft
 
 - dts/dby-w09-ack18-board.dts.draft — removed unverified vph_pwr / vdd-s*-supply input topology.
 - dts/dby-w09-ack18-rootparam.dtso.draft — restored stock generic huawei,modem_id sentinel.
-- config/dby-w09-ack18-storage-first.fragment.draft — added SCSI DMA, RPMh XO clock, SM8250 interconnect support and explicit SMMU variant; removed UFS-only need for RPMh power domains.
+- config/dby-w09-ack18-storage-first.fragment.draft — added SCSI DMA, RPMh XO clock, SM8250 interconnect support and explicit SMMU variant; retained QCOM_RPMHPD for UFS OPP required-opps (separate from the direct GCC GDSC).
 - dts/README.md — updated limitations and evidence boundary.
 
 ROUND15 follow-up note: a closer check found that the UFS OPP table includes required-opps references to RPMh power-domain OPP states. The config fragment and ROUND14 table therefore retain QCOM_RPMHPD for OPP scaling; this is separate from the direct GCC UFS_PHY_GDSC reference.

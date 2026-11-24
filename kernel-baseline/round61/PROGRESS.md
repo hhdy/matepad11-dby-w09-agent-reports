@@ -242,3 +242,8 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.
 - Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
 - Phase F/G: NOT RUN; no boot image or device write/boot operation performed.
+
+
+### dtschema 2023.9 comparison and fixture correction
+
+Run 45446071024 used the ACK Makefile's declared minimum dtschema version 2023.9. Under that version, the SM8250 one-domain positive fixture (including VDDP/VCCQ-parent metadata) validates with an empty diagnostic log, so the prior latest-dtschema unevaluatedProperties failure is not reproduced on the ACK-minimum tool version. The two-domain positive fixture exposed a fixture-generation error: its power-domain providers declare #power-domain-cells = <0> but the generated references incorrectly appended a zero argument, causing the two-domain list to be decoded as four entries. Corrected the generator to emit <&pdN> with no argument in commit 3f7284355b881bbba59b5d6092ae384b324e574b. The same run still shows diagnostics on the upstream qcom,ufs.example.dtb; investigate whether the example's provider-less phandle encoding or a schema condition is responsible, and do not suppress it.

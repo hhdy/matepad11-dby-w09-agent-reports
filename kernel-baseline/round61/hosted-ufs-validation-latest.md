@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: b40ca25751a918ebfbc51b9e9ca513f1cfc5faec
-- Workflow run ID: 45450813746
+- Workflow commit: 28442291a7c053512225b32b2553bd6b51b08dee
+- Workflow run ID: 45451495314
 - Branch: ai-parallel/stagea-port-until-boot
-- Job status: failure
+- Job status: success
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-7c26e1ff9ad0387faeda8114c2dbdb16797dd5aba2c2a2e3410f97c2b2318ee8  /home/runner/work/_temp/round61-processed-schema.json
+e8c386aa66dad66bd0d177b033ac00f4e3d87df7e669f54907e2afcefa530ee9  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -30,10 +30,8 @@ ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
  7 files changed, 477 insertions(+), 7 deletions(-)
 
 ## round63-phy-legacy-validation.log
-/home/runner/work/_temp/round63-phy-legacy-no-property.dtb: /: 'compatible' is a required property
-	from schema $id: http://devicetree.org/schemas/root-node.yaml#
-/home/runner/work/_temp/round63-phy-legacy-no-property.dtb: /: 'model' is a required property
-	from schema $id: http://devicetree.org/schemas/root-node.yaml#
+
+## round63-phy-positive-validation.log
 
 ## ufs-sm8250-1-domain-valid-validation.log
 
@@ -111,6 +109,11 @@ NOTE: Ignored message types: CAMELCASE
   DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
 
 ## round61-ufs-example-validation.log
+
+## round63-phy-negative-validation.log
+vdda-phy-always-on: size (4) error for type flag
+/home/runner/work/_temp/round63-phy-always-on-invalid-type.dtb: ufs-phy@1d87000: vdda-phy-always-on: [[1]] is not of type 'boolean'
+	from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
 
 ## dt_binding_check log SHA-256
 a87faad1f06f6db6839b141aeeec6dffd241e8e3444a39c21cbe687af053cb2e  /home/runner/work/_temp/round61-dt-binding-check.log

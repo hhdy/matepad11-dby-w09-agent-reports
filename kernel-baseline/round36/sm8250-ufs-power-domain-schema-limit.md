@@ -104,3 +104,7 @@ Therefore schema validation and DTB compilation remain NOT_RUN. No full kernel s
 - No dt-schema, dtc, Kconfig resolver, kernel compile, runtime test or device boot was run.
 
 **Conclusion:** the two-domain DTS design has a schema blocker in the exact ACK `.33_r00` common Qualcomm UFS binding. ROUND36 prepares a narrow compatible-scoped draft to unblock it, while preserving the former one-domain limit for other Qualcomm UFS controllers. This is a draft-level design fix, not a validation result.
+
+## 8. Combined schema series application
+
+ROUND32 and ROUND36 were applied sequentially in one isolated temporary directory containing both exact ACK `.33_r00` source files. The initial `qcom,ufs.yaml` source blob (`1dd41f6d5258014d59c8c8005bc54f7994351a52`) and `qcom,ufs-common.yaml` source blob (`962dffcd28b44b3489be5615c75e7270a0c45dc4`) both matched GitHub exactly. ROUND32 patch `efe2d932da34716c631de22d89aba19730cc7f50` passed `git apply --check` and `git apply`; ROUND36 patch `dad87ef8dfefee6141b8a7949982c007c4a03b4a` passed the same checks after ROUND32. Combined `git diff --check`, YAML parsing, and focused conditional JSON Schema tests all passed. This is a two-file exact-source fixture test, not a full ACK kernel worktree or dt-schema validation.

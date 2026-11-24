@@ -83,3 +83,19 @@ The Second AI promoted `ARM_SMMU_QCOM` into the required built-in symbol set and
 - Unit tests: 11.
 
 This remains a validator hardening change. The real resolved Kleaf `.config` must still prove `CONFIG_ARM_SMMU_QCOM=y`; if Kconfig does not resolve it, investigate the exact pinned dependency chain rather than forcing the symbol.
+
+
+## 7. Hosted regression result for strengthened validator
+
+Run `45457083961` (head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf`) completed these steps successfully:
+- exact ACK source fetch and identity verification;
+- real ordered patch application and diff check;
+- strict checkpatch;
+- Kleaf BUILD formatting validation;
+- the updated config-helper unit-test step, including the BLOCK and Qualcomm SMMU missing/module regressions.
+
+The 11-test suite therefore passed in this hosted run. At the last poll, the run had advanced to installing device-tree schema prerequisites; final UFS/PHY schema results were still pending.
+
+An earlier intermediate run `45457024349` failed in the config-helper step because the checker had been promoted to require `ARM_SMMU_QCOM` before the corresponding test fixture was updated. The corrected test revision was then run in `45457083961` and passed. This was a test/implementation sequencing mismatch, not a kernel compile result.
+
+This hosted test pass still does not substitute for the real Kleaf-generated `.config` or Image compilation.

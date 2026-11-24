@@ -247,7 +247,10 @@ ROUND14 was once the sole active Local Agent task. It has since been completed, 
 
 ## ROUND52 final context-validation update (2026-11-24)
 
-- The full intended patch order was simulated in memory against the exact ACK .33_r00 pristine files and the protected board DTS file fetched read-only: ROUND32 3/3, ROUND36 2/2, ROUND52 binding 2/2, ROUND37 2/2, ROUND33 2/2, ROUND52 driver header 1/1 and driver 3/3 — all 15 hunks matched.
+- The full intended patch order was strictly simulated in memory against the exact ACK .33_r00 pristine files and the protected board DTS file fetched read-only. All 15 hunks matched exact old context and declared old/new line positions after cumulative deltas, without fuzz or nearest-context fallback: ROUND32 3/3, ROUND36 2/2, ROUND52 binding 2/2, ROUND37 2/2, ROUND33 2/2, ROUND52 driver header 1/1 and driver 3/3.
 - This is source-context/order simulation only, not a real git worktree apply, dt-schema, build or runtime test.
 - Updated full manifest: kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md. Latest ROUND52 report: kernel-baseline/round52/round52-storage-first-ufs-vddp-integration-and-binding-closure.md.
 - No Local Agent is needed or active. The next blocked boundary is a full authorized ACK source/build worktree, not another local firmware scan.
+
+
+ROUND52 final identities: binding patch c0ac84067a900022a077c748b7abb10345f1295f; VDDP driver patch fb34fbc9701bc7e7b56bb9078ee98c0cdd8caf78; report acd35ab048a437e03957cf6a7f5ffd2c82885378; series manifest 128bf07e7d637e9e52f8ee27e87ca475a67c939a. The HBA/host pointer lifetime check is recorded in ROUND52: devres LIFO releases the later VDDP cleanup action before the earlier variant-host and HBA release actions.

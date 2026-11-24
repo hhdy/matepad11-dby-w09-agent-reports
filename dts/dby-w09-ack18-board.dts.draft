@@ -22,7 +22,6 @@
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 
 #include "sm8250.dtsi"
-#include "pm8150.dtsi"
 
 / {
 	model = "Huawei MatePad 11 (2021) DBY-W09";
@@ -39,44 +38,30 @@
 
 	/*
 	 * The label is required by dby-w09-ack18-rootparam.dtso.draft.
-	 * Board identity values are populated by the matching DTBO.
-	 * The HOS huawei,modem_id property is intentionally not reproduced:
-	 * its exact requirements/value have not been approved for publication.
+	 * Board identity values are populated by the matching DTBO. The local
+	 * stock-DTBO inventory shows huawei,modem_id is the same generic
+	 * sentinel in all nine entries; the minimal overlay preserves it.
 	 */
 	rootparam: rootparam {
 	};
 };
 
 /*
- * Provisional PMIC input source copied structurally from the public
- * same-device Linux DTS reference. Its exact input topology must be
- * reconciled with the HOS4.3 PMIC tree before this file can be considered
- * build-ready. Voltage/load values for the five UFS rails below are taken
- * from the local HOS4.3 ROUND9 phandle-resolution report.
+ * The PM8150 output rails used by UFS are represented directly under the
+ * SM8250 apps_rsc RPMh provider. The existing ROUND7 property inventory
+ * confirms these regulator names and output-voltage windows, but does not
+ * record regulator input-supply properties or resolve their parent source.
+ *
+ * The same-device Linux 7.0 reference uses a fixed 3.7 V vph_pwr node and
+ * vdd-s*-supply links, but that is a cross-reference based on HOS4.2, not a
+ * verified HOS4.3 fact. Do not copy that parent topology into this minimal
+ * ACK DTS until a targeted local base-FDT check establishes it.
  */
-vph_pwr: vph-pwr-regulator {
-	compatible = "regulator-fixed";
-	regulator-name = "vph_pwr";
-	regulator-min-microvolt = <3700000>;
-	regulator-max-microvolt = <3700000>;
-	regulator-always-on;
-};
-
 &apps_rsc {
 	regulators-0 {
 		compatible = "qcom,pm8150-rpmh-regulators";
 		qcom,pmic-id = "a";
 
-		vdd-s1-supply = <&vph_pwr>;
-		vdd-s2-supply = <&vph_pwr>;
-		vdd-s3-supply = <&vph_pwr>;
-		vdd-s4-supply = <&vph_pwr>;
-		vdd-s5-supply = <&vph_pwr>;
-		vdd-s6-supply = <&vph_pwr>;
-		vdd-s7-supply = <&vph_pwr>;
-		vdd-s8-supply = <&vph_pwr>;
-		vdd-s9-supply = <&vph_pwr>;
-		vdd-s10-supply = <&vph_pwr>;
 
 		/* HOS4.3: PM8150 S4, 1.8–1.92 V, initial level 1.8 V. */
 		vreg_s4a_1p8: smps4 {

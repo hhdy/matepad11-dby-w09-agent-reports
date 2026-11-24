@@ -25,8 +25,8 @@ hardware. It must be reviewed together with the separate SM8250 binding and
 DTS changes.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 118 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 118 insertions(+)
+ drivers/ufs/host/ufs-qcom.c | 119 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 119 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c
@@ -50,7 +50,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +#include <dt-bindings/power/qcom,rpmhpd.h>
 +
  #include <soc/qcom/ice.h>
-@@ -2802,15 +2808,127 @@
+@@ -2802,15 +2808,128 @@
  	.tx_eqtr_notify		= ufs_qcom_tx_eqtr_notify,
  };
  
@@ -162,7 +162,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +
 +	return 0;
 +}
- 
++
  /**
   * ufs_qcom_probe - probe routine of the driver
   * @pdev: pointer to Platform device handle

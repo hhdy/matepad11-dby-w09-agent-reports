@@ -1,0 +1,1 @@
+One-shot trigger for the official common-android17-6.18 manifest sync, exact ACK checkout, ROUND61 patch application, Bazel query/cquery, final Kconfig validation and DBY-W09 Image build. The workflow writes its result back to hosted-build-latest.md on this branch.

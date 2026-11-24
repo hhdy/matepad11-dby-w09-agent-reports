@@ -707,3 +707,23 @@ ROUND16 因 WorkBuddy 的 command-safety/sandbox 层拦截 `wsl.exe` 而 BLOCKED
 - Stage A 仍是唯一主线；Stage A 真正验收前不开始 DerpFest Android 17 Stage B。
 
 主 AI / ChatGPT 继续并行推进固定源码分析与设备启动链阻塞项，审查二号 AI 每阶段产物，并将已验证结果同步到主仓库。该长期任务不是把项目交给二号 AI后停止主 AI 工作。
+
+
+## ROUND62 — DBY-W09 same-device boot-chain reference reconciliation (2026-11-24)
+
+Primary AI inspected the pinned public repository `svesnav/linux-dby-w09` at commit `116cb1fe06110543ce03217e8bd8f35c12ca89c3` and recorded a cross-reference report:
+
+`kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md`
+
+Useful same-device findings:
+- The external project reports Huawei ABL using boot header v2 plus a separate `ramdisk` partition.
+- Its README says `fastboot boot` (RAM boot) is refused on that tested setup.
+- Its ABL-accepted DTBO must fill `/rootparam`, or the tablet returns to fastboot.
+- It reconstructs a replacement boot image by unpacking the exact stock header-v2 boot image and preserving its metadata.
+- It builds a separate ramdisk payload and writes it over the stock ramdisk partition while preserving the footer described by that project's verified stock image.
+
+These are same-model, strong structural cross-references; they are **not** direct proof of the user's current HOS4.3 bootloader/partition/footer behavior. External project describes its own Linux 7.0 environment and the DTS itself references HOS4.2. Never copy its stock image hash, 96 MiB boot size, 2 MiB ramdisk size, offsets, cmdline, AVB footer offsets, RAM map, or DTB into this project.
+
+The reported refusal of `fastboot boot` raises the possibility that a first test may require partition writes. Therefore a temporary RAM-boot route must not be assumed; any write/flash action requires exact local HOS4.3 metadata, a reviewed rollback plan, and separate explicit user authorization. No partition writes are authorized here.
+
+ROUND62 has been added as Phase E/F context to the second AI's ROUND61 long-running mission. It must not block ROUND61 Phase A–D real patch/schema/Kconfig/Image build work. Stage A remains the only mainline; Stage B waits for real Stage-A device acceptance.

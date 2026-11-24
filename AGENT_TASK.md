@@ -365,3 +365,12 @@ The current ROUND17 taskbook is diagnostic-first and supersedes all previous ROU
 - use the exact product's official docs to find any supported authorization procedure;
 - do not retry wsl.exe, do not use alternate shells/wrappers/copies/renames, do not bypass or disable security;
 - do not launch the whole Agent elevated until a later step actually requires elevation.
+
+## ROUND59 当前补丁系列核验与 WorkBuddy 状态（2026-11-24）
+
+- ROUND59 report: `kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`.
+- 完整 UFS patch order ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 (board .dts.draft fixture only) → ROUND33 → ROUND52-0002; 16/16 exact hunk contexts and new line anchors matched against exact source blobs in an in-memory simulation.
+- This is not real `git apply`, `git diff --check`, dt-schema, Kconfig or build. See ROUND59 for full identities and boundaries.
+- ROUND57 hunk defect fixed: current canonical patch blob is `3656f05ad01d54452b83591b762faaa71a16f592`, header `@@ -165,13 +165,15 @@`. Do not use prior blob `f282a695...`.
+- The local Agent product is known: WorkBuddy, model DeepSeek V4.1 Flash. ROUND17 should let WorkBuddy identify its own command execution policy/approval mechanism from its own app context. Do not direct the user to the unverified Windows Security Center menu and do not blindly ask for elevation.
+- The second AI remains assigned ROUND58 on `ai-parallel/round58-kleaf-target-audit`.

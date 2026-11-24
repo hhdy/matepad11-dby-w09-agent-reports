@@ -16,10 +16,6 @@ jobs:
     env:
       ACK_COMMIT: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
       MANIFEST_COMMIT: 46a1a5274ff0b40419952c861a8958bba5f28cfc
-      WORK: ${{ runner.temp }}/ack-6.18.33
-      ART: ${{ runner.temp }}/round61-artifacts
-      REPORT: ${{ github.workspace }}
-      TMPDIR: ${{ runner.temp }}
     steps:
       - name: Checkout dedicated implementation branch
         uses: actions/checkout@v4
@@ -31,6 +27,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          WORK="$RUNNER_TEMP/ack-6.18.33"
+          ART="$RUNNER_TEMP/round61-artifacts"
+          REPORT="$GITHUB_WORKSPACE"
+          TMPDIR="$RUNNER_TEMP"
+          {
+            echo "WORK=$WORK"
+            echo "ART=$ART"
+            echo "REPORT=$REPORT"
+            echo "TMPDIR=$TMPDIR"
+          } >> "$GITHUB_ENV"
           mkdir -p "$ART" "$TMPDIR"
           nproc; free -h; cat /sys/fs/cgroup/memory.max || true; df -h "$RUNNER_TEMP"
           sudo apt-get update

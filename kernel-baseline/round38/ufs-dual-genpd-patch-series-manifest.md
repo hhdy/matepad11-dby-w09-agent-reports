@@ -184,3 +184,25 @@ The primary AI accepted R54-001 as a valid P3 schema-hardening correction and cr
 7. ROUND52-0002 — VDDP managed lifecycle.
 
 No full-tree apply or dt_binding_check/dtbs_check was performed for ROUND57. The follow-up is a draft, not a validation PASS. Full integration/build and device gates remain NOT_RUN.
+
+## ROUND59 — complete ordered exact-source patch simulation (2026-11-24)
+
+ROUND59 fetched each source file at the exact ACK commit and verified all source blob IDs against the existing recorded identities:
+- `qcom,ufs.yaml`: `1dd41f6d5258014d59c8c8005bc54f7994351a52`
+- `qcom,ufs-common.yaml`: `962dffcd28b44b3489be5615c75e7270a0c45dc4`
+- `ufs-qcom.c`: `a80c6998406dbc88c25dbd9977699ba481207efe`
+- `ufs-qcom.h`: `5f979daabd5323184eeee137cc8ecc076193979e`
+- protected board draft fixture: `e86c8707c413a9376b1e332a94e292b86acde3e2` (read-only).
+
+The corrected ordered list was replayed in-memory against those exact source contents:
+ROUND32 → ROUND57 → ROUND36 → ROUND52-0001 → ROUND37 (review-only board fixture) → ROUND33 → ROUND52-0002.
+
+All **16/16 hunks** matched the exact old-side context and declared new line anchor, with no fuzz / nearest-context fallback. ROUND52-0002 was routed to its two real target files: `ufs-qcom.h` (one hunk) and `ufs-qcom.c` (three hunks). A post-application text assertion set confirmed the intended compatible, eight-clock names, dual-domain schema, supply binding, MMCX-first/GCC-second draft topology, required-OPP mapping and VDDP lifecycle fields. A lightweight scan found no trailing whitespace among 367 added lines.
+
+This was an **in-memory exact-context simulation**, not a real Git worktree application. Do not label it `git apply --check` or `git diff --check`. Full-tree Git apply/diff-check, checkpatch, dt-schema, DTB, Kconfig, Kleaf and compile remain NOT_RUN.
+
+### ROUND57 correction identified by ROUND59
+
+The previous ROUND57 blob `f282a695ed1201298f29a54ff0871084d995b3f2` had malformed hunk counts (declared 6/8; actual 13/15) and the wrong post-ROUND32 anchor (163 rather than 165). The canonical main patch is corrected to `@@ -165,13 +165,15 @@`, blob `3656f05ad01d54452b83591b762faaa71a16f592`. Use this corrected blob only.
+
+Full evidence: `kernel-baseline/round59/round59_ufs_patch_series_exact_source_integration.md`.

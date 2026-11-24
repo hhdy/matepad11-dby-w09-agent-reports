@@ -122,3 +122,23 @@ Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PH
 Report update commit: `ff816f9665876200a5df63f14aa42f10385b1c77`.
 
 The first outstanding gate remains the actual hosted Actions result for the updated workflow; the local container cannot run dtc/dtschema or the manifest-pinned Bazel toolchain.
+
+
+## 2026-11-25 manifest-pinned hosted Kleaf/Image build attempt
+
+**Trigger commit:** `2229d9b8982d42c4d47f6ec92b1fdfab632f5746`  
+**Workflow:** `.github/workflows/round61-manifest-kleaf-build.yml`  
+**Pinned manifest commit:** `46a1a5274ff0b40419952c861a8958bba5f28cfc` on `common-android17-6.18`  
+**Fixed ACK common commit:** `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
+
+Added a one-shot GitHub-hosted build workflow (triggered only by `run-manifest-kleaf-build.txt`) to attempt the official kernel Repo manifest path rather than substituting the host's preinstalled Clang. It:
+- verifies the manifest branch resolves to the exact manifest commit before syncing;
+- syncs the official kernel manifest, records `repo manifest -r`, build/kernel revision, Bazel/Clang/Rust versions and lockfile hash;
+- checks out the immutable ACK commit into the `common` project;
+- applies the ordered UFS patch set, the two ROUND63 PHY patches and the ROUND58 Kleaf target in a disposable manifest workspace;
+- runs strict checkpatch, buildifier, the 9 config-helper tests, Bazel query/cquery, and the full `//common:dby_w09` Image build with pipefail;
+- runs the final-config validator, hashes Image/.config/System.map/vmlinux, uploads artifacts, and publishes the result/manifest back to this branch.
+
+ROUND57 remains deliberately superseded rather than applied: ROUND32's fixed eight-entry `clock-names.items` list already expresses exact cardinality, while ACK dt-schema rejects redundant minItems/maxItems on that list. The earlier schema diagnostics and the rationale are documented above.
+
+**Status: TRIGGER COMMITTED / RESULT NOT YET AVAILABLE.** No repo sync, Bazel query, final Kconfig resolution or Image build is claimed until the hosted workflow writes `hosted-build-latest.md`. If the workflow cannot complete because the hosted environment cannot access the manifest or dependencies, that exact external blocker will be recorded there. No local firmware, device, boot image or partition was accessed.

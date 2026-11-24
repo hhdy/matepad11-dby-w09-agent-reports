@@ -48,6 +48,7 @@ CONFIG_INTERCONNECT_QCOM_SM8250=y
 # RPMh regulator provider for the HOS4.3 PM8150 UFS rails.
 CONFIG_QCOM_COMMAND_DB=y
 CONFIG_QCOM_RPMH=y
+CONFIG_QCOM_RPMHPD=y
 CONFIG_REGULATOR=y
 CONFIG_REGULATOR_QCOM_RPMH=y
 
@@ -57,9 +58,9 @@ CONFIG_IOMMU_SUPPORT=y
 CONFIG_ARM_SMMU=y
 CONFIG_ARM_SMMU_QCOM=y
 
-# QCOM_RPMHPD is intentionally not requested in this UFS-only fragment:
-# UFS_PHY_GDSC is provided by SM_GCC_8250 via QCOM_GDSC. Add RPMHPD later
-# only when an enabled consumer actually references an &rpmhpd power domain.
+# The Host's explicit UFS_PHY_GDSC power-domain is supplied by SM_GCC_8250.
+# Separately, ufs_opp_table contains required-opps references to
+# rpmhpd_opp_low_svs / rpmhpd_opp_nom. Keep RPMhPD built-in for this OPP path.
 #
 # SPMI_MSM_PMIC_ARB / MFD_SPMI_PMIC / PMIC SPMI pinctrl are deferred:
 # this minimal DTS does not include PM8150 SPMI GPIO/PON peripherals. The

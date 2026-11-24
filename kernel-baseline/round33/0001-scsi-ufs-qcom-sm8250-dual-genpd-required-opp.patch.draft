@@ -25,8 +25,8 @@ hardware. It must be reviewed together with the separate SM8250 binding and
 DTS changes.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 119 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 119 insertions(+)
+ drivers/ufs/host/ufs-qcom.c | 141 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 141 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c
@@ -152,7 +152,7 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +		ret = -EINVAL;
 +	else
 +		ret = 0;
-++
++
 +	of_node_put(provider_table_np);
 +	of_node_put(req_pd_np);
 +	of_node_put(req_table_np);

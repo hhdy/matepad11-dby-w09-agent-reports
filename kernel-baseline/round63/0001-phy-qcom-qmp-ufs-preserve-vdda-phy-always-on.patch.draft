@@ -224,7 +224,7 @@ diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-
 +	if (ret)
 +		dev_err(qmp->dev, "failed to disable PHY regulators, err=%d\n", ret);
 +
-+	return ret;
++	return 0;
 +}
  static int qmp_ufs_set_mode(struct phy *phy, enum phy_mode mode, int submode)
  {

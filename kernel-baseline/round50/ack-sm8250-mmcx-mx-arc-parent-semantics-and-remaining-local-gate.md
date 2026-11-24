@@ -103,12 +103,17 @@ This is a larger port with separate driver/binding/Kconfig/lifecycle work. It mu
 
 ### Current recommendation
 
-Keep the UFS-only board DTS on the existing ACK RPMHPD/OPP model and keep full ARC equivalence explicitly unclaimed. Do not add an MMCX→MX parent edge to the shared SM8250 descriptor yet. First obtain the exact existing HOS4.3 property values for:
-- `rpmh-regulator-mmcxlvl` and `rpmh-regulator-mxlvl` resource names;
-- MMCX ALL/AO/SO and the exact two MX target children resolved by ROUND11;
-- `qcom,set`, `regulator-min/max-microvolt` (logical corner indices), `qcom,init-voltage-level`, `qcom,min-dropout-voltage-level`;
-- provider/child proxy flags and voltage/current requests relevant to those nodes.
-Also inspect the already-existing S8 `qcom,init-enable` / standard boot-on / always-on fields because ROUND49 found its load-only UFS vote may not actually invoke the driver callback without an enable reference.
+Keep the UFS-only board DTS on the existing ACK RPMHPD/OPP model and keep full ARC equivalence explicitly unclaimed. Do not add an MMCX→MX parent edge to the shared SM8250 descriptor.
+
+ROUND14 has now supplied the exact local base-FDT corner, set, dropout and proxy values; ROUND51 has reviewed their source semantics:
+- Providers: `mmcxlvl` / resource `mmcx.lvl`; `mxlvl` / resource `mx.lvl`.
+- MMCX ALL/AO/SO min/init corner 64 (LOW_SVS); MX MMCX-supply/AO min/init corner 16 (RETENTION); max 65535 is a logical storage ceiling.
+- `qcom,set` 3/1/2 means ALL/ACTIVE/SLEEP.
+- MMCX ALL/AO `qcom,min-dropout-voltage-level=<0xffffffff>`; in the public KONA implementation this is read into signed int and added numerically along the logical ARC parent request path as -1 on ARM64 two's-complement, not a no-dropout sentinel.
+- MMCX ALL has a temporary proxy-enable request at TURBO..MAX.
+- ROUND14 found no static S8 init-enable / boot-on / always-on property in the inspected base-FDT scope. Runtime S8 enable state remains UNKNOWN.
+
+The remaining uncertainty is not the above captured node values; it is full ARC graph census, selected/effective DTBO, Command DB runtime level maps and actual runtime votes. Do not repeat ROUND14 FDT extraction. Do not create a DBY-W09-specific ARC compatible or patch a shared SM8250 GenPD parent relationship from corner-number similarity alone.
 
 ## 4. Verification status
 
@@ -118,13 +123,13 @@ Also inspect the already-existing S8 `qcom,init-enable` / standard boot-on / alw
 | Public KONA child min-dropout application path | SOURCE REVIEWED |
 | Fixed ACK SM8250 descriptor lacks MMCX→MX parent | SOURCE REVIEWED |
 | Generic GenPD parent performance-state translation | SOURCE REVIEWED |
-| Exact HOS4.3 MMCX/MX dropout and request properties | UNKNOWN / NOT_CAPTURED |
-| Exact HOS4.3 S8 init-enable / boot-on policy | UNKNOWN / NOT_CAPTURED |
-| DBY-W09-specific parent edge or ARC provider implementation | DESIGN ONLY |
+| Exact HOS4.3 MMCX/MX set, corner, dropout and proxy properties | COMPLETE IN ROUND14; INTERPRETED IN ROUND51 |
+| ROUND11 parent-edge count reconciliation | AT LEAST FIVE CONFIRMED; full total unverified |
+| Exact HOS4.3 S8 static enable/boot properties | NOT_FOUND_IN_INSPECTED_SCOPE BY ROUND14; live state UNKNOWN |
+| DBY-W09-specific parent edge or dedicated ARC provider implementation | DESIGN ONLY; NOT JUSTIFIED FOR STORAGE-FIRST |
 | Full-tree source/schema/Kconfig/build/DTB/boot/runtime validation | NOT_RUN |
 
-The next step requires a tightly scoped local, read-only property extraction using the previously approved ROUND3 parser and the existing FDT work copy. It must not repeat ROUND11's parent phandle extraction or ROUND13's mode scan, and must not create a new parser or touch the device.
-
+ROUND14 is complete and uploaded. Do not rerun the local FDT parser or rescan ROUND11/13/14 fields. No new local Agent task is active. Full ARC graph enumeration, selected DTBO identity, runtime RPMh votes and Command DB effective maps remain separate evidence/implementation gates; they do not block the conservative decision to keep the current ACK RPMHPD/OPP model for the first storage milestone.
 
 ## ROUND51 correction — ROUND14 resolves corner names and a fifth edge (2026-11-24)
 

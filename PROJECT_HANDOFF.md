@@ -102,6 +102,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - [ROUND38：UFS dual-GenPD patch series manifest](./kernel-baseline/round38/ufs-dual-genpd-patch-series-manifest.md)：汇总固定 ACK 基线、四份补丁的 SHA / 依赖顺序、两文件 schema series apply PASS 证据，以及 full-tree / dt-schema / DTB / Kconfig / build / device gates。
 - [ROUND39：ACK 6.18.33 Kleaf 构建基线与工具链锁定](./kernel-baseline/round39/ack-6.18.33-kleaf-build-toolchain-baseline.md)：固定 tag 的 legacy build.config.gki.aarch64 已是 error stub，应使用 Kleaf/Bazel；核对 KMI gen5、Clang r584948c、Rust 1.91.1.p3、官方 manifest linkfiles/工具链以及 `kernel_aarch64` GKI base 与 `base_kernel` 混合构建样例。尚未 repo sync、建立设备 target 或 build。
 - [ROUND38：RPMhPD provider 注册与 UFS OPP table identity 审查](./kernel-baseline/round38/rpmhpd-provider-registration-and-ufs-opp-table-identity.md)：固定源码证明 MMCX 域存在、provider 在 OPP table 建立后才注册、attach-list 延迟探测失败会回滚已附着域；并把 ROUND33 驱动补丁强化为校验 required-opps table 与 provider operating-points-v2 phandle 完全同一。
+- [ROUND40：UFS VCCQ-parent / VDDP 供电生命周期审查](./kernel-baseline/round40/ufs-vccq-parent-vddp-lifetime-and-merge-audit.md)：固定 ACK 的 generic VCCQ rails 在 Qualcomm variant exit 之后才关闭；现有供电草案若在 `ufs_qcom_exit()` 先关闭 VCCQ-parent 可能违反父子 rail 顺序。下游 VDDP 与 VCCQ-parent 管理也不同；供电草案必须分开策略并推迟 cleanup，未修改受保护分支草案。
 - [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：固定 ACK `qcom,ufs.yaml` 漏列 `qcom,sm8250-ufshc`；补丁 blob `efe2d932da34716c631de22d89aba19730cc7f50` 与仓库草案一致，目标源 blob `1dd41f6d5258014d59c8c8005bc54f7994351a52`。在该精确单文件 fixture 上 `git apply --check`、`git apply`、`git diff --check` 均 PASS；仍未运行 dt-schema/dtbs_check，也未在完整 ACK 工作树集成。
 
 仓库 `kernel-baseline/round6` 至 `round27` 已有连续研究记录。重点内容：
@@ -181,7 +182,7 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### GPT 侧（当前继续工作）
 
-- ROUND38 已整理 UFS dual-GenPD 补丁序列；ROUND32/36 schema patch pair 与 ROUND37 DTS patch 均通过精确源文件 fixture 的真实 apply 检查，ROUND33 driver 仍只有 hunk/source-context 核验。ROUND39 已确认 ACK `.33_r00` 必须走 Kleaf/Bazel，不可 source 已禁用的 legacy GKI build.config；工具链常量为 KMI gen5 / Clang `r584948c` / Rust `1.91.1.p3`。下一阶段先锁定 `repo manifest -r` 完整工具链快照，再建 DBY-W09 的 GKI mixed `kernel_build` + rules_devicetree target，并在完整 ACK worktree 中完成 UFS 补丁系列 full-tree apply、dt-schema、DTB、Kconfig 和编译验证。局部测试绝不等于内核已可启动。
+- ROUND38 已整理 UFS dual-GenPD 补丁序列；ROUND32/36 schema patch pair 与 ROUND37 DTS patch 均通过精确源文件 fixture 的真实 apply 检查，ROUND33 driver 只有 hunk/source-context 核验且已增加 exact OPP-table identity 检查。ROUND39 已锁定 ACK `.33_r00` 的 Kleaf/Bazel 构建入口和工具链常量：KMI gen5 / Clang `r584948c` / Rust `1.91.1.p3`；应先保存 `repo manifest -r` 完整快照，再建立 DBY-W09 GKI mixed `kernel_build` + rules_devicetree target。ROUND40 发现 VCCQ-parent/VDDP companion sketch 的 teardown 顺序风险，未合并前要先重构。下一阶段先取得完整 ACK worktree/toolchain，在 disposable tree 中应用 UFS 双域系列、处理供电驱动补丁，再跑 dt-schema、DTB、Kconfig、编译和设备验证。局部测试绝不等于内核已可启动。
 - 以 ROUND31 的 Kconfig 依赖闭环为起点，对冻结的 GKI base config + board fragment 做真正的 olddefconfig / 最终 .config 解析（在工具链/源码可用时），并逐项核验最终 built-in 状态；不能把 Kconfig 理论关系当成 resolver PASS。
 - 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。

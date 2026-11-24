@@ -101,3 +101,20 @@ The patched ROUND32 `qcom,ufs.yaml` and patched ROUND36 `qcom,ufs-common.yaml` w
 - Non-SM8250 Qualcomm UFS with two power domains: **REJECT**.
 
 All expected outcomes passed. This checks the composition of the two edited conditional rules, not the complete dt-schema meta-schema, the full included binding graph, `dt_binding_check`, or the final device DTB. Those validations remain NOT_RUN.
+
+## 9. Combined two-file schema patch series application
+
+The two schema patches were applied sequentially in one isolated temporary tree assembled from the exact pinned ACK source files:
+- `qcom,ufs.yaml` original GitHub blob: `1dd41f6d5258014d59c8c8005bc54f7994351a52`.
+- `qcom,ufs-common.yaml` original GitHub blob: `962dffcd28b44b3489be5615c75e7270a0c45dc4`.
+- ROUND32 patch blob: `efe2d932da34716c631de22d89aba19730cc7f50`.
+- ROUND36 patch blob: `dad87ef8dfefee6141b8a7949982c007c4a03b4a`.
+
+Sequence and result:
+1. Both pristine source fixture hashes matched the immutable ACK source blob IDs: **PASS**.
+2. `git apply --check` + `git apply` for ROUND32: **PASS**.
+3. `git apply --check` + `git apply` for ROUND36 after ROUND32: **PASS**.
+4. Combined `git diff --check`: **PASS**.
+5. PyYAML parse and focused JSON Schema Draft 7 tests on the combined result: **PASS** for the expected SM8250 and non-SM8250 cases listed in §8.
+
+This is a real two-file patch-series test on exact source-file fixtures, but not a complete ACK source tree. Full dt-schema meta-schema validation, `dt_binding_check`, `dtbs_check`, DTS preprocessing/DTB generation, and integration with the Round33 driver / Round37 board DTS remain NOT_RUN.

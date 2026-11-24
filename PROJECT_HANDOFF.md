@@ -57,8 +57,10 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 
 - DerpFest Android 17 manifest：https://github.com/DerpFest-AOSP/android_manifest/tree/17
 - Manifest 初始化入口：`repo init -u https://github.com/DerpFest-AOSP/android_manifest.git -b 17 --git-lfs`
-- Android 17 manifest 的 `snippets/kernel-6.18.xml` 指向 ACK common kernel 的 `android17-6.18-2026-06`，这是 manifest 中的源码 revision 标识。
-- 用户指定的设备目标是 6.18.33。不能仅凭分支名或 snippet 就宣称它已经是 6.18.33；必须核对 kernel common Makefile、commit、ACK tag、defconfig/config fragment 和最终 `uname -r`。
+- Android 17 manifest 的 `snippets/kernel-6.18.xml` 指向 ACK common kernel 的 `android17-6.18-2026-06`，其官方 release baseline 为 6.18.21；这是 DerpFest manifest 的通用默认值，不是本项目的 6.18.33 目标。
+- **ROUND28 已锁定 Stage A 的官方 ACK 源码标签：`android17-6.18.33_r00`，tag target commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。** 不要把纯 Linux stable `v6.18.33` 标签当作 ACK 源码替代品，也不要跟踪移动的 `android17-6.18` HEAD。
+- 官方 GKI release-build 页面将 2026-09 Android 17 / 6.18 certified branch 标为 6.18.32；`android17-6.18.33_r00` 是官方 ACK tag，但自定义 DBY-W09 构建是否满足 GKI KMI/ABI/certification 仍需独立验证。报告必须准确称为 ACK-derived / GKI-based，除非认证条件有证据。
+- 阶段 B 构建 DerpFest 时，必须覆盖其 manifest 默认的 6.18.21 kernel 引用，集成已验证的 DBY-W09 6.18.33 Image/DTB/DTBO/模块；不能改变 Stage A 目标来迎合默认 manifest。
 - 需要记录 Android common source ref、kernel Makefile 版本、补丁序列、配置来源、编译器版本、构建命令、Image/DTB/DTBO 产物身份，避免阶段 A 内核版本漂移。
 - ACK-derived、GKI-based、GKI-compatible 与官方 GKI certified 是不同概念。除非实际通过对应 ABI/KMI、GKI build/validation 及模块兼容要求，不要声称官方认证 GKI。项目目标仍按用户习惯称“6.18.33 GKI 内核移植”，技术报告应注明实际构建类型与验证边界。
 
@@ -78,7 +80,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 主仓库：https://github.com/hhdy/matepad11-dby-w09-agent-reports
 
 - `main`：GPT 可公开完成的上游源码研究、交接文档、脱敏分析报告。
-- `firmware-audit-v1`：本地 Agent 的只读固件报告分支。
+- `firmware-audit-v1`：本地 Agent 的只读固件报告分支；截至 2026-11-24 的仓库核验，该分支目前只有 ROUND11 报告，ROUND12 尚未上传，不能标记完成。
 - `ack18-dby-w09-dts-draft`：ACK 6.18 板级 DTS / rootparam DTBO 草案分支。
 - PR #1：保持 Draft，不得擅自合并。
 
@@ -108,6 +110,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - ROUND25：UFS core 电源顺序与 VCCQ/L6 DRMS 聚合。
 - ROUND26：HOS4.3 PM8150 regulator mode / DRMS 属性证据边界。
 - ROUND27：ACK SM8250 UFS required-OPP 到 RPMHPD 的 GenPD 路由缺口。
+- ROUND28：ACK `android17-6.18.33_r00` 源码基线、DerpFest manifest 版本冲突、Qualcomm 6.12 SoC driver delta 的借鉴边界。
 
 现有草案：
 - `dts/dby-w09-ack18-board.dts.draft`
@@ -119,25 +122,31 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 
 ## 7. 当前已知关键阻塞
 
-### 7.1 UFS / RPMHPD
+### 7.1 源码基线 / GKI 版本身份
+
+ROUND28 已将阶段 A 源码固定为官方 ACK tag `android17-6.18.33_r00`，tag target commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。DerpFest manifest 的 kernel 6.18 snippet 默认 June 2026 / 6.18.21，官方 September 2026 certified GKI release branch 为 6.18.32；两者都不能替代用户指定的 .33 ACK tag。后续需冻结完整 manifest、构建工具链、配置和模块产物身份。
+
+SM7325 Android 17 / 6.18 参考项目展示 ACK + Qualcomm 6.12 SoC driver delta 的移植方式，但使用不同 SoC/板级硬件及 header-v4/vendor_boot 结构；只能借鉴构建及模块同步方法，不能复制 DTS、boot config 或 vendor modules。
+
+### 7.2 UFS / RPMHPD
 
 ROUND27 已确认：SM8250 UFS OPP 表存在 RPMHPD required-opps，但 UFS Host 当前附着 GCC UFS_PHY_GDSC。已审查的 GCC/GDSC 路径没有建立到 RPMHPD MMCX 的性能状态传播关系。因此不能把已有 required-opps 属性当成实际 MMCX vote。
 
 候选设计是 UFS Host 双 GenPD：保留 GCC UFS_PHY_GDSC，同时显式附着 RPMHPD MMCX，并在 OPP table 初始化前映射 required_dev/index。尚未实现、编译或测试；必须审查 PM/runtime-PM、probe 次序、错误 unwind、remove 和实际 vote。
 
-### 7.2 HOS4.3 ARC / proxy
+### 7.3 HOS4.3 ARC / proxy
 
 ROUND11 找到 4 条 ARC level parent-supply 边和 6 条 ARC proxy-supply 边；它们属于 Vendor RPMh ARC/proxy，不是 VRM 物理输入。ACK 上游 qcom-rpmh-regulator 不等同于旧 Vendor ARC provider。不能把 vendor ARC 节点直接搬进 ACK DTS。
 
-### 7.3 PM8150 电源输入与 DRMS
+### 7.4 PM8150 电源输入与 DRMS
 
 完整 base FDT 相关扫描未发现 `vdd-s1..s10-supply`、`vin-supply`、`vph-pwr-supply`。HOS4.3 L5/L6/L9 的 DRMS/allowed-modes 约束仍需 ROUND13 定向核验。不得根据 HOS4.2 参考树臆造供电或模式属性。
 
-### 7.4 Memory / reserved-memory
+### 7.5 Memory / reserved-memory
 
 HOS4.3 base FDT 未发现普通 `/memory` 节点，但有 34 个 reserved-memory 子节点。ABL 替换 DTB 的可用内存注入与保留区 handoff 未闭环，是内核设备树进入实际启动前的 gate。
 
-### 7.5 Legacy boot / AVB / ramdisk
+### 7.6 Legacy boot / AVB / ramdisk
 
 ROUND12 正在检查现有 boot / ramdisk / dtbo / vbmeta 的 AVB footer 和 descriptor 覆盖关系。该任务完成前，不要确定最终镜像重打包策略、dm-verity/FEC 配置或启动测试写入方案。
 ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块目录是否可用尚未确认。UFS/QMP 因此在当前 storage-first 设计中倾向内建，但最终要以构建与启动设计审查为准。
@@ -153,7 +162,8 @@ ROUND10 ramdisk 内容仍 BLOCKED；Android first-stage module 路径及模块�
 
 ### GPT 侧（当前继续工作）
 
-- 继续完成公开 ACK android17-6.18 / SM8250 源码对照、设备 DTS / Kconfig、UFS GenPD patch 的设计审查。
+- 以 ROUND28 锁定的 `android17-6.18.33_r00` 继续完成 SM8250 源码对照、设备 DTS / Kconfig、UFS 双 GenPD / required-OPP patch 设计审查。
+- 建立可复现的 GKI-derived build config / toolchain pin；先厘清哪些 Qualcomm 6.12 SoC 平台增量是 6.18.33 ACK 里缺失的，再决定逐个回移哪些驱动。
 - 继续按内核阶段 A 排序，不提前开始完整 DerpFest device/vendor tree 实施。
 - ROUND12 完成后，再按既有队列审查 ROUND13 的 HOS4.3 regulator mode/DRMS 属性。
 - 每一轮先读本文件和已有报告，再开展新工作；不要重新做 Android 12L 的泛化调研。

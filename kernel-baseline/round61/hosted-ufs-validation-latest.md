@@ -1,7 +1,7 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 501b9c4d8c23588971e4983a71bbac2eb50f9369
-- Workflow run ID: 45443465025
+- Workflow commit: dc091a5927bbdb8b8b9834996e0e5ea766658a37
+- Workflow run ID: 45443538190
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: failure
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -39,18 +39,48 @@ total: 0 errors, 0 warnings, 0 checks, 104 lines checked
 ## round63-0001-checkpatch.log
 Use of uninitialized value $root in concatenation (.) or string at /home/runner/work/_temp/ack/scripts/checkpatch.pl line 1191.
 find: ‘/include’: No such file or directory
-WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
-#6: 
-regulator enable while dropping its active load vote when the PHY is powered
+total: 0 errors, 0 warnings, 0 checks, 224 lines checked
 
-total: 0 errors, 1 warnings, 0 checks, 224 lines checked
-
-NOTE: For some of the reported defects, checkpatch may be able to
-      mechanically convert to the typical style using --fix or --fix-inplace.
-
-"[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle" has style problems, please review.
+"[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle" has no obvious style problems and is ready for submission.
 
 NOTE: Ignored message types: CAMELCASE
 
-NOTE: If any of the errors are false positives, please report
-      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+## round61-dt-binding-check.log
+  SCHEMA  Documentation/devicetree/bindings/processed-schema.json
+/home/runner/work/_temp/ack/Documentation/devicetree/bindings/firmware/gunyah-cma-mem.yaml: ignoring, error parsing file
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/dtc/dtc.o
+  HOSTCC  scripts/dtc/flattree.o
+  HOSTCC  scripts/dtc/fstree.o
+  HOSTCC  scripts/dtc/data.o
+  HOSTCC  scripts/dtc/livetree.o
+  HOSTCC  scripts/dtc/treesource.o
+  HOSTCC  scripts/dtc/srcpos.o
+  HOSTCC  scripts/dtc/checks.o
+  HOSTCC  scripts/dtc/util.o
+  LEX     scripts/dtc/dtc-lexer.lex.c
+  YACC    scripts/dtc/dtc-parser.tab.[ch]
+  HOSTCC  scripts/dtc/dtc-lexer.lex.o
+  HOSTCC  scripts/dtc/dtc-parser.tab.o
+  HOSTLD  scripts/dtc/dtc
+  CHKDT   ./Documentation/devicetree/bindings
+  LINT    ./Documentation/devicetree/bindings
+  DTEX    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dts
+  DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
+Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+
+## round61-ufs-example-validation.log
+Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): power-domains: [[4294967295, 3]] is too short
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb: ufs@1d84000 (qcom,sm8150-ufshc): Unevaluated properties are not allowed ('#reset-cells', 'freq-table-hz', 'interrupts', 'iommus', 'lanes-per-direction', 'phy-names', 'phys', 'power-domains', 'reset-gpios', 'reset-names', 'resets', 'vcc-max-microamp', 'vcc-supply', 'vccq-max-microamp', 'vccq-supply' were unexpected)
+	from schema $id: http://devicetree.org/schemas/ufs/qcom,ufs.yaml
+
+## dt_binding_check log SHA-256
+414f6b8a050d36ad6b8e86520eb4dcf3f6c2245e49c5f343c0f6ec04ac0c9bcc  /home/runner/work/_temp/round61-dt-binding-check.log

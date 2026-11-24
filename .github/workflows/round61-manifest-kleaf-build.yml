@@ -95,8 +95,11 @@ jobs:
           mkdir -p "$WORK"
           cd "$WORK"
           repo init -u https://android.googlesource.com/kernel/manifest \
-            -b "$MANIFEST_COMMIT" \
+            -b common-android17-6.18 \
             --repo-url=https://gerrit.googlesource.com/git-repo
+
+          stage="repo sync manifest projects"
+          test "$(git -C .repo/manifests rev-parse HEAD)" = "$MANIFEST_COMMIT"
 
           stage="repo sync manifest projects"
           repo sync -c --depth=1 --no-tags --no-clone-bundle --optimized-fetch -j4 \

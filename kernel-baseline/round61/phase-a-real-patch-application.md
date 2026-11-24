@@ -99,14 +99,12 @@ The corrected workflow still needs a new run before Phase B can be accepted.
 
 ## 6. Checkpatch status
 
-The first successful patch-application run predates the strict checkpatch step. The workflow has now been updated to run:
+The first strict checkpatch attempt on ROUND33 failed for these reasons:
+- ERROR: missing Signed-off-by line. These are unsigned draft patches with no confirmed human sign-off identity; no sign-off is fabricated.
+- WARNING: one commit-description line exceeds 75 columns.
+- CHECK: the continuation indentation for `ufs_qcom_validate_required_opp()` does not align with the opening parenthesis.
 
-```sh
-perl scripts/checkpatch.pl --no-tree --strict < ROUND33 patch
-perl scripts/checkpatch.pl --no-tree --strict < ROUND52-0002 patch
-```
-
-Those checks have not yet run on a completed workflow revision. Do not mark checkpatch PASS until its output and exit code are inspected.
+The workflow has been updated to run both driver patches independently with `--no-signoff --strict`, capture both logs and report both exit codes. This deliberately skips only the unsigned-draft sign-off requirement; it does not waive source style checks. The next run must establish the actual remaining findings for both patches. The canonical main drafts remain unchanged.
 
 ## 7. Remaining gates
 

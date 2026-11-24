@@ -149,3 +149,8 @@ ROUND57 remains deliberately superseded rather than applied: ROUND32's fixed eig
 The UFS/PHY validation workflow was hardened to publish its actual runner evidence to `kernel-baseline/round61/hosted-ufs-validation-latest.md` and upload its logs as an Actions artifact. Its push-path filter now excludes progress/result documents, preventing a report commit from retriggering the same validation job. The workflow has `contents: write` only for this evidence publication; no other branch is targeted.
 
 Workflow update commit: `35c71f9299165443586fe7e27cc196bcaab7382b`. This update itself triggers the narrowed validation workflow. The result file is not present yet, so patch/schema/fixture outcomes remain PENDING rather than assumed.
+
+
+### ROUND63 checkpatch preflight correction
+
+The independent driver-patch line scan found an 82-column Subject line. Shortened only the branch-local patch subject to `[PATCH DRAFT] phy: qcom-qmp-ufs: keep vdda-phy enabled when idle`; source hunks are unchanged and canonical main candidate remains untouched. Repeat scan has no over-80-column source/message lines (only the conventional `diff --git` header). This patch update triggers the narrowed UFS/PHY hosted validation workflow again. Commit: `3d56f4449ff3330300036b5a79cde3550db00f3f`; report note commit: `853538b3a26c965eea25224f8f9458cf133d9d49`.

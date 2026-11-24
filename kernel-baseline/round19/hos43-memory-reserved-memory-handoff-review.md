@@ -43,12 +43,11 @@ Their sizes are redacted in the existing public report. They are not safe to rec
 
 The stock base-FDT inventory's lack of /memory does not prove that a final boot-time FDT lacks memory nodes. It is a base image DTB captured before any possible ABL fixups.
 
-The same-device public svesnav/linux-dby-w09 Linux 7.0 board DTS also contains no explicit /memory or device_type = "memory" node. Its author states that the board/memory map was checked against the stock HarmonyOS 4.2 DTB. This strongly suggests the Huawei ABL supplies or patches the usable-memory description at handoff, but:
-- the public source does not show the HOS4.3 ABL implementation;
-- its board file is a HOS4.2 cross-reference;
-- no live final FDT has been read for this user's current HOS4.3 boot path.
+The same-device public svesnav/linux-dby-w09 Linux 7.0 board DTS also contains no explicit /memory or device_type = "memory" node. Its author says the board/memory map was checked against a stock HarmonyOS 4.2 DTB. This is a kernel DTS source, not a captured post-ABL Linux handoff FDT, and therefore does not prove that the final FDT lacks or gains /memory.
 
-Therefore mark ABL memory injection as POSSIBLE / NOT_ESTABLISHED, not as a proven behavior to rely on.
+ROUND42 adds a closer SoC-class reference: the public REG-Linux/edk2-freeabl SM8250-capable LinuxLoader (CodeLinaro r34-based, validated on a different SM8250 device) explicitly looks up /memory and returns EFI_NOT_FOUND if absent in its standard non-AUTO_VIRT_ABL path. It updates an existing /memory/reg via UEFI EFI_RAMPARTITION_PROTOCOL; it does not create the node. An older SDM660 BDS LinuxLoader reference does create /memory in PrepareFdt(), so Qualcomm ABL behavior differs by source generation/platform path and cannot be generalized.
+
+Therefore mark the Huawei HOS4.3 ABL memory injection as UNKNOWN / NOT_ESTABLISHED. More importantly, do not assume ABL will create /memory: the same-SoC-class reference shows a valid SM8250 path where it expects the node to exist before LinuxLoader update. The public SM8250 reference is not Huawei's ABL; only the actual final FDT or exact Huawei source can close this.
 
 References:
 - Same-device public board DTS: https://github.com/svesnav/linux-dby-w09/blob/main/sm8250-huawei-dby-w09.dts
@@ -96,10 +95,19 @@ This is a deliberate evidence boundary. Omitting these nodes from a review-only 
 | No-map / reusable / size/alignment property classes | INVENTORIED |
 | Full physical reserved-memory address / size reconstruction | NOT_EXPORTED / NOT_RECONSTRUCTED |
 | Same-device HOS4.2 public Linux board DTS memory/reservation pattern | SOURCE REVIEWED |
-| HOS4.3 ABL live /memory injection into replacement ACK DTB | UNKNOWN / NOT_ESTABLISHED |
+| Public SM8250 FreeABL LinuxLoader memory-node prerequisite / RAM partition update | SOURCE REVIEWED; requires existing /memory in standard path; not Huawei ABL |
+| HOS4.3 ABL live /memory injection into replacement ACK DTB | UNKNOWN / NOT_ESTABLISHED; ROUND42 says do not assume generic injection |
 | Exact set of HOS4.3 reserved regions required for UFS-only Android 17 | UNKNOWN |
 | DTS/dt-schema/Kconfig/build/boot | NOT_RUN |
 
 ## 7. Next step
 
 Continue GPT-side Android 17 first-stage / boot packaging design after ROUND12 AVB metadata findings. Keep memory/reserved-memory handoff as a required review gate before any actual DTB build or boot. No repeated local FDT scan is required at this stage.
+
+## 8. ROUND42 update — same-SoC-class ABL reference tightens the gate
+
+ROUND42 reviewed REG-Linux/edk2-freeabl commit `4cd7fb389e22d7a3761308006fc6d79410be9ddf`, whose project lists SM8250 support validated on a different device. Its standard LinuxLoader `UpdateDeviceTree()` requires `/memory` to exist and returns EFI_NOT_FOUND if absent; `target_dev_tree_mem()` then uses the UEFI RAM Partition Protocol to rewrite the node's `reg`. It does not create `/memory`. This differs from an older SDM660 ABL BDS source that could create a missing node in PrepareFdt(). The source is a reference, not Huawei's HOS4.3 ABL.
+
+That same SM8250 reference optionally scans existing `/reserved-memory` children with `no-map`, subtracts the ranges from RAM partitions, then writes the reduced intervals into `/memory/reg`; it does not synthesize missing reserved-memory children or recover reusable/size/alignment semantics. The feature is conditional on REMOVE_CARVEOUT_REGION. See `kernel-baseline/round42/hos43-memory-handoff-sm8250-abl-fdt-prerequisite.md`.
+
+Updated assessment: the final Huawei post-overlay/post-ABL FDT must be checked for `/memory`; do not leave it out of an ACK DTB relying on generic ABL injection. The HOS4.3 raw/base DTB's missing `/memory` remains non-conclusive about final handoff, but the former positive inference that ABL probably adds it is downgraded. Address/size and the complete reserved-memory set remain UNKNOWN and must not be guessed.

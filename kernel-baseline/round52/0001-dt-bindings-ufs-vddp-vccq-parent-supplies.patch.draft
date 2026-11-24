@@ -48,7 +48,7 @@ diff --git a/Documentation/devicetree/bindings/ufs/qcom,ufs.yaml b/Documentation
 +    minimum: 1
 +    description: Maximum load associated with the VCCQ-parent host consumer.
    reg:
-@@ -83,3 +104,16 @@
+@@ -62,3 +83,16 @@
  allOf:
    - $ref: qcom,ufs-common.yaml
  

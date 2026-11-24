@@ -133,3 +133,8 @@ Main branch:
 ROUND17 subsequently reviews the ACK GENI UART/console path and keeps UART nodes deferred because ttyMSM debug-console and ttyHS regular-UART roles differ. ROUND22 further documents the potential ARC-provider and boot-proxy support port. ROUND18 reviews the same-device legacy boot packaging flow and assigns ROUND12 to check the HOS4.3 AVB footer / vbmeta descriptor scope. Continue GPT-side review of the remaining storage-first DTS/Kconfig and boot packaging plan. Keep the MMCX/CX/MX one-to-one voltage-corner mapping as an explicit open issue until a later consumer-specific OPP audit or permitted runtime validation can close it.
 
 Keep every file suffixed .draft. Keep PR #1 Draft. No device connection, flash, write, root, compile or image packaging.
+
+
+## ROUND27 follow-up — UFS OPP vote route is not established
+
+ACK SM8250 UFS declares required-opps referencing RPMHPD, but OPP core sends the level through the currently attached GenPD. UFS Host currently attaches to GCC UFS_PHY_GDSC. The inspected GCC node has no RPMHPD parent, the GDSC definition has no explicit parent or set_performance_state callback, and GCC registers it standalone in this source topology. Therefore the required-opps declaration is not proof that UFS emits an MMCX/MX ARC vote. Keep the physical UFS GDSC and design a targeted second domain/parent route if required. See ROUND27.

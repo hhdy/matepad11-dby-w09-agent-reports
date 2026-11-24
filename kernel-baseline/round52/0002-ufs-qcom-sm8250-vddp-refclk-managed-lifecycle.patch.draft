@@ -23,27 +23,28 @@ include hunk is written against the post-ROUND33 include list.
 Draft only: not applied to a full tree, checkpatched, compiled, or tested.
 
 ---
- drivers/ufs/host/ufs-qcom.c | 57 +++++++++++++++++++++++++++++++++++++++++++++
- drivers/ufs/host/ufs-qcom.h | 5 +++++
- 2 files changed, 62 insertions(+)
+ drivers/ufs/host/ufs-qcom.c | 73 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.h | 4 ++++
+ 2 files changed, 77 insertions(+)
 
 diff --git a/drivers/ufs/host/ufs-qcom.h b/drivers/ufs/host/ufs-qcom.h
 --- a/drivers/ufs/host/ufs-qcom.h
 +++ b/drivers/ufs/host/ufs-qcom.h
 @@ -316,9 +316,13 @@
  struct gpio_desc;
++struct regulator;
  
  struct ufs_qcom_host {
  	struct phy *generic_phy;
  	struct ufs_hba *hba;
++	struct regulator *vddp_ref_clk;
++	bool vddp_ref_clk_load_set;
++	bool vddp_ref_clk_enabled;
  	struct ufs_pa_layer_attr dev_req_params;
  	struct clk_bulk_data *clks;
  	u32 num_clks;
  	bool is_lane_clks_enabled;
-+	struct ufs_pa_layer_attr dev_req_params;
-+	struct clk_bulk_data *clks;
-+	u32 num_clks;
-+	bool is_lane_clks_enabled;
+
 diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 --- a/drivers/ufs/host/ufs-qcom.c
 +++ b/drivers/ufs/host/ufs-qcom.c
@@ -51,15 +52,15 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
  #include <linux/platform_device.h>
  #include <linux/pm_domain.h>
  #include <linux/pm_opp.h>
++#include <linux/regulator/consumer.h>
  #include <linux/reset-controller.h>
-+#include <linux/reset-controller.h>
-@@ -1497,6 +1497,75 @@
+@@ -1498,6 +1498,75 @@
  	return 0;
  }
  
- /**
-  * ufs_qcom_init - bind phy with controller
-  * @hba: host controller instance
++static void ufs_qcom_vddp_ref_clk_cleanup(void *data)
++{
++	struct ufs_qcom_host *host = data;
 +	struct device *dev = host->hba->dev;
 +	int ret;
 +
@@ -126,17 +127,17 @@ diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
 +	return 0;
 +}
 +
-+/**
-+ * ufs_qcom_init - bind phy with controller
-+ * @hba: host controller instance
-@@ -1578,5 +1647,9 @@
+ /**
+  * ufs_qcom_init - bind phy with controller
+  * @hba: host controller instance
+@@ -1578,5 +1647,8 @@
  	err = ufs_qcom_ice_init(host);
  	if (err)
  		goto out_variant_clear;
  
- 	ufs_qcom_setup_clocks(hba, true, POST_CHANGE);
++	err = ufs_qcom_init_vddp_ref_clk(host);
 +	if (err)
 +		goto out_variant_clear;
 +
-+	ufs_qcom_setup_clocks(hba, true, POST_CHANGE);
+ 	ufs_qcom_setup_clocks(hba, true, POST_CHANGE);
 --

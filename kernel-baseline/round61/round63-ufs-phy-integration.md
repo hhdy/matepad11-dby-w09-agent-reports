@@ -121,3 +121,16 @@ Hosted run `45443465025` (workflow commit `501b9c4d8c23588971e4983a71bbac2eb50f9
 The hosted applied-diff SHA-256 was `d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65`. The diff stat included 123 added lines in `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`, 5 in the PHY binding, 281 in the UFS QCOM driver, 18 net in UFS bindings, 19 in `BUILD.bazel`, and the new config fragment.
 
 The same run then stopped at strict checkpatch with exactly one remaining 75-column commit-description warning (zero errors and zero CHECKs); `CAMELCASE` was successfully ignored as configured. The final description line was wrapped in commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`. Run `45443538190` is now checking the warning-free patch. The UFS/PHY schema stage did not run in run 82 because checkpatch is an earlier gate.
+
+
+## 12. Warning-free hosted checkpatch and Phase-A source gates
+
+Hosted run `45443538190` (commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`) passed:
+- exact immutable ACK source verification;
+- real application of the complete UFS patch series, ROUND63 PHY binding and driver patches, and ROUND58 Kleaf target patch;
+- final `git diff --check`;
+- strict checkpatch for ROUND33, ROUND52-0002 and ROUND63 driver patches (only `CAMELCASE` is ignored for the upstream `init_load_uA` API field);
+- buildifier `-mode=check`;
+- all nine config-helper unit tests.
+
+This closes the ROUND63 source-application/checkpatch gate and Phase A. The same run was still installing dtschema prerequisites when this report was updated; schema/fixture results remain pending. The manifest-pinned Bazel/Image workflow is independent and still running.

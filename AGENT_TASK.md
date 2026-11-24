@@ -293,3 +293,5 @@ The user has explicitly authorized the local Agent to deploy the build environme
 - It must stop before patch application or kernel compilation. Upload only its sanitized text report to `firmware-audit-v1`, then stop.
 
 ROUND54 remains the separate second-AI source review on `ai-parallel/round54-ufs-review`; do not overlap the tasks.
+
+ROUND16 copy/paste start prompt: `firmware-analysis/round16/START_PROMPT.md`.

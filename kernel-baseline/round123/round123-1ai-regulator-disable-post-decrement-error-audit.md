@@ -14,7 +14,7 @@ ROUND122 的本地测试 Agent 报告已从 `firmware-audit-v1` 读回。候选�
 - 固定 ACK commit：`8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。
 - `git apply --check` / apply / `git diff --check` 均 RC=0；报告记载零 offset、零 fuzz；只改 `drivers/ufs/core/ufshcd.c`。
 - `drivers/ufs/core/ufshcd.o`：pristine 与 patched 两份独立构建均 RC=0；目标对象 SHA 不同（pristine `e96226b4…`，patched `4a31b63a…`）。
-- Stage A 构建工作树叠加候选 patch 后，`tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144` 返回 `BUILD_RC=0`；Image SHA-256 `453a46a241ce86bc844f2a886c38942a2fb36aa9ee4573bf17c5ad6454936a7`。构建后恢复了原 Stage A 工作树，Agent 报告中记录的 dirty-line 数恢复为原值。
+- Stage A 构建工作树叠加候选 patch 后，`tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144` 返回 `BUILD_RC=0`；Image SHA-256 `453a46a241ce86bc8445f2a886c38942a2fb36aa9ee4573bf17c5ad6454936a7`。构建后恢复了原 Stage A 工作树，Agent 报告中记录的 dirty-line 数恢复为原值。
 - `checkpatch.pl --strict`：0 errors、0 warnings、2 CHECK，RC=1。两个 CHECK 是原补丁前就存在的 continuation-line 对齐提示；Agent 未修改候选补丁。这应记为“无 error/warning，但仍有 2 个 style CHECK”，不能写成 checkpatch RC=0。
 - 未访问设备、未执行 ADB/fastboot/刷写；未修改 AI2 分支。
 

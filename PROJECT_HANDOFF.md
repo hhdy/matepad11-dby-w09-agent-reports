@@ -1744,3 +1744,17 @@ ROUND27 schema 仍 NOT CLEAN。ROUND84–ROUND90 结论共同构成 2号 AI 处�
 **职责：** ROUND91 是 1号 AI 只读接口/设计审查，仅供 2号 AI 决策；测试 Agent 只有在独立 `AGENT_TEST_TASK.md` 下执行。本轮未修改源码、DTS、binding、补丁、分支，未运行 KMI、构建、schema 或设备测试。
 
 ROUND88 的首次 enable 时序要求仍成立；ROUND91 收窄了建议接入位置。ROUND27 schema 继续 NOT CLEAN。
+
+
+## 2026-11-25 — ROUND92：1号 AI 确认 Qualcomm UFS VCC voltage-level binding 作用范围
+
+报告：[ROUND92 — 1号 AI source review: place the VCC voltage-range schema in Qualcomm UFS common binding](./kernel-baseline/round92/round92-1ai-qcom-ufs-vcc-voltage-binding-scope-and-validation.md)。
+
+- 固定 ACK 的 `qcom,ufs.yaml` 通过 allOf 引入 `qcom,ufs-common.yaml`，并使用 `unevaluatedProperties: false`；`qcom,ufs-common.yaml` 再引入 vendor-neutral `ufs-common.yaml`。
+- vendor-neutral `ufs-common.yaml` 定义所有 UFS host 的 VCC/VCCQ supply 和 max-microamp 属性；不能把 Qualcomm legacy 的 `vcc-voltage-level` 扩展到所有厂商控制器。
+- **推荐 schema 放置点为 `Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml`**：它只作用于 Qualcomm UFS host family，又会经 qcom,ufs.yaml 的 allOf 被实际 DBY-W09 节点识别。运行复验时仍需先包含 ROUND32 对 `qcom,sm8250-ufshc` 的 compatible 修正。
+- 建议属性声明为 exactly two u32、两个值均大于零、单位 µV。单个 JSON schema 的逐项约束无法直接表达第 0 项 <= 第 1 项；此关系应在 driver parser 中检查。driver 对 property present-but-malformed 或没有 VCC supply descriptor 的情况必须在首次 enable 前 fail fast。
+- schema-only 变更不够，必须与 ROUND88/91 的早期解析、ROUND84/89 电压 request lifecycle、ROUND90 DRMS 关闭错误处理成套实现。
+- 本轮只做固定 ACK binding 继承关系审查，未修改 schema/DTS/driver/补丁/分支，未执行 dt_binding_check、dtbs_check 或设备测试。
+
+**ROUND27 schema 仍 NOT CLEAN**，本报告仅给出 Qualcomm VCC 属性的正确 binding scope，不表示已经修复或验证通过。

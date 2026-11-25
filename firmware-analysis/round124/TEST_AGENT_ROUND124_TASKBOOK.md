@@ -73,6 +73,10 @@ Do not make any branch checkout, commit, or mutation in shared workspaces. Use a
 - No public UFS struct layout, Kconfig, DTS, regulator core, binding, config, AVB, boot packaging or firmware changes are introduced by these two candidate patches.
 - No Stage A patch was edited to accommodate these candidates.
 
+## Device-connection approval gate (explicit user instruction)
+
+If any requested test, diagnosis, build validation, or evidence collection appears to require connecting the Huawei MatePad DBY-W09 by USB, ADB, fastboot, serial, or another device interface, the Agent must STOP before making the connection or issuing any device command. The Agent must report exactly what access is needed and why; 1号 AI must notify the user and obtain the user's explicit authorization before a separate device taskbook is issued. Do not interpret a general instruction to continue testing as permission to connect the tablet. This gate applies even to read-only device access.
+
 ## 5. Prohibited actions
 
 - Do not author, edit, reformat, regenerate, or repair either kernel patch.

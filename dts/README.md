@@ -150,3 +150,17 @@ The rev2 candidate is not compiled or schema-validated and is not an input to th
 The source/API design note is [ROUND68](../kernel-baseline/round68/round68-kleaf-dtb-dtbo-build-graph.md). It distinguishes base dtb(), overlay dtbo(), composite resolution via dtb_composite(), and DTBO partition packaging via Kleaf dtbo_image(). Do not confuse dtb_image() with DTBO partition packaging. Base DTB needs generate_symbols=True for the rootparam overlay.
 
 The HOS4.3 DTBO table header metadata is separate from compiling overlay DTS: stock page_size is 4096; entry 8 candidate is id 0x206a / rev 0. Any future package must set and verify dt_table_entry metadata separately, and the actual device variant must be confirmed first. This is not a package-ready result.
+
+
+## ROUND22 / ROUND23 status
+
+ROUND22 proved the original one-domain board DTS draft compiles from a byte-identical temporary copy: cpp and dtc 1.7.0 both exit 0; 32 warnings are inherited from pinned sm8250.dtsi and none originate in the draft. This did not test the newer rev2 candidate or rootparam overlay.
+
+ROUND22 also clarified:
+- qcom,vddp-ref-clk has a real patched ACK UFS Host consumer;
+- qcom,vccq-parent-supply is schema-only metadata with no runtime consumer in the current Image;
+- vdd-hba-to-GDSC is not an ACK regulator supply and remains absent;
+- one-domain UFS DTS does not activate the ROUND33 MMCX required-opps mapping;
+- PM8150 physical input parents remain unknown despite schema optionality and dummy regulator fallback.
+
+ROUND23 now checks the current board rev2 candidate plus the restored VG-only rootparam overlay with temporary cpp/dtc compilation and fdtoverlay composite application. It is not a Kleaf target, DTBO partition package or ABL selection test.

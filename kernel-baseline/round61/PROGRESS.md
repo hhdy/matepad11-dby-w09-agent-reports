@@ -19,6 +19,8 @@
 | F — boot image / ramdisk / AVB | BLOCKED | ROUND62 same-device cross-reference warns fastboot RAM boot may be refused, but exact HOS4.3 AVB/footer/partition metadata and ABL behavior remain unverified. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
+Phase E blocker report: `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (committed 2026-11-25). It records the exact missing HOS4.3 final ABL memory handoff and physical PM8150 input-parent evidence, and keeps the DTS draft review-only.
+
 ## 2026-11-24 execution evidence
 
 ### Real source patch and driver style checks
@@ -441,3 +443,8 @@ A post-report poll confirmed that the formerly in-progress duplicate run `454552
 - `Image`: 44,820,992 B, SHA-256 `8a90e4fa5bd77ce266e9c095cc8e451815cf10bf27099c6e408e6b865a8747de`.
 
 This is an additional successful Image-build result, but remains the accidental duplicate started by the 18:03Z watchdog push. Its log's manually reported first-on-disk Clang path (`clang-3289846`) is not accepted as proof of the compiler selected by Kleaf. The corrected nine-stage run remains the validation of deterministic, exact-version toolchain discovery.
+
+
+### Phase E — board DTS and memory/power handoff blocker report committed
+
+Second AI inspected the current board draft and committed `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (commit `3cb01092277b0750faa534160639fc81bf128b68`). The report preserves the two hard blockers: no evidenced final HOS4.3 ABL-to-Linux memory handoff (or EFI memory-map handoff), and no source-backed physical PM8150 VRM input-parent map. It distinguishes the HOS ARC/proxy graph from physical VRM inputs and records a narrow read-only evidence request for the local Agent. No DTS source input, DTB target, memory address or regulator parent was invented.

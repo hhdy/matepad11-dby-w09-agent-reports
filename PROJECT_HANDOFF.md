@@ -1430,7 +1430,9 @@ Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placehold
 
 ## 2026-11-25 — ROUND27 queued behind ROUND25/ROUND26: Kleaf/Bazel three-target DT build + composite schema validation
 
-**Authoritative start gate (user-confirmed): ROUND25 and ROUND26 must both be completed by their assigned responsible party and uploaded to `firmware-audit-v1`. The primary AI must then read and review both reports before ROUND27 is issued or resumed. Do not dispatch ROUND27 early, do not treat task-file creation as completion, and do not assume an unuploaded report exists.**
+**Authoritative start gate (user instruction): ROUND25 and ROUND26 must both be completed by the responsible local Agent and uploaded to `firmware-audit-v1`. The primary AI (ChatGPT) must then read and review both reports before ROUND27 is issued or resumed. Do not dispatch ROUND27 early, do not treat task-file creation as completion, and do not assume an unuploaded report exists.**
+
+**Execution ownership clarification (2026-11-25):** The sentence “届时我可以直接执行完整的 Kleaf/Bazel 三目标构建与 composite schema 验证” was written by the local Agent to the user. “我” refers to that local Agent, not the user. Once ROUND25/ROUND26 are uploaded and pass primary-AI review, ROUND27 is to be handed back to the local Agent to execute the three-target Kleaf/Bazel DT build and composite schema validation. The user is not being asked to run those commands personally.
 
 Repository status checked on 2026-11-25:
 - `main` contains the ROUND25 and ROUND26 task instructions and the queued ROUND27 task instructions.
@@ -1438,10 +1440,10 @@ Repository status checked on 2026-11-25:
 - Therefore ROUND25/ROUND26 are still awaiting uploaded deliverables and primary-AI review; ROUND27 status is **QUEUED / NOT_STARTED**.
 
 Required sequence:
-1. Assigned responsible party completes ROUND25 read-only HOS4.3 MMCX/MX ARC request/dropout semantics audit and uploads `firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt` to `firmware-audit-v1`.
-2. Assigned responsible party completes ROUND26 read-only inherited SM8250 vs HOS4.3 reserved-memory interval comparison and uploads `firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt` to `firmware-audit-v1`.
+1. The responsible local Agent completes the ROUND25 read-only HOS4.3 MMCX/MX ARC request/dropout semantics audit and uploads `firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt` to `firmware-audit-v1`.
+2. The responsible local Agent completes the ROUND26 read-only inherited SM8250 vs HOS4.3 reserved-memory interval comparison and uploads `firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt` to `firmware-audit-v1`.
 3. Primary AI opens both exact uploaded files, checks evidence/completeness/privacy boundaries, reviews the implications for the current rev2 DTS/UFS and memory gates, and records the review decision.
-4. Only after both reports are present and reviewed may ROUND27 be dispatched/resumed using its existing task file. If either report is missing, blocked, or materially incomplete, ROUND27 stays NOT_STARTED until the primary AI decides the remaining gate.
+4. Only after both reports are present and reviewed may ROUND27 be handed back to the local Agent for execution using its existing task file. If either report is missing, blocked, or materially incomplete, ROUND27 stays NOT_STARTED until the primary AI decides the remaining gate.
 
 Why ROUND27 is next:
 - ROUND22 validated the original board DTS syntax with cpp + dtc.

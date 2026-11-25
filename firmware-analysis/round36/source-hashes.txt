@@ -1,0 +1,103 @@
+# ROUND36 — source hash register
+# ---------------------------------------------------------------------------
+# Audited by : 2号 AI (local agent)
+# Date       : 2026-11-26
+# Method     : read-only. No build, no firmware upload, no device access, and
+#              no modification of any registered input.
+# Columns    : sha256 | bytes | lines | git blob | path
+#   sha256   = sha256sum of the file bytes as committed on the pinned commit
+#   git blob = git rev-parse <commit>:<path>
+# Line numbers quoted in the ROUND36 matrices are 1-based on these exact blobs.
+# ---------------------------------------------------------------------------
+
+TREE_ACK_COMMIT        8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+TREE_REPORT_BRANCH     firmware-audit-v1
+TREE_REPORT_COMMIT     be4f5178c41b4a26c5bc5f5658244e3470d82151
+TREE_STAGEA_BRANCH     ai-parallel/stagea-port-until-boot
+TREE_STAGEA_COMMIT     f0b00e38c8222be14adfb21f122db7f8cac94c14
+
+===========================================================================
+[1] firmware-audit-v1 @ be4f5178c41b4a26c5bc5f5658244e3470d82151
+===========================================================================
+a64af1ad2901b05500f7ae83b779ba454c069975033dcb9a3ba15da1885f60fd      8374      73  56e32d7989157d6c4eab22cb8ddf8a83a9c2f960  firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md
+19d66c3052ce6dbd3fcca64a782e6fac99a79abaaf57491691b7b809bc03f250     25519     349  a0167df755521fa583b4ce3f73b1b2260306b426  firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt
+ca1b1e68486743a762959d171d2cfa023400d194dcca181c1a8f07f682cf0c3a     16808     276  e55ecacaf0b345971062142765fd36e46551484e  firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt
+a0e38aa2b70ceff2d6f009844960c96cf3af7d1ad0d5705d8b6914565b2016d6     45194     802  c96b30ca763b29dcc58aada6e93c25faaea8e34d  firmware-analysis/round19/round19_hos43_boot_ramdisk_avb_dtbo_audit.txt
+f9838d90a6c5dacc9bebb8adf4a354518ada5e31b03342fbaf39aa23c0727fb7     66351    1273  4ff1928bd1cc3043f3908b69289503d5650ab900  firmware-analysis/round20/round20_efi_stub_memory_handoff_and_boot_payload_compatibility.txt
+0e650a1c7bb5acb435379a825d495a6e90cdc57bb51c11824b1f613810d3e2d0      6719     113  1ef1606f6c73ea82d838ce49f1522ff565a75ddf  firmware-analysis/round11/round11_pmic_parent_supply_findings.txt
+ec99c71e93cdfbcbda0493915e82006c668615f4a198459c3794e46bbb862588     23844     419  c3dd45dac71ee45e34697b1fb78abccc40f94b26  firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt
+6a510c2d65536f2ab8ec51aa9d45b6077a0f57e4e22b98aa6145f23e487b0e59      6514      55  8e3b8c79d1b81289438e86b26996948095358720  firmware-analysis/round7/dby_w09_hw_matrix.txt
+94bd996c0384276ba3ee21c8333f2950b116648de95979b460affa7e64df277b   1094393    7938  991020d8e63b91b24352cbe01cdafeb8631ac03c  firmware-analysis/round7/dtb_property_inventory.csv
+266c9fdc7639c9d663e71dcc6a36d4867fa05454e84e14525cfb98dfd6460030      1472      10  d9960ad458383a07649f5ea61395642cdf7dfad7  firmware-analysis/round7/dtbo_board_rootparam_matrix.csv
+6d796daaf119e511c834ed328eeb4efce408ca91ec603c64e38543aee96546b9       543       9  82cd694be17b6cf92a8ec8239656576a622baf03  round2-adb/live_dtb_status.txt
+27a6c3cee4743faff50dc04ec2a71162a460d456663e1e2507d0670d354dcba5      7006     119  05474b3dfac7a990e852293369bab286288de6b7  round2-adb/devicetree_nodes_redacted.txt
+202d2c5406d9dc186390f75a578776012a3278fb527b02d1a848b6f66bf52d49      4478      84  2093b3887ff2c33fbb9b5ba22962e6f9592e1d6f  round2-adb/devicetree_base_redacted.txt
+d24f20c03fccbf289ee20cb714b9a86e379b85f6276ee38d18488e4ce19a5293      6266      88  6900dafe0888c3c263bb71525ea8ad49ad8e35a4  round2-adb/partition_names_redacted.txt
+780b1eb4ef157d9b6201d669b4441701bdfce7036f4fd52dfd66a968d7fe66fe      6855      89  ce0ff9f4f04cf6eff0c6c8d645a3675f9a0b3b6e  firmware-analysis/round36/AI2_ROUND36_TASKBOOK.md
+
+===========================================================================
+[2] ai-parallel/stagea-port-until-boot @ f0b00e38c8222be14adfb21f122db7f8cac94c14
+===========================================================================
+ddcaa362be90ebd6efadfbcb4aafd53f5478d72056abf5375f81aedfbec6d40e      8829     113  06f91fdf6853b382dfe8fd8da7a83c7aaf24c902  kernel-baseline/round19/hos43-memory-reserved-memory-handoff-review.md
+1c7b6ec6c8799b901e79171f9a26c699adc773c375d406c1f0aab98cffa07b99     10833     129  3402acb92c7fe794fbb106097e00c81e87bcc845  kernel-baseline/round21/ack-pm8150-vrm-parent-supply-gap.md
+9649060765c61356d239026b720a774f500d981cbe6597bbff10f0a04fc1e940     15554     165  1ba87a9079f00aed370c82d3b9a1c8c76ded1c24  kernel-baseline/round42/hos43-memory-handoff-sm8250-abl-fdt-prerequisite.md
+4214e421f1d59b5bd34207b65e2de4105217efaa03978492973c11a96f644c33     13132     159  2a89fdf94ec59d4744d6b2eb752760737c34da53  kernel-baseline/round43/ack-6.18.33-fdt-memory-scan-classic-vs-efi-handoff.md
+ca03cc4bb3e28e00e00013d2b82361a454565072ad873d06a1d08b4d7d99acb1      5565      56  3e9f18db04ec4833dd4b033570a816482489cb7b  kernel-baseline/round61/phase-e-board-dts-memory-power-gates.md
+72e67fde885c026dae0e8e18aa13fd6ce796391471865c0976529108294d5efc     14661     320  dd9035083458ea6ccdb5fdd852b7a1860509fbaf  dts/dby-w09-ack18-board.dts.draft
+
+===========================================================================
+[3] ACK android17-6.18.33_r00 @ 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    Hashed from the ACK baseline blob (git show <commit>:<path>), never
+    from a patched work tree. See section [4] for the work-tree deltas.
+===========================================================================
+59eb93ddc319aaf1890c2e6a5d061c3a6957a2b996c1cacaebe9a64d94fa3c5d     67948    1751  109f0aae09b1df431d2e14d45a64d115e87cdec4  drivers/regulator/qcom-rpmh-regulator.c
+30b5dd3ac1da623d71a30bb6cf76dc58c2e532dddcf7e1a7688dddaa86e5a9f6    173934    6608  39d317ad73a33c4aa27e179cc436d8bf4daf5bcc  drivers/regulator/core.c
+be908adff3009a50bae78177a715ae55af3c4d82403ed8e1006f15f3733f8ca2     15755     558  4c5b0629aa3e622579b54a226785139a0b986079  Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+
+===========================================================================
+[4] Notes on the ACK source rows in section [3]
+===========================================================================
+The three files were hashed from their baseline blobs at the pinned commit, so
+the hashes above are pristine android17-6.18.33_r00 content. Two of them are
+modified in the local patched work tree used to read them (the 17 frozen
+production patches plus the ROUND35S KUnit seam). No cited line is affected:
+
+  drivers/regulator/qcom-rpmh-regulator.c
+      byte-identical to the ACK baseline. Work-tree lines 447 (supply_name
+      assignment), 907-912 (RPMH_VREG macro), 980-1010 (pm8150_vreg_data) and
+      1012-1034 (pm8150l_vreg_data) are ACK lines.
+
+  drivers/regulator/core.c
+      work-tree additions are confined to two hunks whose new-side ranges begin
+      at 6000 and 6056 (@@ -5999,0 +6000,3 @@ and @@ -6052,0 +6056,10 @@),
+      i.e. entirely after every line cited here. The patched copy has 6621
+      lines against the baseline's 6608. Lines 114-117 (have_full_constraints),
+      2070-2091 and 2227-2238 are identical to the baseline.
+
+  Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+      the work-tree copy carries +46 lines of proxy-consumer binding text (604
+      lines against the baseline's 558). Every line cited by this round
+      (136-138 required:, 162/170/172 pm8150l branch, 282/289/290/294 pm8150
+      branch) is a BASELINE line number referring to the 558-line blob hashed
+      above, not to the patched copy.
+
+===========================================================================
+[5] Searched-but-not-registered
+===========================================================================
+Other files under firmware-analysis/ and kernel-baseline/ exist and were listed
+during the search but support no row of the ROUND36 matrices, so they are not
+registered here. Nothing was omitted in order to hide a contrary finding: the
+conflict register in AI2_ROUND36_EVIDENCE_AUDIT.md §5 lists every discrepancy
+found, including the two that change a previously published number or
+statement.
+
+===========================================================================
+[6] Reproduction
+===========================================================================
+  git -C <tree> rev-parse HEAD
+  git -C <tree> rev-parse <commit>:<path>
+  sha256sum <tree>/<path>
+  wc -l <tree>/<path>
+
+Every value above was produced by exactly those commands on 2026-11-26, with no
+line-ending normalisation and no text conversion.

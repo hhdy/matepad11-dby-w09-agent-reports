@@ -1,0 +1,57 @@
+AI1 ROUND129 COMBINED UFS RAIL LIFECYCLE CANDIDATE SERIES
+========================================================
+Owner: AI1 (ChatGPT)
+Status: ACCEPTED AS ISOLATED BUILDABLE CANDIDATE SERIES
+Do NOT merge into AI2 branch without explicit review/coordination.
+
+Base:
+  Repository: aosp-mirror/kernel_common
+  ACK tag: android17-6.18.33_r00
+  ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  Stage A snapshot: 2f21233148a04afdd61e44b1be7688399967d9d0
+  Existing Stage A series: kernel-baseline/round61/round32-stagea-series.txt
+  Existing base series length: 17 patches
+
+Apply this AI1 candidate overlay only after all 17 Stage A patches:
+  18. 0001-qmp-ufs-rail-state-v2.patch
+      Source branch: ai1/round128-qmp-ufs-rail-state-v2
+      Original file: kernel-baseline/round128/0001-qmp-ufs-rail-state-v2.patch
+      Git blob: 22ccec1cabf2d78e61442d19219985135f8341e7
+      SHA-256: 53ef42bb997a46e776f65c256039b13285047f784fed506ab8b22ab7f76e3bfb
+      Touches: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+  19. 0002-proxy-consumer-load-first.patch
+      Source branch: ai1/round126-proxy-consumer-load-first
+      Original file: kernel-baseline/round126/0001-proxy-consumer-load-first.patch
+      Git blob: c180dbf458403d68b2c32c1d54776a7559e7e5db
+      SHA-256: eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80
+      Touches: drivers/regulator/proxy-consumer.c
+
+Validation:
+  Agent report: firmware-analysis/round129/TEST_AGENT_ROUND129_COMBINED_REPORT.txt
+  Report blob: ab49a598194aae6af5a13772c62731dcac7a6690
+  Result: all technical gates PASS.
+  19/19 patch identities and applies; host tests 38/38 + 83/83;
+  target object compiles both PASS; full Kleaf Image build BUILD_RC=0;
+  config SHA-256 unchanged at
+    0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15;
+  ROUND58 config 33/33 and helper tests 11/11; overlay restore hash PASS.
+
+Checkpatch disclosure:
+  ROUND128 V2: RC=1, 0 errors, 1 warning, 0 CHECKs (commit subject line >75 chars).
+  ROUND126: RC=1, 0 errors, 0 warnings, 1 CHECK (existing current_uA field naming).
+  Do not call this a fully clean checkpatch series.
+
+Artifact reference (not uploaded):
+  Image SHA-256 2cbc52182c2addefbfa0bb91eb27953f1c5444ee4fefb51c6b7626af20c0ba35
+  System.map SHA-256 8db5aed4b083a37b6939ac74474833789d3113e45a97f99afed4fecbe8ca2ad3
+  vmlinux SHA-256 a8a18801058e903566ad1d14d4422cf6b8c7af6fcb484b0c6b1fe72964f42e2a
+
+Limits:
+  - This proves source/apply/host-test/object-compile/full-build/config gates only.
+  - It does NOT prove hardware behavior, PMIC physical topology, regulator rail
+    voltage, ABL/FDT/EFI memory handoff, boot, or UFS runtime stability.
+  - Existing generic regulator post-decrement/parent-coupling uncertainty remains.
+  - The devm cleanup callback is void and cannot veto managed regulator_put;
+    persistent failure may still produce a nonzero enable_count warning.
+  - No device connection, device command, flash, boot, root, unlock or partition
+    access occurred. Phase E/F remain BLOCKED; Phase G NOT RUN.

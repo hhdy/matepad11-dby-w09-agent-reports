@@ -1,0 +1,402 @@
+From 25d73e033b5116ca8bab8b03186a073db771342c Mon Sep 17 00:00:00 2001
+From: hhdy <103477680+hhdy@users.noreply.github.com>
+Date: Wed, 25 Nov 2026 20:46:50 +0800
+Subject: [PATCH 1/3] regulator: scope boot proxy consumers to the regulator
+ child node
+
+ACK registers a whole PM8150 as one platform device, so the ROUND31
+group-level helper could resolve only one proxy target per provider:
+every child of the flattened pm8150-rpmh-regulators node voted on the
+same regulator, which made it impossible to give the HOS4.3 L5 and L9
+requests their own targets.
+
+Introduce a child-scoped mapping: when the regulator child node itself
+carries a "proxy-supply" phandle, the helper resolves the target with
+of_regulator_get() on that child node (the pinned core already exports
+this regulator-by-device-node API with full refcounting and
+-EPROBE_DEFER semantics).  Children without a child-scoped proxy-supply
+keep the ROUND31 group-level regulator_get() lookup unchanged.  Mixing
+a provider-level and a child-level proxy-supply on one provider is
+ambiguous and is rejected with -EINVAL instead of silently resolving.
+
+A target that is not registered yet (or whose coupling is unresolved)
+parks the request as deferred with no vote made; a late_initcall retry
+gives it one more chance before the late_initcall_sync bulk revoke
+drops it.  Each child keeps an independent consumer object, so
+individual unregistration withdraws only its own votes.
+
+The Kconfig symbol now depends on OF because the child-scoped path uses
+of_regulator_get(), which has no !OF stub.
+
+Signed-off-by: hhdy <103477680+hhdy@users.noreply.github.com>
+---
+ drivers/regulator/Kconfig          |   5 +-
+ drivers/regulator/proxy-consumer.c | 250 +++++++++++++++++++++++------
+ 2 files changed, 204 insertions(+), 51 deletions(-)
+
+diff --git a/drivers/regulator/Kconfig b/drivers/regulator/Kconfig
+index 1eb68d402fe2..5ec1874c6b24 100644
+--- a/drivers/regulator/Kconfig
++++ b/drivers/regulator/Kconfig
+@@ -58,13 +58,16 @@ config REGULATOR_USERSPACE_CONSUMER
+ 
+ config REGULATOR_PROXY_CONSUMER
+ 	bool "Boot time regulator proxy consumer support"
++	depends on OF
+ 	help
+ 	  This driver provides support for boot time regulator proxy requests.
+ 	  It can enforce a specified voltage range, set a minimum current,
+ 	  and/or keep a regulator enabled.  It is needed in circumstances where
+ 	  reducing one or more of these three quantities will cause hardware to
+ 	  stop working if performed before the driver managing the hardware has
+-	  probed.
++	  probed.  Proxy targets are resolved from device tree "proxy-supply"
++	  phandles, either scoped to the regulator child node or declared on
++	  the provider node.
+ 
+ 	  If unsure, say no.
+ 
+diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
+index 1e0236cb04e7..380884892539 100644
+--- a/drivers/regulator/proxy-consumer.c
++++ b/drivers/regulator/proxy-consumer.c
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * Copyright (c) 2013-2014, 2016, The Linux Foundation. All rights reserved.
++ * Copyright (c) 2026, DBY-W09 Stage A port.
+  */
+ 
+ #define pr_fmt(fmt) "%s: " fmt, __func__
+@@ -21,6 +22,11 @@ struct proxy_consumer {
+ 	struct list_head	list;
+ 	struct regulator_dev	*rdev;
+ 	struct regulator	*reg;
++	/* Consumer context kept for deferred (re)acquisition. */
++	struct device		*reg_dev;
++	struct device_node	*reg_node;
++	bool			child_scoped;
++	bool			deferred;
+ 	bool			enable;
+ 	bool			voltage_set;
+ 	int			min_uV;
+@@ -113,21 +119,100 @@ static int proxy_consumer_parse(struct device *reg_dev,
+ 	return 0;
+ }
+ 
++/* Apply the parsed request to the handle.  On failure every partially
++ * applied vote is withdrawn in reverse order before returning the error.
++ */
++static int proxy_consumer_apply_votes(struct device *reg_dev,
++				      struct proxy_consumer *consumer)
++{
++	const char *reg_name = "";
++	int rc;
++	int ret = 0;
++
++	if (dev_name(reg_dev))
++		reg_name = dev_name(reg_dev);
++
++	if (consumer->voltage_set) {
++		rc = regulator_set_voltage(consumer->reg, consumer->min_uV,
++					   consumer->max_uV);
++		if (rc) {
++			pr_err("regulator_set_voltage %s failed, rc=%d\n",
++			       reg_name, rc);
++			return rc;
++		}
++	}
++
++	if (consumer->current_uA > 0) {
++		rc = regulator_set_load(consumer->reg, consumer->current_uA);
++		if (rc < 0) {
++			pr_err("regulator_set_load %s failed, rc=%d\n",
++			       reg_name, rc);
++			ret = rc;
++			goto unwind_voltage;
++		}
++	}
++
++	if (consumer->enable) {
++		rc = regulator_enable(consumer->reg);
++		if (rc) {
++			pr_err("regulator_enable %s failed, rc=%d\n",
++			       reg_name, rc);
++			ret = rc;
++			goto unwind_load;
++		}
++	}
++
++	return 0;
++
++unwind_load:
++	if (consumer->current_uA > 0)
++		regulator_set_load(consumer->reg, 0);
++unwind_voltage:
++	if (consumer->voltage_set)
++		regulator_set_voltage(consumer->reg, 0, INT_MAX);
++	return ret;
++}
++
++/* Resolve the proxy target handle for one consumer.  Child-scoped mode
++ * reads the "proxy-supply" phandle from the regulator child node itself;
++ * legacy group-level mode falls back to regulator_get() on the provider
++ * device exactly as the ROUND31 helper did.
++ */
++static struct regulator *proxy_consumer_get(struct proxy_consumer *consumer)
++{
++	if (consumer->child_scoped)
++		return of_regulator_get(consumer->reg_dev, consumer->reg_node,
++					"proxy");
++
++	return regulator_get(consumer->reg_dev, "proxy");
++}
++
+ /**
+  * regulator_proxy_consumer_register() - conditionally register a proxy consumer
+  *		 for the specified regulator and set its boot time parameters
+- * @reg_dev:		Device pointer of the regulator provider node, used to
+- *			resolve the "proxy" supply
+- * @reg_node:		Device node pointer of the regulator itself; the
+- *			qcom,proxy-consumer-* properties are read from here
+- * @rdev:		Regulator device that owns this proxy consumer
++ * @reg_dev:	Device pointer of the regulator provider node, used to
++ *		resolve a group-level "proxy" supply and for messages
++ * @reg_node:	Device node pointer of the regulator itself; the
++ *		qcom,proxy-consumer-* properties are read from here and a
++ *		child-scoped "proxy-supply" phandle is resolved from here
++ * @rdev:	Regulator device that owns this proxy consumer
++ *
++ * Mapping rules:
++ *  - If the child node carries "proxy-supply", the handle targets exactly
++ *    the regulator named by that phandle (child-scoped mapping).  This is
++ *    what lets two children of the same flattened PM8150 provider device
++ *    vote on two different regulators.
++ *  - If the child node carries no "proxy-supply", the legacy group-level
++ *    lookup regulator_get(reg_dev, "proxy") is used unchanged.
++ *  - Declaring "proxy-supply" on both the child and the provider node is
++ *    ambiguous and is rejected with -EINVAL instead of being silently
++ *    resolved.
+  *
+- * Returns a struct proxy_consumer pointer corresponding to the regulator on
+- * success, ERR_PTR() if an error occurred, or NULL if no proxy consumer is
+- * needed for the regulator.  This function calls regulator_get(reg_dev, "proxy")
+- * after first checking if any proxy consumer properties are present in the
+- * reg_node device node.  After that, the voltage, minimum current, and/or the
+- * enable state will be set based upon the device node property values.
++ * If the target is not registered yet (or its coupling is unresolved) the
++ * request is parked as deferred and retried once from a late_initcall
++ * before the late_initcall_sync bulk revoke.  Returns a struct
++ * proxy_consumer pointer on success (deferred consumers included),
++ * ERR_PTR() on error, or NULL if no proxy consumer is needed.
+  */
+ struct proxy_consumer *
+ regulator_proxy_consumer_register(struct device *reg_dev,
+@@ -135,7 +220,9 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+ 				  struct regulator_dev *rdev)
+ {
+ 	struct proxy_consumer *consumer;
++	struct device_node *group_node;
+ 	const char *reg_name = "";
++	bool child_scoped;
+ 	int rc;
+ 
+ 	/* Return immediately if no proxy consumer properties are specified. */
+@@ -150,6 +237,18 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+ 		goto unlock;
+ 	}
+ 
++	group_node = dev_of_node(reg_dev);
++	child_scoped = of_property_present(reg_node, "proxy-supply");
++
++	if (child_scoped && group_node &&
++	    of_property_present(group_node, "proxy-supply")) {
++		dev_err(reg_dev,
++			"%pOF: child-scoped and group-level proxy-supply are mutually exclusive\n",
++			reg_node);
++		rc = -EINVAL;
++		goto unlock;
++	}
++
+ 	if (dev_name(reg_dev))
+ 		reg_name = dev_name(reg_dev);
+ 
+@@ -161,62 +260,49 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+ 
+ 	INIT_LIST_HEAD(&consumer->list);
+ 	consumer->rdev = rdev;
++	consumer->reg_dev = reg_dev;
++	consumer->reg_node = reg_node;
++	consumer->child_scoped = child_scoped;
+ 
+ 	rc = proxy_consumer_parse(reg_dev, reg_node, consumer);
+ 	if (rc)
+ 		goto free;
+ 
+ 	dev_dbg(reg_dev,
+-		"proxy consumer request: enable=%d, voltage_range=[%d, %d] uV, min_current=%d uA\n",
+-		consumer->enable, consumer->min_uV, consumer->max_uV,
+-		consumer->current_uA);
++		"proxy consumer request: child_scoped=%d, enable=%d, voltage_range=[%d, %d] uV, min_current=%d uA\n",
++		child_scoped, consumer->enable, consumer->min_uV,
++		consumer->max_uV, consumer->current_uA);
+ 
+-	consumer->reg = regulator_get(reg_dev, "proxy");
++	consumer->reg = proxy_consumer_get(consumer);
+ 	if (IS_ERR_OR_NULL(consumer->reg)) {
+ 		rc = consumer->reg ? PTR_ERR(consumer->reg) : -ENODEV;
+-		pr_err("regulator_get(\"proxy\") failed for %s, rc=%d\n",
++		if (rc == -EPROBE_DEFER) {
++			/* The target node exists but its regulator is not
++			 * registered (or coupled) yet.  Park the request
++			 * without voting; late_initcall retries it once.
++			 */
++			consumer->reg = NULL;
++			consumer->deferred = true;
++			list_add_tail(&consumer->list, &proxy_consumer_list);
++			mutex_unlock(&proxy_consumer_list_mutex);
++			pr_info("proxy target for %s deferred, will retry before late_initcall_sync\n",
++				reg_name);
++			return consumer;
++		}
++		pr_err("proxy regulator_get failed for %s, rc=%d\n",
+ 		       reg_name, rc);
+ 		goto free;
+ 	}
+ 
+-	if (consumer->voltage_set) {
+-		rc = regulator_set_voltage(consumer->reg, consumer->min_uV,
+-					   consumer->max_uV);
+-		if (rc) {
+-			pr_err("regulator_set_voltage %s failed, rc=%d\n",
+-			       reg_name, rc);
+-			goto free_regulator;
+-		}
+-	}
+-
+-	if (consumer->current_uA > 0) {
+-		rc = regulator_set_load(consumer->reg, consumer->current_uA);
+-		if (rc < 0) {
+-			pr_err("regulator_set_load %s failed, rc=%d\n",
+-			       reg_name, rc);
+-			goto remove_voltage;
+-		}
+-	}
+-
+-	if (consumer->enable) {
+-		rc = regulator_enable(consumer->reg);
+-		if (rc) {
+-			pr_err("regulator_enable %s failed, rc=%d\n",
+-			       reg_name, rc);
+-			goto remove_current;
+-		}
+-	}
++	rc = proxy_consumer_apply_votes(reg_dev, consumer);
++	if (rc)
++		goto free_regulator;
+ 
+ 	list_add_tail(&consumer->list, &proxy_consumer_list);
+ 	mutex_unlock(&proxy_consumer_list_mutex);
+ 
+ 	return consumer;
+ 
+-remove_current:
+-	regulator_set_load(consumer->reg, 0);
+-remove_voltage:
+-	if (consumer->voltage_set)
+-		regulator_set_voltage(consumer->reg, 0, INT_MAX);
+ free_regulator:
+ 	regulator_put(consumer->reg);
+ free:
+@@ -235,6 +321,18 @@ static int regulator_proxy_consumer_remove(struct proxy_consumer *consumer)
+ 	if (consumer->rdev)
+ 		consumer->rdev->proxy_consumer = NULL;
+ 
++	if (!consumer->reg) {
++		/* Deferred consumer whose target never appeared: no vote
++		 * was ever made, so there is nothing to withdraw.
++		 */
++		if (consumer->deferred)
++			pr_info("dropping deferred proxy consumer for %pOF without voting\n",
++				consumer->reg_node);
++		list_del(&consumer->list);
++		kfree(consumer);
++		return 0;
++	}
++
+ 	if (consumer->enable) {
+ 		ret = regulator_disable(consumer->reg);
+ 		if (ret) {
+@@ -273,8 +371,9 @@ static int regulator_proxy_consumer_remove(struct proxy_consumer *consumer)
+  *
+  * This function removes all requests made by the proxy consumer owned by
+  * @rdev and then frees the consumer's resources.  It is safe to call when
+- * @rdev has no proxy consumer, when registration failed, and after the
+- * late_initcall_sync bulk removal has already run.
++ * @rdev has no proxy consumer, when registration failed, when the consumer
++ * is still deferred (nothing was voted), and after the late_initcall_sync
++ * bulk removal has already run.
+  */
+ void regulator_proxy_consumer_unregister(struct regulator_dev *rdev)
+ {
+@@ -291,6 +390,57 @@ void regulator_proxy_consumer_unregister(struct regulator_dev *rdev)
+ 	mutex_unlock(&proxy_consumer_list_mutex);
+ }
+ 
++/*
++ * Give deferred consumers one more chance before the bulk revoke.  This
++ * covers child-scoped self-targets whose coupling had not resolved yet and
++ * targets registered after their consumer.  Runs at late_initcall, i.e.
++ * strictly before the late_initcall_sync bulk revoke and before the
++ * regulator core's delayed unused-regulator cleanup window closes; each
++ * still-deferred consumer is dropped by the bulk revoke without ever
++ * having voted.
++ */
++static int __init regulator_proxy_consumer_retry_deferred(void)
++{
++	struct proxy_consumer *consumer;
++	struct proxy_consumer *temp;
++	int rc;
++
++	mutex_lock(&proxy_consumer_list_mutex);
++
++	if (!proxy_consumers_removed) {
++		list_for_each_entry_safe(consumer, temp, &proxy_consumer_list,
++					 list) {
++			if (!consumer->deferred)
++				continue;
++
++			consumer->reg = proxy_consumer_get(consumer);
++			if (IS_ERR_OR_NULL(consumer->reg)) {
++				consumer->reg = NULL;
++				continue;
++			}
++			consumer->deferred = false;
++
++			rc = proxy_consumer_apply_votes(consumer->reg_dev,
++							consumer);
++			if (rc) {
++				pr_err("deferred proxy consumer for %pOF failed to apply votes, rc=%d\n",
++				       consumer->reg_node, rc);
++				regulator_put(consumer->reg);
++				consumer->reg = NULL;
++				if (consumer->rdev)
++					consumer->rdev->proxy_consumer = NULL;
++				list_del(&consumer->list);
++				kfree(consumer);
++			}
++		}
++	}
++
++	mutex_unlock(&proxy_consumer_list_mutex);
++
++	return 0;
++}
++late_initcall(regulator_proxy_consumer_retry_deferred);
++
+ /*
+  * Remove all proxy requests at late_initcall_sync.  The assumption is that all
+  * devices have probed at this point and made their own regulator requests.
+-- 
+2.43.0
+

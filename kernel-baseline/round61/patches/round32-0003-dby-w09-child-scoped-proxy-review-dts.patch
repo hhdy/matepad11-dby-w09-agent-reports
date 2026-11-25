@@ -1,0 +1,70 @@
+From ca6ab300b3643bdf1f65d7aa87d10c586285b2d0 Mon Sep 17 00:00:00 2001
+From: hhdy <103477680+hhdy@users.noreply.github.com>
+Date: Wed, 25 Nov 2026 20:47:02 +0800
+Subject: [PATCH 3/3] arm64: dts: qcom: add DBY-W09 child-scoped proxy review
+ artifact
+
+Add a review-only devicetree source expressing the HOS4.3 PM8150 L5/L9
+boot proxy requests in the flattened qcom,pm8150-rpmh-regulators shape
+of this kernel: each rail's child scopes proxy-supply to itself and
+carries qcom,proxy-consumer-enable plus qcom,proxy-consumer-current =
+100000, matching the sanitized ROUND13 evidence.  The file is not
+referenced by any build target; board voltages and modes belong to the
+board DTS draft and are not restated here.
+
+Signed-off-by: hhdy <103477680+hhdy@users.noreply.github.com>
+---
+ .../boot/dts/qcom/dby-w09-proxy-review.dts    | 41 +++++++++++++++++++
+ 1 file changed, 41 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+
+diff --git a/arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts b/arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+new file mode 100644
+index 000000000000..442b3aab426a
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+@@ -0,0 +1,41 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * DBY-W09 PM8150 child-scoped proxy-supply review artifact.
++ *
++ * Review-only file for the Stage A patch series; it is deliberately not
++ * referenced by any build target.  It expresses the HOS4.3 PM8150 L5/L9
++ * boot proxy requests (per ROUND13 sanitized evidence: each rail's child
++ * carries qcom,proxy-consumer-enable plus qcom,proxy-consumer-current =
++ * 100000, and the group proxy-supply points at that same child) in the
++ * flattened qcom,pm8150-rpmh-regulators node shape of this kernel, using
++ * child-scoped proxy-supply self-targets so that L5 and L9 vote on their
++ * own regulators.  Board voltages, initial modes and parent-supply wiring
++ * belong to the board DTS draft and are intentionally not restated here.
++ */
++
++/dts-v1/;
++
++/ {
++	model = "Huawei MatePad 11 (DBY-W09) PM8150 proxy review";
++	compatible = "huawei,dby-w09", "qcom,sm8250";
++	#address-cells = <2>;
++	#size-cells = <2>;
++	pm8150-regulators {
++		compatible = "qcom,pm8150-rpmh-regulators";
++		qcom,pmic-id = "a";
++
++		vreg_l5a: ldo5 {
++			regulator-name = "pm8150_l5";
++			proxy-supply = <&vreg_l5a>;
++			qcom,proxy-consumer-enable;
++			qcom,proxy-consumer-current = <100000>;
++		};
++
++		vreg_l9a: ldo9 {
++			regulator-name = "pm8150_l9";
++			proxy-supply = <&vreg_l9a>;
++			qcom,proxy-consumer-enable;
++			qcom,proxy-consumer-current = <100000>;
++		};
++	};
++};
+-- 
+2.43.0
+

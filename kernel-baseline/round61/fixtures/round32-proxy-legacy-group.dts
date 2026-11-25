@@ -1,0 +1,20 @@
+/dts-v1/;
+
+/ {
+    compatible = "test,round32-proxy-fixture";
+    model = "ROUND32 child-scoped proxy schema fixture (legacy group-level only)";
+    #address-cells = <1>;
+    #size-cells = <1>;
+
+    regulators {
+        compatible = "qcom,pm8150-rpmh-regulators";
+        qcom,pmic-id = "a";
+        proxy-supply = <&vreg_l5>;
+
+        vreg_l5: ldo5 {
+            regulator-name = "pm8150_l5";
+            qcom,proxy-consumer-enable;
+            qcom,proxy-consumer-current = <100000>;
+        };
+    };
+};

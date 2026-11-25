@@ -1,3 +1,8 @@
+[已废弃 / DO NOT SEND OR EXECUTE]
+本启动提示把测试 Agent 错误写成 2号 AI，已被纠正并废弃。正确角色：1号 AI = ChatGPT；2号 AI = 独立开发 AI；Agent = 仅负责测试/验证的本地执行者。当前 ROUND27 唯一有效指令由 2号 AI 下发给测试 Agent，见：
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md
+以下旧内容仅作历史记录，不得据此派发或执行。
+
 [发给2号AI｜2号AI任务书 / LOCAL_AGENT_TASK｜ROUND27]
 
 执行者：2号 AI（本地 WorkBuddy Agent）

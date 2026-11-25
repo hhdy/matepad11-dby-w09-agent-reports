@@ -11,6 +11,10 @@
  *     five property names; only variant identity values differ.
  *   - Public same-device Linux reference:
  *     https://github.com/svesnav/linux-dby-w09/blob/main/dby-w09-rootparam.dtso
+ *   - That reference keeps the base board qcom,board-id at <0 0>, writes
+ *     <0x206a 0> in the rootparam overlay, but packs its one-entry DTBO table
+ *     with id=0/rev=0. Thus root board identity and dt_table_entry metadata
+ *     are separate layers; this is a reference only, not proven HOS4.3 policy.
  *
  * IMPORTANT:
  *   - This is a source draft, not a compiled DTBO or a bootable package.

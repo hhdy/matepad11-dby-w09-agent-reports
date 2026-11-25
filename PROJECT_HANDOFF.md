@@ -2149,3 +2149,13 @@ For every future local Agent task, if a test or evidence step may require connec
 - This candidate overlaps the QMP PHY source path touched by AI2 ROUND63. It remains isolated on AI1 branch and must not be merged into AI2 automatically.
 - Full Image build is held until the current AI2 ROUND33 repair is independently revalidated and its full build slot is released. Agent may perform ROUND125's identity/apply/source/checkpatch/object prechecks in an independent disposable workspace, but must not run a concurrent full Image build.
 - Known limits remain explicit: an API error can be post-decrement in generic regulator core; HOS4.3 static evidence narrows the L5/L9 path but does not prove every runtime parent/alias. The void devm cleanup action cannot veto the later managed regulator_put. No device or hardware behavior is claimed.
+
+
+## 2026-11-25 — ROUND124 Agent validation accepted
+
+- Agent report `firmware-analysis/round124/TEST_AGENT_ROUND124_COMBINED_UFS_CORE_REPORT.txt` was read in full and independently reviewed by 1号 AI.
+- Disposition: **ACCEPTED as an isolated buildable AI1 candidate series**. Patch 0001 per-HBA async scan domain/cookie join plus patch 0002 UFS generic VCC load-zero-before-disable were applied sequentially to the exact Stage A 15-patch baseline; both patch identities matched; applies and diff checks had zero offsets/fuzz; all source gates passed; UFS core objects compiled; full `//common:dby_w09` Image build returned 0; .config matched byte-for-byte; workspace restore hash matched exactly.
+- Checkpatch disclosure: patch 0001 recorded 0E/4W/1C (RC=1); patch 0002 0E/0W/2C (RC=1). These were not auto-fixed; zero errors is not the same as a fully checkpatch-clean series.
+- Exact review: `kernel-baseline/round124/ROUND124_AGENT_VALIDATION_ACCEPTANCE.md` on `ai1/round124-ufs-core-combined-candidates`.
+- No integration into AI2 branch. ROUND124 does not prove device boot, PMIC physical input topology, final FDT memory map, DTBO selection or hardware power behavior. Phase E/F remain BLOCKED and G NOT RUN.
+- ROUND125 remains a separate unvalidated QMP UFS dual-rail state candidate; its pending Agent validation is independent of ROUND124 acceptance.

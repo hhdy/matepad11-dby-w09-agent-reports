@@ -1422,3 +1422,32 @@ Although the DBY-W09 board DTS source itself does not explicitly write /memory, 
 This is structurally aligned with the HOS4.3 template's bootloader-fill zero-size memory node, but the initial base cells differ. The final HOS4.3 ABL fixup behavior and actual runtime RAM tuple remain UNKNOWN. Do not add a duplicate manual /memory node or hardcode RAM.
 
 Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.
+
+
+## 2026-11-25 — ROUND27 queued after ROUND25/ROUND26: real Kleaf device-tree target validation
+
+Current status: ROUND25 and ROUND26 local read-only audits are still pending. ROUND27 is queued only; it must not start until both reports have been uploaded to firmware-audit-v1 and reviewed.
+
+Why ROUND27 is next:
+- ROUND22 validated the original board DTS syntax with cpp + dtc.
+- ROUND23 validated the rev2 candidate, rootparam-only DTBO and fdtoverlay composite using temporary dtc copies.
+- The next build-system gate is to run the same three outputs through the exact Bzlmod/Kleaf ruleset pinned in the existing ROUND18 local workspace, then run the strongest available DT binding validation on the resulting composite.
+- This can validate a reproducible DTB/DTBO source build graph without rebuilding the kernel Image or generating a DTBO partition package.
+
+Task files:
+- firmware-analysis/round27/AGENT_TASK.md
+- firmware-analysis/round27/START_PROMPT.md
+
+Start prerequisites:
+- firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt exists on firmware-audit-v1 and has been reviewed.
+- firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt exists on firmware-audit-v1 and has been reviewed.
+If either is absent, ROUND27 remains NOT_STARTED.
+
+ROUND27 scope after prerequisites:
+1. Inspect the exact local build/kernel Kleaf module link, Bzlmod module file and lock, repo manifest revision, and resolved rules_devicetree dependency/toolchain. Do not infer the local version from current upstream HEAD.
+2. In a disposable copy of the existing ROUND18 workspace, temporarily stage the main rev2 board DTS and rootparam overlay into the pinned qcom DTS directory. Create a temporary BUILD.bazel package using the local exact dtb(), dtbo() and dtb_composite() API plus //common:dtc_includes_aarch64.
+3. Run bazel query/cquery and build only the base DTB, raw DTBO and composite-check targets. No kernel_build, no Image rebuild, no dtbo_image.
+4. Inspect final composite properties and validate with the narrowest supported pinned schema/dtbs_check/dt-validate invocation. Report every diagnostic.
+5. Remove temporary source/BUILD files and verify pre-existing tracked source/config/Image outputs are unchanged. Upload one sanitized report only to firmware-audit-v1/firmware-analysis/round27/.
+
+Hard limits: no ACK tracked source/config/patch edit, no main DTS candidate edit, no boot.img or dtbo.img packaging, no table id/rev selection, no AVB/signature operation, no device/ADB/fastboot/recovery/flash. Final memory/reserved-memory, PMIC physical input rails, DTBO ABL selection and AVB acceptance remain independent gates. A Kleaf DTB/DTBO composite PASS is not a device boot milestone.

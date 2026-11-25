@@ -668,3 +668,13 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - Follow-up review found the committed fourth negative fixture was not yet exercised by the hosted workflow. 2号 AI added that fixture to the existing workflow loop and diagnostic gate; commit 96d70f1d78d60a39152857750a2f31a6b69b95ff. Hosted run 45591535546 completed success; the retained log explicitly rejects vdda-phy-always-on-extra.
 - The board DTS input blob mismatch was correctly treated as a stop for that input; no DTS was changed. PM8150 L5 physical input topology, HOS4.3 ARC/proxy lifecycle, ABL/FDT/EFI handoff and boot packaging remain separate blockers. Phase E/F remain BLOCKED; Phase G NOT RUN. No device, partition, boot/DTBO/AVB, or firmware-upload operation occurred.
 - **Disposition: AI2-ROUND30 accepted as implementation-and-build complete, with the original driver-draft apply deviation explicitly retained.** This does not establish device bootability or hardware validation.
+
+
+## 2026-11-25 — AI2 ROUND31 assigned: temporary HOS4.3 L5/L9 proxy-consumer port
+
+- Task ownership: **2号 AI 专属任务书**; task ID AI2-ROUND31; executor is the user's local Agent. 1号 AI tasks are explicitly excluded.
+- Taskbook: firmware-analysis/round31/AI2_ROUND31_TASKBOOK.md on firmware-audit-v1; taskbook commit 4524c0644e76a759f27e58e8f5c851d4bb99a1aa.
+- Purpose: implement, where source and topology permit, the temporary Qualcomm proxy-consumer lifecycle for the HOS4.3-confirmed PM8150 L5/L9 100000-uA requests, including regulator registration, late_initcall_sync removal and individual unregister cleanup. This is distinct from ROUND30 QMP PHY always-on and from the unimplemented ARC provider.
+- Inputs are limited to existing sanitized ROUND13/ROUND48/ROUND51 evidence and public KONA source commit cad09e061ef6cf689a4a1e54d27562e0f042236a. Agent must resolve the reported proxy-supply phandle/self-child semantics before coding; if it cannot prove safe resolution, stop rather than guess.
+- Required work is actual ACK source patching, strict binding/positive-negative fixtures, lifecycle/error-path tests, Stage A patch-series integration, full manifest-pinned //common:dby_w09 Image rebuild and ROUND58 config regression. If implementation is unsafe or unsupported, report the precise source-level blocker without submitting a partial implementation.
+- No PMIC parent-supply guesses, no permanent system-load/always-on substitution, no ARC provider implementation, no device/partition/boot/DTBO/AVB action, no HOS4.3 firmware upload. Agent must stop after the single report and must not start ROUND32.

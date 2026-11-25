@@ -4,7 +4,7 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **测试 Agent 当前队列：ROUND27。** ROUND25/26 已由 1号 AI 审查；ROUND27 的技术任务书由 2号 AI 编写并下发，执行者是测试 Agent。当前唯一有效任务书位于 `firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`。预期报告 `AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` 尚未上传，故不能把三目标 DT 构建或 schema 验证标记为完成。不要重跑已完成报告，不要安装 AVB 工具。
+> **ROUND27 测试报告已上传并完成 1号 AI 主审。** 任务下发方为 2号 AI，执行者为测试 Agent；报告路径为 `firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt`。三目标构建和 composite 属性检查 PASS；schema NOT CLEAN，见 `kernel-baseline/round81/round81-1ai-primary-review-of-ai2-round27-report.md`。不要把 schema 结果写成 PASS，也不要将测试 Agent 混称为 2号 AI。
 
 ## 三方角色归属（强制）
 
@@ -1002,14 +1002,14 @@ No kernel_build/Image, no dtbo_image or table metadata, no boot packaging/AVB/si
 - 下发方/技术负责人：**2号 AI（独立开发 AI）**
 - 执行者：**测试 Agent（本地 WorkBuddy）**
 - 审核者：**1号 AI（ChatGPT）**
-- 状态：**AUTHORIZED / INPUT IDENTITY BLOCKED / REPORT PENDING**；任务书记录的 base DTS SHA `9918efe3...` 与当前 main 文件 `f5449bac...` 不一致，必须先由 2号 AI 修订任务书或明确固定旧 commit/blob。
+- 状态：**REPORT UPLOADED / PRIMARY REVIEW COMPLETE / SCHEMA NOT CLEAN**；测试 Agent 已精确恢复并使用任务书锁定的历史 blob `9918efe3...`，1号 AI 已独立核验该 blob；与当前 main 的差异仅为注释。
 - 唯一报告路径：`firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt`
 
 ROUND25、ROUND26 已由 1号 AI 审查通过，满足 ROUND27 前置条件。测试 Agent 只执行三个 Kleaf/Bazel DT 目标（base DTB、raw rootparam DTBO、composite-check DTB）和指定 schema 验证，并按任务书清理临时文件；不得构建 kernel/Image、dtbo_image、boot.img，不得操作设备或分区。
 
-ROUND78 输入身份核验补充：当前 main base DTS blob 是 `f5449bac669ea71d7149ffb1fc858e39eb128572`，任务书旧值是 `9918efe3f253a3e4821689ffeb899d5a0f237e8f`；overlay SHA `c7e5b145d4308e0675ff648b4e046033c5560083` 一致。测试 Agent 必须在输入 SHA 匹配后才可继续；否则报告 `BLOCKED_INPUT_IDENTITY_MISMATCH`。详见 `kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md`。
+ROUND78 输入身份核验已由 ROUND27 报告解决：测试 Agent 从历史 commit `e06062cac9e319bbb4156226469a1e295338fe95` 精确恢复 `9918efe3...`；1号 AI 独立复核旧版与当前 main 的非注释内容一致。
 
-**检查仓库时，若唯一报告尚未出现，继续标记 REPORT PENDING；测试 Agent 上传后停止，由 1号 AI 审查。2号 AI 是开发任务书下发方，不是测试 Agent。**
+**报告已上传，测试 Agent 按停止条件结束；1号 AI 已审查。当前下一步是由 2号 AI 负责修订 schema 诊断，必要时另发新的测试 Agent 验证任务。2号 AI 是开发任务书下发方，不是测试 Agent。**
 
 
 ## 1号 AI 最近独立审查
@@ -1033,3 +1033,14 @@ ROUND78 输入身份核验补充：当前 main base DTS blob 是 `f5449bac669ea7
 - 固定 ACK Generic GenPD + OPP 框架支持通过 indexed RPMhPD OPP table 和 required-opps 将 MMCX 子域 pstate 映射到 MX 父域 pstate；已有 MMCX→CX / AO→CX_AO descriptor 模式可供结构参考。
 - 当前 SM8250 provider 仍使用单一 shared table，HOS ROUND25 所需 AUX corner/dropout 规则和 UFS ARC consumer 关系未知。未授权任何 MMCX→MX 代码或 DTS 变更；不得把“架构可实现”写成“硬件语义已证实”。
 - 当前只作 1号 AI 源码研究记录，不派发给测试 Agent 执行。
+
+
+## ROUND81 — 当前 ROUND27 验收状态
+
+- 测试 Agent 唯一报告已上传，1号 AI 主审报告：`kernel-baseline/round81/round81-1ai-primary-review-of-ai2-round27-report.md`。
+- 输入身份 PASS：旧锁定 blob 精确匹配，当前 main 差异仅注释。
+- 三目标 Bazel DTB / DTBO / composite build PASS（按报告）；composite 属性检查 PASS。
+- schema NOT CLEAN：narrow 1 条 UFS `vcc-voltage-level` error；full 8 条 error-level diagnostics。
+- 1号 AI 建议 2号 AI 修复：移除 ACK UFS driver 不消费的 `vcc-voltage-level`；补齐 DBY-W09 board compatible 与 rootparam vendor binding；随后由 2号 AI 下发新的、范围明确的测试任务给测试 Agent复验。
+- 当前不需要测试 Agent自行续跑；测试 Agent已经按单报告任务停止。任何新验证都要有新的任务书，执行者标记为测试 Agent。
+- Round27 schema 清洁通过前，不得声称整轮所有工作包 PASS。板级 DT 构建通过也不代表设备 boot ready。

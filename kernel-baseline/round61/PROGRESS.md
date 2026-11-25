@@ -427,3 +427,12 @@ Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `455293956
 - Stage 2/9 (repo init and immutable manifest sync) is `in_progress`, started at `2026-11-25T01:57:03Z`.
 - Stages 3–9 are pending; no failed step is reported.
 - No run has been cancelled. Wait for actual stage transitions; do not infer a dead runner from run-level `updated_at` or an unavailable in-progress log.
+
+
+### Follow-up: watchdog-created duplicate Image run also completed
+
+A post-report poll confirmed that the formerly in-progress duplicate run `45455279898` completed successfully at `2026-11-24T18:34:35Z` (job `138662922161`). It uploaded artifact `14951574600` (210,439,547 B). Its completed log independently records:
+- `.config`: 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7` (same archived config as run 45453412267);
+- `Image`: 44,820,992 B, SHA-256 `8a90e4fa5bd77ce266e9c095cc8e451815cf10bf27099c6e408e6b865a8747de`.
+
+This is an additional successful Image-build result, but remains the accidental duplicate started by the 18:03Z watchdog push. Its log's manually reported first-on-disk Clang path (`clang-3289846`) is not accepted as proof of the compiler selected by Kleaf. The corrected nine-stage run remains the validation of deterministic, exact-version toolchain discovery.

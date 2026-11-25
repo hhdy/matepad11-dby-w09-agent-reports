@@ -199,7 +199,29 @@ Therefore:
 
 A complete fix for the pre-decrement provider failure would require a policy that keeps a valid consumer handle and its owner lifetime until a later successful balance/release, or an independently justified regulator-core/API change. Simply replacing devm_regulator_get() with regulator_get() does not solve the state ambiguity or owner lifetime by itself.
 
-### 5.4 Required focused cases
+### 5.4 PM8150 L6 provider implementation — what is confirmed and what is not
+
+The exact pinned Qualcomm RPMh regulator provider adds an important refinement. Source blob:
+- drivers/regulator/qcom-rpmh-regulator.c SHA: 109f0aae09b1df431d2e14d45a64d115e87cdec4
+- [Pinned Qualcomm RPMh regulator provider](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/qcom-rpmh-regulator.c)
+
+Verified in that source:
+- PM8150 LDO6 is registered in pm8150_vreg_data at line 996 as pmic5_nldo with supply_name "vdd-l6-l9".
+- pmic5_nldo at lines 771–781 uses rpmh_regulator_vrm_drms_ops and has hpm_min_load_uA = 30000.
+- rpmh_regulator_vrm_drms_ops contains the .disable callback; rpmh_regulator_disable() at lines 259–262 calls rpmh_regulator_set_enable_state(rdev, false).
+- rpmh_regulator_set_enable_state() passes the enable boolean into rpmh_regulator_send_request(). For disable, wait_for_ack is false. rpmh_regulator_send_request() at lines 163–174 uses rpmh_write_async() unless qcom,always-wait-for-ack is set on the regulator node; that property is read at lines 460–461.
+- The provider installs rdesc.supply_name from the LDO6 table at line 447. Therefore a regulator-core parent-supply relationship can exist if the actual PMIC regulator node provides the corresponding vdd-l6-l9-supply link.
+
+Implications:
+1. A negative provider .disable return before consumer-count decrement is possible at least from RPMh request-submission failure. If qcom,always-wait-for-ack is enabled, the disable path can additionally wait for and report the RPMh acknowledgement result. Do not assume the HOS4.3 PMIC regulator node has that property until its exact FDT content is checked.
+2. In the default no-ACK path, the provider submits the disable asynchronously. A successful return means the RPMh request was accepted by the asynchronous path; it is not proof that a later remote hardware action has been observed synchronously by this consumer.
+3. The LDO6 descriptor names a candidate parent supply, vdd-l6-l9, but this does not identify the physical upstream rail by itself. The matching supply link in the actual DBY-W09/HOS4.3 regulator node and its resolved phandle are still required before claiming a parent-supply disable failure is an actual board path.
+4. Consequently, load-zero-before-disable remains correct for the DRMS transition. The pre-decrement submission/notifier path remains a real source-code possibility. The post-decrement parent-supply path is possible in regulator core but is not proven to be wired on this specific tablet until the FDT parent relation is resolved.
+
+Do not infer the board's physical parent for L6 from the string "vdd-l6-l9"; it is a regulator-provider supply name, not a verified schematic net name. The HOS4.3 final PMIC input topology remains a Phase-E evidence requirement.
+
+### 5.5 Required focused cases
+
 
 2号 AI should add a source-backed test/failure-injection plan that distinguishes:
 1. VDDP load-zero succeeds and disable succeeds;

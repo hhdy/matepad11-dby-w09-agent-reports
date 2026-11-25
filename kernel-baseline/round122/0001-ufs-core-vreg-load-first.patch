@@ -1,0 +1,105 @@
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -9496,46 +9496,61 @@
+ 	return ufshcd_config_vreg_load(dev, vreg, on ? vreg->max_uA : 0);
+ }
+ 
+-static int ufshcd_enable_vreg(struct device *dev, struct ufs_vreg *vreg)
+-{
+-	int ret = 0;
+-
+-	if (!vreg || vreg->enabled)
+-		goto out;
+-
+-	ret = ufshcd_config_vreg(dev, vreg, true);
+-	if (!ret)
+-		ret = regulator_enable(vreg->reg);
+-
+-	if (!ret)
+-		vreg->enabled = true;
+-	else
+-		dev_err(dev, "%s: %s enable failed, err=%d\n",
+-				__func__, vreg->name, ret);
+-out:
+-	return ret;
+-}
+-
+-static int ufshcd_disable_vreg(struct device *dev, struct ufs_vreg *vreg)
+-{
+-	int ret = 0;
+-
+-	if (!vreg || !vreg->enabled || vreg->always_on)
+-		goto out;
+-
+-	ret = regulator_disable(vreg->reg);
+-
+-	if (!ret) {
+-		/* ignore errors on applying disable config */
+-		ufshcd_config_vreg(dev, vreg, false);
+-		vreg->enabled = false;
+-	} else {
+-		dev_err(dev, "%s: %s disable failed, err=%d\n",
+-				__func__, vreg->name, ret);
+-	}
+-out:
+-	return ret;
+-}
++static int ufshcd_enable_vreg(struct device *dev, struct ufs_vreg *vreg)
++{
++	int ret = 0;
++
++	if (!vreg)
++		goto out;
++
++	/*
++	 * A previous disable may have cleared the load but failed to drop
++	 * the enable reference. Restore the active load before reusing it.
++	 */
++	ret = ufshcd_config_vreg(dev, vreg, true);
++	if (ret)
++		goto out;
++
++	if (vreg->enabled)
++		goto out;
++
++	ret = regulator_enable(vreg->reg);
++
++	if (!ret)
++		vreg->enabled = true;
++	else
++		dev_err(dev, "%s: %s enable failed, err=%d\n",
++				__func__, vreg->name, ret);
++out:
++	return ret;
++}
++
++static int ufshcd_disable_vreg(struct device *dev, struct ufs_vreg *vreg)
++{
++	int ret = 0;
++
++	if (!vreg || !vreg->enabled || vreg->always_on)
++		goto out;
++
++	/*
++	 * Clear the load while the consumer enable reference is still held.
++	 * ACK regulator core may run a fallible DRMS update after decrementing
++	 * the consumer enable_count in regulator_disable().
++	 */
++	ret = ufshcd_config_vreg(dev, vreg, false);
++	if (ret)
++		goto out;
++
++	ret = regulator_disable(vreg->reg);
++
++	if (!ret)
++		vreg->enabled = false;
++	else
++		dev_err(dev, "%s: %s disable failed, err=%d\n",
++				__func__, vreg->name, ret);
++out:
++	return ret;
++}
+ 
+ static int ufshcd_setup_vreg(struct ufs_hba *hba, bool on)
+ {

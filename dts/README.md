@@ -2,6 +2,26 @@
 
 This directory contains a **review-only source draft** for the initial DBY-W09 board DTS and its minimal ABL rootparam overlay.
 
+## Current authoritative state — 2026-11-25
+
+The paragraphs below retain the project's historical design notes. For current status, use this section together with the root `PROJECT_HANDOFF.md`.
+
+Current main-branch source files include:
+- `dby-w09-ack18-board.dts.draft` — original single-domain reference draft.
+- `dby-w09-ack18-board.dts.rev2.candidate` — current two-domain UFS Host candidate (MMCX index 0, GCC UFS_PHY_GDSC index 1), blob `f5449bac669ea71d7149ffb1fc858e39eb128572`.
+- `dby-w09-ack18-rootparam.dtso.draft` — minimal VG / 0x206a overlay candidate, blob `c7e5b145d4308e0675ff648b4e046033c5560083`.
+
+Validation status:
+- ROUND23 already compiled the rev2 board DTS and rootparam overlay with temporary cpp/dtc copies and produced a successful fdtoverlay composite. This is not the later Kleaf/Bazel/schema validation.
+- 2号 AI's separate `ai-parallel/stagea-port-until-boot` branch reports successful full source apply/checkpatch, UFS/QMP binding validation, Kleaf target validation and pinned 6.18.33 Image build. See `kernel-baseline/round61/` on that branch; those results must not be confused with a board DTB build.
+- ROUND77 (1号 AI) independently reviewed normal-path UFS dual-GenPD, VDDP and QMP PHY source semantics: PASS with minor teardown/error-path notes.
+- ROUND27 is assigned by 2号 AI to the test Agent. **It is currently held for input identity reconciliation:** the taskbook expects base DTS blob `9918efe3f253a3e4821689ffeb899d5a0f237e8f`, while current main contains `f5449bac669ea71d7149ffb1fc858e39eb128572`. The rootparam overlay hash matches. 2号 AI must correct the taskbook pin or identify the intended immutable old source before the test Agent proceeds. See [ROUND78](../kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md).
+- The actual post-ABL RAM/reserved-memory handoff, PM8150 physical input-parent topology, HOS MMCX→MX ARC corner/dropout equivalence, selected runtime DTBO, AVB acceptance and device boot are still unresolved. No boot-ready claim is made.
+
+The VG overlay is a candidate only; rootparam board identity is not DTBO table id/rev, and the user's runtime board variant / ABL selection has not been proven. Do not package or flash an image from these source drafts.
+
+---
+
 Files:
 - `dby-w09-ack18-board.dts.draft` — minimal SM8250 board identity + HOS4.3 PM8150 UFS rails + UFS/QMP enablement.
 - `dby-w09-ack18-rootparam.dtso.draft` — separate minimal DBY-W09 board identity overlay, including the stock `huawei,modem_id` sentinel.

@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 24880326da85ba26efc33fca3c00a319a6484d42
-- Workflow run ID: 45590794431
+- Workflow commit: 96d70f1d78d60a39152857750a2f31a6b69b95ff
+- Workflow run ID: 45591535546
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: success
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-bcc7be9935cafab6a98362db5ddb6ba11f2fda5f021b19eeab993e1fb78b4cbd  /home/runner/work/_temp/round61-processed-schema.json
+1ef57b67783a2b1b3b45421f6f34baa2232b49c312c24d22ac44d737a38482fe  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -113,6 +113,10 @@ NOTE: Ignored message types: CAMELCASE
 ## round63-phy-negative-validation.log
 vdda-phy-always-on: size (4) error for type flag
 /home/runner/work/_temp/round63-phy-always-on-invalid-type.dtb: ufs-phy@1d87000: vdda-phy-always-on: [[1]] is not of type 'boolean'
+	from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
+
+## round63-phy-undeclared-validation.log
+/home/runner/work/_temp/round63-phy-undeclared-property.dtb: ufs-phy@1d87000: 'vdda-phy-always-on-extra' does not match any of the regexes: 'pinctrl-[0-9]+'
 	from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
 
 ## dt_binding_check log SHA-256

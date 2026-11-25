@@ -1,0 +1,484 @@
+TEST-AGENT-ROUND111 — DBY-W09 HOS4.3 PM8150 L17 / UFS VCC teardown 属性核验
+================================================================================
+
+任务 ID        : TEST-AGENT-ROUND111
+下发方         : 1号 AI（ChatGPT）
+执行方         : 用户本地只读测试 Agent（非 2号 AI）
+任务性质       : 已有固件工作副本只读取证；不是驱动实现任务，不产出补丁
+固定 ACK 对照  : android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+目标设备       : Huawei MatePad 11 DBY-W09 / KONA / SM8250
+关联报告       : ROUND90 / 103 / 105 / 106 / 107 / 109 / 110
+报告分支       : firmware-audit-v1
+唯一报告路径   : firmware-analysis/round111/TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt
+
+角色隔离声明：本任务只属于 1号 AI。未修改内核源码、DTS、binding、补丁或任何 Git 开发
+分支；未替 2号 AI 做实现决策；未接触 2号 AI 的 patch series 或 Stage A 分支内容。
+
+--------------------------------------------------------------------------------
+0. 结论摘要
+--------------------------------------------------------------------------------
+
+A. `qcom,always-wait-for-ack`：三个 base 候选的 **L17 child 自身均为 ABSENT**，
+   L17 group 也是 ABSENT；更关键的是——**整个 base 设备树里此属性出现 0 次**
+   （3471/3471/3433 个节点、1753/1753/1752 个 label 全覆盖扫描）。
+   九个 stock DTBO 同样 **0 处** 声明该属性。因此 L17 的 disable 路径不会进入
+   `rpmh_write()` 同步分支，仍走 `rpmh_write_async()`（见 §9）。
+
+B. Coupling：`regulator-coupled-with` / `-max-spread` / `-min-spread` /
+   `-no-balance` 在三个 base、九个 DTBO 中均为 **0 实例**。
+   HOS vendor 侧也不存在 coupling-like 属性（按 `coup|spread|balance` 子串全树扫描，
+   命中 0 条）。反向耦合扫描：**不存在任何属性以 phandle 形式指向 L17 child**
+   —— supply 类引用 0 条，非 supply 类数值巧合 0 条（见 §5）。
+
+C. Parent supply：L17 group 与 L17 child 上 **没有任何 `*-supply` / `*-parent-supply`
+   属性**；`vdd-l13-l16-l17-supply`、`vin-supply`、`vph-pwr-supply` 在整个 base 中
+   出现 0 次。这必须与 ACK 驱动行为区分开：驱动从**静态表**取得 `supply_name`
+   = `vdd-l13-l16-l17`（不由 FDT 决定），core 随后按该名字做 DT lookup，失败后在
+   `have_full_constraints()` 为真（本机 DT 已填充，故恒为真）时绑定 **dummy regulator**。
+   所以准确表述是"FDT 未声明父供电"，而不是"该 regulator 在 core 里没有父级"（§6）。
+
+D. Vendor proxy：L17 group **没有** `proxy-supply`。同子树内 5 个 group
+   （ldoa5 / ldoa9 / ldoa14 / ldoc11 / cxlvl / mmcxlvl）确实带 `proxy-supply` 且各自指向
+   自己的 child——这正好构成对照：L5（ROUND106）有 proxy，**L17 没有**。
+   因此不存在"把 L17 的 proxy 误读成物理输入"的风险，本报告也不做任何电气输入断言。
+
+E. DTBO 覆盖：九个 entry **全部**不修改 L17 group / L17 child。逐 entry 的 fragment
+   target 100% 解析成功（143–145 个 fragment/entry，unresolved 0、dangling 0），
+   **没有任何 fragment 落在 `/soc/rsc@18200000` 子树内**。九个 entry 里唯一涉及 L17 的
+   是 `/fragment@64`（target label `ufshc_mem`）新增的 **consumer 侧** `vcc-supply`，
+   其 fixup 指向 label `pm8150_l17`——即 UFS host 消费 L17，而不是改 L17。
+
+F. Failure-boundary：L17 静态配置对应 **异步 `rpmh_write_async()`**。
+   依据是 ACK 驱动的分支条件本身，不是 regulator 类型推断（§9 给出源码行号）。
+
+G. 未关闭项：本报告不涉及运行时电压/使能状态、PMIC ACK 实际完成状态、ABL 实际选中的
+   DTBO entry、电气原理图结论。全部保持独立、未因此次取证而"关闭"。
+
+--------------------------------------------------------------------------------
+1. 输入身份与结构校验（只读，未重提取）
+--------------------------------------------------------------------------------
+
+1.1 输入来源
+  仅使用 ROUND3 已建立并通过审查的 HOS4.3 工作副本：3 个 base boot FDT candidate
+  与 9 个 stock DTBO entry。未重新提取固件、未重新解包、未创建新工作区。
+
+1.2 逐文件身份与 FDT 结构自校验
+  FDT header 的 `totalsize` 与文件实际字节数逐一比对，全部相等（无截断/无尾随填充）；
+  `version` 全为 17；结构 token 解码 0 error。
+
+  文件                            字节数    totalsize  ver  nodes  labels  sha256(前 16)
+  boot_fdt_candidate_0.dtb        556,524    556,524    17   3471   1753   df2730f3d2e9bdab
+  boot_fdt_candidate_1.dtb        556,520    556,520    17   3471   1753   f3dcba83e73f4d86
+  boot_fdt_candidate_2.dtb        551,026    551,026    17   3433   1752   6cda673986bf814c
+  dtbo_entry_0.dtbo               329,044    329,044    17   1687     —    6940ce1167a3a21c
+  dtbo_entry_1.dtbo               329,352    329,352    17   1690     —    685a837e65a692da
+  dtbo_entry_2.dtbo               329,240    329,240    17   1688     —    0633a6fbeebbad45
+  dtbo_entry_3.dtbo               329,098    329,098    17   1686     —    e68e5a48f64cfb68
+  dtbo_entry_4.dtbo               329,340    329,340    17   1689     —    866991056bef3a99
+  dtbo_entry_5.dtbo               329,356    329,356    17   1690     —    699df8950612ca38
+  dtbo_entry_6.dtbo               329,356    329,356    17   1690     —    fca5a7a83ea69a47
+  dtbo_entry_7.dtbo               329,352    329,352    17   1690     —    0a57a7f8ac678073
+  dtbo_entry_8.dtbo               329,352    329,352    17   1690     —    a7946352a86ab6e4
+
+  （`labels` 为 `/__symbols__` 条目数；DTBO 不以 label 表作为 target 解析依据，
+    故不计，其解析路径见 §8。）
+
+1.3 解析方法（沿用已审查模式，未引入新工具）
+  - 二进制解码：ROUND3 已审查的 FDT token 解码器（`parse_fdt_header` +
+    `decode_structure`）。未使用 dtc / fdtget / fdtoverlay / 任何新下载工具。
+  - phandle 解析：`/soc/rsc@18200000` 子树内所有 `phandle` / `linux,phandle` 建索引，
+    引用方按索引反向解析为完整节点路径；**不凭 cell 数字猜测**。
+    按 ROUND103/106 惯例，本报告不打印 phandle 的具体数值（仅记录其长度与解析结果）。
+  - DTBO target 解析：`target = <0xffffffff>` 是占位符；真实路径来自
+    `/__fixups__` 的 `"<label>:/fragment@N:target:0"` 与 base 的 `/__symbols__`
+    （label → path）联立。该模式与 ROUND103/106 完全一致。
+  - 属性存在性采用两层判据：解析后的节点表（精确）+ 全树属性名子串扫描
+    （防拼写/变体漏检）。
+
+--------------------------------------------------------------------------------
+2. 目标节点定位与全属性表
+--------------------------------------------------------------------------------
+
+2.1 定位结果（三个 base 候选完全一致）
+  Provider group : /soc/rsc@18200000/rpmh-regulator-ldoa17
+  Regulator child: /soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17
+  group 的子节点数 = 1（**只有** regulator-pm8150-l17）。
+  → 与 L6 / L5 不同：L5 group 有 l5 / l5-ao / l5-so 三个 child；L17 组内**没有**
+    AO/SO 变体节点，因此不存在"sibling 变体继承/共享 ACK 配置"的结构基础。
+
+  L17 child 在 `/__symbols__` 中的 label：`pm8150_l17`、`L17A`（两个 label 指向同一路径）。
+  group 无 label。
+
+2.2 L17 group 全属性表（三 base 逐字段相等，`identical=True`）
+  compatible                  len 24  "qcom,rpmh-vrm-regulator"
+  qcom,mode-threshold-currents len 8   cells <0 10000>          → HPM 门限 10 mA
+  qcom,regulator-type         len 10  "pmic5-ldo"
+  qcom,resource-name          len 7   "ldoa17"
+  qcom,supported-modes        len 8   cells <2 4>
+  —— 属性总数 5，**没有** ACK、coupling、任何 supply/proxy 属性。
+
+2.3 L17 child 全属性表（三 base 逐字段相等）
+  phandle                     len 4   1 cell（数值不记录）
+  qcom,init-mode              len 4   cells <2>
+  qcom,init-voltage           len 4   cells <2496000>  (2,496,000 µV)
+  qcom,set                    len 4   cells <3>
+  regulator-max-microvolt     len 4   cells <3008000>
+  regulator-min-microvolt     len 4   cells <2496000>
+  regulator-name              len 11  "pm8150_l17"
+  —— 属性总数 7，**没有** `qcom,always-wait-for-ack`、**没有** coupling、
+     **没有** 任何 `*-supply` / `*-parent-supply`。
+
+  说明：`qcom,init-mode=<2>` 与 group 的 `supported-modes=<2 4>`、
+  `mode-threshold-currents=<0 10000>` 属 ROUND13 已取证的 mode/DRMS 静态证据，
+  本轮只做交叉核对（一致），不重复推导其物理含义。
+
+--------------------------------------------------------------------------------
+3. A. RPMh ACK 配置（逐个节点，而非 group 汇总）
+--------------------------------------------------------------------------------
+
+3.1 child 级（驱动实际读取的位置）
+  ACK 驱动在 `rpmh_regulator_init_vreg()` 中对传进来的 `node` 调
+  `of_property_read_bool(node, "qcom,always-wait-for-ack")`；而 `node` 来自
+  `rpmh_regulator_probe()` 的 `for_each_available_child_of_node_scoped(dev->of_node, node)`
+  ——即**每个 regulator child 节点**，不是 group。故 child 自身取值才是有效结论：
+
+    candidate_0 / 1 / 2 的 /soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17
+      → qcom,always-wait-for-ack = ABSENT（属性名不在该节点的属性表中，
+        长度为 0 的布尔属性也不存在；不是"存在但为 0"）
+
+3.2 group 级（仅作背景，不继承给 child）
+    candidate_0 / 1 / 2 的 group → ABSENT
+
+3.3 全树与 RSC 子树扫描（防"别处有、此处被误当继承"）
+    ack_instances_treewide = []      （三个 base 全树 0 命中）
+    ack_instances_in_rsc   = []      （RSC 子树 0 命中）
+  → 本 DT 里**没有任何节点**声明 `qcom,always-wait-for-ack`。因此不存在
+    "L17 之外某个 provider 声明了 ACK 从而间接影响 L17" 的可能。
+
+3.4 同组 sibling
+    group 只有 1 个 child（§2.1），不存在 sibling 变体；即便存在，
+    ACK 属性也是 per-child 读取，不会从 sibling 继承。
+
+3.5 九个 DTBO
+    每个 entry 的属性名集合中 `qcom,always-wait-for-ack` 出现 0 次
+    （`ack_name_instances = []`，entry 0..8 全一致），详见 §8 的逐 entry 矩阵。
+
+--------------------------------------------------------------------------------
+4. B. Regulator coupling
+--------------------------------------------------------------------------------
+
+4.1 upstream 四个属性（三 base + 九 DTBO）
+    regulator-coupled-with          : 0 实例
+    regulator-coupled-max-spread    : 0 实例
+    regulator-coupled-min-spread    : 0 实例
+    regulator-coupled-no-balance    : 0 实例
+  检查范围：三个 base 全树（非仅 L17 子树），以及九个 DTBO 的全树属性名集合。
+
+4.2 vendor coupling-like 属性
+    以子串 `coup` / `spread` / `balance`（大小写不敏感）扫全部属性名：
+    base 命中 0 条；九个 DTBO 命中 0 条。
+  → 不存在"换了个名字的 HOS 私有耦合属性"可直接与 upstream binding 对照；
+    本报告不把任何属性默认等价于 upstream coupling。
+
+4.3 结论
+    L17 child 自身无 coupling 声明；三个 base 一致（逐字段相等）；九个 DTBO 未添加。
+
+--------------------------------------------------------------------------------
+5. 反向耦合：全 RSC 子树指向 L17 的引用搜索
+--------------------------------------------------------------------------------
+
+5.1 搜索方法
+  1) 取 L17 child 的 `phandle`（len 4，单 cell；数值按惯例不记录）。
+  2) 遍历**整个 base 树**所有属性（排除 `phandle` / `linux,phandle` 自身），
+     逐 cell 比对；命中者按 §1.3 的索引解析为目标节点路径。
+  3) 命中按属性语义分两类：
+     - supply 类（`*-supply` / `*-parent-supply`）：真实 regulator 引用；
+     - 非 supply 类：**数值巧合**（clock ID / reg / cell-id / bit 等），
+       单独计数披露，不并入结论。
+
+5.2 结果（candidate_0 / 1 / 2 完全一致）
+    supply 类指向 L17 的引用        : 0 条
+    非 supply 类数值巧合            : 0 条
+    RSC 子树内指向 L17 的引用       : 0 条
+  → RSC 子树内**没有任何** regulator child 反向耦合到 L17；
+    L17 的 phandle 在 base 设备树中**完全未被引用**。
+
+5.3 与 DTBO 的关系
+    九个 entry 中唯一引用 label `pm8150_l17` 的是 `/fragment@64/__overlay__:vcc-supply:0`
+    （target label `ufshc_mem`）——这是 UFS host 节点作为 **consumer** 取用 L17，
+    不是 regulator 之间的 coupling，也不在 RSC 子树内（§8.3）。
+    把 consumer 引用误读成 coupling 是本类取证最常见的错误，特此显式区分。
+
+--------------------------------------------------------------------------------
+6. C. 普通 upstream supply / parent
+--------------------------------------------------------------------------------
+
+6.1 L17 group 与 L17 child 上的 `*-supply` / `*-parent-supply`
+    group : 属性表 5 项，supply/parent-supply 类 **0 项**
+    child : 属性表 7 项，supply/parent-supply 类 **0 项**
+
+6.2 逐名检查（全树范围，不限于 L17 子树）
+    vdd-l13-l16-l17-supply   : 0 次
+    vin-supply               : 0 次
+    vdd-supply               : 23 次，但**均不在** L17 group/child 上
+                               （分布在 bps / camss / gdsc / ipe0 / mipi-csi / rot 等节点）
+    vph-pwr-supply           : 0 次
+    proxy-supply             : 8 次，均不在 L17 上（见 §7）
+    另检查裸名属性 `vdd-l13-l16-l17`（无 `-supply` 后缀）：0 次；
+    以及是否有 regulator 的 `regulator-name` 等于 `vdd-l13-l16-l17`：0 个。
+
+6.3 RSC 子树内实际存在的 parent/supply 属性（对照用，非 L17）
+    /soc/rsc@18200000/rpmh-regulator-cxlvl
+        pm8150_s3_level-parent-supply      len 4 1 cell
+        pm8150_s3_level_ao-parent-supply   len 4 1 cell
+        proxy-supply                       len 4 1 cell（指向自身 child）
+    /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+        pm8150a_s4_level-parent-supply     len 4 1 cell
+        pm8150a_s4_level_ao-parent-supply  len 4 1 cell
+        proxy-supply                       len 4 1 cell（指向自身 child）
+    /soc/rsc@18200000/rpmh-regulator-mxlvl
+        pm8150a_s3_mmcx_sup_level-parent-supply len 4 1 cell
+    /soc/rsc@18200000/rpmh-regulator-ldoa5   proxy-supply → 本组 regulator-pm8150-l5
+    /soc/rsc@18200000/rpmh-regulator-ldoa9   proxy-supply → 本组 regulator-pm8150-l9
+    /soc/rsc@18200000/rpmh-regulator-ldoa14  proxy-supply → 本组 regulator-pm8150-l14
+    /soc/rsc@18200000/rpmh-regulator-ldoc11  proxy-supply → 本组 regulator-pm8150a-l11
+  → 说明本 DT **确实会写** `-parent-supply` 与 `proxy-supply`，
+    只是**没有写给 L17**。这一点排除了"取证脚本漏扫属性名"的可能。
+
+6.4 必须区分的两层语义（任务书 §4.3 要求）
+  第 1 层：FDT 层。L17 的 group 与 child 上不存在任何普通 upstream parent supply
+  属性，且全树没有名为 `vdd-l13-l16-l17` / `vdd-l13-l16-l17-supply` 的属性。
+  结论：**FDT 未声明 L17 的物理输入 parent**。
+
+  第 2 层：ACK regulator core 层。`vdd-l13-l16-l17` 这个字符串来自驱动静态表，
+  而非 DT：
+
+    drivers/regulator/qcom-rpmh-regulator.c（固定 ACK 8ad08f75）
+      line 1007  RPMH_VREG("ldo17", "ldo%s17", &pmic5_pldo, "vdd-l13-l16-l17")   // pm8150_vreg_data
+      line 447   vreg->rdesc.supply_name = rpmh_data->supply_name;
+      drivers/regulator/core.c
+      line 5898  if (init_data && init_data->supply_regulator)   // DT 未提供 → 走 else
+      line 5900  else if (regulator_desc->supply_name)            // → 5901 赋值
+      line 2046  regulator_resolve_supply(): 先 regulator_dt_lookup(dev, supply_name)
+                 → of_regulator_dev_lookup() 找 `<supply>-supply` 属性；
+                 再退回 regulator_dev_lookup()；
+      line 2080  if (have_full_constraints()) { r = dummy_regulator_rdev; ... }
+      line 114   have_full_constraints() { return has_full_constraints || of_have_populated_dt(); }
+
+  含义（严格表述）：
+  - core 会以固定名 `vdd-l13-l16-l17` 主动查找父级，**不是**"看到没有属性就跳过"；
+  - 本 DT 既无 `vdd-l13-l16-l17-supply` 属性、也无同名 regulator，查找必然失败；
+  - 由于 DT 已填充，`have_full_constraints()` 恒为真 → core 绑定 **dummy regulator**
+    并打印 "supply ... not found, using dummy regulator"（运行时日志，本报告不声称已观测）。
+  - 因此"FDT 中无该 property" ≠ "该 regulator 在 core 里没有 parent 对象"。
+    前者是本轮的静态结论；后者属于运行时对象状态，超出本轮范围。
+
+  同理，`supply_name` 是 C 字符串 lookup key，**不能**作为实际物理供电网的证据。
+
+--------------------------------------------------------------------------------
+7. D. Vendor proxy-supply
+--------------------------------------------------------------------------------
+
+7.1 L17
+    group / child 上 `proxy-supply` 均为 ABSENT；
+    也没有 `qcom,proxy-consumer-enable` / `-current` / `-voltage` 等配套属性
+    （按 `proxy` 子串全树扫描，L17 两条路径均不命中）。
+
+7.2 同子树内确实存在 proxy（对照）
+    共 8 处 `proxy-supply`，其中 6 处在 RSC 子树内，且全部指向**自己的 child**：
+      rpmh-regulator-cxlvl    → .../regulator-pm8150-s3-mmcx-sup-level
+      rpmh-regulator-ldoa5    → .../regulator-pm8150-l5
+      rpmh-regulator-ldoa9    → .../regulator-pm8150-l9
+      rpmh-regulator-ldoa14   → .../regulator-pm8150-l14
+      rpmh-regulator-mmcxlvl  → .../regulator-pm8150a-s4-level
+      rpmh-regulator-ldoc11   → .../regulator-pm8150a-l11
+    另 2 处不在 RSC 子树：
+      /soc/qcom,gdsc@af03000        proxy-supply → 自身
+      /soc/refgen-regulator@88e7000 proxy-supply → 自身
+
+7.3 结论
+    L17 **没有** proxy 语义。ROUND106 在 L5 group 上看到的 proxy-supply 属于
+    L5 的组级配置，**不能**平移到 L17。
+    即使存在 proxy-supply，也只能说明"该 regulator 在 HOS 侧有一个 proxy consumer
+    引用"，**不能**推断真实电气输入。本轮 L17 连这一层都没有，故 L17 的输入拓扑
+    在 FDT 中完全不可见，只能标注为 OPEN。
+
+--------------------------------------------------------------------------------
+8. D. 九个 stock DTBO 的覆盖矩阵
+--------------------------------------------------------------------------------
+
+8.1 结构与 target 解析（逐 entry）
+  entry  fragment  已解析  unresolved  dangling  落在 RSC 子树的 fragment
+    0     143       143        0         0        0
+    1     145       145        0         0        0
+    2     144       144        0         0        0
+    3     143       143        0         0        0
+    4     144       144        0         0        0
+    5     145       145        0         0        0
+    6     145       145        0         0        0
+    7     145       145        0         0        0
+    8     145       145        0         0        0
+
+  即九个 entry 的 fragment target **100% 解析**（`target=<0xffffffff>` 占位 +
+  `/__fixups__` label + base `/__symbols__` 联立），无 unresolved、无 dangling label。
+  九个 entry 都带 `/__symbols__` 与 `/__fixups__`，均**不带** `/__local_fixups__`。
+
+8.2 对 A/B/C 属性的修改：全部为"无"
+  逐 entry 检查以下三类，结果 entry 0..8 一致：
+
+  检查项                                             entry 0..8
+  qcom,always-wait-for-ack（属性名出现次数）          0
+  regulator-coupled-*（4 个属性实例数）               0
+  supply / parent-supply 类属性名是否命中 L17          否
+  overlay 子树内是否存在 ldoa17 / l17 节点重定义        无
+  fragment target 为 L17 group / L17 child            0
+  fragment target 落在 RSC 子树                       0
+
+  → 九个 entry **均未**通过 overlay property、fixup 或 local-fixup 增删改 L17 的
+    ACK / coupling / parent supply。对 L17 而言，九个 overlay 的合成结果都与 base 相同。
+
+8.3 九个 entry 中唯一涉及 L17 的引用（consumer 侧，必须与 A/B/C 区分）
+  每个 entry 都有 `/fragment@64`，其 target label = `ufshc_mem`（UFS host 控制器节点）。
+  该 fragment 的 `__overlay__` 属性表（entry 0..8 完全一致）：
+    status                     "ok"
+    vcc-supply                 len 4  placeholder <0xffffffff> → fixup label pm8150_l17
+    vcc-max-microamp           800000
+    vcc-voltage-level          <2504000 2950000>
+    vcc-low-voltage-sup        len 0（布尔，存在）
+    vccq-supply                → fixup label pm8150_l6
+    vccq-max-microamp          800000
+    vccq2-supply               → fixup label pm8150_s4
+    vccq2-max-microamp         800000
+    qcom,vccq-parent-supply    → fixup label pm8150a_s8
+    qcom,vccq-parent-max-microamp 210000
+    qcom,vddp-ref-clk-supply   → fixup label pm8150_l6
+    qcom,vddp-ref-clk-max-microamp 100
+    vdd-hba-supply             → fixup label ufs_phy_gdsc（注意：不是 regulator）
+    vdd-hba-fixed-regulator    布尔，存在
+  六个 supply 的 label 映射在 entry 0..8 中**逐项相同**。
+
+  要点：
+  - `vcc-supply = <&pm8150_l17>` 证明的是 **UFS VCC 消费 L17**，
+    与任务书前提（UFS generic VCC 用 L17）一致；
+  - 它**不是** L17 的 parent supply，也不改变 L17 节点的任何属性；
+  - `vcc-max-microamp = 800000` 与 ROUND90 的 800 mA 候选负载口径一致（静态值，非运行时）；
+  - `vdd-hba-supply` 指向的是 GDSC（`ufs_phy_gdsc`），不是 PMIC regulator，
+    因此不能计入 L17 相关的 regulator 拓扑。
+
+8.4 entry 之间的差异（如实记录）
+  九个 DTBO 文件的字节数/fragment 数不同（143/144/145），差异不落在 L17 相关节点上：
+  本报告已逐 entry 验证"RSC 子树 fragment = 0"与"L17 相关属性 0 命中"，
+  故 fragment 数量的差异不影响 L17 结论。不能据此推断 entry 8 就是实际启动选择。
+
+--------------------------------------------------------------------------------
+9. F. Failure-boundary classification（静态配置 → 同步还是异步）
+--------------------------------------------------------------------------------
+
+9.1 判定依据（全部来自固定 ACK 源码，不依赖 regulator 类型猜测）
+  drivers/regulator/qcom-rpmh-regulator.c（8ad08f75）
+
+  line 460   vreg->always_wait_for_ack = of_property_read_bool(node,
+                                             "qcom,always-wait-for-ack");
+
+  line 163   static int rpmh_regulator_send_request(struct rpmh_vreg *vreg,
+                                                 struct tcs_cmd *cmd, bool wait_for_ack)
+  line 168       if (wait_for_ack || vreg->always_wait_for_ack)
+  line 169           ret = rpmh_write(vreg->dev, RPMH_ACTIVE_ONLY_STATE, cmd, 1);
+  line 171       else
+  line 172           ret = rpmh_write_async(vreg->dev, RPMH_ACTIVE_ONLY_STATE, cmd, 1);
+
+  line 229   rpmh_regulator_set_enable_state(..., bool enable)
+  line 247       ret = rpmh_regulator_send_request(vreg, &cmd, enable);   // 注意：传入 enable
+
+  line 256   rpmh_regulator_enable()  → set_enable_state(rdev, true)    → wait_for_ack = true
+  line 261   rpmh_regulator_disable() → set_enable_state(rdev, false)   → wait_for_ack = false
+
+  line 284   rpmh_regulator_vrm_set_mode_bypass() → send_request(vreg, &cmd, true)  // mode 恒同步
+
+  drivers/soc/qcom/rpmh.c
+  line 253   rpmh_write():  __rpmh_write() 后 wait_for_completion_timeout(RPMH_TIMEOUT_MS)，
+             超时返回 -ETIMEDOUT（同步、会等 ACK）
+  line 222   rpmh_write_async(): 只 __rpmh_write()，不等待完成（异步、不等 ACK）
+
+9.2 判定
+  对 L17：
+    enable  → 同步 rpmh_write()
+    set_mode→ 同步 rpmh_write()（与属性无关，恒为 true）
+    disable → **异步 rpmh_write_async()**
+  因为 L17 child 上没有 `qcom,always-wait-for-ack`（§3.1），
+  `always_wait_for_ack` 保持 false，disable 的 `wait_for_ack=false` 不会升级为同步。
+
+  因此本轮静态配置的 failure boundary 属于 **异步** 一侧：
+  `regulator_disable()` 的返回值只反映"命令是否成功排队/写入"，**不反映 PMIC 是否已
+  完成 ACK**。`rpmh_write()` 的 `-ETIMEDOUT` 分支在本配置下不会被 L17 disable 触发。
+
+9.3 与 ROUND90 的关系（不重复推导，只做边界说明）
+  ROUND90 已确认 load-zero-before-disable 可避免 core 在 enable_count 递减后执行
+  非零 load 的 DRMS 更新。本轮只补充"该路径的错误返回语义是异步"这一静态事实；
+  两者不矛盾，也不构成运行时结论。
+
+--------------------------------------------------------------------------------
+10. unresolved / not present / not run
+--------------------------------------------------------------------------------
+
+10.1 not present（已确证不存在，非"未检查"）
+  - L17 child 的 `qcom,always-wait-for-ack`：不存在（base ×3、DTBO ×9）
+  - L17 的 coupling 四属性与 vendor coupling-like 属性：不存在
+  - L17 group/child 上的任何 `*-supply` / `*-parent-supply`：不存在
+  - 全树 `vdd-l13-l16-l17-supply` / `vin-supply` / `vph-pwr-supply`：不存在
+  - L17 的 `proxy-supply`：不存在
+  - 指向 L17 的任何 phandle 引用（base 内）：不存在
+  - 落在 RSC 子树的 DTBO fragment：不存在（entry 0..8）
+
+10.2 unresolved
+  - 无。九个 entry 的 fragment target 全部解析成功，无 unresolved target、
+    无 dangling fixup label。（若存在，本报告会逐条列出，不做猜测。）
+
+10.3 not run（明确未执行，且不在本任务范围）
+  - 未做 overlay 合成后的运行时验证；未连接设备，未读取分区；
+  - 未验证 PMIC ACK 实际完成状态、未测量任何电压/电流/时序；
+  - 未判定 ABL 实际选中哪个 DTBO entry（entry 8 不具特殊性）；
+  - 未做电气原理图推断。`vdd-l13-l16-l17` 只是 lookup 名。
+  - 未运行 dtc / fdtoverlay / fdtget：ROUND3 解包工作副本已含解析结果，
+    且任务书禁止引入新工具与重新解包。
+
+--------------------------------------------------------------------------------
+11. 安全边界与未修改声明
+--------------------------------------------------------------------------------
+
+11.1 未修改任何输入
+  - 未修改/覆盖/重新解包/重打包任何 base FDT、DTBO 或 ROUND3 解析产物；
+    所有输入以只读方式（`rb`）打开，未写入。
+  - 未修改 ROUND103 / 106 及其他任一 ROUND 的工作文件与脚本。
+  - 未修改内核源码、DTS、binding、补丁；未创建或修改任何 Git 开发分支；
+    未触碰 2号 AI 的 patch series 或 Stage A 分支。
+  - 未新增、下载、安装、编译任何二进制工具。解析仅用 ROUND3 已审查解码器 +
+    ROUND103/106 已审查模式（同一套 phandle index / fixup target 解析 / 逐 entry 矩阵）。
+
+11.2 未执行的危险操作
+  - 未访问设备：无 ADB / fastboot / recovery / reboot / unlock / root / flash。
+  - 未读取或写入任何设备分区；未构建 boot / DTBO image / AVB / vbmeta。
+  - 未上传任何二进制 FDT/DTBO/固件、完整原始属性 dump 或本地绝对路径。
+    本报告只含属性名、长度、布尔/raw cell（phandle 数值按惯例不记录）、
+    解析后的节点路径、结构校验摘要与逐 entry 结果。
+
+11.3 临时文件
+  分析过程的工作文件全部位于 ROUND111 专属目录内；中间 JSON dump 在报告定稿后删除，
+  不留在共享目录。报告是可复现的：同一套只读驱动脚本可重新生成相同结论。
+
+11.4 结论边界
+  本报告是**只读静态证据**，不是代码补丁，也不是运行时结论。
+  以下独立事项不因本轮取证而改变：
+    - PM8150 L17 / UFS VCC 的物理输入拓扑仍为 OPEN（FDT 无 parent supply）；
+    - HOS4.3 ARC/proxy 语义（L17 甚至没有 proxy 配置）；
+    - ABL 实际选择的 DTBO entry；
+    - Phase E/F 未关闭：静态属性不等于设备可启动。
+
+--------------------------------------------------------------------------------
+12. 停止
+--------------------------------------------------------------------------------
+
+本报告为 TEST-AGENT-ROUND111 的唯一交付物，上传至
+firmware-audit-v1:firmware-analysis/round111/TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt
+后立即停止。未启动 ROUND112 或任何后续任务。
+================================================================================

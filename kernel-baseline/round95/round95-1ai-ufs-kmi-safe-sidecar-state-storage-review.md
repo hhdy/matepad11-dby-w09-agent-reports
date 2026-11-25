@@ -80,7 +80,7 @@ Pinned [include/linux/android_vendor.h](https://github.com/aosp-mirror/kernel_co
 
 The pinned [drivers/android/Kconfig](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/android/Kconfig) defines CONFIG_ANDROID_VENDOR_OEM_DATA, depends on 64-bit, and has default y. It is not explicitly listed in the pinned arch/arm64/configs/gki_defconfig; final local .config must still be checked to confirm the Kconfig default was not overridden.
 
-The pinned ABI graph records struct ufs_hba as 5,552 bytes. Its android_oem_data1 member is a u64 at bit offset 44,352 (byte offset 5,544), occupying the final 8 bytes of the structure. This is an already-existing slot, not a new field proposal.
+The pinned ABI graph records struct ufs_hba as 5,552 bytes. Within the struct_union entry for ufs_hba itself, the final member ID is 0xd671c9db; the corresponding ABI member record identifies it as android_oem_data1, type u64, at bit offset 44,352 (byte offset 5,544). It occupies the final 8 bytes of this exact structure (5,544 + 8 = 5,552). This is an already-existing slot, not a same-named field inferred from another structure.
 
 Official Android guidance explains that OEMs should use ANDROID_OEM_DATA() for OEM-specific data and should not appropriate ANDROID_VENDOR_DATA(), which is reserved for vendor-specific use: [Android GKI kernel coding guidance](https://source.android.com/docs/core/architecture/kernel/kernel-code).
 

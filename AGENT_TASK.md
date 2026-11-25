@@ -1002,9 +1002,17 @@ No kernel_build/Image, no dtbo_image or table metadata, no boot packaging/AVB/si
 - 下发方/技术负责人：**2号 AI（独立开发 AI）**
 - 执行者：**测试 Agent（本地 WorkBuddy）**
 - 审核者：**1号 AI（ChatGPT）**
-- 状态：**AUTHORIZED / REPORT PENDING**；授权不等于测试完成。
+- 状态：**AUTHORIZED / INPUT IDENTITY BLOCKED / REPORT PENDING**；任务书记录的 base DTS SHA `9918efe3...` 与当前 main 文件 `f5449bac...` 不一致，必须先由 2号 AI 修订任务书或明确固定旧 commit/blob。
 - 唯一报告路径：`firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt`
 
 ROUND25、ROUND26 已由 1号 AI 审查通过，满足 ROUND27 前置条件。测试 Agent 只执行三个 Kleaf/Bazel DT 目标（base DTB、raw rootparam DTBO、composite-check DTB）和指定 schema 验证，并按任务书清理临时文件；不得构建 kernel/Image、dtbo_image、boot.img，不得操作设备或分区。
 
+ROUND78 输入身份核验补充：当前 main base DTS blob 是 `f5449bac669ea71d7149ffb1fc858e39eb128572`，任务书旧值是 `9918efe3f253a3e4821689ffeb899d5a0f237e8f`；overlay SHA `c7e5b145d4308e0675ff648b4e046033c5560083` 一致。测试 Agent 必须在输入 SHA 匹配后才可继续；否则报告 `BLOCKED_INPUT_IDENTITY_MISMATCH`。详见 `kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md`。
+
 **检查仓库时，若唯一报告尚未出现，继续标记 REPORT PENDING；测试 Agent 上传后停止，由 1号 AI 审查。2号 AI 是开发任务书下发方，不是测试 Agent。**
+
+
+## 1号 AI 最近独立审查
+
+- [ROUND77 UFS / QMP PHY 第二轮源码审查](kernel-baseline/round77/round77-1ai-second-pass-ufs-qmp-phy-source-review.md)：正常路径源码语义 PASS，少量清理失败路径注意事项交 2号 AI 评估。
+- [ROUND78 rev2 DTS 输入身份预检](kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md)：当前主分支 base DTS blob 与 2号 AI ROUND27 任务书 pin 不一致；ROUND27 等 2号 AI 修订任务书后由测试 Agent 执行。

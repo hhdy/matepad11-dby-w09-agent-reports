@@ -1026,3 +1026,23 @@ The agent may compile a temporary DTB/DTBO from unmodified drafts into the ROUND
 No source/config/DTS/DTBO/firmware edit, no Kconfig run, no kernel rebuild, no AVB/sign/boot packaging, no device/ADB/fastboot/recovery/flash. Use the existing ROUND18/ROUND19 work copies only; do not re-extract firmware or redeploy WSL. Upload one sanitized text report to firmware-audit-v1/firmware-analysis/round22/ and stop.
 
 ROUND18 Image remains the frozen successful build baseline. ROUND21 does not justify adding DEVTMPFS or DEVTMPFS_MOUNT. Do not enable PINCTRL_MSM/PINCTRL_SM8250 until a deliberate compatible strategy is reviewed. Stage A is still not device-boot accepted.
+
+
+## 2026-11-25 — Supplemental pinned-source finding: HOS vdd-hba-supply is not portable to ACK
+
+A separate direct source pass against the exact ACK commit established an important UFS contract that should be checked in ROUND22:
+
+- HOS4.3's stock UFS overlay adds `vdd-hba-supply` pointing at its `qcom,gdsc` node and also carries `vdd-hba-fixed-regulator`.
+- ACK's `ufshcd-pltfrm.c` actively parses optional `vdd-hba-supply`; if present it obtains a normal regulator handle and ACK's `ufshcd/core/ufshcd.c` calls regulator_enable/disable. If absent, ACK treats the HBA supply as already enabled.
+- ACK's `drivers/clk/qcom/gdsc.c` registers GDSCs as generic power domains through `of_genpd_add_provider_onecell()`; it does not register a regulator device for the GDSC node. The GDSC driver's own `rsupply` is its upstream input rail, not an output regulator consumer.
+- ACK `of_regulator_dev_lookup()` returns `-EPROBE_DEFER` when a supply phandle points to an existing node that has not registered a regulator device. The dummy-regulator fallback is for `-ENODEV` missing-regulator lookup and does not convert this existing-node/no-regulator case into a dummy.
+- Consequently, copying the HOS `vdd-hba-supply` phandle to the ACK DTS would be unsafe and could leave UFS probe deferred indefinitely. The existing ACK board draft correctly omits it and retains the SoC DTSI's UFS Host/PHY `power-domains = <&gcc UFS_PHY_GDSC>` declarations. The HOS-only `vdd-hba-fixed-regulator` property is also not consumed by the reviewed ACK UFS path.
+
+Detailed source review: `kernel-baseline/round64/round64-ufs-hba-gdsc-regulator-source-review.md`.
+
+Pinned ACK source anchors:
+- `ufshcd-pltfrm.c:L121-L188`, `ufshcd.c:L9499-L9852`
+- `gdsc.c:L259-L317,L570-L628`
+- `of_regulator.c:L647-L665`, `regulator/core.c:L2210-L2245`
+
+This is source/API evidence, not a runtime result. ROUND22 still performs the full local board-DTS / DTB readiness audit; no source, DTS or build input was changed.

@@ -2105,3 +2105,18 @@ Review: [ROUND123 fixed-ACK regulator-disable audit](./kernel-baseline/round123/
 - The regulator core may still return an error after consumer `enable_count` has been decremented: `_regulator_disable()` can next fail at coupled-regulator `regulator_balance_voltage()` or recursive parent-supply disable. UFS keeps `vreg->enabled=true` on any negative return; a later enable can restore load but skip `regulator_enable()`, which does not reconstruct a reference already decremented. This remains a verified generic-source boundary, not a confirmed DBY-W09 runtime failure.
 - `ufshcd_hba_exit()` ignores the error from `ufshcd_setup_vreg(hba, false)`; `devm_regulator_get()` release invokes `regulator_put()` unconditionally, and `_regulator_put()` warns but still destroys the consumer handle if `enable_count` is nonzero.
 - ROUND122 stays isolated on AI1 branch; no AI2 branch or protected DTS branch was changed. No device test. Phase E/F remain BLOCKED; Phase G NOT RUN.
+
+
+## 2026-11-25 — ROUND124: 1号 AI combined UFS core candidates (Agent validation pending)
+
+Candidate branch: [ai1/round124-ufs-core-combined-candidates](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ai1/round124-ufs-core-combined-candidates/kernel-baseline/round124).  
+Design/review: [ROUND124 combined candidate review](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round124-ufs-core-combined-candidates/kernel-baseline/round124/ROUND124_COMBINED_CANDIDATE_REVIEW.md).  
+Test-only taskbook: [TEST_AGENT_ROUND124_TASKBOOK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round124/TEST_AGENT_ROUND124_TASKBOOK.md).
+
+- 1号 AI created a separate combined candidate branch from the already validated ROUND120 candidate. Patch 0001 is the per-HBA UFS async scan join (blob `f604c8672fcbc98f3e9645f5e8888c8a34b1c11e`, SHA-256 `12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7`). Patch 0002 is the UFS VCC/VCCQ load-first disable candidate (blob `64dd2ad9022251e2411a1a745aeb920a0badfa85`, SHA-256 `2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66`). Both are copied byte-for-byte from their independently validated candidates.
+- Required application order is ROUND120 first, ROUND122 second. Their `ufshcd.c` hunks do not overlap: ROUND120 modifies later remove/alloc/init/scheduling code; ROUND122 changes the earlier regulator helper block. Real sequential Git apply must still confirm zero offset/fuzz.
+- The combined candidate is to be tested on a disposable copy of the AI2 ROUND32 15-patch Stage A tree, pinned to ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`. Do not include AI2 ROUND33 patch 16 in this test while its separate Agent validation is pending.
+- Agent scope is test/build only: verify patch hashes, sequential apply/check, source gates, UFS core compile, full `//common:dby_w09` Image build, hashes and exact workspace restoration. Agent must not edit code or any AI2 branch.
+- ROUND124 acceptance remains PENDING until its one required report is uploaded and reviewed. Even if combined build passes, it remains an isolated AI1 candidate; do not merge it into AI2 automatically.
+- ROUND123 limitations remain binding: ROUND122 does not solve every regulator post-decrement error or managed teardown hazard.
+- No device/ADB/fastboot/flash/DTBO/AVB operation. Phase E/F remain BLOCKED; Phase G NOT RUN.

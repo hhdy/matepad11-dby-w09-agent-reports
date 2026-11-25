@@ -1558,3 +1558,16 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 1号 AI 直接读取 GitHub Actions job `138920645396`（run `45529395645`）的 job steps 和原始日志，14/14 步骤均 completed/success；原始日志确认 `//common:dby_w09` 构建成功（775 actions）、33/33 必需配置符号为 `=y`、Image 和配套文件成功上传。Image SHA256 为 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`，大小 44,820,992 bytes。
 
 **Phase D = PASS（1号 AI 已独立核验 job 状态与日志）。** 这不是板级 DTB/DTBO 或 boot package 验收。Phase E/F 仍 BLOCKED，Phase G NOT RUN。ROUND27 仍因 base DTS 输入 SHA 与任务书不一致而处于 INPUT IDENTITY BLOCKED，等待 2号 AI 修订任务书后由测试 Agent 执行。
+
+
+## 2026-11-25 — ROUND80：ACK RPMhPD indexed-OPP parent-state translation architecture
+
+报告：[ROUND80 — ACK 6.18.33 RPMhPD indexed-OPP parent translation architecture](./kernel-baseline/round80/round80-ack-rpmhpd-indexed-opp-parent-translation-architecture.md)。
+
+- 固定 ACK 的 GenPD 核心可通过 child OPP 表中的 required-opps 将子域 pstate 翻译为父域不同 pstate；升档先升父域，降档后降父域，并支持失败回滚。
+- RPMhPD provider 的 operating-points-v2 支持按 domain index 的 phandle array；SM8250 index 为 CX 0、CX_AO 1、EBI 2、GFX 3、LCX 4、LMX 5、MMCX 6、MMCX_AO 7、MX 8、MX_AO 9。当前 sm8250.dtsi 用单一 shared OPP table，因此默认是 same-pstate 映射。
+- rpmhpd.c 已有 MMCX→CX / MMCX_AO→CX_AO 成对父域 descriptor 模式；若未来证据授权，可按同样架构设计 MMCX→MX / MMCX_AO→MX_AO descriptor，再为 6/7/8/9 索引定义完整的 OPP mapping。
+- 但 ROUND25 仍未获取 CMD_DB AUX level mapping、0xffffffff dropout 真实语义、ARC parent-state 规则，也未证明 UFS 是 HOS4.3 MMCX/MX 明确消费者。因此这只是 ACK 架构可行性，不是 DBY-W09 实施授权，不得凭 0x40→0x10 单点值造表。
+- **当前决策：不改 rpmhpd.c、不改 DTS、不加 MMCX→MX 父域。** 等待 HOS AUX/dropout/运行时证据，或在其他可验证来源中获得完整 corner translation。
+
+Stage A 状态维持：Phase D Image build PASS；ROUND27 仍 INPUT IDENTITY BLOCKED，等待 2号 AI 修正 base DTS blob pin 后由测试 Agent 执行；Phase E memory/PMIC/ARC gates 未关闭，Phase F boot/AVB 未关闭，Phase G 设备验证 NOT RUN。

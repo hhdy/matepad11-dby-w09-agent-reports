@@ -1969,3 +1969,16 @@ Report: [ROUND113 — same-device config mapping](./kernel-baseline/round113/rou
 - The main additional stage distinction: vendor 4.19 had KGSL + Kona GPU/display/camera clocks enabled. Current Stage A 6.18 config has SM8250 GCC enabled but SM8250 GPUCC/DISPCC/CAMCC disabled; DRM_MSM is also disabled and the fixed ACK config has no QCOM_KGSL symbol. This is a Stage B graphics/acceleration gap to address after Stage A boot/storage acceptance, not a reason to reorder the project.
 - HI1861 vendor command and crypto implementation equivalence remain open; symbol-name differences must be traced through real source and runtime use, not guessed.
 - No code, device, boot image, firmware or AI2 branch was modified in this audit.
+
+
+### ROUND114 — KONA proxy-consumer semantics vs fixed ACK (1号 AI review)
+
+Report: [ROUND114 — KONA proxy-consumer ACK compatibility](./kernel-baseline/round114/round114-1ai-kona-proxy-consumer-ack-compat-review.md).
+
+- Source review of public Qualcomm KONA commit cad09e061ef6cf689a4a1e54d27562e0f042236a resolves the apparent L5/L9 self-referential proxy-supply: the provider group device performs regulator_get("proxy") using its group-node proxy-supply phandle to obtain a consumer handle on that provider's own child regulator. This is a temporary self-consumer request, not a PMIC electrical parent edge. Child qcom,proxy-consumer-* properties are passed separately as the helper's reg_node.
+- KONA registers the temporary vote at regulator_register, then unregisters it individually before rdev registry removal or globally at late_initcall_sync. L5/L9 requests are 100000 uA + enable; no similar request is inferred for L6/L17.
+- KONA's cleanup order disable -> set_load(0) must not be copied into ACK. KONA's old global use_count and regulator_set_load behavior differ from ACK 6.18 per-handle enable_count + conditional DRMS update + load rollback. ACK must set_load(0) while the proxy handle remains enabled, abort disable if it fails, then disable, and only update retained state after success.
+- Failure-state / handle lifetime at provider unregister, lock ordering, async late probe, and failed late-init cleanup remain implementation requirements. Round114 is source review only, not code implementation.
+- **Taskbook ownership conflict:** AI2 ROUND31 is an actual 2号 AI coding task, but its published text says the local Agent is executor. This conflicts with the user's explicit role boundary. 1号 AI has not edited AI2 taskbook or Stage A branch; the executor assignment needs correction before further execution. Local Agent may only run explicitly scoped read-only evidence/build/test work, not author kernel code.
+- Current AI2 branch remains an assignment-only observation until a new actual source commit is fetched; re-check before code review.
+

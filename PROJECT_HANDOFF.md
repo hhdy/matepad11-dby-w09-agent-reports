@@ -1821,3 +1821,90 @@ ROUND95 报告已补入 1号 AI 对固定 ACK devres 顺序的继续核验（同
 - parser 运行在 `ufshcd_init()` 的 `dev_set_drvdata(dev,hba)` 之前；早期 parser 已经拿到 `hba` 参数，应直接通过 HBA OEM slot 读写 sidecar，不可依赖 `dev_get_drvdata()`。
 
 这一核验支持 sidecar 的 devres 生命周期设计候选，但没有证明 OEM slot 无其他下游消费者，也没有确认实际最终 `.config` 中 `CONFIG_ANDROID_VENDOR_OEM_DATA=y`，更没有执行 Kleaf ABI diff。以上仍是 2号 AI 采用该方案前的硬性检查。详见更新后的 [ROUND95 报告](./kernel-baseline/round95/round95-1ai-ufs-kmi-safe-sidecar-state-storage-review.md)。
+
+
+## 2026-11-25 — ROUND102 至 ROUND110：UFS 私有生命周期与 regulator teardown 最新约束
+
+以下新报告均由 **1号 AI** 基于固定 ACK 源码只读审查写入 main。它们不代表代码已经集成；实际 patch 仍属于 **2号 AI** 的 `ai-parallel/stagea-port-until-boot` 分支。
+
+### ROUND102 — generic UFS 私有状态的最终存储位置
+
+报告：[ROUND102 — UFS private host storage and registered async domain design](./kernel-baseline/round102/round102-1ai-ufs-private-host-storage-and-registered-async-domain-design.md)。
+
+**重要修正：ROUND102 的 `struct ufs_hba_priv` 方案优先于 ROUND95 的 `android_oem_data1` OEM slot + devm sidecar 方案。**
+
+固定 ACK 已有私有 wrapper：
+
+```c
+struct ufs_hba_priv {
+        struct ufs_hba hba;
+        bool zwor_sup;
+};
+```
+
+由 `ufshcd_alloc_host()` 分配为 SCSI host private data；`struct ufs_hba` 是第一个成员。建议 2号 AI 在该私有 wrapper 中增加生命周期 state 子结构：
+- per-HBA async domain / cookie / scheduled state；
+- generic UFS VCC voltage/load/request cleanup state。
+
+这样不修改 KMI-visible `struct ufs_hba`、`struct ufs_vreg`、`struct ufs_hba_variant_ops`，不使用 `android_oem_data1`，不依赖 `CONFIG_ANDROID_VENDOR_OEM_DATA`，也不需要另设一个 devm sidecar allocation。ROUND95 是历史设计候选，其 OEM slot 方案不再是首选。
+
+### ROUND105 — VDDP / QMP load-zero-before-disable
+
+报告：[ROUND105 — UFS QMP/VDDP load-first teardown review](./kernel-baseline/round105/round105-1ai-ufs-qmp-vddp-load-first-teardown-review.md)。
+
+- ROUND52 VDDP L6 cleanup 仍是 disable-first、load-zero-later；必须调整为 load-zero while enabled，再 disable。
+- ROUND63 QMP L5 cleanup 必须在 load-zero 失败时停止，不得继续 disable；只有 disable 成功后才能把 retained enable flag 清零。
+- regulator core 的 disable 负返回有可能发生在 consumer enable_count 已减后；load-zero-before-disable 可消除当前已识别的 post-decrement DRMS 路径。
+- load-zero-before-disable 不会消除真实 provider disable 失败，devres action 的 return 不能阻止后续 managed regulator_put。
+
+### ROUND106 — Local Agent 已完成 L5 只读取证
+
+报告：[TEST_AGENT_ROUND106_L5_RPMH_DISABLE_CONFIG_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round106/TEST_AGENT_ROUND106_L5_RPMH_DISABLE_CONFIG_REPORT.txt)。
+
+- 三个已提取 base FDT candidates 与九个 DTBO 的结构完整性均通过既有 parser 检查。
+- L5 全局范围没有 `qcom,always-wait-for-ack`、regulator coupling、普通 parent-supply 属性；九个 DTBO 均不修改 L5 provider/group。
+- L5 group 的 vendor `proxy-supply` 指回自身 L5 child，不能解释为物理输入。
+- Agent 只读，报告已上传 `firmware-audit-v1`，没有改固件/parser/源代码/分支，已停止。
+
+### ROUND107 / ROUND109 — QMP retained rail 状态模型
+
+报告：
+- [ROUND107 — L5 async disable and QMP state-machine review](./kernel-baseline/round107/round107-1ai-l5-and-qmp-poweroff-state-machine-review.md)
+- [ROUND109 — QMP power-off residual regulator-state design](./kernel-baseline/round109/round109-1ai-qmp-phy-poweroff-residual-rail-state-design.md)
+
+已确认：
+- HOS4.3 L5/L9 均没有 `qcom,always-wait-for-ack`、coupling；当前源的 RPMh provider disable 走 `rpmh_write_async()`，错误发生在请求 trigger 前；load-zero 的同步 DRMS mode transition 则可能 timeout。
+- 固定 ACK QMP UFS PHY 源有 15 组 regulator lists，全部严格是两项：index0 `vdda-phy`、index1 `vdda-pll`。SM8250 load 为 89900µA / 18800µA。
+- `devm_regulator_bulk_get_const()` 在 probe 时已经把 init_load 写入 consumer handle；因此“enable ref false”不等于 stored load 为零。
+- QMP 需要分别记录 L5 retained enable、L5 stored load 状态和 L9/tail enable/load 状态。L9 disable 失败后不能重复 enable，否则会多出一个 consumer reference。
+- PHY core 仅在 provider `.power_off()` 返回成功时递减 power_count；但 Qualcomm UFS variant `exit` 回调是 void，当前忽略 `phy_power_off()` 返回并继续 `phy_exit()`。仅传播错误不是完整 remove 解决方案。
+- ROUND109 的设计建议是：硬件已 power-down 且 clocks 已关闭后，即使 regulator vote cleanup 失败，也应返回“PHY 硬件已关闭”的成功语义，同时保留准确残余 regulator 状态；后续 power-on 必须复用仍持有的 reference，不得重复 enable；QMP provider 最终移除时再尝试 drain 所有残余 L5/L9 references。此为 2号 AI 评估的设计建议，不是已集成代码。
+- HOS4.3 L5/L9 vendor 100mA ARC/proxy consumer semantics 未被 ACK RPMh provider 实现，仍是单独开放的 compatibility gap；不能把它误当物理 parent supply。
+
+### ROUND108 — UFS-owned async callback 必须按 HBA join
+
+报告：[ROUND108 — UFS async private-domain join design](./kernel-baseline/round108/round108-1ai-ufs-async-private-domain-join-design.md)。
+
+固定 ACK 的 `ufshcd_init()` 调用 `async_schedule(ufshcd_async_scan, hba)` 后丢弃 cookie；`ufshcd_remove()` 当前没有在 teardown 前 join 该 callback。
+
+推荐在 `ufs_hba_priv` 中嵌入一个 `struct async_domain`，初始化为 registered domain（pending list 初始化、`registered=1`），schedule 时存储 cookie，remove 的第一处动作以 `async_synchronize_cookie_domain(cookie + 1, &domain)` join。这样等待范围只限该 HBA 的 callback，同时继续参与全局 `async_synchronize_full()`。不要用全局 async barrier 或未经证明的 SCSI async barrier代替。
+
+### ROUND110 — 综合 UFS remove / regulator shutdown 顺序
+
+报告：[ROUND110 — integrated UFS remove and rail ordering map](./kernel-baseline/round110/round110-1ai-integrated-ufs-remove-rail-ordering-map.md)。
+
+正确顺序是：
+1. UFS remove entry 先 join `ufshcd_async_scan`。
+2. 正常 SCSI/IRQ/HBA teardown。
+3. Variant exit：QMP PHY hardware off，L5 load-zero/retained ref 与 L9 状态处理。
+4. Generic UFS VCC/L17、VCCQ/L6、VCCQ2/S4 shutdown；L17/L6 load-zero 必须在 disable 前。
+5. VCCQ/L6 关闭后，VDDP 独立 L6 consumer 仍可能保持 100µA。
+6. remove callback 返回后，VDDP devres action load-zero then disable，再 managed put。
+7. HBA private wrapper 随 Scsi_Host private allocation 释放；**不是独立 devm sidecar**。
+8. QMP PHY provider 在其独立设备生命周期结束时清理残余 L5/L9 regulator refs，再 put managed bulk handles。
+
+### 当前开发分支和任务状态
+
+截至本交接更新前最后一次核对，`ai-parallel/stagea-port-until-boot` HEAD 仍为 `40f5555bc78fc54ee17c5b12f1294c43368ea30c`（AI2 ROUND30 task assignment）。ROUND61 的旧 Phase A–D Image build 仍然是有效的历史构建证据，但不验证这些 ROUND105–110 后续 teardown / async 设计改动。**下一次审查必须重新 fetch AI2 分支 head 和 diff；不能假设 ROUND30 implementation 已完成。**
+
+本组 1AI 报告均未修改 AI2 分支、protected DTS 分支、PR #1、固件、配置、源代码或 build artifact，也没有执行 device boot/flash/AVB 操作。Stage A Phase E/F 继续 BLOCKED，Phase G NOT RUN；DerpFest Stage B 仍须等待 Stage A 实际启动和 UFS/storage/basic hardware acceptance。

@@ -55,9 +55,11 @@ The exact pinned ACK source has removed this VCC min/max request path:
 
 2. `drivers/ufs/host/ufshcd-pltfrm.c:ufshcd_populate_vreg()` reads the supply phandle and `<name>-max-microamp`; it does not parse `vcc-voltage-level`.
 
-3. `drivers/ufs/core/ufshcd.c:ufshcd_config_vreg()` returns if the regulator has no voltage-count support; otherwise it delegates only to `ufshcd_config_vreg_load()`, which calls `regulator_set_load()`. There is no `regulator_set_voltage()` in this setup path.
-
-4. The pinned `qcom,sc7180-ufshc.yaml` selects `qcom,sm8250-ufshc`, sets `unevaluatedProperties: false`, and does not declare `vcc-voltage-level`. `qcom,ufs-common.yaml` declares the VCC supply and max-current property but not the voltage-level property.
+3. `drivers/ufs/host/ufshcd-pltfrm.c:ufshcd_populate_vreg()` reads only the supply phandle and `<name>-max-microamp`; the exported helper is used for VCC, VCCQ and VCCQ2. No VCC voltage-range property is parsed.
+4. `include/ufs/ufs.h:struct ufs_vreg` contains the regulator pointer, name, always-on/enabled flags and `max_uA` only; there are no `min_uV/max_uV` fields.
+5. `drivers/ufs/core/ufshcd.c:ufshcd_config_vreg()` returns if the regulator has no voltage-count support; otherwise it delegates only to `ufshcd_config_vreg_load()`, which calls `regulator_set_load()`. There is no `regulator_set_voltage()` in this setup path.
+6. The enable path calls `ufshcd_config_vreg(..., true)` before `regulator_enable()`. The disable path calls `regulator_disable()` first and then `ufshcd_config_vreg(..., false)` (and explicitly ignores errors from applying the disable configuration). Any restored voltage request must account for this ordering and must not silently leak a consumer vote.
+7. The pinned `qcom,sc7180-ufshc.yaml` selects `qcom,sm8250-ufshc`, sets `unevaluatedProperties: false`, and does not declare `vcc-voltage-level`. `qcom,ufs-common.yaml` declares the VCC supply and max-current property but not the voltage-level property.
 
 Pinned source references:
 - [ACK `struct ufs_vreg`, `include/ufs/ufs.h`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/include/ufs/ufs.h)
@@ -90,10 +92,10 @@ Implement the VCC voltage range as a real consumer request, then add matching sc
    - min must be non-zero and <= max;
    - reject malformed arrays; do not silently fall back to broad voltage limits when the property is present but malformed.
 3. Before VCC regulator enable, call `regulator_set_voltage(vcc, min_uV, max_uV)` when the regulator supports voltage changes; preserve correct rollback if voltage or load configuration fails.
-4. On disable, release the consumer voltage request with the same safe ordering and semantics verified against the selected regulator-core API. Confirm interactions with shared consumers and regulator constraints.
+4. Match the current UFS lifecycle carefully: enable config is applied before `regulator_enable()`; disable releases the regulator enable reference before the current config(false) call. If the restored voltage request is released after disable, check the API outcome, report failures and ensure a stale min-voltage consumer vote cannot survive invisibly. Do not retain the current unconditional “ignore disable config error” behavior for a new voltage vote without a documented reason.
 5. Keep `vcc-voltage-level` in the DT only when this consumer path is actually present.
 6. Add its two-cell u32 range declaration to the pinned Qualcomm UFS binding (likely `qcom,ufs-common.yaml` if the property is intentionally common to Qualcomm UFS hosts, otherwise a narrower Qualcomm host schema). The binding must describe units, pair semantics and validation limits; do not add a schema-only property without driver implementation.
-7. Add tests for absent property, valid pair, malformed length, min > max, fixed-voltage regulator, voltage-capable regulator, failure rollback, shared regulator consumer and disable/re-enable.
+7. Add tests for absent property, valid pair, malformed length, min > max, fixed-voltage regulator, voltage-capable regulator, failure rollback, shared regulator consumer, suspend/disable/re-enable and always-on behavior.
 
 ### Path B — Do not implement the legacy consumer request
 

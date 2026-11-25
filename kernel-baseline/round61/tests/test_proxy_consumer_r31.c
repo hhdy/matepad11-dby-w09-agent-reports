@@ -108,7 +108,7 @@ int main(void)
 	mock_register_target(&l5, &rdev5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
-	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(!IS_ERR_OR_NULL(rdev5.proxy_consumer), "enable+current -> consumer registered");
 	CHECK(mock.get_calls == 1, "exactly one regulator_get");
 	CHECK(mock.last_get_id_is_proxy == 1, "supply id is \"proxy\"");
@@ -141,7 +141,7 @@ int main(void)
 	reset_mock();
 	del_props(&l5);
 	add_u32(&l5, "qcom,proxy-consumer-current", 0x80000000u);
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -22, "current > INT_MAX -> -EINVAL");
 	CHECK(mock.get_calls == 0, "rejected before regulator_get");
 	CHECK(rdev5.proxy_consumer == NULL, "rejected -> rdev untouched");
@@ -150,7 +150,7 @@ int main(void)
 	reset_mock();
 	del_props(&l5);
 	add_u32(&l5, "qcom,proxy-consumer-enable", 1);
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -22, "non-empty enable -> -EINVAL");
 	CHECK(mock.get_calls == 0, "type error rejected before regulator_get");
 
@@ -158,14 +158,14 @@ int main(void)
 	reset_mock();
 	del_props(&l5);
 	add_u32_pair(&l5, "qcom,proxy-consumer-voltage", 1200000, 900000);
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -22, "min > max voltage -> -EINVAL");
 
 	/* 8. properties present but no actual request is rejected */
 	reset_mock();
 	del_props(&l5);
 	add_u32(&l5, "qcom,proxy-consumer-current", 0);
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -22, "zero-only request -> -EINVAL");
 	CHECK(mock.get_calls == 0, "zero-only request never touches a regulator");
 
@@ -177,7 +177,7 @@ int main(void)
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	mock.fail_set_load = -5;
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -5, "set_load failure propagates");
 	CHECK(mock.enable_calls == 0 && mock.enable_balance == 0,
 	      "set_load failure -> no enable");
@@ -189,7 +189,7 @@ int main(void)
 	add_supply(&group5_node, "proxy-supply", &l5);
 	mock_register_target(&l5, &rdev5);
 	mock.fail_enable = -6;
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -6, "enable failure propagates");
 	CHECK(mock.load_uA == 0, "enable failure restores load to 0");
 	CHECK(mock.put_calls == 1, "enable failure -> regulator_put once");
@@ -205,7 +205,7 @@ int main(void)
 	add_u32(&l9, "qcom,proxy-consumer-current", 100000);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
-	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	rdev9.proxy_consumer = regulator_proxy_consumer_register(&group9, &l9, &rdev9);
 	CHECK(!IS_ERR_OR_NULL(rdev5.proxy_consumer) &&
 	      !IS_ERR_OR_NULL(rdev9.proxy_consumer), "two rails registered");
@@ -242,7 +242,7 @@ int main(void)
 	reset_mock();
 	del_props(&l9);
 	add_flag(&l9, "qcom,proxy-consumer-enable");
-	c = regulator_proxy_consumer_register(&group, &l9, &rdev9);
+	c = regulator_proxy_consumer_register(&group9, &l9, &rdev9);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -1, "registration after removal -> -EPERM");
 	CHECK(mock.get_calls == 0, "refused registration does not vote");
 

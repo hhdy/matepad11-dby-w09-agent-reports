@@ -1234,3 +1234,17 @@ ROUND23 uses the current main files: dby-w09-ack18-board.dts.rev2.candidate and 
 The task is local/read-only: no changes to either main DTS source candidate, no source/config edits, no schema or kernel build, no Kleaf/Bazel, no boot image/DTBO table package/AVB, no device. It uploads one report to firmware-audit-v1/firmware-analysis/round23/ and stops.
 
 Round23 is a temporary syntax/composite validation only. It does not establish that VG is the actual selected hardware variant or that ABL accepts a one-entry DTBO image. Final memory handoff and PM8150 physical input-parent topology remain blocked.
+
+
+## ROUND68 addendum — fixed ACK DTS package has no existing Bazel BUILD file
+
+A read-only GitHub tree check at the exact ACK common commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a found:
+- arch/arm64/boot/dts/qcom has 516 entries and no BUILD.bazel or BUILD file;
+- arch/arm64/boot/dts has 40 entries and no BUILD.bazel or BUILD file.
+
+Therefore the documented rules_devicetree APIs cannot simply be invoked as an existing //common:arch/arm64/boot/dts/qcom target. The future integration must add a new BUILD.bazel package at the chosen location (or a separate dedicated package) and explicitly wire:
+- rules_devicetree dtb/dtbo/composite targets;
+- //common:dtc_includes_aarch64 include dependency;
+- Kleaf dtbo_image packaging rule only after raw DTBO metadata is approved.
+
+This also means no exact Bazel target label exists yet for DBY-W09 DTB/DTBO. Do not claim a Kleaf device-tree target is ready. The local ROUND23 dtc/fdtoverlay checks remain syntax/composite validation outside Bazel.

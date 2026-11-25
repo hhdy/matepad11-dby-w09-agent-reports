@@ -113,3 +113,8 @@ After ROUND22's local source/DTB readiness report is received:
 - Final RAM/PMIC data, AVB signing, boot package and device startup: BLOCKED / NOT RUN.
 
 No BUILD.bazel target, source, DTS, DTBO, config, image, branch-protected artifact or device was changed.
+
+
+## Addendum — actual pinned ACK DTS package layout
+
+At the exact common source commit, a GitHub tree check found 516 entries under arch/arm64/boot/dts/qcom and no BUILD/BUILD.bazel file; arch/arm64/boot/dts has 40 entries and no BUILD file either. There is no existing qcom Bazel package to extend. A later Kleaf integration must create a new BUILD.bazel package at the selected DTS source path or a dedicated build package, load rules_devicetree and Kleaf dtbo_image, and depend on //common:dtc_includes_aarch64. The exact source tree itself remains untouched.

@@ -1919,3 +1919,41 @@ Taskbook：[ROUND111 TEST_AGENT_TASKBOOK.md](./kernel-baseline/round111/TEST_AGE
 - 范围：只读取既有 ROUND3 base FDT candidates 0/1/2、九个现有 DTBO；只检查 L17 group/child 和相关 reverse coupling；禁止重新提取固件、访问设备、改源代码/DTS/binding。
 - 唯一报告目标：`firmware-analysis/round111/TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt`，分支 `firmware-audit-v1`。
 - Agent 上传报告后立即停止。该证据用于 1号 AI 完成 L17 disable failure boundary 审查；实际驱动修复仍属于 2号 AI。
+
+
+## 2026-11-25 — ROUND111 completed; ROUND112 L17 teardown boundary accepted by 1号 AI
+
+### ROUND111 — PM8150 L17 / UFS VCC FDT evidence (Agent completed)
+
+Report: [TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round111/TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt), blob f6423267249b46ffdab34474d3be34a603ccbb7b.
+
+- Role: assigned by 1号 AI; executed by local read-only test Agent; not a 2号 AI coding task.
+- Three base FDT candidates agree. L17 child/group have no qcom,always-wait-for-ack; the property is absent tree-wide and in all nine DTBOs.
+- No regulator coupling properties or reverse phandle references to L17.
+- No ordinary parent-supply properties on L17 and no full-tree vdd-l13-l16-l17-supply, vin-supply, or vph-pwr-supply. ACK's vdd-l13-l16-l17 is a static regulator-core lookup name, not proof of a physical power input. With populated DT/full constraints and no matching regulator/property, fixed ACK supply resolution falls back to dummy regulator; this is a source-derived expectation, not observed runtime state.
+- L17 has no proxy-supply. Do not transpose L5's proxy finding to L17.
+- Nine DTBO entries do not target or alter the L17 provider/RSC subtree. Their common /fragment@64 adds consumer-side UFS vcc-supply = <&pm8150_l17>, with vcc-max-microamp = 800000; that is UFS consuming L17, not L17's parent.
+- Agent reported all fragment targets resolved, with no unresolved/dangling fixups, did not modify inputs/source/branches, and stopped after its single report.
+
+### ROUND112 — 1号 AI L17 error-boundary review
+
+Report: [ROUND112 — PM8150 L17 / UFS VCC disable failure boundary](./kernel-baseline/round112/round112-1ai-l17-rpmh-disable-boundary-review.md).
+
+Critical distinction: L17 regulator_disable() uses asynchronous rpmh_write_async() because the child lacks qcom,always-wait-for-ack; however regulator_set_load(0) may invoke a synchronous DRMS mode transition through rpmh_write() and can time out. Required order remains load-zero while enabled; abort disable on load-zero failure; disable only after load-zero succeeds; clear retained enable state only after disable reports success. Async disable success is request submission, not proof of physical PMIC rail-off.
+
+Physical L17 input topology remains OPEN. Phase E/F remain BLOCKED; Phase G NOT RUN.
+
+### Same-device 4.19 reference repository reviewed
+
+Report: [zytstudio DBY-W09 Kernel reference audit](./kernel-baseline/references/zytstudio-dby-w09-kernel-4.19-audit.md).
+
+- zytstudio/DBY-W09-Kernel is a same-model DBY-W09/KONA/SM8250 HarmonyOS 4.3 vendor 4.19.157-perf build project, not an ACK 6.18.33 port.
+- Its configs/running.config (blob 4cf9559611d4c1c2f8bacfc3b98f76fb62cead1a) is a valuable historical /proc/config.gz-derived device-running config. Key enabled areas include UFS/QCOM UFS/HI1861 vendor command/crypto, QCOM RPMh, vendor REGULATOR_RPMH, QMP, UFS PHY, Kona clocks, SMMU/IOMMU and KGSL.
+- Important symbol distinction: that 4.19 config has CONFIG_REGULATOR_RPMH=y while CONFIG_REGULATOR_QCOM_RPMH is not set. Do not conflate vendor 4.19 symbols with ACK 6.18.
+- The repo documents 96 MiB boot, Android header v2, 4096-byte pages, gzip kernel, preserved ramdisk/DTB/cmdline and AVB footer. This is historical packaging evidence only; it does not resolve current ABL→Linux FDT/memory handoff, DTBO runtime selection, or AVB/vbmeta_cust.
+- Its 4.19-specific source/build patches (RTIC .bss, qcacld path, Kconfig and warning changes, generated LCD stub, msm_gem import fault) must not be blindly applied to ACK 6.18. Use only as diagnostic clues after the corresponding 6.18 issue is independently established.
+- External repo master HEAD at review: cf2b854a9d36969856cbe85c1f9c90ac54b8d4d0.
+
+### Current AI2 work branch
+
+At this handoff append, latest observed ai-parallel/stagea-port-until-boot HEAD is 5ecf5f626ade4c365d1bfb0d5a2ea5c7a46aed10 (ROUND61 assignment of AI2 ROUND31 proxy-consumer port). This is a task-assignment commit, not evidence that ROUND31 implementation is complete. 2号 AI implementation must remain on its designated branch; 1号 AI must not modify that branch. Re-fetch its head/diff before the next review.

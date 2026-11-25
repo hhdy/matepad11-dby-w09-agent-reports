@@ -402,6 +402,53 @@ int main(void)
 	c = regulator_proxy_consumer_register(&group, &l5_node, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -1, "legacy after revoke -> -EPERM");
 
+	/* 16. child-scoped cross-target phandle is rejected before lookup. */
+	clear_nodes();
+	reset_mock();
+	mock_register_target(&l5_node, &rdev5);
+	mock_register_target(&l9_node, &rdev9);
+	add_supply(&l5_node, "proxy-supply", &l9_node);
+	add_flag(&l5_node, "qcom,proxy-consumer-enable");
+	c = regulator_proxy_consumer_register(&group, &l5_node, &rdev5);
+	CHECK(IS_ERR(c) && PTR_ERR(c) == -22,
+	      "child-scoped cross-target rejected with -EINVAL");
+	CHECK(mock.get_calls == 0,
+	      "child-scoped cross-target rejected before regulator lookup");
+	CHECK(rdev5.proxy_consumer == NULL,
+	      "child-scoped cross-target leaves owner back-pointer empty");
+
+	/* 17. legacy group mapping also rejects a different target child. */
+	clear_nodes();
+	reset_mock();
+	mock_register_target(&l5_node, &rdev5);
+	mock_register_target(&l9_node, &rdev9);
+	add_supply(&container_node, "proxy-supply", &l9_node);
+	add_flag(&l5_node, "qcom,proxy-consumer-enable");
+	c = regulator_proxy_consumer_register(&group, &l5_node, &rdev5);
+	CHECK(IS_ERR(c) && PTR_ERR(c) == -22,
+	      "legacy group cross-target rejected with -EINVAL");
+	CHECK(mock.get_calls == 0,
+	      "legacy group cross-target rejected before regulator lookup");
+	CHECK(rdev5.proxy_consumer == NULL,
+	      "legacy group cross-target leaves owner back-pointer empty");
+
+	/* 18. legacy self-target remains supported and resolves to its owner. */
+	clear_nodes();
+	reset_mock();
+	mock_register_target(&l5_node, &rdev5);
+	add_supply(&container_node, "proxy-supply", &l5_node);
+	add_flag(&l5_node, "qcom,proxy-consumer-enable");
+	rdev5.proxy_consumer =
+		regulator_proxy_consumer_register(&group, &l5_node, &rdev5);
+	CHECK(!IS_ERR_OR_NULL(rdev5.proxy_consumer),
+	      "legacy group self-target still registers");
+	CHECK(mock_count(&l5_node, MOCK_GET_OK) == 1,
+	      "legacy group self-target resolves the owner node");
+	regulator_proxy_consumer_unregister(&rdev5);
+	CHECK(mock_count(&l5_node, MOCK_DISABLE) == 1 &&
+	      mock_count(&l5_node, MOCK_PUT) == 1,
+	      "legacy self-target owner teardown withdraws once");
+
 	clear_nodes();
 
 	printf("\nchecks=%d failures=%d\n", checks, failures);

@@ -86,3 +86,33 @@ The HOS4.3 DTBO inventory reports `vdda-phy-always-on` on the UFS PHY node. ACK 
 The board DTS draft now declares `vdda-phy-always-on`. It no longer duplicates `vdda-phy-max-microamp=89900` / `vdda-pll-max-microamp=18800`: ACK's pinned `sm8250_ufsphy_vreg_l[]` already sets these exact values. The properties are not accepted by the current QMP UFS PHY binding and are not read by the ACK driver. The stock HOS DTBO entry 8 also contains them, but this project must not apply that 145-fragment stock entry to the minimal ACK base; the planned minimal DTBO is rootparam-only.
 
 **Still a candidate only:** the driver and binding patches have not been full-tree applied, checkpatch/schema checked, compiled or hardware-tested. See `kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md`. The board DTS remains `.draft`, not a source-tree build input.
+
+
+## 2026-11-25 — Superseding current evidence snapshot (ROUND18–ROUND21)
+
+The historical notes above are retained as design history. Where they conflict with this section or the linked ROUND19–ROUND21 reports, the later inspected evidence below is authoritative.
+
+### Confirmed corrections and current status
+
+- **Base /memory:** the HOS4.3 base FDT does contain `/memory` with `device_type = "memory"`; its `reg` is `<0 0 0 0>` (all-zero placeholder). Do not say the node is absent. Do not infer RAM ranges or carveouts. The final ABL-to-Linux handoff remains unknown.
+- **First-stage /dev:** ROUND21 statically traced the exact HOS4.3 `/init`. It mounts tmpfs on `/dev`, creates initial character nodes with `mknod()`, and uses netlink uevents/sysfs coldboot for devices. `CONFIG_TMPFS=y` is required; `CONFIG_DEVTMPFS` and `CONFIG_DEVTMPFS_MOUNT` are not required by this exact first stage.
+- **UFS pinctrl:** the stock HOS TLMM compatible is `qcom,kona-pinctrl`; the pinned ACK SM8250 pinctrl driver matches `qcom,sm8250-pinctrl`. Enabling `PINCTRL_MSM/PINCTRL_SM8250` alone will not bind the HOS node. The pinned ACK UFS Host driver does not select HOS's custom `dev-reset-assert/deassert` states; it uses GCC `core_reset` and the optional device-reset GPIO is absent in the base DTB. Do not add a compatible override without a separately reviewed decision.
+- **Nine stock DTBOs:** all nine carry byte-identical UFS PHY/Host fragments and UFS fixups, but no UFS dual-GenPD array. They also all write five `/rootparam` properties. Variant 8 / board-id `0x206a` is the VG candidate only; runtime variant selection is not proven.
+- **UFS dual GenPD:** the ROUND18 Image includes the ROUND33 helper. The current board DTS draft still inherits only one GCC UFS GDSC domain. To activate UFS OPP routing, the next ACK DTS candidate must add exactly two Host domains in order: MMCX / RPMHPD index 0, then GCC UFS_PHY_GDSC index 1. See [ROUND37 delta](../kernel-baseline/round37/dby-w09-ufs-dual-genpd-board-dts-delta.md) and [ROUND65 audit](../kernel-baseline/round65/round65-ufs-dual-genpd-dts-opp-routing-audit.md). Keep the PHY's own GCC GDSC attachment.
+- **Do not copy HOS `vdd-hba-supply`:** the stock UFS overlay points this at a GDSC node. ACK exposes GDSC as GenPD, not as a regulator. ACK UFS core would try a normal regulator get if `vdd-hba-supply` is present and may defer. The current board draft's omission is deliberate. See [ROUND64 source review](../kernel-baseline/round64/round64-ufs-hba-gdsc-regulator-source-review.md).
+- **VDDP and always-on PHY rail:** ROUND18 includes the VDDP ref-clock lifecycle patch and QMP `vdda-phy-always-on` patch/binding. The board draft's VDDP/L6 and PHY always-on properties are consumed by that patched Image. The UFS VCCQ-parent/S8 property is retained as topology metadata, but the initial ACK driver does not acquire or vote S8; do not assume S8 enable state.
+- **PM8150 input parents:** the pinned ACK RPMh binding does not require every PM8150 `vdd-*-supply` property, and regulator core may use a dummy parent on DT boot when no regulator is found. That fallback assumes the physical rail exists and is already enabled; it is not evidence of the board's electrical topology. Do not invent `vph_pwr`, `vdd-s*` parents or voltages. See [ROUND66 source review](../kernel-baseline/round66/round66-pm8150-rpmh-parent-supply-dummy-fallback-audit.md).
+- **EFI and memory:** ROUND20 proves the built Image has a real PE/COFF EFI entry and ACK can rebuild memblock from UEFI metadata. It does not prove ABL invokes EFI. Ordinary ARM64 entry can also use the kernel EFI memory path if ABL supplies the full metadata. If EFI Stub starts without the platform DTB configuration table, it can generate an empty DTB and lose `/firmware/android/fstab`.
+- **Boot-v2 / AVB:** ROUND20 compression figures prove capacity only. They do not create a boot image or preserve AVB. ROUND19 AVB metadata remains preliminary because no independent trusted implementation cross-check has closed all descriptor inconsistencies.
+
+### Actual files currently present in this directory
+
+As of the current main branch listing, `dts/` contains:
+- `dby-w09-ack18-board.dts.draft`;
+- `README.md`.
+
+The README historically names `dby-w09-ack18-rootparam.dtso.draft`, but that file is **not currently present in the main-branch directory listing**. Do not assume it exists. ROUND19 provides the exact nine variant property values; a minimal overlay must be created/validated separately and must not apply the full 143–145-fragment HOS stock DTBO to the minimal ACK base.
+
+### Next validation boundary
+
+ROUND22 is the active local audit for exact ACK DTS includes/labels, temporary syntax-only DTB compilation, UFS property-to-driver contract, PM8150 input parent software/electrical distinction, and correction of this historical /memory wording. No board DTB has yet passed a full pinned-source build. The board file remains `.draft`, not a build input. Stage A remains unaccepted until a real 6.18.33 kernel boots on DBY-W09 and storage/essential hardware are evidenced.

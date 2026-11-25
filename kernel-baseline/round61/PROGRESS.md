@@ -626,3 +626,16 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - **Review disposition: AI2-ROUND29 deliverable accepted as investigation-complete; root compatible F1 resolution PASS in disposable validation; /rootparam strict validation PASS as a separate node-name-selected schema; overall requested parent-board-schema architecture PARTIAL / NOT MERGE-READY.** UFS voltage property remains OPEN. No formal source change authorized by this review.
 - Phase gates remain unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. This schema work does not establish device bootability or hardware validation.
 - Agent stop rule honored; ROUND30 was not started. Await independent 2号 AI decision before any next task.
+
+
+## 2026-11-25 — AI2 ROUND30 assigned: actual QMP UFS PHY implementation and Image rebuild
+
+- Task ownership: **2号 AI 专属任务书**; task ID `AI2-ROUND30`; executor is the user's local Agent.
+- Taskbook: `firmware-analysis/round30/AI2_ROUND30_TASKBOOK.md` on `firmware-audit-v1`.
+- Taskbook commit: `9e03384a7cf06e8b46e38da6fa820bbee1779ccd`.
+- This is an implementation task, not another design-only review: perform real Git apply of the final ROUND63 QMP UFS PHY driver + binding patches against the exact pinned ACK worktree, real checkpatch/diff/schema checks, integrate into the existing Stage-A source patch series, and rebuild the full `//common:dby_w09` Image target.
+- Exact final inputs: driver patch blob `a06b7d3fc19e0b23895b0013ab9ac322d84cdda5`; binding patch blob `a6668eebe293f9a35e9c08d6be4f37c4340e7ddd`; source finding report blob `bc91a1c5b8112d9466e6b5950ae93ca246c0d366`. Earlier driver patch revisions are prohibited.
+- Keep existing Phase A–D integration intact and rerun the full Image build after adding the driver change. Runtime regulator/PHY hardware tests remain pending and require separate device authorization.
+- Independent blockers remain open: PM8150 L5 physical input topology; HOS4.3 ARC/proxy lifecycle; actual ABL/FDT/EFI memory handoff; boot/ramdisk/AVB layout. Do not invent any of these or build/package a boot candidate.
+- No device operation, ADB/fastboot, partition access, boot/DTBO image packaging, AVB modification, or firmware upload is authorized.
+- The Agent must stop after the one report or at a precise external blocker. Do not start ROUND31 automatically.

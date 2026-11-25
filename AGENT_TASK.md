@@ -701,3 +701,16 @@ The already-referenced public same-device Linux rootparam-only overlay uses thos
 The project main `dts/` directory currently lists only README and the board DTS draft; the README mentions a separate rootparam overlay draft that is not present in that branch listing. No overlay was fabricated in this round because variant selection remains unknown.
 
 Detailed note: `kernel-baseline/round67/round67-hos43-rootparam-overlay-candidate-reconciliation.md`.
+
+
+## 2026-11-25 — ROUND64 Phase E/F evidence now available (read-only; second-AI work)
+
+The second AI's independent local Agent uploaded:
+- Phase E: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md
+- Phase F: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md
+
+Phase E remains BLOCKED: the existing adb pull of /sys/firmware/fdt had failed with Permission denied in ROUND2; no final post-ABL FDT is available, so memory tuples/reserved ranges and EFI/classic path remain UNKNOWN. No authoritative board-specific PM8150 input power tree/schematic exists; do not infer physical parents from ARC/proxy links.
+
+Phase F read-only metadata inventory is now backed by the AOSP avbtool 1.4.0 already present in the pinned ACK source tree. It enumerates boot/ramdisk/DTBO footer and descriptor coverage. Root vbmeta links boot, ramdisk and dtbo; their payload changes cannot reuse stock footer/hash metadata. vbmeta_cust.img has an anomalous footer pointer beyond the 1 MiB file to an empty Algorithm NONE vbmeta object with no descriptors; cust coverage remains UNKNOWN. ABL-selected DTBO remains UNKNOWN. Phase F stays BLOCKED for packaging; info_image metadata parsing is not AVB signature verification.
+
+No device operation, privilege escalation, partition modification or image packaging was performed. Do not attempt to solve the missing final FDT by root/unlock or policy bypass; wait for already-authorized evidence or keep the gate BLOCKED.

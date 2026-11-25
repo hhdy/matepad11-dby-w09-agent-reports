@@ -1639,3 +1639,21 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 - 本轮为 1号 AI 的 source/design review，仅供 2号 AI 评估。2号 AI 负责实现；测试 Agent 只有在收到单独 `AGENT_TEST_TASK.md` 后才执行验证。未修改任何分支、DTS、binding 或补丁，未运行 dt-schema/build/设备测试。
 
 **ROUND27 schema 状态继续保持 NOT CLEAN**，直至 2号 AI 在其实现分支完成 UFS VCC driver+binding、SM8250 root compatible、Huawei rootparam binding 的成套修复，并由测试 Agent 按新测试任务复验。
+
+
+## 2026-11-25 — ROUND86：1号 AI 核对 PM8150 L17 电压档位与 UFS VCC 请求兼容性
+
+报告：[ROUND86 — 1号 AI source review: PM8150 L17 voltage-table compatibility with the UFS VCC request](./kernel-baseline/round86/round86-1ai-pm8150-l17-ufs-vcc-voltage-range-compatibility.md)。
+
+**结论：固定 ACK 6.18.33 的 PM8150 L17 可调压能力和当前候选 DTS 的 UFS VCC consumer 区间在源码/数值层面兼容。**
+
+- `qcom-rpmh-regulator.c` 中 PM8150 LDO17 使用 `pmic5_pldo`，基准 1.504 V、selector 0..255、步进 8 mV，并通过 VRM-DRMS ops 提供 `set_voltage_sel` / `list_voltage`，不是固定/XOB 电源。
+- 候选 provider 约束 2.496–3.008 V 对应 selector 124..188；候选 UFS consumer 范围 2.504–2.950 V 对应可用 selector 125..180。
+- 可满足的实际档位区间为 2.504–2.944 V（8 mV 步进，56 个 selector）。2.950 V 不是精确 selector；下一个 2.952 V 超出 consumer 最大值。2.944 V 是区间内最高可选档。provider 区间完整包含此 consumer 可用档位子集。
+- 因此 L17 不需要为满足当前 UFS consumer 区间而扩大 provider 范围；两种范围仍须分别保留，不能把 provider 的 2.496–3.008 V 当成 UFS consumer 的替代值。
+- 这支持 2号 AI 评估恢复 `regulator_set_voltage(vcc, 2504000, 2950000)` 的实际 consumer 请求。ROUND84 的 shared-helper 隔离、请求状态、回滚及释放失败诊断要求仍然有效。
+- 该结果不是实机电压测量，不证明 PMIC 外部输入 net、HOS ARC dropout/corner 等价、UFS 负载下电气裕量或首启行为。
+
+**职责：** ROUND86 是 1号 AI 只读源码分析。2号 AI 拥有实现决定和补丁；测试 Agent 只有在收到单独 `AGENT_TEST_TASK.md` 后执行验证。本轮未修改源码、DTS、binding、2号 AI 分支或受保护分支，未运行构建、schema 或设备测试。
+
+ROUND27 schema 仍 NOT CLEAN，直到 driver+binding 和 root-compatible/rootparam binding 修复完成并重新验证。

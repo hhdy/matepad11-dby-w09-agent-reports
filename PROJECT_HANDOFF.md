@@ -2026,3 +2026,13 @@ Report: [ROUND117 — UFS QMP proxy handoff order](./kernel-baseline/round117/ro
 - Built-in UFS/QMP platform drivers have no PROBE_PREFER_ASYNCHRONOUS setting. Under default driver-core policy probes are synchronous; late deferred-probe initcall flush occurs at late_initcall level 7 before KONA-style late_initcall_sync level 7s. This conclusion is conditional on no explicit driver_async_probe cmdline override and successful UFS host probe.
 - Thus the Round31 proxy removal at late_initcall_sync can hand L5/L9 mode votes to already-enabled QMP consumers on the normal successful probe path; no need to wait for asynchronous SCSI scan merely for these PHY rail consumer refs. ROUND108 async join still remains necessary for remove lifetime safety.
 - This is only software call-order proof; no actual rail voltage, RPMh completion, selected runtime DTBO, or successful device boot is claimed.
+
+
+### ROUND118 — AI2 ROUND31 role correction and implementation addendum
+
+Taskbook: [AI2 ROUND31 implementation addendum](./kernel-baseline/round118/AI2_ROUND31_IMPLEMENTATION_ADDENDUM.md).
+
+- The original firmware-audit-v1 ROUND31 taskbook states “2号 AI 专属” but also says “执行者为用户本地 Agent”; this is contradictory and violates the user's role boundary.
+- ROUND118 clarifies the actual code executor is 2号 AI on ai-parallel/stagea-port-until-boot. Local Agent is only a separate test/build/read-only tool after code exists; it must not author or repair kernel patches.
+- Adds ROUND115/116 per-child proxy-supply and of_regulator_get constraints, Round114 ACK DRMS/load-disable semantics, Round117 QMP active-vote handoff order, and the non-vetoable ACK regulator_unregister/devres cleanup hazard.
+- At the time of this note the AI2 branch still matched its ROUND31 assignment commit 5ecf5f626ade4c365d1bfb0d5a2ea5c7a46aed10; no actual ROUND31 source implementation commit was present. Re-fetch before review.

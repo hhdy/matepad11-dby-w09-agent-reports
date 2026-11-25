@@ -104,6 +104,7 @@ int main(void)
 
 	/* 2. enable + current: exactly one get, one load vote, one enable */
 	reset_mock();
+	group5_node.nprops = 0;
 	add_supply(&group5_node, "proxy-supply", &l5);
 	mock_register_target(&l5, &rdev5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
@@ -172,6 +173,7 @@ int main(void)
 	/* 9. set_load failure rolls back without enabling */
 	reset_mock();
 	del_props(&l5);
+	group5_node.nprops = 0;
 	add_supply(&group5_node, "proxy-supply", &l5);
 	mock_register_target(&l5, &rdev5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
@@ -186,6 +188,7 @@ int main(void)
 
 	/* 10. enable failure unwinds the load vote */
 	reset_mock();
+	group5_node.nprops = 0;
 	add_supply(&group5_node, "proxy-supply", &l5);
 	mock_register_target(&l5, &rdev5);
 	mock.fail_enable = -6;
@@ -197,7 +200,9 @@ int main(void)
 	/* 11. two rails, bulk late_initcall_sync removal */
 	reset_mock();
 	del_props(&l5);
+	group9_node.nprops = 0;
 	add_supply(&group9_node, "proxy-supply", &l9);
+	group5_node.nprops = 0;
 	add_supply(&group5_node, "proxy-supply", &l5);
 	mock_register_target(&l9, &rdev9);
 	mock_register_target(&l5, &rdev5);

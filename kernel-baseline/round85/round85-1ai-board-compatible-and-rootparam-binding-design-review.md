@@ -51,13 +51,15 @@ select:
   properties:
     $nodename:
       const: rootparam
+    qcom,boardid: true
+    huawei,modem_id: true
   required:
     - $nodename
     - qcom,boardid
     - huawei,modem_id
 ```
 
-This makes the binding apply to the overlay-populated Huawei rootparam node, while leaving the empty base placeholder unmatched. The final schema should keep the selector deliberately narrow. If dt-schema's exact selector semantics require the signature properties inside `select.properties` as well as `required`, follow the pinned tool's documented/validated syntax; do not rely on a broad automatic nodename match.
+This makes the binding apply to the overlay-populated Huawei rootparam node, while leaving the empty base placeholder unmatched. The two `: true` selectors match property presence, while `required` makes the signature explicit. Keep this selector deliberately narrow and validate it with the pinned dt-schema version; do not rely on a broad automatic nodename match.
 
 ### 3.1 Property contracts from the actual overlay
 

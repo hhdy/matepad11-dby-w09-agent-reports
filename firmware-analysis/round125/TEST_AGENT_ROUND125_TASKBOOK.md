@@ -67,10 +67,10 @@ Patch:
 `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch`
 
 Expected Git blob:
-`c192fe1488d82b12aa3d3108e036d1141f5e76db`
+`b2a9a1e6c8f75e858f75e93a5b4ed35ec6bed05d`
 
 Expected SHA-256:
-`31571a1e4449cb5cceae3f77a102e7d4af488f4ef878af3248e8624c7211617c`
+`71b8a64d20ca0fad1037099cbc864a6aceebacebce057eceb7d4a745cabde330`
 
 Patch 只改：
 `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`

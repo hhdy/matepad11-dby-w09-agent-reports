@@ -819,3 +819,12 @@ Do not copy its hard-coded boot payload size 24,412,160 B: the actual HOS4.3 ROU
 This reference also confirms a separate ramdisk partition and rootparam-only overlay, but not the current HOS4.3 table-ID/AVB/ABL policy. Do not use the public privileged install_images.py or copy its flash process.
 
 Detailed note: kernel-baseline/round71/round71-same-device-boot-packaging-structure-cross-reference.md.
+## 2026-11-25 — ROUND72 exact Kleaf DTS include dependency design
+
+At the pinned ACK root BUILD.bazel lines 1874–1897, public //common:dtc_includes_aarch64 covers arm64 include-prefixes and depends on the private dt-bindings header library. It does not contain arch/arm64/boot/dts/qcom/sm8250.dtsi.
+
+The exact qcom source directory currently has no BUILD.bazel. When creating a disposable qcom Bazel package, the simplest rule is to list both the new board dts and same-directory sm8250.dtsi in dtb(srcs=[...]), and add //common:dtc_includes_aarch64 in deps for dt-bindings headers. The rootparam dtso is built separately with dtbo(); dtb_composite() applies it to the symbol-generating base DTB. A distinct dtbo_image() target must wait for HOS4.3 DT table ID/rev selection policy.
+
+The rules_devicetree docs explicitly permit same-directory dtsi files in dtb srcs; different-directory includes instead require devicetree_library(). Exact ruleset module version in local Bzlmod still needs checking before implementing BUILD.bazel.
+
+Detailed note: kernel-baseline/round72/round72-kleaf-qcom-dts-include-dependency-design.md.

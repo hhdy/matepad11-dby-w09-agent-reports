@@ -1982,3 +1982,9 @@ Report: [ROUND114 — KONA proxy-consumer ACK compatibility](./kernel-baseline/r
 - **Taskbook ownership conflict:** AI2 ROUND31 is an actual 2号 AI coding task, but its published text says the local Agent is executor. This conflicts with the user's explicit role boundary. 1号 AI has not edited AI2 taskbook or Stage A branch; the executor assignment needs correction before further execution. Local Agent may only run explicitly scoped read-only evidence/build/test work, not author kernel code.
 - Current AI2 branch remains an assignment-only observation until a new actual source commit is fetched; re-check before code review.
 
+
+
+#### ROUND114 follow-up — DRMS accounting difference affecting proxy handoff
+
+- Additional fixed-source comparison: KONA drms_uA_update() sums every consumer's stored uA_load regardless of enable state, while ACK drms_uA_update() only sums consumer handles with enable_count > 0. KONA set_load on a disabled UFS/QMP handle can immediately affect mode; ACK only stores the load until that handle is enabled.
+- ROUND107 notes QMP bulk-get sets init_load_uA at probe time. Thus in ACK, probe/bulk-get is not proof that the QMP load is already contributing to DRMS. AI2 ROUND31 must validate the 100mA proxy-vote handoff against actual UFS/QMP enable timing at late_initcall_sync; UFS async scan lifetime from ROUND108 remains relevant. Do not claim vendor DRMS equivalence from matching load values alone.

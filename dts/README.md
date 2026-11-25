@@ -131,3 +131,8 @@ Reports:
 - [ROUND64 Phase F](../firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md)
 
 The source/Image build milestone remains complete; board DTB and boot-package gates are not complete.
+
+
+## VG rootparam overlay candidate restored (2026-11-25)
+
+The main branch now contains `dby-w09-ack18-rootparam.dtso.draft`. It is a **VG / 0x206a candidate only**, restored from the exact HOS4.3 ROUND19 entry-8 rootparam values and cross-checked against the public same-device rootparam-only source. It is not proof that the user's actual ABL selects VG. It has not been compiled with `dtc -@`, inserted into a DTBO table or accepted by HOS4.3 ABL. Keep the other eight variants available as evidence; do not silently mark VG as the selected runtime overlay.

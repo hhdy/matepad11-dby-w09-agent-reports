@@ -155,7 +155,7 @@ board entry), asserted explicitly in the fixture gate instead of being
 
 - The first Agent verification correctly found malformed hunk counts in the original combined patch 16; no dependent checks were run.
 - Corrected the patch by splitting the driver runtime guard and binding documentation into two independently reviewable patches:
-  - Patch 16 driver: blob `8b7869b42c64fc808c6b2e2e328be793bbe50f91`, SHA-256 `a43b87447255469f87c4219e7d2fe8d88786cadea6ac9c9394ea8e1133ef56d8`.
-  - Patch 17 binding: blob `9dd73d2dce8892c58c5a2b502029d671a9e055dc`, SHA-256 `3b4f7a5a4b517beecca663b70bde7a444e0df98fcebae0a7c3722fda81784d5b`.
+  - Patch 16 driver: blob `3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe`, SHA-256 `7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4`.
+  - Patch 17 binding: blob `d2e818296118672bd708db34ed08d817fcd3895b`, SHA-256 `d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05`.
 - A local structural pass now confirms all five hunk headers exactly match their body line counts: driver 6/30, 6/7, 6/25; binding 7/9, 11/11. This is only text-structure verification, **not** proof of git apply or source-context applicability.
 - The series record now has 17 patches. All runtime tests, checkpatch, schema checks, and full Image rebuild remain pending a fresh local Agent run.

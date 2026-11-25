@@ -88,7 +88,9 @@ The fixed ACK 6.18.33 UFS schemas:
 
 1号 AI searched the pinned ACK UFS driver files ufs-qcom.c, ufshcd-pltfrm.c and core ufshcd.c: no vcc-voltage-level consumer was found. The generic UFS core configures regulator load and enable references; the board candidate already describes the PM8150 L17 regulator's permitted min/max range at the regulator node. Thus adding vcc-voltage-level to the ACK schema merely to silence validation would document a property that the pinned ACK driver does not consume.
 
-**Recommended 2号 AI disposition:** treat vcc-voltage-level as unsupported metadata in this ACK candidate. Remove it from the ACK-facing UFS host node, retaining the HOS-reported range only in a comment/research record if useful. Do not narrow the PM8150 L17 regulator min/max values to the UFS range unless separate HOS evidence proves that those are the regulator's actual board constraints. If a runtime voltage request is required, it needs a real consumer implementation and evidence, not a schema-only addition.
+**Corrected disposition (see ROUND82):** the legacy Qualcomm UFS binding and driver show that vcc-voltage-level expresses an actual VCC min/max consumer request in microvolts, parsed into the VCC regulator descriptor and applied through regulator_set_voltage(). The pinned ACK no longer implements that behavior, but deleting the property would lose the narrower consumer range (2.504–2.950 V) currently represented separately from the broader PM8150 L17 provider limits (2.496–3.008 V). Do not delete the property until 2号 AI either implements and schema-declares the real UFS VCC voltage request in ACK, or proves an electrically equivalent alternative. Do not add a schema-only property without driver behavior.
+
+See [ROUND82 — Corrected UFS VCC voltage-range schema remediation analysis](../round82/round82-corrected-vcc-voltage-level-schema-remediation.md).
 
 Sources:
 - [UFS SM8250/SC7180 binding](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml)

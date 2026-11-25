@@ -1670,3 +1670,21 @@ ROUND27 schema 仍 NOT CLEAN，直到 driver+binding 和 root-compatible/rootpar
 - 这只是固定 ACK 源码路径核对，不代表实机 800mA 电流测量，不证明板级负载/热设计或 HOS ARC 完全等价。
 
 ROUND87 是 1号 AI 只读审查，供 2号 AI 实现评估；测试 Agent 仅在收到单独 `AGENT_TEST_TASK.md` 后测试。本轮无源码/DTS/binding/分支修改，无编译、schema 或设备操作。
+
+
+## 2026-11-25 — ROUND88：1号 AI 确认 UFS VCC 电压范围必须在首次 regulator enable 前解析
+
+报告：[ROUND88 — 1号 AI source review: UFS VCC voltage parsing must precede the first regulator enable](./kernel-baseline/round88/round88-1ai-ufs-vcc-voltage-parse-before-first-enable-ordering.md)。
+
+固定 ACK 调用顺序发现一个新的实现时序要求：
+
+- `ufshcd_pltfrm_init()` 先设置 `hba->vops`，再运行 generic `ufshcd_parse_regulator_info()`，随后才进入 `ufshcd_init()`。
+- `ufshcd_hba_init()` 内部先 `ufshcd_init_vreg()` 获取 VCC handles，再 `ufshcd_setup_vreg(hba,true)` 配置并启用 VCC/VCCQ/VCCQ2，最后才调用 `ufshcd_variant_hba_init()`。
+- Qualcomm `ufs_qcom_init()` 是 variant init callback，故它执行时 UFS 供电轨已经启用。若只在该回调中解析/应用 `vcc-voltage-level`，第一次 VCC enable 就没有先应用 UFS consumer min/max 请求。虽然 regulator API 允许 enabled 状态下重新设压，但这不等同 legacy pre-enable 顺序；且 provider 范围比 UFS consumer 范围更宽。
+- 正确方向是：保持共享导出 `ufshcd_populate_vreg()` 不变，增加一个早期、窄范围的 variant-specific regulator-property parse hook，在 generic supply descriptor 创建后、`ufshcd_init()` 之前填入 VCC min/max。可考虑可选的 variant parse callback，由 Qualcomm vops 注册；也可由 platform glue 在明确识别 qcom variant 后执行。不要通过移动所有 variant init 顺序来解决。
+- 解析后的 range 应在第一次 `ufshcd_setup_vreg(hba,true)` 中先于 `regulator_enable()` 应用，同时保留 VCC DRMS load vote。MediaTek 及其他使用通用 `ufshcd_pltfrm_init()` 的平台必须维持原行为。
+- ROUND84 的独立 vote/error-state 清理、ROUND86 的 L17 电压表兼容和 ROUND87 的 DRMS load 结论继续有效。
+
+**角色：** ROUND88 是 1号 AI 只读调用链审查，仅供 2号 AI 实现时评估。测试 Agent 仅在收到独立 `AGENT_TEST_TASK.md` 后测试。本轮未修改代码/DTS/binding/补丁/分支，也未执行构建、schema 或设备操作。
+
+**实现要求新增：** UFS VCC min/max 不能只在 `ufs_qcom_init()` 中解析；必须在第一次 regulator enable 之前准备好。

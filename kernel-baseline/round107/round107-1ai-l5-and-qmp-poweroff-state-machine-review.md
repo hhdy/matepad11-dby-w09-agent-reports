@@ -263,3 +263,26 @@ Pinned `ufs_qcom_exit()` is a void callback and currently ignores the return fro
 If an implementation chooses to propagate `qmp_ufs_power_off()` errors, it must not claim that this automatically retries UFS removal. Any retry/best-effort policy needs to be implemented and documented at the UFS variant-exit call site (or in the QMP managed cleanup strategy) without assuming the core can abort a void remove callback. The existing consumer-first teardown order still holds, but it is not an error-recovery mechanism.
 
 This distinction is important because a failed L5 load-zero can occur after the trailing PLL consumer has already been disabled successfully. Any explicit retry must remember that the trailing rail is off and must not call `regulator_disable()` on it a second time.
+
+
+## 13. Concrete trailing-rail failure case: vdda-pll / PM8150 L9
+
+The SM8250 QMP UFS PHY configuration has two rails:
+- index 0: `vdda-phy`, 89.9mA initial load, PM8150 L5;
+- index 1: `vdda-pll`, 18.8mA initial load, PM8150 L9.
+
+HOS4.3 ROUND13 identifies L9 as PMIC5 NLDO with a 30mA HPM threshold and a vendor 100mA proxy-consumer property. The ACK regulator driver does not implement the vendor proxy-consumer properties. ROUND106's global base-FDT/DTBO scan also found no `qcom,always-wait-for-ack` or coupling property anywhere, so the L9 provider disable request uses the asynchronous RPMh branch too.
+
+The failure sequence in the current ROUND63 helper is concrete:
+1. `regulator_bulk_disable()` attempts to disable the trailing `vdda-pll` consumer.
+2. If L9's asynchronous provider disable fails before trigger, regulator core returns the error before decrementing that consumer handle's enable count.
+3. `qmp_ufs_regulators_disable()` returns an error, but current `qmp_ufs_power_off()` only logs it and returns success.
+4. PHY core therefore decrements `phy->power_count` as if the whole power-off succeeded.
+5. A subsequent PHY power-on calls `regulator_bulk_enable()` again for L9. Because the previous failed disable left the consumer reference held, this creates a second reference.
+6. A later successful power-off then removes only one reference; L9 can remain logically enabled after the PHY is off.
+
+This double-reference scenario is conditional on a provider disable failure; it is not a claim that such a failure has been observed on the tablet. It demonstrates why the non-L5 rail state must be tracked rather than discarded when the helper returns an error.
+
+For the SM8250 two-rail list, a per-tail-rail enabled flag is sufficient to avoid re-enabling a reference that remains held after an error. The special property path should also consider whether a DRMS load-zero request is needed for the trailing L9 consumer before disable, because it is itself a DRMS-capable NLDO. With its 18.8mA request below the 30mA threshold, an isolated L9 consumer remains in LPM on both sides of the disable; however, any additional active consumer could change the aggregate and cross the mode threshold. Do not assume absence of other consumers without an exact phandle-reference inventory.
+
+The HOS4.3 100mA L9 proxy-consumer field does not establish an ACK Linux DRMS load: the pinned ACK provider has no implementation for that vendor property. Keep the ARC/proxy parity gap separate.

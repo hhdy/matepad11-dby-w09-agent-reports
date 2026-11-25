@@ -2,7 +2,7 @@
 
 Owner: 1号 AI (ChatGPT)
 Branch: ai1/round130-stagea-ufs-lifecycle-integration
-Status: PREPARED FOR JOINT AGENT VALIDATION; NOT YET ACCEPTED.
+Status: ACCEPTED as an isolated, buildable AI1 candidate series after ROUND130 joint Agent validation.
 
 ROUND124 proved ROUND120 per-HBA async scan join + ROUND122 UFS regulator
 load-first on a Stage A 15-patch tree. ROUND129 proved ROUND128 V2 QMP
@@ -50,3 +50,15 @@ candidate series. It does not prove async runtime race behavior, physical
 PMIC rail sequencing, parent input topology, final ABL/DTBO/FDT/EFI memory
 handoff, boot or hardware stability. It must not be merged into AI2
 automatically. Phase E/F remain BLOCKED; Phase G remains NOT RUN.
+
+
+## Final validation disposition (2026-11-26)
+
+ROUND130 Agent report: firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_REPORT.txt
+Report blob: def62019b5760d991f41d674e227b9e1af0761df
+Result: PASS. Exact 17-patch Stage A base plus the four candidates produced a 21-patch tree. All patch identities, source gates, 38/38 + 83/83 host tests, 9/9 affected object builds, full Kleaf Image build (BUILD_RC=0), Stage A .config identity and ROUND58 33/33 + 11/11 regression gates passed. Reverse application restored the exact 17-patch tracked diff hash and path sets.
+
+Checkpatch results are disclosed, not hidden: ROUND120 0E/4W/1C RC=1; ROUND122 0E/0W/2C RC=1; ROUND128 V2 0E/1W/0C RC=1; ROUND126 0E/0W/0C RC=0. This does not change the compile/build disposition.
+
+Acceptance record: kernel-baseline/round130/ROUND130_ACCEPTANCE.md.
+This is a buildable AI1 candidate only. No device or hardware validation; Phase E/F remain BLOCKED and Phase G NOT RUN. Do not auto-merge into AI2.

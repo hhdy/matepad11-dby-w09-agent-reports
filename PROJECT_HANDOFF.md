@@ -1300,3 +1300,16 @@ The public svesnav/linux-dby-w09 Linux 7.0 board DTS configures UFS with vcc/L17
 The public DTS also creates fixed vph_pwr at 3.7 V and links PM8150 S1..S10 input supplies to it. This is not authoritative HOS4.3 electrical evidence; ROUND11/14/21/64 current HOS4.3 reports did not find those input links, and no schematic exists. Do not copy vph_pwr or 3.7V into the current board candidate.
 
 Detailed note: kernel-baseline/round73/round73-public-linux-ufs-pmic-model-comparison.md.
+
+
+## 2026-11-25 — Supplemental UFS performance-domain caveat: SM8250 MMCX has no MX parent in ACK
+
+Exact pinned ACK drivers/pmdomain/qcom/rpmhpd.c review confirms:
+- SM8250 descriptor table selects plain mmcx / mmcx_ao, with no .parent pointer.
+- CX is selected as cx_w_mx_parent and has a parent link to MX.
+- Other SoC descriptor variants use mmcx_w_cx_parent, but that parents MMCX to CX, not MX.
+- Generic GenPD parent propagation is state translation; with no required-opps mapping in the shared SM8250 RPMHPD OPP table, a parent request would receive the same pstate, not a HOS-specific dropout delta.
+
+Thus ROUND33+ROUND37 activates the UFS required-opps request on MMCX but does not fully reproduce the HOS4.3 legacy ARC MMCX-to-MX graph. This may or may not block the initial UFS link; no evidence currently proves that. Do not add a parent descriptor or port the whole ARC provider until HOS4.3 resource-name, qcom,set, init-voltage and min-dropout semantics are captured.
+
+Detailed note: kernel-baseline/round74/round74-ack-sm8250-mmcx-parent-and-hos-arc-equivalence.md.

@@ -39,3 +39,10 @@ ROUND125 目标是 AI1 ROUND63 后的 QMP UFS L5/L9 双 rail state accounting，
 - ROUND33 复测期间，Agent 优先执行 2号 AI 的 ROUND33 任务；
 - ROUND125 任务书已就绪，但不能假定 Agent 已开始它；
 - 1号 AI 继续独立源码审查/补丁工作。ROUND125 等 ROUND33 完成后再占用 Agent 进行独立验证；完整 Image 构建仍按前文顺序排队。
+
+
+## ROUND124 validation result
+
+ROUND124 Agent report has been reviewed in full by 1号 AI and accepted as an isolated, buildable candidate series. Full Image build and workspace restore passed. Checkpatch recorded zero errors but RC=1 with warnings/CHECKs, all disclosed in the acceptance note. This does not change AI2 Stage A branch.
+
+ROUND125 remains pending and may not run a competing full Image build until ROUND33's current revalidation/build slot is released.

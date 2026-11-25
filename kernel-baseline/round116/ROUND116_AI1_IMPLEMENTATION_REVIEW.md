@@ -21,7 +21,7 @@ The patch implements the ROUND108 design in the exact pinned source:
 
 ## 2. Source-level validation performed
 
-The patch generator fetched the three source files from the exact pinned ACK commit and verified that every replacement context occurs exactly once in `ufshcd.c` / `ufshcd-priv.h`. It generated unified hunks from those fetched source lines and rejected overlapping edits.
+The patch-generation pass fetched the two target files (`ufshcd.c` and `ufshcd-priv.h`) from the exact pinned ACK commit and verified that every replacement context occurs exactly once. The pinned `include/linux/async.h` was separately inspected for the complete domain/cookie API. Unified hunks were generated from the fetched target source lines; overlapping edits were rejected. After publishing, all 6 generated hunks (1 private-header hunk and 5 core-file hunks) were replayed against the exact pinned source text with exact old/new line-range checks; all matched at zero offset. This deterministic text replay is not a substitute for the required real `git apply --check`.
 
 Key assumptions carried forward from ROUND108:
 - `ufshcd-priv.h` is the existing SCSI-host private wrapper and `struct ufs_hba` is its first member.
@@ -48,6 +48,7 @@ The Agent must not author or modify the patch, change the AI2 branch, edit DTS/c
 
 - AI1 patch candidate: CREATED in this branch.
 - Exact-source context checks: PASS.
+- Deterministic replay of all 6 hunks against the pinned source text: PASS (zero offset / exact context).
 - Patch apply / checkpatch: NOT RUN by a test executor.
 - Compilation / Kleaf Image build: NOT RUN.
 - Device boot / storage acceptance: NOT RUN; Stage A Phase E/F remain gated separately.

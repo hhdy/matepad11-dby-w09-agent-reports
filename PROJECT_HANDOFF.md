@@ -1452,7 +1452,7 @@ Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placehold
 
 ## 2026-11-25 — ROUND27 prerequisites queue snapshot (superseded; now released)
 
-**状态更新：** 本节记录的是 ROUND25/26 报告上传前的历史状态。两份报告现已由 1号 AI 审查并通过 ROUND27 前置门槛。当前权威状态见后文“ROUND25/ROUND26 primary review complete; ROUND27 released to local Agent”及对应审查报告。ROUND27 是 **2号 AI 下发、测试 Agent 执行** 的验证任务；两者身份不能混为一谈。
+**状态更新：** 本节记录的是 ROUND25/26 报告上传前的历史状态。两份报告现已由 1号 AI 审查并通过 ROUND27 前置门槛。当前权威状态见后文“ROUND25/ROUND26 review complete; 2号 AI issued ROUND27 to the testing Agent”及对应审查报告。ROUND27 是 **2号 AI 下发、测试 Agent 执行** 的验证任务；两者身份不能混为一谈。
 
 **Authoritative start gate (user instruction): ROUND25 and ROUND26 had to be completed by the assigned testing Agent and uploaded to `firmware-audit-v1`. 1号 AI (ChatGPT) then had to read and review both reports before ROUND27 could be issued or resumed. The reports were reviewed; do not confuse the testing Agent with 2号 AI, which is the independent development AI.**
 

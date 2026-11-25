@@ -714,3 +714,14 @@ Phase E remains BLOCKED: the existing adb pull of /sys/firmware/fdt had failed w
 Phase F read-only metadata inventory is now backed by the AOSP avbtool 1.4.0 already present in the pinned ACK source tree. It enumerates boot/ramdisk/DTBO footer and descriptor coverage. Root vbmeta links boot, ramdisk and dtbo; their payload changes cannot reuse stock footer/hash metadata. vbmeta_cust.img has an anomalous footer pointer beyond the 1 MiB file to an empty Algorithm NONE vbmeta object with no descriptors; cust coverage remains UNKNOWN. ABL-selected DTBO remains UNKNOWN. Phase F stays BLOCKED for packaging; info_image metadata parsing is not AVB signature verification.
 
 No device operation, privilege escalation, partition modification or image packaging was performed. Do not attempt to solve the missing final FDT by root/unlock or policy bypass; wait for already-authorized evidence or keep the gate BLOCKED.
+
+
+## 2026-11-25 — VG-only rootparam overlay candidate restored (NOT validated)
+
+A source-only candidate is now present at:
+`dts/dby-w09-ack18-rootparam.dtso.draft`
+Commit: `9737dd9f469b2bd7b13dc5167e181f71f0173cd2`.
+
+It contains one fragment targeting `&rootparam` and the HOS4.3 ROUND19 entry-8 / VG values: qcom board-id 0x206a, qcom,boardid 08:02:09:08, DBY_W09_VG, product DBY-W09, hardware SH1DBSLM and the stock huawei,modem_id sentinel. It also preserves root compatible `huawei,dby-w09, qcom,sm8250`, matching the public same-device minimal overlay reference.
+
+This is explicitly a **VG candidate only**. The exact HOS4.3 ABL-selected variant on the user's unit remains UNKNOWN. The file is not dtc-compiled, not validated against the current board base, not packed into a DTBO image and not confirmed accepted by ABL. Do not package it until the board variant and the full DTBO header/table contract are evidenced. No protected branch was changed.

@@ -249,7 +249,7 @@ jobs:
           dt_validate_expected_failure ufs-sm8250-vccq-parent-zero-load-invalid qcom,vccq-parent-max-microamp
           printf 'ROUND61_UFS_FIXTURES=PASS (SM8250 1/2 domains; 7/9 clocks, 3 domains, non-SM8250 dual domain, supply/load pair and zero load rejected)\n'
           fixture_dir="$report/kernel-baseline/round61/fixtures"
-          for fixture in round63-phy-legacy-no-property round63-phy-always-on-valid round63-phy-always-on-invalid-type; do
+          for fixture in round63-phy-legacy-no-property round63-phy-always-on-valid round63-phy-always-on-invalid-type round63-phy-undeclared-property; do
             dtc -Wno-unit_address_vs_reg -I dts -O dtb \
               -o "$RUNNER_TEMP/$fixture.dtb" "$fixture_dir/$fixture.dts"
           done
@@ -279,7 +279,19 @@ jobs:
             exit 1
           fi
           grep -qi 'vdda-phy-always-on' "$RUNNER_TEMP/round63-phy-negative-validation.log"
-          printf 'ROUND63_PHY_FIXTURES=PASS (legacy absent, boolean present, malformed type rejected)\n'
+          set +e
+          dt-validate -s Documentation/devicetree/bindings/processed-schema.json \
+            "$RUNNER_TEMP/round63-phy-undeclared-property.dtb" \
+            > "$RUNNER_TEMP/round63-phy-undeclared-validation.log" 2>&1
+          undeclared_rc=$?
+          set -e
+          cat "$RUNNER_TEMP/round63-phy-undeclared-validation.log"
+          if [ "$undeclared_rc" -ne 0 ] && [ ! -s "$RUNNER_TEMP/round63-phy-undeclared-validation.log" ]; then
+            echo "dt-validate failed before producing the expected undeclared PHY property diagnostic"
+            exit 1
+          fi
+          grep -qi 'vdda-phy-always-on-extra' "$RUNNER_TEMP/round63-phy-undeclared-validation.log"
+          printf 'ROUND63_PHY_FIXTURES=PASS (legacy absent, boolean present, malformed type rejected, undeclared property rejected)\n'
           if [ -s "$RUNNER_TEMP/round61-ufs-example-validation.log" ]; then
             echo "The extracted qcom,ufs.example.dtb contains unresolved external provider phandles (for example &gcc); direct dt-validate output is retained as diagnostic only."
             echo "Authoritative positive/negative schema gates are the self-contained fixtures above, which define provider #*-cells and are validated against the processed schema."
@@ -341,7 +353,7 @@ jobs:
               git -C "$RUNNER_TEMP/ack" status --short
               git -C "$RUNNER_TEMP/ack" diff --stat
             fi
-            for log in round63-phy-legacy-validation.log round63-phy-positive-validation.log ufs-sm8250-1-domain-valid-validation.log ufs-sm8250-2-domains-valid-validation.log round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log; do
+            for log in round63-phy-legacy-validation.log round63-phy-positive-validation.log ufs-sm8250-1-domain-valid-validation.log ufs-sm8250-2-domains-valid-validation.log round33-checkpatch.log round52-0002-checkpatch.log round63-0001-checkpatch.log round61-dt-binding-check.log round61-ufs-example-validation.log round63-phy-negative-validation.log round63-phy-undeclared-validation.log; do
               if [ -f "$RUNNER_TEMP/$log" ]; then
                 echo
                 echo "## $log"

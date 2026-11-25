@@ -580,3 +580,13 @@ A source-level triage was started after AI2-ROUND27 was accepted as task-complet
 Public source references used for triage: historical Qualcomm UFS property documentation and downstream parser; modern Qualcomm UFS binding; Android common UFS platform-driver source snapshot. These establish the historical semantics and the modern binding gap, but do not replace the pending exact pinned-commit check.
 
 **Disposition:** no schema diagnostic is reclassified as PASS. The candidate and its voltage semantics remain unchanged pending exact ACK source inspection and a small supplemental-binding validation experiment in an isolated copy. Phase E/F remain BLOCKED; Phase G NOT RUN.
+
+## 2026-11-25 — AI2 ROUND28 assigned (pinned UFS + Huawei schema verification)
+
+- Task ownership: **2号 AI 专属任务书**; task ID `AI2-ROUND28`; local Agent is executor; 1号 AI does not execute this task.
+- Taskbook: `firmware-analysis/round28/AI2_ROUND28_TASKBOOK.md` on `firmware-audit-v1`.
+- Taskbook commit: `11af28ee8eb3e73fe4b84f3b26259ba4b8765f58`.
+- Purpose: verify `vcc-voltage-level` consumption against the exact pinned ACK commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`; attribute every ROUND27 schema diagnostic; prototype minimal Huawei root/board bindings and positive/negative validation only in a disposable copy.
+- No DTS, binding, driver, kernel source, build output, boot package, AVB metadata, or device state was changed by issuing this task.
+- This is an independently authorized next task after ROUND27 acceptance, not an automatic ROUND28 launch. Agent must stop after the single report and must not start ROUND29.
+- Current phase gates unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. No claim is made that ROUND27 schema diagnostics are resolved.

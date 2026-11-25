@@ -4,7 +4,16 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **当前本地 Agent 队列为空。** ROUND12 AVB 报告已上传但在可信工具门槛 BLOCKED；ROUND13 regulator 审计、ROUND14 ARC/S8 属性审计均已上传并完成。不要重跑 ROUND11/13/14，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。最新状态见本文件末尾。
+> **当前本地 Agent 队列：ROUND27（已由 1号 AI 审查 ROUND25/26 并正式授权）。** ROUND12 AVB 报告已上传但在可信工具门槛 BLOCKED；ROUND13 regulator 审计、ROUND14 ARC/S8 属性审计均已上传并完成。不要重跑 ROUND11/13/14，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。当前只执行带有 **[2号AI任务书]** 标记的任务；ROUND27 任务书位于 `firmware-analysis/round27/AGENT_TASK.md`，执行后按停止条件上传一份脱敏报告并停止。
+
+## 双 AI 任务归属（强制）
+
+- **1号 AI = ChatGPT**：公开研究、GitHub/上游源码调查、设计、任务拆分、任务书编写与报告审查。
+- **2号 AI = 本地 WorkBuddy Agent**：本机只读提取、工具/环境检查，以及任务书明确授权的本机验证/构建。
+- 本文件是 **2号 AI 的任务入口**。只执行标题/首段明确标为 **[2号AI任务书]** 的 `AGENT_TASK.md`；不要执行 `[1号AI任务书]` / `AI1_TASK.md`。
+- 任务书未明确执行者、任务标签或本地执行边界时，停止并向用户报告，不要自行推断。
+- 每个任务的启动提示第一行必须写明 `[发给2号AI]`。1号 AI 的任务使用独立 `AI1_TASK.md`，不得混在本文件任务中。
+
 
 ## 当前项目目标
 

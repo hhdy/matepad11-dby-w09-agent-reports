@@ -1,0 +1,40 @@
+/dts-v1/;
+
+/*
+ * Topology evidence fixture, not a supported board description.
+ *
+ * ACK models the whole PM8150 as ONE rpmh-regulator platform device, so the
+ * regulator core can only resolve a single "proxy" supply per PMIC group.
+ * This fixture shows what happens when two rails in the same group both carry
+ * qcom,proxy-consumer-* requests: the schema accepts it, but the second rail
+ * resolves the same proxy-supply phandle, i.e. it would vote on the first
+ * rail instead of on itself.
+ */
+/ {
+    compatible = "test,round31-proxy-fixture";
+    model = "ROUND31 proxy consumer schema fixture";
+    #address-cells = <1>;
+    #size-cells = <1>;
+
+    regulators {
+        compatible = "qcom,pm8150-rpmh-regulators";
+        qcom,pmic-id = "a";
+        proxy-supply = <&vreg_l5>;
+
+        vreg_l5: ldo5 {
+            regulator-name = "pm8150_l5";
+            regulator-min-microvolt = <880000>;
+            regulator-max-microvolt = <880000>;
+            qcom,proxy-consumer-enable;
+            qcom,proxy-consumer-current = <100000>;
+        };
+
+        vreg_l9: ldo9 {
+            regulator-name = "pm8150_l9";
+            regulator-min-microvolt = <1200000>;
+            regulator-max-microvolt = <1200000>;
+            qcom,proxy-consumer-enable;
+            qcom,proxy-consumer-current = <100000>;
+        };
+    };
+};

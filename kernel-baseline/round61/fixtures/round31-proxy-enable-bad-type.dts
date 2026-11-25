@@ -1,0 +1,22 @@
+/dts-v1/;
+
+/ {
+    compatible = "test,round31-proxy-fixture";
+    model = "ROUND31 proxy consumer schema fixture";
+    #address-cells = <1>;
+    #size-cells = <1>;
+
+    regulators {
+        compatible = "qcom,pm8150-rpmh-regulators";
+        qcom,pmic-id = "a";
+        proxy-supply = <&vreg_l5>;
+
+        vreg_l5: ldo5 {
+            regulator-name = "pm8150_l5";
+            regulator-min-microvolt = <880000>;
+            regulator-max-microvolt = <880000>;
+            qcom,proxy-consumer-enable = <1>;
+            qcom,proxy-consumer-current = <100000>;
+        };
+    };
+};

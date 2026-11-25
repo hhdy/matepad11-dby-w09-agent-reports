@@ -1,0 +1,487 @@
+From 128b38ac49fec3eff83cf86dc1bde32340767774 Mon Sep 17 00:00:00 2001
+From: hhdy <103477680+hhdy@users.noreply.github.com>
+Date: Wed, 25 Nov 2026 18:48:33 +0800
+Subject: [PATCH 1/3] regulator: add boot time proxy consumer support
+
+Port the Qualcomm boot time regulator proxy consumer helper onto the pinned
+ACK 6.18.33 tree so that qcom,proxy-consumer-* requests can be expressed by
+a board DTS again. ACK currently has neither the source file, the Kconfig
+symbol, the Makefile entry, nor the regulator core hook.
+
+The helper is invoked from regulator_register() and regulator_unregister().
+It resolves the "proxy" supply on the device that registers the regulator
+(the PMIC group node) while reading qcom,proxy-consumer-enable,
+qcom,proxy-consumer-current and qcom,proxy-consumer-voltage from the
+regulator child node (config->of_node). That split matches the HOS4.3
+topology, where proxy-supply sits on the provider group and the request
+flags sit on the regulator child, so no phandle is reinterpreted here.
+
+All requests are withdrawn once at late_initcall_sync. A single regulator
+teardown withdraws only its own request through the regulator_dev
+back-pointer, and the bulk removal clears that pointer, so the bulk path
+and a per-regulator unregister can never act on the same consumer twice.
+Every partially applied request is unwound in reverse order on failure.
+
+The Kconfig symbol is placed after the core objects in the Makefile so that
+the late_initcall_sync order stays core-first, proxy-second.
+
+Signed-off-by: hhdy <103477680+hhdy@users.noreply.github.com>
+---
+ drivers/regulator/Kconfig                |  12 +
+ drivers/regulator/Makefile               |   1 +
+ drivers/regulator/core.c                 |   5 +
+ drivers/regulator/proxy-consumer.c       | 316 +++++++++++++++++++++++
+ include/linux/regulator/driver.h         |   3 +-
+ include/linux/regulator/proxy-consumer.h |  41 +++
+ 6 files changed, 377 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/regulator/proxy-consumer.c
+ create mode 100644 include/linux/regulator/proxy-consumer.h
+
+diff --git a/drivers/regulator/Kconfig b/drivers/regulator/Kconfig
+index d84f3d054c59..1eb68d402fe2 100644
+--- a/drivers/regulator/Kconfig
++++ b/drivers/regulator/Kconfig
+@@ -56,6 +56,18 @@ config REGULATOR_USERSPACE_CONSUMER
+ 
+ 	  If unsure, say no.
+ 
++config REGULATOR_PROXY_CONSUMER
++	bool "Boot time regulator proxy consumer support"
++	help
++	  This driver provides support for boot time regulator proxy requests.
++	  It can enforce a specified voltage range, set a minimum current,
++	  and/or keep a regulator enabled.  It is needed in circumstances where
++	  reducing one or more of these three quantities will cause hardware to
++	  stop working if performed before the driver managing the hardware has
++	  probed.
++
++	  If unsure, say no.
++
+ config REGULATOR_NETLINK_EVENTS
+ 	bool "Enable support for receiving regulator events via netlink"
+ 	depends on NET
+diff --git a/drivers/regulator/Makefile b/drivers/regulator/Makefile
+index b3101376029d..e77c2d6aec14 100644
+--- a/drivers/regulator/Makefile
++++ b/drivers/regulator/Makefile
+@@ -10,6 +10,7 @@ obj-$(CONFIG_OF) += of_regulator.o
+ obj-$(CONFIG_REGULATOR_FIXED_VOLTAGE) += fixed.o
+ obj-$(CONFIG_REGULATOR_VIRTUAL_CONSUMER) += virtual.o
+ obj-$(CONFIG_REGULATOR_USERSPACE_CONSUMER) += userspace-consumer.o
++obj-$(CONFIG_REGULATOR_PROXY_CONSUMER) += proxy-consumer.o
+ 
+ obj-$(CONFIG_REGULATOR_88PG86X) += 88pg86x.o
+ obj-$(CONFIG_REGULATOR_88PM800) += 88pm800-regulator.o
+diff --git a/drivers/regulator/core.c b/drivers/regulator/core.c
+index 39d317ad73a3..76bc72b19c6e 100644
+--- a/drivers/regulator/core.c
++++ b/drivers/regulator/core.c
+@@ -5997,6 +5997,9 @@ regulator_register(struct device *dev,
+ 
+ 	rdev_init_debugfs(rdev);
+ 
++	rdev->proxy_consumer =
++		regulator_proxy_consumer_register(dev, config->of_node, rdev);
++
+ 	/* try to resolve regulators coupling since a new one was registered */
+ 	mutex_lock(&regulator_list_mutex);
+ 	regulator_resolve_coupling(rdev);
+@@ -6050,6 +6053,8 @@ void regulator_unregister(struct regulator_dev *rdev)
+ 
+ 	flush_work(&rdev->disable_work.work);
+ 
++	regulator_proxy_consumer_unregister(rdev);
++
+ 	mutex_lock(&regulator_list_mutex);
+ 
+ 	WARN_ON(rdev->open_count);
+diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
+new file mode 100644
+index 000000000000..1e0236cb04e7
+--- /dev/null
++++ b/drivers/regulator/proxy-consumer.c
+@@ -0,0 +1,316 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (c) 2013-2014, 2016, The Linux Foundation. All rights reserved.
++ */
++
++#define pr_fmt(fmt) "%s: " fmt, __func__
++
++#include <linux/device.h>
++#include <linux/err.h>
++#include <linux/kernel.h>
++#include <linux/limits.h>
++#include <linux/list.h>
++#include <linux/mutex.h>
++#include <linux/of.h>
++#include <linux/slab.h>
++#include <linux/regulator/consumer.h>
++#include <linux/regulator/driver.h>
++#include <linux/regulator/proxy-consumer.h>
++
++struct proxy_consumer {
++	struct list_head	list;
++	struct regulator_dev	*rdev;
++	struct regulator	*reg;
++	bool			enable;
++	bool			voltage_set;
++	int			min_uV;
++	int			max_uV;
++	int			current_uA;
++};
++
++static DEFINE_MUTEX(proxy_consumer_list_mutex);
++static LIST_HEAD(proxy_consumer_list);
++static bool proxy_consumers_removed;
++
++static const char * const proxy_prop_names[] = {
++	"qcom,proxy-consumer-enable",
++	"qcom,proxy-consumer-voltage",
++	"qcom,proxy-consumer-current",
++};
++
++static bool proxy_consumer_props_present(struct device_node *reg_node)
++{
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(proxy_prop_names); i++)
++		if (of_property_present(reg_node, proxy_prop_names[i]))
++			return true;
++
++	return false;
++}
++
++static int proxy_consumer_parse(struct device *reg_dev,
++				struct device_node *reg_node,
++				struct proxy_consumer *consumer)
++{
++	struct property *prop;
++	u32 voltage[2];
++	u32 current_ua;
++	int rc;
++
++	prop = of_find_property(reg_node, "qcom,proxy-consumer-enable", NULL);
++	if (prop) {
++		if (prop->length != 0) {
++			dev_err(reg_dev,
++				"%pOF: qcom,proxy-consumer-enable must be an empty property\n",
++				reg_node);
++			return -EINVAL;
++		}
++		consumer->enable = true;
++	}
++
++	if (of_property_present(reg_node, "qcom,proxy-consumer-current")) {
++		rc = of_property_read_u32(reg_node,
++					  "qcom,proxy-consumer-current",
++					  &current_ua);
++		if (rc)
++			return rc;
++		if (current_ua > INT_MAX) {
++			dev_err(reg_dev,
++				"%pOF: qcom,proxy-consumer-current %u uA is out of range\n",
++				reg_node, current_ua);
++			return -EINVAL;
++		}
++		consumer->current_uA = current_ua;
++	}
++
++	if (of_property_present(reg_node, "qcom,proxy-consumer-voltage")) {
++		rc = of_property_read_u32_array(reg_node,
++						"qcom,proxy-consumer-voltage",
++						voltage, 2);
++		if (rc)
++			return rc;
++		if (voltage[1] > INT_MAX || voltage[0] > voltage[1]) {
++			dev_err(reg_dev,
++				"%pOF: invalid qcom,proxy-consumer-voltage range %u..%u uV\n",
++				reg_node, voltage[0], voltage[1]);
++			return -EINVAL;
++		}
++		if (voltage[1] > 0) {
++			consumer->min_uV = voltage[0];
++			consumer->max_uV = voltage[1];
++			consumer->voltage_set = true;
++		}
++	}
++
++	if (!consumer->enable && !consumer->current_uA && !consumer->voltage_set) {
++		dev_err(reg_dev,
++			"%pOF: proxy consumer properties present but no request expressed\n",
++			reg_node);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++/**
++ * regulator_proxy_consumer_register() - conditionally register a proxy consumer
++ *		 for the specified regulator and set its boot time parameters
++ * @reg_dev:		Device pointer of the regulator provider node, used to
++ *			resolve the "proxy" supply
++ * @reg_node:		Device node pointer of the regulator itself; the
++ *			qcom,proxy-consumer-* properties are read from here
++ * @rdev:		Regulator device that owns this proxy consumer
++ *
++ * Returns a struct proxy_consumer pointer corresponding to the regulator on
++ * success, ERR_PTR() if an error occurred, or NULL if no proxy consumer is
++ * needed for the regulator.  This function calls regulator_get(reg_dev, "proxy")
++ * after first checking if any proxy consumer properties are present in the
++ * reg_node device node.  After that, the voltage, minimum current, and/or the
++ * enable state will be set based upon the device node property values.
++ */
++struct proxy_consumer *
++regulator_proxy_consumer_register(struct device *reg_dev,
++				  struct device_node *reg_node,
++				  struct regulator_dev *rdev)
++{
++	struct proxy_consumer *consumer;
++	const char *reg_name = "";
++	int rc;
++
++	/* Return immediately if no proxy consumer properties are specified. */
++	if (!reg_node || !proxy_consumer_props_present(reg_node))
++		return NULL;
++
++	mutex_lock(&proxy_consumer_list_mutex);
++
++	/* Do not register new consumers if they cannot be removed later. */
++	if (proxy_consumers_removed) {
++		rc = -EPERM;
++		goto unlock;
++	}
++
++	if (dev_name(reg_dev))
++		reg_name = dev_name(reg_dev);
++
++	consumer = kzalloc(sizeof(*consumer), GFP_KERNEL);
++	if (!consumer) {
++		rc = -ENOMEM;
++		goto unlock;
++	}
++
++	INIT_LIST_HEAD(&consumer->list);
++	consumer->rdev = rdev;
++
++	rc = proxy_consumer_parse(reg_dev, reg_node, consumer);
++	if (rc)
++		goto free;
++
++	dev_dbg(reg_dev,
++		"proxy consumer request: enable=%d, voltage_range=[%d, %d] uV, min_current=%d uA\n",
++		consumer->enable, consumer->min_uV, consumer->max_uV,
++		consumer->current_uA);
++
++	consumer->reg = regulator_get(reg_dev, "proxy");
++	if (IS_ERR_OR_NULL(consumer->reg)) {
++		rc = consumer->reg ? PTR_ERR(consumer->reg) : -ENODEV;
++		pr_err("regulator_get(\"proxy\") failed for %s, rc=%d\n",
++		       reg_name, rc);
++		goto free;
++	}
++
++	if (consumer->voltage_set) {
++		rc = regulator_set_voltage(consumer->reg, consumer->min_uV,
++					   consumer->max_uV);
++		if (rc) {
++			pr_err("regulator_set_voltage %s failed, rc=%d\n",
++			       reg_name, rc);
++			goto free_regulator;
++		}
++	}
++
++	if (consumer->current_uA > 0) {
++		rc = regulator_set_load(consumer->reg, consumer->current_uA);
++		if (rc < 0) {
++			pr_err("regulator_set_load %s failed, rc=%d\n",
++			       reg_name, rc);
++			goto remove_voltage;
++		}
++	}
++
++	if (consumer->enable) {
++		rc = regulator_enable(consumer->reg);
++		if (rc) {
++			pr_err("regulator_enable %s failed, rc=%d\n",
++			       reg_name, rc);
++			goto remove_current;
++		}
++	}
++
++	list_add_tail(&consumer->list, &proxy_consumer_list);
++	mutex_unlock(&proxy_consumer_list_mutex);
++
++	return consumer;
++
++remove_current:
++	regulator_set_load(consumer->reg, 0);
++remove_voltage:
++	if (consumer->voltage_set)
++		regulator_set_voltage(consumer->reg, 0, INT_MAX);
++free_regulator:
++	regulator_put(consumer->reg);
++free:
++	kfree(consumer);
++unlock:
++	mutex_unlock(&proxy_consumer_list_mutex);
++	return ERR_PTR(rc);
++}
++
++/* proxy_consumer_list_mutex must be held by caller. */
++static int regulator_proxy_consumer_remove(struct proxy_consumer *consumer)
++{
++	int rc = 0;
++	int ret;
++
++	if (consumer->rdev)
++		consumer->rdev->proxy_consumer = NULL;
++
++	if (consumer->enable) {
++		ret = regulator_disable(consumer->reg);
++		if (ret) {
++			pr_err("regulator_disable failed, rc=%d\n", ret);
++			rc = ret;
++		}
++	}
++
++	if (consumer->current_uA > 0) {
++		ret = regulator_set_load(consumer->reg, 0);
++		if (ret < 0) {
++			pr_err("regulator_set_load failed, rc=%d\n", ret);
++			rc = ret;
++		}
++	}
++
++	if (consumer->voltage_set) {
++		ret = regulator_set_voltage(consumer->reg, 0, INT_MAX);
++		if (ret) {
++			pr_err("regulator_set_voltage failed, rc=%d\n", ret);
++			rc = ret;
++		}
++	}
++
++	regulator_put(consumer->reg);
++	list_del(&consumer->list);
++	kfree(consumer);
++
++	return rc;
++}
++
++/**
++ * regulator_proxy_consumer_unregister() - unregister a proxy consumer and
++ *					   remove its boot time requests
++ * @rdev:		Regulator device whose proxy consumer is to be removed
++ *
++ * This function removes all requests made by the proxy consumer owned by
++ * @rdev and then frees the consumer's resources.  It is safe to call when
++ * @rdev has no proxy consumer, when registration failed, and after the
++ * late_initcall_sync bulk removal has already run.
++ */
++void regulator_proxy_consumer_unregister(struct regulator_dev *rdev)
++{
++	struct proxy_consumer *consumer;
++
++	if (!rdev)
++		return;
++
++	mutex_lock(&proxy_consumer_list_mutex);
++	consumer = rdev->proxy_consumer;
++	rdev->proxy_consumer = NULL;
++	if (!IS_ERR_OR_NULL(consumer))
++		regulator_proxy_consumer_remove(consumer);
++	mutex_unlock(&proxy_consumer_list_mutex);
++}
++
++/*
++ * Remove all proxy requests at late_initcall_sync.  The assumption is that all
++ * devices have probed at this point and made their own regulator requests.
++ */
++static int __init regulator_proxy_consumer_remove_all(void)
++{
++	struct proxy_consumer *consumer;
++	struct proxy_consumer *temp;
++
++	mutex_lock(&proxy_consumer_list_mutex);
++	proxy_consumers_removed = true;
++
++	if (!list_empty(&proxy_consumer_list))
++		pr_info("removing regulator proxy consumer requests\n");
++
++	list_for_each_entry_safe(consumer, temp, &proxy_consumer_list, list)
++		regulator_proxy_consumer_remove(consumer);
++
++	mutex_unlock(&proxy_consumer_list_mutex);
++
++	return 0;
++}
++late_initcall_sync(regulator_proxy_consumer_remove_all);
+diff --git a/include/linux/regulator/driver.h b/include/linux/regulator/driver.h
+index 3f63da8c4b14..6162ebffbbd2 100644
+--- a/include/linux/regulator/driver.h
++++ b/include/linux/regulator/driver.h
+@@ -16,6 +16,7 @@
+ #include <linux/linear_range.h>
+ #include <linux/notifier.h>
+ #include <linux/regulator/consumer.h>
++#include <linux/regulator/proxy-consumer.h>
+ #include <linux/ww_mutex.h>
+ #include <linux/android_kabi.h>
+ 
+@@ -664,7 +665,7 @@ struct regulator_dev {
+ 
+ 	int pw_requested_mW;
+ 
+-	ANDROID_KABI_RESERVE(1);
++	ANDROID_KABI_USE(1, struct proxy_consumer *proxy_consumer);
+ };
+ 
+ /*
+diff --git a/include/linux/regulator/proxy-consumer.h b/include/linux/regulator/proxy-consumer.h
+new file mode 100644
+index 000000000000..ab5e9f76dd73
+--- /dev/null
++++ b/include/linux/regulator/proxy-consumer.h
+@@ -0,0 +1,41 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
++ */
++
++#ifndef _LINUX_REGULATOR_PROXY_CONSUMER_H_
++#define _LINUX_REGULATOR_PROXY_CONSUMER_H_
++
++#include <linux/device.h>
++#include <linux/of.h>
++
++struct proxy_consumer;
++struct regulator_dev;
++
++#ifdef CONFIG_REGULATOR_PROXY_CONSUMER
++
++struct proxy_consumer *
++regulator_proxy_consumer_register(struct device *reg_dev,
++				  struct device_node *reg_node,
++				  struct regulator_dev *rdev);
++
++void regulator_proxy_consumer_unregister(struct regulator_dev *rdev);
++
++#else
++
++static inline struct proxy_consumer *
++regulator_proxy_consumer_register(struct device *reg_dev,
++				  struct device_node *reg_node,
++				  struct regulator_dev *rdev)
++{
++	return NULL;
++}
++
++static inline void
++regulator_proxy_consumer_unregister(struct regulator_dev *rdev)
++{
++}
++
++#endif
++
++#endif

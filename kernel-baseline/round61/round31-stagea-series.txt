@@ -1,0 +1,50 @@
+AI2-ROUND31 Stage A source patch series — ordered apply record
+generated: 2026-11-25
+base commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (android17-6.18.33_r00)
+trees: a31-apply (forensic worktree, detached at base) and ack-6.18.33-a30 (build workspace);
+       all 8 touched files verified byte-identical between the two trees (sha256 match)
+protocol per patch: git apply --check ; git apply ; git diff --check
+result: 12/12 patches, 36/36 exit codes = 0
+note: patches 1-9 are the reviewed ROUND30 series and are unchanged by this round.
+
+idx  patch                                                          git-blob                                  sha256                                                            rc(check/apply/diff)
+1    round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft dad87ef8dfefee6141b8a7949982c007c4a03b4a  9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171 0/0/0
+2    round61/patches/round52-0001-context-corrected.patch           e47219d4a944b44f5c1461689b76e77b4f0317a8  74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6 0/0/0
+3    round61/patches/round36-corrected-power-domain-range.patch     79b00af904454f637098b2882b78b01d52c831cf  5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764 0/0/0
+4    round61/patches/round32-corrected-sc7180-clock-names.patch     2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb  f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836 0/0/0
+5    round61/patches/round33-checkpatch-clean.patch                f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622  e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65 0/0/0
+6    round61/patches/round52-0002-checkpatch-clean.patch            7e5df841b756dfef803edec486d9a5e3e753f47b  d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4 0/0/0
+7    round61/patches/round63-0002-qmp-ufs-phy-binding.patch         a6668eebe293f9a35e9c08d6be4f37c4340e7ddd  534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0 0/0/0
+8    round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch  99fffb10603b38bc30a0e6c9db99b0e9888a7b82  d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539 0/0/0
+9    round61/patches/round58-kleaf-target.patch                     dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec  bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec 0/0/0
+
+ROUND31 additions:
+
+10   round61/patches/round31-0001-regulator-add-proxy-consumer.patch  c7438eb8772c0b90a319ba5a37d5fa71b9342964  38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003 0/0/0
+11   round61/patches/round31-0002-regulator-proxy-consumer-binding.patch d810e771bc16e531bc01082af0e9feea157aeb7a 1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6 0/0/0
+12   round61/patches/round31-0003-dby-w09-enable-proxy-consumer.patch 2a486d066b8eeb914665730feb9d42b21e847fd6  c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435 0/0/0
+
+patch 10 touches (6 files, +402/-1):
+  drivers/regulator/proxy-consumer.c        new, 8378 B, blob 1e0236cb04e7d314ee75d71cbd351734a897e590
+  include/linux/regulator/proxy-consumer.h  new,  860 B, blob ab5e9f76dd730673257fc3c167b0851efde14117
+  drivers/regulator/Kconfig                 +12
+  drivers/regulator/Makefile                +1
+  include/linux/regulator/driver.h          +3/-1  (ANDROID_KABI_USE(1, ...) replaces ANDROID_KABI_RESERVE(1))
+  drivers/regulator/core.c                  +5
+
+patch 11 touches: Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml (+27)
+patch 12 touches: arch/arm64/configs/dby_w09_storage_first.fragment (+3)
+
+checkpatch --strict on the three new patches: 0 errors, 0 checks.
+  patch 10: 1 warning (new-file / MAINTAINERS hint; not converted into a fabricated
+            maintainer entry on purpose)
+  patch 11: clean
+  patch 12: clean
+
+applied result: git diff --binary sha256 (a31-apply, HEAD = base) = 3c6980b173eedf655bc42f3d22fe030819e300c4e43a4d3f2daec97f431488bd
+build: tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144 -> recorded in the ROUND31 report SECTION 8
+
+NOT applied, deliberately:
+  board DTS proxy properties. ACK binds one platform device per PMIC and resolves
+  a single "proxy-supply" per group, so a group carrying both L5 and L9 requests
+  would make L9 vote on L5. See round31-proxy-consumer-implementation.md section 6.

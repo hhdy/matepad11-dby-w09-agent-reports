@@ -1,0 +1,64 @@
+From 59a2516bc9ef91799d8b9da3206206726f74f6de Mon Sep 17 00:00:00 2001
+From: hhdy <103477680+hhdy@users.noreply.github.com>
+Date: Wed, 25 Nov 2026 18:48:33 +0800
+Subject: [PATCH 2/3] dt-bindings: regulator: document qcom proxy consumer
+ properties
+
+Declare proxy-supply on the RPMh regulator provider node, plus
+qcom,proxy-consumer-enable, qcom,proxy-consumer-current and
+qcom,proxy-consumer-voltage on the regulator child nodes.
+
+The child schema keeps unevaluatedProperties false, so an undeclared
+qcom,proxy-consumer-* property is still rejected rather than silently
+accepted.
+
+Signed-off-by: hhdy <103477680+hhdy@users.noreply.github.com>
+---
+ .../regulator/qcom,rpmh-regulator.yaml        | 27 +++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+index 4c5b0629aa3e..9eade129be07 100644
+--- a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
++++ b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+@@ -110,6 +110,13 @@ properties:
+         strictly lower power state.
+     $ref: /schemas/types.yaml#/definitions/flag
+ 
++  proxy-supply:
++    description: |
++        Phandle to the regulator child node that receives the temporary
++        boot time proxy consumer requests described by the
++        qcom,proxy-consumer-* properties of that child.  The requests are
++        withdrawn again at late_initcall_sync.
++
+   vdd-flash-supply:
+     description: Input supply phandle of flash.
+ 
+@@ -130,6 +137,26 @@ patternProperties:
+     $ref: regulator.yaml#
+     unevaluatedProperties: false
+     description: smps/ldo regulator nodes(s).
++    properties:
++      qcom,proxy-consumer-enable:
++        description: |
++            Boolean flag which requests that the boot time proxy consumer
++            keeps this regulator enabled until late_initcall_sync.
++        $ref: /schemas/types.yaml#/definitions/flag
++
++      qcom,proxy-consumer-current:
++        description: |
++            Minimum current in microamperes requested by the boot time
++            proxy consumer.  Absent or zero means no current request.
++        $ref: /schemas/types.yaml#/definitions/uint32
++
++      qcom,proxy-consumer-voltage:
++        description: |
++            Minimum and maximum voltage in microvolts requested by the
++            boot time proxy consumer.  Absent means no voltage request.
++        $ref: /schemas/types.yaml#/definitions/uint32-array
++        minItems: 2
++        maxItems: 2
+     dependencies:
+       regulator-allow-set-load: [ regulator-allowed-modes ]
+ 

@@ -1,0 +1,28 @@
+From 7804f8c4f730b1ee234d7ac02f6a18b35c9d51f1 Mon Sep 17 00:00:00 2001
+From: hhdy <103477680+hhdy@users.noreply.github.com>
+Date: Wed, 25 Nov 2026 18:48:33 +0800
+Subject: [PATCH 3/3] dby_w09: enable REGULATOR_PROXY_CONSUMER in the config
+ fragment
+
+Turn the ported helper on for the DBY-W09 storage-first target so the
+Kconfig symbol is actually built into the image validated by this round.
+
+Signed-off-by: hhdy <103477680+hhdy@users.noreply.github.com>
+---
+ arch/arm64/configs/dby_w09_storage_first.fragment | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/arm64/configs/dby_w09_storage_first.fragment b/arch/arm64/configs/dby_w09_storage_first.fragment
+index ae8675357e2f..bf4e620c19dd 100644
+--- a/arch/arm64/configs/dby_w09_storage_first.fragment
++++ b/arch/arm64/configs/dby_w09_storage_first.fragment
+@@ -56,6 +56,9 @@ CONFIG_QCOM_RPMH=y
+ CONFIG_QCOM_RPMHPD=y
+ CONFIG_REGULATOR=y
+ CONFIG_REGULATOR_QCOM_RPMH=y
++# Boot time proxy consumer votes (PM8150 L5/L9) are withdrawn at
++# late_initcall_sync; see drivers/regulator/proxy-consumer.c.
++CONFIG_REGULATOR_PROXY_CONSUMER=y
+ 
+ # UFS Host has apps_smmu stream IDs in the ACK SM8250 DTSI.
+ # ARM_SMMU_QCOM is def_tristate y inside if ARM_SMMU when ARCH_QCOM=y and

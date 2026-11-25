@@ -2159,3 +2159,29 @@ For every future local Agent task, if a test or evidence step may require connec
 - Exact review: `kernel-baseline/round124/ROUND124_AGENT_VALIDATION_ACCEPTANCE.md` on `ai1/round124-ufs-core-combined-candidates`.
 - No integration into AI2 branch. ROUND124 does not prove device boot, PMIC physical input topology, final FDT memory map, DTBO selection or hardware power behavior. Phase E/F remain BLOCKED and G NOT RUN.
 - ROUND125 remains a separate unvalidated QMP UFS dual-rail state candidate; its pending Agent validation is independent of ROUND124 acceptance.
+
+
+## 2026-11-25 — ROUND33 third validation completed; Stage A 17-patch build slot released
+
+- Final Agent report: `firmware-analysis/round33/AI2_ROUND33_FINAL_REVALIDATION_REPORT.txt`, blob `f7452f9259e7ed25027758fc39af4c047867b9e7`.
+- Tested Stage A snapshot: `ai-parallel/stagea-port-until-boot@2f21233148a04afdd61e44b1be7688399967d9d0`.
+- Third validation result: all 17 patches apply; patch16/17 strict checkpatch 0E/0W/0C; host harness 38/38 + 83/83; schema 14/14 across dtschema 2023.9/2026.9; fresh full `//common:dby_w09` Image build BUILD_RC=0 (337s); .config byte-identical to Stage A-only; ROUND58 config 33/33 and helper tests 11/11; workspace restored hash-verified; no device connection or prohibited action.
+- Image SHA-256: `a59c22f7f5f124c1f125edaa53c9125d3e56f8bf6c21fd8fe0fe85bbf0a3d50e`. Image artifacts not uploaded.
+- The second validation's host-test failure remains documented historically, but is superseded by this final third validation. **ROUND33 FULL BUILD SLOT RELEASED.**
+- Branch subsequently marked the 17-patch series with final PASS status. Do not conflate source/test/build validation with actual device boot.
+
+## 2026-11-25 — ROUND126 AI1 proxy-consumer load-first teardown candidate
+
+- Finding: AI2 ROUND31/32/33 proxy consumer removal disables its regulator before clearing qcom proxy consumer current vote. Fixed ACK regulator core decrements the consumer enable_count and may execute DRMS after decrement; a synchronous DRMS failure can therefore be returned after the count already changed.
+- HOS4.3 L5 and L9 evidence shows enabled proxy-consumer requests with current=100000uA (100mA) and 30mA mode threshold. This is a static-FDT/software behavior review, not a runtime PMIC measurement.
+- AI1 patch: `kernel-baseline/round126/0001-proxy-consumer-load-first.patch` on `ai1/round126-proxy-consumer-load-first`; blob `c180dbf458403d68b2c32c1d54776a7559e7e5db`; SHA-256 `eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80`.
+- Review: `kernel-baseline/round126/ROUND126_PROXY_CONSUMER_LOAD_FIRST_REVIEW.md`.
+- It moves the proxy consumer's load-zero attempt before disable in the normal path. If load-zero fails, the existing best-effort void unregister path continues; persistent provider errors and managed-put limitations remain OPEN. This is not a claim that all teardown errors are solved.
+
+## 2026-11-25 — ROUND127 combined AI1 Agent validation task
+
+- Active taskbook: `firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_TASKBOOK.md` on `firmware-audit-v1`.
+- Combines AI1 ROUND125 QMP rail-state patch and AI1 ROUND126 proxy-consumer load-first patch on the independently validated Stage A 17-patch baseline.
+- One isolated Agent workstream will perform both patch identities/applications, source gates, test suites, checkpatch, target objects and one full Image build. ROUND127 must not modify AI2 branch or files.
+- The standalone ROUND125 taskbook is superseded. Do not use its former 15-patch baseline instructions.
+- All tasks remain offline. Any possible device access still requires stopping before connection and obtaining the user's explicit approval.

@@ -174,3 +174,7 @@ ROUND68 package-layout detail: at the pinned ACK common commit, arch/arm64/boot/
 A public same-device Linux reference (based on an earlier HOS generation) keeps the base DTS board-id at 0, uses 0x206a in the rootparam overlay, but packages a one-entry DTBO table with id=0/rev=0/page_size=4096. This shows table entry metadata and the overlay's root qcom,board-id are separate layers. It does **not** prove the HOS4.3 ABL accepts the same one-entry wildcard/default table. The exact replacement table id/rev policy remains UNKNOWN. Do not generate dtbo.img until that contract is evidenced.
 
 See [ROUND70](../kernel-baseline/round70/round70-dby-w09-dtbo-table-id-selection-ambiguity.md).
+
+## ROUND71 — same-device boot packaging reference
+
+The public same-device Linux 7.0 reference confirms boot v2 + separate header-v0 ramdisk + rootparam-only DTBO and states its ABL refuses RAM boot. Its repack script hard-codes 24,412,160 B stock boot payload and keeps stock footer bytes when replacing payload. HOS4.3 here measures 24,457,216 B and has explicit root-vbmeta hash coverage for boot/ramdisk/dtbo; the public constants and retained-footer behavior must not be copied or assumed valid. See [ROUND71](../kernel-baseline/round71/round71-same-device-boot-packaging-structure-cross-reference.md).

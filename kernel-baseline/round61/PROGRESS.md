@@ -16,12 +16,12 @@
 | C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
 | D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
 | E — board DTS + memory/power handoff | BLOCKED | ROUND22 syntax-compiled an older pre-rev2 draft in temp only; zero draft-local warnings, but no schema/runtime proof. ROUND64 still leaves final memory handoff and PM8150 physical inputs unresolved; stock `/memory/reg` is all-zero. ROUND23 rev2/rootparam validation pending. |
-| F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64/65 confirm header-v2/ramdisk/DTBO/AVB layout, 21-entry base-FDT fstab semantics and prebuilt mkbootimg header-v2 capability. `vbmeta_cust` provenance and ABL-selected DTBO / boot path remain unknown; no candidate package. |
+| F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64/65 confirm header-v2/ramdisk/DTBO/AVB, 21-entry fstab and mkbootimg v2 support. ROUND70 confirms table `id/rev` differs from overlay `qcom,board-id`; HOS4.3 matching policy and ABL selection remain unknown. `vbmeta_cust` is unresolved; no package. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
 Phase E blocker report: `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (committed 2026-11-25). It records the exact missing HOS4.3 final ABL memory handoff and physical PM8150 input-parent evidence, and keeps the DTS draft review-only.
 
-Phase F report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (updated 2026-11-25). ROUND64/65 completed the fstab, ramdisk/module, trusted footer/descriptor and mkbootimg contract inventory. Packaging remains blocked by unresolved `vbmeta_cust` provenance, HOS4.3 ABL DTBO/entry/temporary-boot decisions and Phase E dependencies.
+Phase F report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (updated 2026-11-25). ROUND64/65 completed the fstab, ramdisk/module, trusted footer/descriptor and mkbootimg contract inventory. ROUND70 distinguishes DT-table id/rev from overlay root board-id but cannot establish HOS4.3 ABL matching. Packaging remains blocked by unresolved `vbmeta_cust` provenance, ABL selection/temporary-boot decisions and Phase E dependencies.
 
 ## 2026-11-24 execution evidence
 
@@ -118,7 +118,6 @@ Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report up
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
 ### ROUND63 regulator-list cross-check (2026-11-25)Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.
-
 Report update commit: `ff816f9665876200a5df63f14aa42f10385b1c77`.
 
 The first outstanding gate remains the actual hosted Actions result for the updated workflow; the local container cannot run dtc/dtschema or the manifest-pinned Bazel toolchain.
@@ -239,7 +238,6 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.- Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
 - Phase F/G: NOT RUN; no boot image or device write/boot operation performed.
 
-
 ### dtschema 2023.9 comparison and fixture correction
 
 Run 45446071024 used the ACK Makefile's declared minimum dtschema version 2023.9. Under that version, the SM8250 one-domain positive fixture (including VDDP/VCCQ-parent metadata) validates with an empty diagnostic log, so the prior latest-dtschema unevaluatedProperties failure is not reproduced on the ACK-minimum tool version. The two-domain positive fixture exposed a fixture-generation error: its power-domain providers declare #power-domain-cells = <0> but the generated references incorrectly appended a zero argument, causing the two-domain list to be decoded as four entries. Corrected the generator to emit <&pdN> with no argument in commit 3f7284355b881bbba59b5d6092ae384b324e574b. The same run still shows diagnostics on the upstream qcom,ufs.example.dtb; investigate whether the example's provider-less phandle encoding or a schema condition is responsible, and do not suppress it.
@@ -358,7 +356,6 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - The manifest/Kleaf runner verification remains separately in progress with the independent Agent. No new full Image build was started.
 
 ### Updated Phase D validator result
-
 Hosted run `45457083961` at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` completed the source fetch, immutable identity checks, ordered patch application, strict checkpatch, buildifier and config-helper test steps successfully. The updated **11-test** suite includes:
 - rejection when `CONFIG_BLOCK` is unset;
 - rejection when `CONFIG_ARM_SMMU_QCOM` is absent;
@@ -478,7 +475,6 @@ The build milestone is complete. The next progress dependency is no longer compi
 ### ROUND64 local-Agent handoff returned — 2026-11-25
 
 The Phase E and Phase F read-only taskbooks have both been completed and their sanitized reports are available on `firmware-audit-v1`:
-
 - [Phase E final memory / PM8150 input evidence](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md)
 - [Phase F boot-v2 / ramdisk / DTBO / AVB evidence](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md)
 

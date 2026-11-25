@@ -840,3 +840,12 @@ ROUND24 inspects the already-decompiled 34-node HOS4.3 reserved-memory tree and 
 The public same-device Linux 7.0 DTS has four HOS4.2-era reserved-memory entries, including splash_region and crash/DFPS regions. This is a semantic cross-reference only; do not copy addresses to HOS4.3 or assume it proves ABL creates memory/reservation nodes dynamically.
 
 ROUND24 is read-only. It does not change DTS, rebuild, package, sign, or access the device. Physical ranges must be redacted from the final report.
+
+
+## 2026-11-25 — Same-device public Linux DTS UFS/PMIC comparison
+
+The public svesnav/linux-dby-w09 Linux 7.0 board DTS configures UFS with vcc/L17, vccq/L6, vccq2/S4 and PHY vdda-phy/L5 + vdda-pll/L9. It does not show qcom,vddp-ref-clk-supply, qcom,vccq-parent-supply, PHY always-on, or an explicit MMCX/GCC dual-domain Host list. The public tree is an earlier HOS generation and must not replace the current ACK 6.18.33 driver property contract.
+
+The public DTS also creates fixed vph_pwr at 3.7 V and links PM8150 S1..S10 input supplies to it. This is not authoritative HOS4.3 electrical evidence; ROUND11/14/21/64 current HOS4.3 reports did not find those input links, and no schematic exists. Do not copy vph_pwr or 3.7V into the current board candidate.
+
+Detailed note: kernel-baseline/round73/round73-public-linux-ufs-pmic-model-comparison.md.

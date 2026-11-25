@@ -1248,3 +1248,15 @@ Therefore the documented rules_devicetree APIs cannot simply be invoked as an ex
 - Kleaf dtbo_image packaging rule only after raw DTBO metadata is approved.
 
 This also means no exact Bazel target label exists yet for DBY-W09 DTB/DTBO. Do not claim a Kleaf device-tree target is ready. The local ROUND23 dtc/fdtoverlay checks remain syntax/composite validation outside Bazel.
+
+
+## 2026-11-25 — ROUND70 DTBO table selection policy correction
+
+The earlier ROUND68 illustrative table config using id=0x206a is withdrawn as a specific recommendation. The public same-device Linux reference (based on an earlier HOS generation) deliberately uses:
+- base DTS qcom,board-id = <0 0>;
+- rootparam overlay qcom,board-id = <0x206a 0>;
+- one-entry DTBO table header entry id=0/rev=0, page_size=4096.
+
+Its README states the ABL requires the rootparam overlay shape; its packer confirms header id=0. This shows table id and overlay root board identity are separate. It does not prove HOS4.3 accepts the same single-entry id=0 strategy. HOS4.3 stock table entry 8 is id=0x206a/rev=0, but the replacement table match policy remains UNKNOWN.
+
+Do not generate dtbo.img or prescribe table id/rev until HOS4.3 ABL matching policy is established. ROUND23 only validates the raw overlay/composite.

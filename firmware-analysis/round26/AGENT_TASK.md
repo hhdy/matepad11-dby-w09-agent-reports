@@ -97,3 +97,13 @@ Do not upload scripts, raw DTS/DTB/DTBO or physical memory ranges.
 ## Stop rule
 
 After the one report is uploaded, stop. Do not edit DTS, patch driver, build, package/sign or contact the device.
+ 
+### Addendum — include the top-level memory-node placeholder in the same comparison
+
+ROUND76 established that the board DTS source inherits a generic top-level memory node from sm8250.dtsi even though the board file itself does not declare one. Add a separate, coordinate-redacted comparison of:
+- the top-level memory node(s) in pinned sm8250.dtsi;
+- the top-level memory node(s) in HOS4.3 ROUND19 base_2.dts.
+
+Report only node path with unit-address suffix redacted, device_type, address/size cell counts, number of reg tuples, whether the base cell is zero/nonzero, whether size is zero/nonzero, and whether the two initial placeholders are structurally identical. Do NOT upload any physical base or size value.
+
+Also confirm the actual rev2 candidate's include graph inherits the sm8250.dtsi memory node. Do not add or modify any memory node; this is evidence collection only.

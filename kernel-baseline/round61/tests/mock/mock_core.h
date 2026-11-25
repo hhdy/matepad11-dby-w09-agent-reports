@@ -151,6 +151,22 @@ static inline bool of_property_present(const struct device_node *np,
 	return of_find_property(np, name, NULL) != NULL;
 }
 
+/* Parse a single mock phandle and mirror the OF node reference contract. */
+static inline struct device_node *
+of_parse_phandle(const struct device_node *np, const char *name, int index)
+{
+	struct property *p;
+
+	if (index)
+		return NULL;
+	p = of_find_property(np, name, NULL);
+	if (!p || p->length != (int)sizeof(struct device_node *))
+		return NULL;
+	return (struct device_node *)p->value;
+}
+
+static inline void of_node_put(struct device_node *np) { (void)np; }
+
 static inline int of_property_read_u32(const struct device_node *np,
 				       const char *name, u32 *out)
 {
@@ -288,11 +304,22 @@ static inline void mock_unregister_all_targets(void) { mock_ntargets = 0; }
 static inline struct regulator *regulator_get(struct device *dev,
 					      const char *id)
 {
-	(void)dev;
+	struct device_node *target;
+	struct regulator *r;
+
 	mock.get_calls++;
 	mock.last_get_id_is_proxy = id && !strcmp(id, "proxy");
-	mock_record(NULL, MOCK_GET_OK, 0, 0, 0);
-	return (struct regulator *)calloc(1, sizeof(struct regulator));
+	target = of_parse_phandle(dev ? dev->of_node : NULL, "proxy-supply", 0);
+	if (!target || !mock_find_target(target)) {
+		mock_record(target, MOCK_GET_DEFER, 0, 0, 0);
+		return ERR_PTR(-EPROBE_DEFER);
+	}
+	r = calloc(1, sizeof(*r));
+	if (!r)
+		return NULL;
+	r->target = target;
+	mock_record(target, MOCK_GET_OK, 0, 0, 0);
+	return r;
 }
 
 /* regulator-by-device-node, mirroring of_regulator_get() + the pinned

@@ -170,3 +170,26 @@ ACK's generic GenPD parent propagation passes the same incoming pstate unless a 
 **Decision:** do not add a bare MMCX→MX parent descriptor, invent required-opps corner mappings, or port vendor ARC semantics speculatively. Keep the existing ACK UFS OPP→MMCX route as a distinct ACK-side request path, but do not claim it is HOS ARC-equivalent. ROUND25 classifies this as an unresolved hardware-equivalence / voltage-margin risk, not a demonstrated UFS probe blocker.
 
 ROUND25 does not close either Phase E primary gate: final ABL-to-Linux memory handoff and authoritative DBY-W09 PM8150 physical input-parent topology remain BLOCKED. The board DTS remains review-only; no build/package/device action is authorized by this evidence.
+
+
+## 15. ROUND26 — inherited ACK SM8250 memory / reserved-memory interval comparison (2026-11-25)
+
+Local-Agent report:
+[ROUND26 — ACK SM8250 vs HOS4.3 reserved-memory interval audit](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt).
+
+All physical tuples were parsed and compared locally; only node names, match classes and coarse size classes were published. No coordinates or coordinate hashes were uploaded.
+
+**Reserved-memory comparison:**
+- Pinned ACK `sm8250.dtsi` declares 18 immediate fixed-reg `no-map` children. HOS4.3 has 37 direct children: 24 fixed-reg and 13 dynamic/no-fixed-reg.
+- 17 ACK fixed intervals are exact matches to HOS4.3 fixed intervals. No ACK-vs-HOS fixed interval was classified as overlap or same-base/different-size.
+- The sole unresolved ACK-side interval is `cdsp_secure_heap`: ACK has a fixed interval, while the HOS4.3 same-name node has no fixed `reg`. It is not valid to call these equivalent.
+- HOS4.3 has seven fixed nodes without exact ACK counterparts and 13 dynamic/no-fixed-reg nodes, including CMA/shared pools absent from the generic ACK DTSI.
+- rev2 includes `sm8250.dtsi`, so its compiled tree inherits the 18 ACK carveouts and six SoC memory-region consumers. A present consumer node does not imply its driver probes.
+
+**Top-level memory placeholder comparison:**
+The ACK and HOS4.3 top-level memory nodes are both zero-size single-tuple placeholders, but are not structurally identical. ACK's inherited node has a nonzero base and a unit-address suffix; HOS4.3's base node has a zero base and no unit-address suffix. The rev2 include graph therefore inherits the ACK placeholder, not the HOS placeholder. Neither placeholder provides usable RAM values.
+
+**Decision and remaining gate:**
+On interval evidence alone, retaining the 17 exact-match upstream reservations is more defensible than omitting all HOS4.3 reservations. This is not proof that the whole inherited tree is safe: `cdsp_secure_heap` remains fixed-vs-dynamic unresolved, and no comparison to actual usable RAM / ABL / secure-firmware allocations is possible without the final post-ABL FDT. Do not delete, resize or override any node based on this report. Keep the memory map and Phase E BLOCKED pending the actual final ABL-to-Linux FDT/EFI handoff.
+
+ROUND26 is a static local comparison only. It does not close the PM8150 physical input-parent gate, does not establish runtime reservation ownership, and does not authorize a DTS edit, build, package or device operation.

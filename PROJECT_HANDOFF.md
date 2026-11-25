@@ -1758,3 +1758,21 @@ ROUND88 的首次 enable 时序要求仍成立；ROUND91 收窄了建议接入�
 - 本轮只做固定 ACK binding 继承关系审查，未修改 schema/DTS/driver/补丁/分支，未执行 dt_binding_check、dtbs_check 或设备测试。
 
 **ROUND27 schema 仍 NOT CLEAN**，本报告仅给出 Qualcomm VCC 属性的正确 binding scope，不表示已经修复或验证通过。
+
+
+## 2026-11-25 — ROUND93：1号 AI 核对 UFS regulator_enable 失败后的 voltage/load vote 回滚
+
+报告：[ROUND93 — 1号 AI source review: UFS VCC voltage/load votes must be unwound when regulator enable fails](./kernel-baseline/round93/round93-1ai-ufs-vcc-enable-failure-vote-rollback.md)。
+
+固定 ACK 的 UFS enable 逻辑发现另一处重要回滚边界：
+
+- `ufshcd_enable_vreg()` 先调用 config(true)，之后才执行 `regulator_enable()`；只有 regulator_enable 成功才设置 `vreg->enabled=true`。
+- 如果 voltage request / DRMS load config 已成功但 regulator_enable 失败，`vreg->enabled` 仍为 false。
+- 随后的 `ufshcd_setup_vreg()` 失败回滚虽然会调用 `ufshcd_toggle_vreg(false)`，但 `ufshcd_disable_vreg()` 会因 `!vreg->enabled` 提前返回，故不能清理失败 enable 尝试之前已经写入的 consumer vote。
+- regulator core 在 disabled consumer 上的 `regulator_set_load(max)` 只存储 vote；`regulator_enable()` 期间才触发 DRMS。如果该阶段失败，core 会回退 consumer enable_count，但 stored uA_load 不会自动清零。新 VCC min/max request 也会在未 enable 的状态下继续保留，除非 UFS driver 明确 unwind。
+
+**新增实现要求：** failed-enable unwind 不能依赖 `vreg->enabled`。需分别跟踪 enable reference、voltage request state、DRMS load state 和 pending cleanup；在没有取得 enable reference 的失败路径上，不调用 regulator_disable()，但仍需尝试把 load 清为 0、把 VCC voltage request 放宽至 `[0,max_uV]`，并分别记录失败。若后续供电轨 enable 失败导致回滚已启用的 VCC，仍按 ROUND90/89 的顺序处理。
+
+ROUND93 是 1号 AI 只读源码审查，仅供 2号 AI 实现评估。测试 Agent 只有在单独 `AGENT_TEST_TASK.md` 下执行；本轮未修改代码/DTS/binding/补丁/分支，也未运行 build/schema/device tests。
+
+ROUND84–ROUND93 现已形成完整 UFS VCC/VCCQ 设计审查约束：首次 enable 前解析/设置；VCC ON/OFF voltage interval 语义；DRMS load 独立投票；HPM→LPM disable 错误排序；未成功 enable 的 vote cleanup；binding/compatible/rootparam schema 独立修复。

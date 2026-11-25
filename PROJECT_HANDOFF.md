@@ -1173,3 +1173,16 @@ Kleaf docs say //common:dtc_includes_aarch64 can be used as a dependency for ker
 ROUND64 confirms the stock HOS4.3 DTBO table uses page size 4096, version 0, 9 entries, 32-byte entry size and entry 8 id 0x206a/rev 0. AOSP mkdtimg takes id/rev/custom table metadata separately from compiling the root DTS property, and supports cfg_create. Do not assume the DT overlay root property alone sets DT table entry ID. The VG overlay candidate is not yet known to be the actual selected variant, so the illustrative one-entry config in the note is NOT a package recommendation.
 
 No BUILD target, DTB, DTBO or dtbo.img was created.
+
+
+## 2026-11-25 — Exact UFS dual-domain binding constants independently rechecked
+
+The exact pinned ACK headers and SoC DTSI confirm the board rev2 values:
+- qcom,rpmhpd.h defines RPMHPD_MMCX = 6.
+- qcom,gcc-sm8250.h defines UFS_PHY_GDSC = 4.
+- sm8250.dtsi declares the gcc provider label/compatible, ufs_mem_hc host, ufs_mem_phy, and rpmhpd provider label/compatible.
+- The SoC UFS Host has exactly one required-opps reference in each of its two available OPP entries, while the UFS PHY independently retains the GCC GDSC domain.
+
+This validates the literal binding labels and IDs in dts/dby-w09-ack18-board.dts.rev2.candidate against the pinned source. It does not replace dtc/schema/build validation or close the distinct MMCX-to-MX ARC equivalence issue.
+
+Detailed note: kernel-baseline/round69/round69-sm8250-ufs-dual-genpd-provider-identity.md.

@@ -5,7 +5,7 @@
 **Branch:** `ai-parallel/stagea-port-until-boot`  
 **Target:** `//common:dby_w09`  
 **Fixed ACK common commit:** `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`  
-**Status:** PASS — exact manifest/ACK pin, Kleaf target query and cquery output inventory passed in hosted run `45529395645`; Image build is a separate Phase D gate now running in stage 8/9.
+**Status:** PASS — exact manifest/ACK pin, pinned toolchain discovery, ordered patches, Bazel query/cquery, Image build and final 33-symbol config/artifact validation all passed in run `45529395645`.
 
 ## 1. Target design
 

@@ -1,7 +1,7 @@
 # MatePad 11 DBY-W09 — Agent 只读采集与固件清单报告
 
 本仓库收录针对华为 MatePad 11（型号 DBY-W09，KONA / SM8250）的只读采集结果，
-用于 GKI 6.18.33 内核移植的前期调研。**当前顺序：先移植并验证 6.18.33 内核，再移植 Android 17 DerpFest；Android 12L 仅为历史参考。** 新会话必须先读 [PROJECT_HANDOFF.md](./PROJECT_HANDOFF.md)、[AGENT_TASK.md](./AGENT_TASK.md) 和 [外部仓库研究记录](./external-research/REFERENCE_REPOSITORIES_2026-11-25.md)。所有设备侧操作均为只读，未执行刷机、
+用于 GKI 6.18.33 内核移植的前期调研。**当前顺序：先移植并验证 6.18.33 内核，再移植 Android 17 DerpFest；Android 12L 仅为历史参考。** 项目角色为：1号 AI（ChatGPT）、2号 AI（独立开发 AI）、测试 Agent（仅负责测试/验证），三者不可混称。新会话必须先读 [PROJECT_HANDOFF.md](./PROJECT_HANDOFF.md)、[AGENT_TASK.md](./AGENT_TASK.md) 和 [外部仓库研究记录](./external-research/REFERENCE_REPOSITORIES_2026-11-25.md)。所有设备侧操作均为只读，未执行刷机、
 重启、解锁、root、EDL 或任何分区写入。
 
 ## 目录

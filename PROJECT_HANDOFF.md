@@ -1606,3 +1606,22 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 固定 ACK 的 qcom-rpmh-regulator.c 为所需输出定义了准确的父级供电 lookup key：PM8150 L5→vdd-l3-l4-l5-l18、L6/L9→vdd-l6-l9、L17→vdd-l13-l16-l17、S4→vdd-s4；PM8150L S8→vdd-s8。PM8150 regulator binding 也允许这些属性组。
 
 **重要边界：** 这些是 ACK regulator driver 的 supply_name/DT lookup 名称，不是实测板级物理 net 证据。HOS4.3 base FDT 检索仍未发现这些 parent-supply properties，也没有 DBY-W09 原理图或 power-tree。故不能推导其物理源头、不能猜 vph_pwr、不能给所有 rail 补相同 parent。ROUND83 将 ROUND64 后续需要的查询字段精确收窄为上述五组，PMIC physical input gate 仍 BLOCKED。
+
+
+## 2026-11-25 — ROUND84：1号 AI 独立复核 ACK UFS VCC voltage-request lifecycle
+
+报告：[ROUND84 — 1号 AI review: ACK UFS VCC consumer voltage request and lifecycle integration](./kernel-baseline/round84/round84-1ai-ufs-vcc-request-consumer-lifecycle-review.md)。
+
+本轮仅对固定 ACK `android17-6.18.33_r00` / `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 做只读源码复核，为 2号 AI 的 UFS VCC 修复设计补充边界：
+
+- `ufshcd_populate_vreg()` 是导出的共享 helper，MediaTek UFS host 也用它解析版本相关的 `vcc-ufsX` / `vcc-optX`。不得将 DBY-W09/SM8250 专用的 `vcc-voltage-level` 语义直接塞入这个通用 helper；解析应限定在标准 Qualcomm UFS 的普通 `vcc` descriptor 路径。
+- ACK 当前 `struct ufs_vreg` 无 min/max voltage 字段；`ufshcd_config_vreg()` 只处理 DRMS load，不应用 VCC 电压请求。
+- ACK enable 顺序为 config 后 regulator_enable；disable 顺序为 regulator_disable 后 config(false)。Linux regulator API 允许在 regulator enabled 或 disabled 时调用 `regulator_set_voltage()`，因此 legacy 顺序本身合理，无需仅因 regulator 已关闭就改序。
+- **新发现的 error-path 风险：** ACK disable 成功后会忽略 config(false) 的错误。若这里加入 VCC voltage release，失败可能留下未释放的最小电压请求。实现应独立跟踪 regulator enable reference 与 voltage-request active 状态，记录释放错误并定义可诊断的 retry/cleanup；enable 后续步骤失败时也要处理新增电压请求的回滚。
+- 若 DTS 存在 `vcc-voltage-level` 却缺少 `vcc-supply`，驱动没有 consumer handle 可以执行请求，不能声称已 enforce。不可调压 regulator 的行为也需明确；不要把 PM8150 L17 provider 的 2.496–3.008 V 约束与 UFS consumer 的 2.504–2.950 V 要求混为一谈。
+- 建议 binding 只在语义覆盖范围足够广时放入 `qcom,ufs-common.yaml`，否则使用最窄的 Qualcomm host binding。属性需声明恰好两个 u32 microvolt 值，min > 0 且 min <= max；driver 与 binding 同步修复。
+- ROUND81 另外的 `huawei,dby-w09` root compatible 与五个 `/rootparam` vendor properties schema 错误仍需独立修复，不由本轮 VCC 结论覆盖。
+
+**角色与边界：** ROUND84 是 **1号 AI 研究/复核报告**，仅供 2号 AI 评估；2号 AI 仍拥有实现决策和补丁。测试 Agent 仅在收到单独的 `AGENT_TEST_TASK.md` 后执行测试。本轮未修改任何源代码、DTS、binding、补丁、2号 AI 分支或受保护分支；未运行编译/schema/设备测试。
+
+**当前结论：** UFS VCC consumer voltage range 在 ACK 中确实缺失；共享 helper 和 disable-release error path 是实现必须顾及的两个额外边界。ROUND27 schema 仍 NOT CLEAN，待 2号 AI 实现修复并由测试 Agent 按新任务验证。

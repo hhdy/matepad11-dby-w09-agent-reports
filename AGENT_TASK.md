@@ -1016,3 +1016,12 @@ ROUND78 输入身份核验补充：当前 main base DTS blob 是 `f5449bac669ea7
 
 - [ROUND77 UFS / QMP PHY 第二轮源码审查](kernel-baseline/round77/round77-1ai-second-pass-ufs-qmp-phy-source-review.md)：正常路径源码语义 PASS，少量清理失败路径注意事项交 2号 AI 评估。
 - [ROUND78 rev2 DTS 输入身份预检](kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md)：当前主分支 base DTS blob 与 2号 AI ROUND27 任务书 pin 不一致；ROUND27 等 2号 AI 修订任务书后由测试 Agent 执行。
+
+
+## 1号 AI ROUND79 审查记录
+
+- 报告：`kernel-baseline/round79/round79-1ai-independent-phase-d-image-build-verification.md`。
+- 已直接检查 GitHub Actions job `138920645396` 的 steps 和原始日志：14/14 步骤成功，`//common:dby_w09` Image 构建 775 actions 成功，33/33 .config 符号为 `=y`。
+- Phase D Image build 现标记为 **PASS（1号 AI 已核验 job steps/log）**，但 1号 AI 未下载 artifact ZIP，也未重复检查 ZIP 成员哈希。
+- 这不关闭 Phase E/F/G，不代表板级 DTB、boot image 或设备启动通过。
+- ROUND27 仍等待 2号 AI 修正 base DTS blob SHA；测试 Agent 不得在身份未匹配时继续。

@@ -1341,3 +1341,27 @@ Do not downgrade the HOS ARC gate to PASS. Keep it as an open hardware-equivalen
 Exact ACK source review shows that plain SM8250 MMCX has a complete local GenPD implementation: probe validates its CMD_DB address, ARC slave ID and AUX mapping; power_on sends the local enable corner to RPMh; set_performance_state maps and stores/updates the local corner; and aggregate_corner emits the MMCX/mmcx_AO peer ACTIVE_ONLY, WAKE_ONLY and SLEEP votes on mmcx.lvl. The descriptor's absent .parent only means no GenPD parent link is registered; it does not disable local MMCX voting or itself return a probe error.
 
 Therefore the ROUND33 + ROUND37 route to MMCX remains a credible minimal UFS OPP route. The HOS4.3 MMCX->MX ARC edge is still a hardware-equivalence/voltage-margin risk, but no longer classified as a proven ACK probe blocker. Whether the UFS link needs the additional HOS parent/dropout behavior remains UNKNOWN pending ROUND25's local property values and ultimately runtime evidence.
+## 2026-11-25 — ROUND23 completed: rev2 DTB + VG rootparam overlay composite PASS
+
+Final report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt
+Blob: 8a676ce1a8a92b6fa3417de05843515e3b8d7b42
+
+ROUND23 used only byte-identical temporary copies of the current main candidate sources and the pinned ROUND18 ACK tree. No project source, firmware, config, protected branch or device was modified.
+
+Results:
+- rev2 board DTS preprocesses with cpp exit 0; dtc 1.7.0 -@ exit 0; temporary DTB size 145,849 bytes.
+- Warning set is identical to ROUND22 baseline: 32 warnings (30 unique_unit_address + 2 avoid_unnecessary_addr_size), all from upstream sm8250.dtsi; zero new warnings from DBY-W09 source.
+- rootparam-only VG overlay compiles with dtc -@ and -a 4, output 536 bytes. It contains a real __fixups__ entry targeting /fragment@0:target:0 to resolve rootparam.
+- fdtoverlay successfully applies the one overlay to the rev2 base DTB; temporary composite DTB size 146,045 bytes.
+- Composite /rootparam values match the ROUND19 HOS4.3 VG candidate: qcom,boardid 08:02:09:08; board_name DBY_W09_VG; product_name DBY-W09; hardware_version SH1DBSLM; modem_id <0xffffffff 0>.
+- Composite UFS Host power-domains resolve in the intended order: RPMhPD MMCX (argument 6) then GCC UFS_PHY_GDSC (argument 4). UFS PHY retains GCC UFS_PHY_GDSC only.
+- UFS Host contains vcc/vccq/vccq2, qcom,vccq-parent and qcom,vddp-ref-clk; PHY retains vdda-phy/vdda-phy-always-on/vdda-pll. No vdd-hba-supply is present.
+- Composite root qcom,board-id remains <0 0>; the overlay's root qcom,board-id <0x206a 0> is separate and is not copied by the /rootparam fragment. This reinforces that root identity and DT table entry ID/rev are separate layers.
+
+Important limits:
+- This proves syntax, label resolution, overlay fixup and composite property values only.
+- It does NOT prove VG is the actual hardware variant or ABL runtime-selected overlay.
+- dt_table_entry id/rev and DTBO image packaging remain UNKNOWN; no dtbo.img/mkdtimg run.
+- dt_binding_check/dtbs_check and Kleaf/Bazel targets were not run.
+- Final memory/reserved-memory and PM8150 physical input-parent gates remain BLOCKED; no boot package or device operation.

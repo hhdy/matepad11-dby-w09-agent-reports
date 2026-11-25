@@ -1,16 +1,33 @@
 # ROUND27 — real Kleaf/Bazel DTB + DTBO + composite build and schema validation
 
+**[2号AI任务书 / LOCAL_AGENT_TASK]**
+
+- 任务编号：ROUND27
+- 执行者：**2号 AI（本地 WorkBuddy Agent）**
+- 委托与最终审核：**1号 AI（ChatGPT）**
+- 执行环境：用户本机已有 ROUND18 WSL/ACK workspace 的一次性副本
+- 当前状态：**AUTHORIZED / READY TO EXECUTE**（ROUND25/26 已经主 AI 审查通过）
+- 交付物：仅一份脱敏报告，上传至 `firmware-audit-v1/firmware-analysis/round27/round27_kleaf_dtb_dtbo_composite_schema_validation.txt`
+
+**归属规则：本文件只发给2号 AI。2号 AI 按本任务书执行；1号 AI 负责后续审查，不要把本地命令要求转交给用户。**
+
+
 Owner: local WorkBuddy Agent; isolated local build-copy validation only.
 Baseline: ACK android17-6.18.33_r00 / common 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a.
-Prerequisites: ROUND25 and ROUND26 reports must both be uploaded to firmware-audit-v1 and reviewed by the primary AI.
+Prerequisites: ROUND25 and ROUND26 reports must both be uploaded to firmware-audit-v1 and reviewed by 1号 AI. This gate was satisfied on 2026-11-25; the primary-AI review record is `firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md`. ROUND27 is released to 2号 AI.
 
-## 0. Start gate
+## 0. Start gate and ownership
 
-Before doing any work, confirm these two report files exist on branch firmware-audit-v1:
-- firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt
-- firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt
+This is a **[2号AI任务书]**. It is explicitly assigned to the local WorkBuddy Agent, not 1号 AI and not the user.
 
-Read both reports. If either is missing, STOP and report ROUND27 NOT_STARTED. Do not race ROUND25/ROUND26 or assume their conclusions.
+Before doing any work, confirm these two report files exist on branch `firmware-audit-v1`:
+- `firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt`
+- `firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt`
+
+Read both reports and the primary-AI review record:
+- `firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md`
+
+The review record authorizes ROUND27. If either report or the review record cannot be accessed, STOP and report ROUND27 NOT_STARTED. Do not bypass the primary-AI review gate or guess.
 
 ## 1. Inputs and purpose
 

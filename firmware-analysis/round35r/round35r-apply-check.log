@@ -1,0 +1,280 @@
+=== tree-b: apply 17 production patches ===
+BASE_HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+--- PATCH 01 sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171 ---
+CMD: git apply --check --verbose 01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 02 sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6 ---
+CMD: git apply --check --verbose 02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 03 sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764 ---
+CMD: git apply --check --verbose 03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 04 sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836 ---
+CMD: git apply --check --verbose 04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 05 sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65 ---
+CMD: git apply --check --verbose 05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: git apply --verbose 05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 06 sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4 ---
+CMD: git apply --check --verbose 06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: git apply --verbose 06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 07 sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0 ---
+CMD: git apply --check --verbose 07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 08 sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539 ---
+CMD: git apply --check --verbose 08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+CHECK_RC=0
+CMD: git apply --verbose 08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 09 sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec ---
+CMD: git apply --check --verbose 09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: git apply --verbose 09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 10 sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003 ---
+CMD: git apply --check --verbose 10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+CHECK_RC=0
+CMD: git apply --verbose 10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 11 sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6 ---
+CMD: git apply --check --verbose 11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 12 sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435 ---
+CMD: git apply --check --verbose 12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: git apply --verbose 12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 13 sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650 ---
+CMD: git apply --check --verbose 13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+CMD: git apply --verbose 13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 14 sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15 ---
+CMD: git apply --check --verbose 14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: git apply --verbose 14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 15 sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594 ---
+CMD: git apply --check --verbose 15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+CHECK_RC=0
+CMD: git apply --verbose 15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 16 sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 ---
+CMD: git apply --check --verbose 16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+CHECK_RC=0
+CMD: git apply --verbose 16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 17 sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 ---
+CMD: git apply --check --verbose 17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+CHECK_RC=0
+CMD: git apply --verbose 17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+
+=== tree-b identity after 17 patches ===
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+DIFF17_SHA256=3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+
+=== tree-b: apply ROUND35R seam patch ===
+SEAM_SHA256=14c62ec878e701a10e6eef211704262300e2ac742286c18f1e5c7496eaeb9049
+SEAM_BYTES=16740
+SEAM_LINES=471
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round35r-agent/round35r-kunit-seam.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+SEAM_CHECK_RC=0
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round35r-agent/round35r-kunit-seam.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/kunit-proxy-consumer.dtso cleanly.
+Applied patch drivers/regulator/proxy-consumer-kunit.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+SEAM_APPLY_RC=0
+CMD: git diff --check
+SEAM_DIFFCHECK_RC=0
+
+=== tree-b identity after seam ===
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/kunit-proxy-consumer.dtso
+?? drivers/regulator/proxy-consumer-kunit.c
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+DIFF17_PLUS_SEAM_SHA256=722104f9220a4f46538ce6dc1091c53369c01a298377cfa3d89053da17eceabf

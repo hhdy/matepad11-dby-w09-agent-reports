@@ -1,0 +1,471 @@
+diff --git a/drivers/regulator/Kconfig b/drivers/regulator/Kconfig
+index 5ec1874c6b24..706b4f2abb82 100644
+--- a/drivers/regulator/Kconfig
++++ b/drivers/regulator/Kconfig
+@@ -71,6 +71,17 @@ config REGULATOR_PROXY_CONSUMER
+ 
+ 	  If unsure, say no.
+ 
++config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++	tristate "KUnit test for regulator proxy consumer lifecycle" if KUNIT
++	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
++	depends on !KUNIT_ALL_TESTS
++	default n
++	help
++		KUnit coverage for proxy-consumer bulk revoke and the owner
++		unregister ordering seam. Off by default and excluded from
++		KUNIT_ALL_TESTS so it can never be enabled by a product config
++		or defconfig; use it only in an isolated KUnit test configuration.
++
+ config REGULATOR_NETLINK_EVENTS
+ 	bool "Enable support for receiving regulator events via netlink"
+ 	depends on NET
+diff --git a/drivers/regulator/Makefile b/drivers/regulator/Makefile
+index e77c2d6aec14..9f274925a0e0 100644
+--- a/drivers/regulator/Makefile
++++ b/drivers/regulator/Makefile
+@@ -12,6 +12,9 @@ obj-$(CONFIG_REGULATOR_VIRTUAL_CONSUMER) += virtual.o
+ obj-$(CONFIG_REGULATOR_USERSPACE_CONSUMER) += userspace-consumer.o
+ obj-$(CONFIG_REGULATOR_PROXY_CONSUMER) += proxy-consumer.o
+ 
++obj-$(CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST) += proxy-consumer-kunit-test.o
++proxy-consumer-kunit-test-y := proxy-consumer-kunit.o kunit-proxy-consumer.dtbo.o
++
+ obj-$(CONFIG_REGULATOR_88PG86X) += 88pg86x.o
+ obj-$(CONFIG_REGULATOR_88PM800) += 88pm800-regulator.o
+ obj-$(CONFIG_REGULATOR_88PM8607) += 88pm8607.o
+diff --git a/drivers/regulator/core.c b/drivers/regulator/core.c
+index 76bc72b19c6e..6f8110485f41 100644
+--- a/drivers/regulator/core.c
++++ b/drivers/regulator/core.c
+@@ -6055,6 +6055,14 @@ void regulator_unregister(struct regulator_dev *rdev)
+ 
+ 	regulator_proxy_consumer_unregister(rdev);
+ 
++#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++	/*
++	 * KUnit-only ordering seam: proxy teardown has run, but the core
++	 * open-count warning, coupling and list teardown below have not.
++	 * Compiled out entirely unless the isolated test option is enabled.
++	 */
++	regulator_proxy_consumer_kunit_observe_unregister(rdev);
++#endif
+ 	mutex_lock(&regulator_list_mutex);
+ 
+ 	WARN_ON(rdev->open_count);
+diff --git a/drivers/regulator/kunit-proxy-consumer.dtso b/drivers/regulator/kunit-proxy-consumer.dtso
+new file mode 100644
+index 000000000000..329056f8f2f0
+--- /dev/null
++++ b/drivers/regulator/kunit-proxy-consumer.dtso
+@@ -0,0 +1,28 @@
++// SPDX-License-Identifier: GPL-2.0
++/dts-v1/;
++/plugin/;
++
++/*
++ * Self-target proxy consumer node used by the KUnit lifecycle test.
++ *
++ * The provider child node owns both the proxy consumer request properties
++ * and a "proxy-supply" phandle that points back to itself.  This is the
++ * ROUND33 self-target-only rule: a per-rdev owner may only vote on its own
++ * regulator, never on a different regulator.
++ */
++&{/} {
++	kunit_proxy_provider: kunit-proxy-provider {
++		compatible = "kunit,proxy-provider";
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		kunit_proxy_owner: kunit-proxy-owner@0 {
++			reg = <0>;
++			regulator-name = "kunit-proxy-owner";
++			proxy-supply = <&kunit_proxy_owner>;
++			qcom,proxy-consumer-enable;
++			qcom,proxy-consumer-voltage = <1800000 3300000>;
++			qcom,proxy-consumer-current = <100000>;
++		};
++	};
++};
+diff --git a/drivers/regulator/proxy-consumer-kunit.c b/drivers/regulator/proxy-consumer-kunit.c
+new file mode 100644
+index 000000000000..d49014a38d6c
+--- /dev/null
++++ b/drivers/regulator/proxy-consumer-kunit.c
+@@ -0,0 +1,320 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * KUnit integration tests for the boot-time regulator proxy consumer
++ * lifecycle.  All regulator core calls here are the real kernel ones:
++ *
++ *   - regulator_register() runs the real registration path, which calls
++ *     regulator_proxy_consumer_register() (ROUND33 production code).
++ *   - of_regulator_get() resolves a real self-target handle through the
++ *     device tree, so proxy_consumer_get() takes the real OF path.
++ *   - regulator_enable()/set_voltage()/set_load()/disable() are real core
++ *     entry points; only the regulator_ops callbacks below are a fake
++ *     provider used to observe what the core asked the hardware to do.
++ *   - regulator_unregister() runs the real owner unregister path.
++ *
++ * The only production changes are KUnit-only seams in proxy-consumer.c and
++ * core.c, compiled out unless CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y.
++ *
++ * This is deliberately ONE ordered test: bulk revoke sets the global
++ * one-shot proxy_consumers_removed flag, so any test that registers a proxy
++ * consumer after it would see -EPERM.  The revoke case therefore runs last
++ * and no separate reset interface is added (as required by the taskbook).
++ */
++
++#include <kunit/device.h>
++#include <kunit/of.h>
++#include <kunit/test.h>
++#include <linux/err.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/regulator/consumer.h>
++#include <linux/regulator/driver.h>
++#include <linux/regulator/machine.h>
++#include <linux/regulator/proxy-consumer.h>
++
++/* ------------------------------------------------------------------ */
++/* Fake provider: records real core-initiated callback counts/params.   */
++/* ------------------------------------------------------------------ */
++
++struct fake_provider {
++	bool enabled;
++	int enable_count;
++	int disable_count;
++	int set_voltage_count;
++	int set_load_count;
++	int last_min_uV;
++	int last_max_uV;
++	int last_load_uA;
++};
++
++static struct fake_provider provider;
++
++static int fake_enable(struct regulator_dev *rdev)
++{
++	provider.enabled = true;
++	provider.enable_count++;
++	return 0;
++}
++
++static int fake_disable(struct regulator_dev *rdev)
++{
++	provider.enabled = false;
++	provider.disable_count++;
++	return 0;
++}
++
++static int fake_set_voltage(struct regulator_dev *rdev, int min_uV,
++			    int max_uV, unsigned int *selector)
++{
++	provider.set_voltage_count++;
++	provider.last_min_uV = min_uV;
++	provider.last_max_uV = max_uV;
++	if (selector)
++		*selector = 0;
++	return 0;
++}
++
++static int fake_set_load(struct regulator_dev *rdev, int load_uA)
++{
++	provider.set_load_count++;
++	provider.last_load_uA = load_uA;
++	return 0;
++}
++
++static int fake_list_voltage(struct regulator_dev *rdev, unsigned int selector)
++{
++	return 1800000;
++}
++
++/* Report the fake rail as off until enabled, so the core actually drives
++ * ops->enable()/disable() instead of treating it as always-on.
++ */
++static int fake_is_enabled(struct regulator_dev *rdev)
++{
++	return provider.enabled ? 1 : 0;
++}
++
++static const struct regulator_ops fake_ops = {
++	.enable = fake_enable,
++	.disable = fake_disable,
++	.is_enabled = fake_is_enabled,
++	.set_voltage = fake_set_voltage,
++	.set_load = fake_set_load,
++	.list_voltage = fake_list_voltage,
++};
++
++static const struct regulator_desc fake_desc = {
++	.name = "kunit-proxy-fake",
++	.type = REGULATOR_VOLTAGE,
++	.id = 0,
++	.ops = &fake_ops,
++	.n_voltages = 1,
++	.owner = THIS_MODULE,
++};
++
++/*
++ * Real constraints are required: without CHANGE_VOLTAGE/CHANGE_DRMS in
++ * valid_ops_mask the core rejects the proxy's voltage request before the
++ * fake provider callback is ever reached.
++ */
++static const struct regulator_init_data fake_init_data = {
++	.constraints = {
++		.name = "kunit-proxy-fake",
++		.min_uV = 1800000,
++		.max_uV = 3300000,
++		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_DRMS |
++				  REGULATOR_CHANGE_STATUS,
++		.valid_modes_mask = REGULATOR_MODE_NORMAL,
++	},
++};
++
++/* ------------------------------------------------------------------ */
++/* Ordering observer: invoked by the core.c seam inside regulator_unregister. */
++/* ------------------------------------------------------------------ */
++
++struct unregister_observation {
++	int calls;
++	bool proxy_pointer_cleared;
++	u32 open_count;
++	bool device_still_registered;
++	int provider_disable_count;
++};
++
++static struct unregister_observation observation;
++
++/*
++ * Defined here and called from the KUnit-only seam in core.c.  At this
++ * point regulator_proxy_consumer_unregister() has run but the core's
++ * WARN_ON(open_count)/coupling/list teardown has not.
++ */
++void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev)
++{
++	observation.calls++;
++	observation.proxy_pointer_cleared = !rdev->proxy_consumer;
++	observation.open_count = rdev->open_count;
++	observation.device_still_registered = device_is_registered(&rdev->dev);
++	observation.provider_disable_count = provider.disable_count;
++}
++EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_observe_unregister);
++
++/* ------------------------------------------------------------------ */
++/* Helpers                                                             */
++/* ------------------------------------------------------------------ */
++
++KUNIT_DEFINE_ACTION_WRAPPER(unregister_owner_wrapper,
++			    regulator_unregister, struct regulator_dev *);
++
++static void reset_provider(void)
++{
++	memset(&provider, 0, sizeof(provider));
++}
++
++static void reset_observation(void)
++{
++	memset(&observation, 0, sizeof(observation));
++}
++
++/* Find the self-target owner node installed by the DT overlay. */
++static struct device_node *find_owner_node(struct kunit *test)
++{
++	struct device_node *np;
++
++	np = of_find_node_by_name(NULL, "kunit-proxy-owner");
++	of_node_put_kunit(test, np);
++	return np;
++}
++
++static struct regulator_dev *register_regulator(struct device *dev,
++						struct device_node *np)
++{
++	struct regulator_config config = { };
++
++	config.dev = dev;
++	config.of_node = np;
++	config.init_data = &fake_init_data;
++	config.driver_data = &provider;
++	return regulator_register(dev, &fake_desc, &config);
++}
++
++/* ------------------------------------------------------------------ */
++/* Single ordered test                                                 */
++/* ------------------------------------------------------------------ */
++
++static void proxy_kunit_lifecycle(struct kunit *test)
++{
++	struct device *dev;
++	struct device_node *np;
++	struct regulator_dev *rdev;
++	struct regulator *handle;
++	int count_disable, count_voltage, count_load;
++
++	/* Install the self-target DT node once for the whole ordered test. */
++	KUNIT_ASSERT_EQ(test, 0, of_overlay_apply_kunit(test, kunit_proxy_consumer));
++	np = find_owner_node(test);
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, np);
++
++	dev = kunit_device_register(test, "proxy-kunit-provider");
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, dev);
++
++	/* ---- Phase 1: self-target registration votes the real core. ---- */
++	reset_provider();
++	reset_observation();
++	rdev = register_regulator(dev, np);
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, rdev);
++	/* No action: this rdev is explicitly unregistered in Phase 2. */
++	/* Bulk revoke must not have run yet in the isolated test config. */
++	KUNIT_EXPECT_FALSE(test, regulator_proxy_consumer_kunit_removed());
++	KUNIT_ASSERT_NOT_NULL(test, rdev->proxy_consumer);
++
++	/* A second real OF lookup must resolve the same self-target. */
++	handle = of_regulator_get(dev, np, "proxy");
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, handle);
++	KUNIT_EXPECT_EQ(test, 0, regulator_enable(handle));
++	regulator_disable(handle);
++	regulator_put(handle);
++
++	/* Proxy request reached the provider via real core calls:
++	 *   set_voltage(1800000, 3300000)
++	 *   set_load(100000)  (issued by DRMS when the proxy enabled)
++	 *   enable
++	 */
++	KUNIT_EXPECT_GE(test, provider.enable_count, 1);
++	KUNIT_EXPECT_GE(test, provider.set_voltage_count, 1);
++	KUNIT_EXPECT_GE(test, provider.set_load_count, 1);
++	KUNIT_EXPECT_EQ(test, provider.last_load_uA, 100000);
++	KUNIT_EXPECT_EQ(test, provider.last_min_uV, 1800000);
++	/* single-voltage desc: core maps the requested range to 1800000..1800000 */
++	KUNIT_EXPECT_LE(test, provider.last_max_uV, 3300000);
++
++	/* ---- Phase 2: owner unregister ordering seam. ---- */
++	count_disable = provider.disable_count;
++	regulator_unregister(rdev);
++	KUNIT_EXPECT_EQ(test, observation.calls, 1);
++	KUNIT_EXPECT_TRUE(test, observation.proxy_pointer_cleared);
++	KUNIT_EXPECT_TRUE(test, observation.device_still_registered);
++	KUNIT_EXPECT_EQ(test, observation.open_count, 0);
++	KUNIT_EXPECT_GT(test, observation.provider_disable_count, count_disable);
++
++	/* ---- Phase 3: no-handle teardown is a no-op and idempotent. ---- */
++	reset_provider();
++	reset_observation();
++	/* of_node=NULL => no proxy properties => rdev->proxy_consumer stays NULL. */
++	rdev = register_regulator(dev, NULL);
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, rdev);
++	KUNIT_EXPECT_NULL(test, rdev->proxy_consumer);
++
++	count_disable = provider.disable_count;
++
++	/* Repeating proxy teardown on a live rdev with no handle is a no-op.
++	 * These run before regulator_unregister() to avoid touching a freed rdev.
++	 */
++	regulator_proxy_consumer_unregister(NULL);
++	regulator_proxy_consumer_unregister(rdev);
++	regulator_proxy_consumer_unregister(rdev);
++	KUNIT_EXPECT_EQ(test, observation.calls, 0);
++	KUNIT_EXPECT_EQ(test, provider.disable_count, count_disable);
++
++	regulator_unregister(rdev);
++	KUNIT_EXPECT_EQ(test, observation.calls, 1);
++	KUNIT_EXPECT_TRUE(test, observation.proxy_pointer_cleared);
++	KUNIT_EXPECT_EQ(test, provider.disable_count, count_disable);
++
++	/* ---- Phase 4 LAST: shared bulk revoke helper. ----
++	 * This sets the one-shot proxy_consumers_removed flag, so it must be
++	 * the final phase that registers a proxy consumer.
++	 */
++	reset_provider();
++	rdev = register_regulator(dev, np);
++	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, rdev);
++	kunit_add_action(test, unregister_owner_wrapper, rdev);
++	KUNIT_ASSERT_NOT_NULL(test, rdev->proxy_consumer);
++
++	count_disable = provider.disable_count;
++	count_voltage = provider.set_voltage_count;
++	count_load = provider.set_load_count;
++
++	KUNIT_EXPECT_EQ(test, regulator_proxy_consumer_kunit_revoke_all(), 0);
++	KUNIT_EXPECT_NULL(test, rdev->proxy_consumer);
++	KUNIT_EXPECT_GT(test, provider.disable_count, count_disable);
++	KUNIT_EXPECT_GE(test, provider.set_voltage_count, count_voltage);
++	KUNIT_EXPECT_GE(test, provider.set_load_count, count_load);
++	KUNIT_EXPECT_EQ(test, provider.last_load_uA, 0);
++	/* Voltage cleanup: set_voltage(0, INT_MAX) clamped by the core. */
++	KUNIT_EXPECT_GE(test, provider.last_min_uV, 0);
++	KUNIT_EXPECT_LE(test, provider.last_max_uV, 3300000);
++}
++
++static struct kunit_case proxy_kunit_cases[] = {
++	KUNIT_CASE(proxy_kunit_lifecycle),
++	{ }
++};
++
++static struct kunit_suite proxy_kunit_suite = {
++	.name = "regulator-proxy-consumer-lifecycle",
++	.test_cases = proxy_kunit_cases,
++};
++
++kunit_test_suite(proxy_kunit_suite);
++
++MODULE_DESCRIPTION("KUnit integration tests for regulator proxy consumer lifecycle");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
+index d66500fad916..6a701071a6d6 100644
+--- a/drivers/regulator/proxy-consumer.c
++++ b/drivers/regulator/proxy-consumer.c
+@@ -489,7 +489,7 @@ late_initcall(regulator_proxy_consumer_retry_deferred);
+  * Remove all proxy requests at late_initcall_sync.  The assumption is that all
+  * devices have probed at this point and made their own regulator requests.
+  */
+-static int __init regulator_proxy_consumer_remove_all(void)
++static int regulator_proxy_consumer_revoke_all(void)
+ {
+ 	struct proxy_consumer *consumer;
+ 	struct proxy_consumer *temp;
+@@ -507,4 +507,25 @@ static int __init regulator_proxy_consumer_remove_all(void)
+ 
+ 	return 0;
+ }
++
++#ifndef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++static int __init regulator_proxy_consumer_remove_all(void)
++{
++	return regulator_proxy_consumer_revoke_all();
++}
+ late_initcall_sync(regulator_proxy_consumer_remove_all);
++#endif
++
++#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++int regulator_proxy_consumer_kunit_revoke_all(void)
++{
++	return regulator_proxy_consumer_revoke_all();
++}
++EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_revoke_all);
++
++bool regulator_proxy_consumer_kunit_removed(void)
++{
++	return proxy_consumers_removed;
++}
++EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_removed);
++#endif
+diff --git a/include/linux/regulator/proxy-consumer.h b/include/linux/regulator/proxy-consumer.h
+index ab5e9f76dd73..6b18c8af81c8 100644
+--- a/include/linux/regulator/proxy-consumer.h
++++ b/include/linux/regulator/proxy-consumer.h
+@@ -21,6 +21,12 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+ 
+ void regulator_proxy_consumer_unregister(struct regulator_dev *rdev);
+ 
++#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++int regulator_proxy_consumer_kunit_revoke_all(void);
++bool regulator_proxy_consumer_kunit_removed(void);
++void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev);
++#endif
++
+ #else
+ 
+ static inline struct proxy_consumer *

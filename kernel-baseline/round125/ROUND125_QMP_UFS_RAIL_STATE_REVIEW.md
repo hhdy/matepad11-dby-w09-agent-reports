@@ -61,8 +61,8 @@ When present:
 Patch:
 `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch`
 
-- Git blob: `c192fe1488d82b12aa3d3108e036d1141f5e76db`
-- SHA-256: `31571a1e4449cb5cceae3f77a102e7d4af488f4ef878af3248e8624c7211617c`
+- Git blob: `b2a9a1e6c8f75e858f75e93a5b4ed35ec6bed05d`
+- SHA-256: `71b8a64d20ca0fad1037099cbc864a6aceebacebce057eceb7d4a745cabde330`
 - Changes only: `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`
 - Patch was generated as a delta against the ACK source after applying AI2 ROUND63. Its three hunk contexts and declared old/new line counts were independently checked in the authoring session; sequential application on the full 15-patch workspace and compilation are still **PENDING Agent validation**.
 

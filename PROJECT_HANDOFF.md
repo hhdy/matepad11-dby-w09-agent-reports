@@ -1549,3 +1549,12 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 - 当前唯一 ROUND27 报告 `firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` 尚未上传；报告上传后，1号 AI 还要核对报告中实际使用的输入 SHA。
 
 **ROUND27 当前状态：授权范围不变，但因 base DTS 输入 SHA 不匹配，进入 INPUT IDENTITY BLOCKED；等待 2号 AI 修订任务书后由测试 Agent 继续。**
+
+
+## 2026-11-25 — ROUND79：1号 AI 独立核验 Phase D Image 构建
+
+报告：[ROUND79 — 1号 AI 独立核验 2号 AI 的 Phase D 内核 Image 构建](./kernel-baseline/round79/round79-1ai-independent-phase-d-image-build-verification.md)。
+
+1号 AI 直接读取 GitHub Actions job `138920645396`（run `45529395645`）的 job steps 和原始日志，14/14 步骤均 completed/success；原始日志确认 `//common:dby_w09` 构建成功（775 actions）、33/33 必需配置符号为 `=y`、Image 和配套文件成功上传。Image SHA256 为 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`，大小 44,820,992 bytes。
+
+**Phase D = PASS（1号 AI 已独立核验 job 状态与日志）。** 这不是板级 DTB/DTBO 或 boot package 验收。Phase E/F 仍 BLOCKED，Phase G NOT RUN。ROUND27 仍因 base DTS 输入 SHA 与任务书不一致而处于 INPUT IDENTITY BLOCKED，等待 2号 AI 修订任务书后由测试 Agent 执行。

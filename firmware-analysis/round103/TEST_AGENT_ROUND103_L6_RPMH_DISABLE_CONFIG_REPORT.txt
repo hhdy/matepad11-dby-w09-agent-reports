@@ -1,0 +1,412 @@
+接受任务 TEST-AGENT-ROUND103；下发方 1号 AI；执行方测试 Agent；只读固件配置取证；不承担驱动实现。
+
+================================================================================
+TEST-AGENT-ROUND103
+HOS4.3 PM8150 L6 — RPMh disable 相关 DT 配置只读取证
+================================================================================
+
+1. 任务编号、归属、执行 Agent、停止规则
+--------------------------------------------------------------------------------
+任务编号      : TEST-AGENT-ROUND103
+任务归属      : 测试 Agent 专属只读取证任务。
+                不是 1号 AI 实现任务，也不是 2号 AI 驱动修改任务。
+下发方/审查方 : 1号 AI（ChatGPT）
+执行方        : 本地测试 Agent（WorkBuddy / 本机代理）
+固定内核基线  : ACK android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+                （只读查看，未检出、未修改、未编译）
+唯一交付物    : firmware-analysis/round103/TEST_AGENT_ROUND103_L6_RPMH_DISABLE_CONFIG_REPORT.txt
+上传分支      : firmware-audit-v1
+
+排程冲突规则处置（任务书 §0）：
+  - AI2-ROUND29 已在上一轮完成并已停止。其唯一报告存在于
+    firmware-audit-v1:firmware-analysis/round29/AI2_ROUND29_HUAWEI_BOARD_BINDING_SCHEMA_REPORT.txt
+    （37,868 B，git blob 1b269445a2dc...），已按该轮停止规则停止，未启动 ROUND30。
+  - 因此在确认上述状态之后才开始本任务，未并发操作同一工作区，
+    未暂停、覆盖、合并或代替 AI2-ROUND29。
+
+停止规则执行：
+  - 上传本报告后立即停止；
+  - 未启动 ROUND104；
+  - 未提交驱动代码，未修改 DTS / binding；
+  - 未执行内核编译、boot 打包、AVB、刷机或任何设备操作；
+  - 未判定 VDDP 清理是否安全，未替 2号 AI 作实现决策。
+
+角色边界：本报告仅为只读固件配置取证。驱动实现归 2号 AI；源码设计与报告审查归 1号 AI。
+
+
+2. 固件版本与输入对象 SHA-256
+--------------------------------------------------------------------------------
+固件         : DBY-W09 HarmonyOS 4.3 官方整包（本地既有镜像目录，未重新下载、未连接设备）
+DTBO 容器    : dtbo.img，25,165,824 B（Android DTBO table，9 entries）
+输入来源     : 既有的本地固件提取目录（ROUND3 dtb_work，由 ROUND2/3 从同一 dtbo.img / boot.img
+               提取；本轮直接复用其中现成对象，未从设备取任何数据）
+
+base FDT 候选（boot.img 的 dtb 段被 ROUND3 拆为 4 个 FDT 对象；四者长度之和 = 1,664,243 B，
+与 ROUND19 记录的 boot header "dtb size" 一致）：
+
+  对象                             长度(B)   SHA-256
+  boot_fdt_candidate_0.dtb         556,524   df2730f3d2e9bdabad874c3ef7399534c5c6070b046c4524224aa461ba2c70f7
+  boot_fdt_candidate_1.dtb         556,520   f3dcba83e73f4d868e8e069369eb499ecde399a9034010be8bb34af4786e9817
+  boot_fdt_candidate_2.dtb         551,026   6cda673986bf814c9f118aa129e3e85f235def6ce6f607f6a724b6fa135a0835
+  boot_fdt_candidate_3.dtb             173   f06fb36d7847c035ff7fb4457eb84d0bf2d0786adcf1912ad8a005d34f4f8f1e
+
+  candidate_0/1/2 三者的 qcom,msm-id 首 cell 均为 356，第二 cell 三者互不相同；
+  三者 model 分别为 "Qualcomm Technologies, Inc. kona v2.1 SoC" / "kona v2 SoC" / "kona v1 SoC"；
+  qcom,board-id 均为 <0 0>；各自含 37 个 reserved-memory 子节点和 /firmware/android
+  （vbmeta, fstab）。candidate_3 仅 173 B，是空 FDT 壳（无 model / compatible / soc 节点）。
+
+九个 DTBO 条目：
+
+  对象                     长度(B)   SHA-256
+  dtbo_entry_0.dtbo       329,044   6940ce1167a3a21cb677a422da4327682d5e6d266dc5af5a002acb28cfc72aef
+  dtbo_entry_1.dtbo       329,352   685a837e65a692da8780df6f9245c010128893ef22d0aeb1046b572eabe2872f
+  dtbo_entry_2.dtbo       329,240   0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b
+  dtbo_entry_3.dtbo       329,098   e68e5a48f64cfb686e2698b4dba07d58fa07fe4316522bbb4323ecfbeb9f486c
+  dtbo_entry_4.dtbo       329,340   866991056bef3a99d7e010bc13196f87ee5b93474e70a75a4c34ddcc4bad6cfc
+  dtbo_entry_5.dtbo       329,356   699df8950612ca3825db38050dceb20d08c85ded666e238a57b281c80ba7eec1
+  dtbo_entry_6.dtbo       329,356   fca5a7a83ea69a473720c180594cf95035c57707957e1effe0484b76bdbad844
+  dtbo_entry_7.dtbo       329,352   0a57a7f8ac678073542de72cef02e2bbbf9d40dd5aeb30000835258d55cff07b
+  dtbo_entry_8.dtbo       329,352   a7946352a86ab6e47b5ee79d84e5d6c4cf4e548c96b0221cec909f32ebd9d21d
+
+  长度与 SHA-256 在本任务开始与结束时各计算一次，两次结果完全一致（原始输入未被改动）。
+
+
+3. 工具版本、每条读取命令和退出码
+--------------------------------------------------------------------------------
+仅使用本机已安装工具，未下载 / 安装 / 升级任何工具、源码或 Python 包。
+
+  dtc        /usr/bin/dtc        Version: DTC 1.7.0
+  fdtget     /usr/bin/fdtget     Version: DTC 1.7.0
+  fdtdump    /usr/bin/fdtdump    Version: DTC 1.7.0
+  fdtoverlay /usr/bin/fdtoverlay DTC 1.7.0（同 dtc 包）
+  python-libfdt: 未安装（未使用；phandle 解析用自带的只读 DTS 文本解析脚本完成，
+                 未安装任何包，脚本脚本本身不含固件数据副本）
+
+关键命令与退出码（<file>/<dtbo> 为上述输入对象；$T 为临时工作目录）：
+
+  dtc --version                                                         rc=0
+  dtc -I dtb -O dts -o $T/base_c<N>.dts <base candidate>                rc=0（N=0,1,2；candidate_3 不反编译）
+  dtc -I dtb -O dts -o $T/dtbo_<N>.dts <dtbo entry>                     rc=0（N=0..8）
+  fdtget -p <base candidate> /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+                                                                        rc=0（candidate 0/1/2）
+                                                                        rc=1 + FDT_ERR_NOTFOUND（candidate_3）
+  fdtget -t x <base candidate> <目标节点> <属性名>                       逐属性见第 4 节
+                                                                        rc=0 表示存在，rc=1 + FDT_ERR_NOTFOUND 表示不存在
+  fdtoverlay -i <base candidate_2> -o $T/comp_<N>.dtb <dtbo entry>      rc=0（N=0..8，九次全部成功）
+  git show 8ad08f75dd...:drivers/regulator/qcom-rpmh-regulator.c         rc=0（只读）
+
+关于 dtc 警告（如实记录，未抑制）：九个 DTBO 反编译各产生 241–242 行 warning
+（以 (reg_format) / (unit_address_vs_reg) 为主，源于厂商 DT 中 reg 长度与
+#address-cells/#size-cells 不一致的既有写法），rc 仍为 0 且输出完整。base 反编译
+产生 167 行同类 warning。这些 warning 均不位于本任务目标节点及其父节点路径上。
+
+
+4. 目标节点完整属性 presence/absence 表
+--------------------------------------------------------------------------------
+节点路径（与任务书 §1 给出的路径完全一致，无需按兼容链改写）：
+
+  /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+
+父节点 /soc/rsc@18200000/rpmh-regulator-ldoa6 的自身属性：
+  compatible = "qcom,rpmh-vrm-regulator"，另有 qcom,resource-name、
+  qcom,regulator-type、qcom,supported-modes、qcom,mode-threshold-currents。
+  该父节点下只有 regulator-pm8150-l6 一个子节点。
+
+目标节点自身属性（candidate_0 / 1 / 2 三者完全一致，合计 7 个）：
+
+  属性                        状态      说明
+  regulator-name              PRESENT   = "pm8150_l6"（字符串）
+  qcom,set                    PRESENT   单 cell
+  regulator-min-microvolt     PRESENT   单 cell，逻辑 DT 值 1,200,000 uV
+  regulator-max-microvolt     PRESENT   单 cell，逻辑 DT 值 1,200,000 uV
+  qcom,init-voltage           PRESENT   单 cell，逻辑 DT 值 1,200,000 uV
+  qcom,init-mode              PRESENT   单 cell
+  phandle                     PRESENT   数值仅在内部用于解析，本报告不记录
+
+任务书 §1 逐项要求的属性（在 candidate_0 / 1 / 2 上逐项以 rc 判定）：
+
+  属性                              结果                          判定
+  qcom,always-wait-for-ack          rc=1 FDT_ERR_NOTFOUND        不存在
+  regulator-coupled-with            rc=1 FDT_ERR_NOTFOUND        不存在
+  vdd-l6-l9-supply                  rc=1 FDT_ERR_NOTFOUND        不存在
+  vin-supply                        rc=1 FDT_ERR_NOTFOUND        不存在
+  vdd-supply                        rc=1 FDT_ERR_NOTFOUND        不存在
+  vph-pwr-supply                    rc=1 FDT_ERR_NOTFOUND        不存在
+
+  regulator-coupled-with 的 coupling spread 关联属性，同样逐项检查：
+  qcom,coupling-spread              rc=1 FDT_ERR_NOTFOUND        不存在
+  regulator-coupled-max-spread      rc=1 FDT_ERR_NOTFOUND        不存在
+  （由于 regulator-coupled-with 本身不存在，coupling spread 无配对对象。）
+
+全树交叉验证（不只依赖节点级查询，避免属性名拼写或节点级假阴性）：
+  对 candidate_0 / 1 / 2 反编译文本做全文件检索，命中数：
+    "always-wait-for-ack"  0 次
+    "coupled-with"         0 次
+    "coupl"（任意大小写）   0 次
+    "vdd-l6-l9"            0 次
+    "vin-supply"           0 次
+    "vph-pwr-supply"       0 次
+  即：这三个 base FDT 的整棵树里都不存在上述属性，不仅目标节点上没有。
+
+candidate_3（173 B 空 FDT 壳）：目标节点与父节点均不存在（rc=1 FDT_ERR_NOTFOUND）。
+  该对象不含可用的 SoC 或板级节点，属于空壳对象，不作为 base 语义证据；
+  其结论标注为 NOT CAPTURED（该对象内无此节点）。
+
+
+5. phandle 解析结果（只记录节点路径，不输出数值）
+--------------------------------------------------------------------------------
+目标节点 phandle 解析：解析成功，指向其自身节点路径（phandle 数值未在本报告中出现）。
+
+base FDT（candidate_2，3,433 个节点）内，引用目标节点 phandle 的节点数：0。
+  即：在纯 base FDT 中，没有任何节点把 PM8150 L6 作为
+  regulator-coupled-with 目标、也没有任何 supply 消费者指向它，
+  且不存在 vdd-l6-l9-supply / vin-supply / vdd-supply / vph-pwr-supply 的消费者。
+
+base + 单个 DTBO 合成后（第 7 节），引用目标节点 phandle 的节点为 2 处，
+这两处均来自 DTBO 的 UFS host fragment，且都属于 consumer -> regulator 的 supply 引用：
+
+  引用者节点            属性                          解析到的目标
+  UFS host 节点          vccq-supply                   /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+  UFS host 节点          qcom,vddp-ref-clk-supply      /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+
+  说明：UFS host 节点的单元地址已按脱敏要求省略（下同）。
+
+同一次合成解析中，UFS host 节点的其它 supply 指向（仅列路径，用于区分 L6 的角色）：
+
+  vcc-supply                  -> /soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17
+  vccq2-supply                -> /soc/rsc@18200000/rpmh-regulator-smpa4/regulator-pm8150-s4
+  qcom,vccq-parent-supply     -> /soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8
+  vdd-hba-supply              -> 一个 GDSC 供电域节点（非 PMIC regulator 节点，单元地址已省略）
+  vcc-voltage-level           两 cell 的字面量（不是 phandle，解析为“非 phandle”属正常）
+
+因此，就 DT regulator-core 拓扑而言，PM8150 L6 是 UFS host 的
+vccq 与 vddp-ref-clk 两条 supply 的 parent regulator；
+但 L6 自身节点没有任何指向上游 regulator 的 supply 属性，
+也没有任何 coupling 声明。
+
+
+6. 九个 DTBO 的 overlay 逐项结果
+--------------------------------------------------------------------------------
+解析方法：每个条目 dtc 反编译（rc=0）后，(a) 统计真实 fragment 数并与 target 赋值数比对，
+(b) 检索目标节点/父节点/目标属性名，(c) 检查 __fixups__ 中与 pm8150_l6 符号相关的引用，
+(d) 用 fdtoverlay 与 base candidate_2 做单条目临时合成。
+
+  条目           长度(B)   真实fragment  target赋值  dtc  fddtbo合成  L6节点被改写  目标属性出现
+  dtbo_entry_0   329,044   143           143         rc0   rc=0 成功    否            否
+  dtbo_entry_1   329,352   145           145         rc0   rc=0 成功    否            否
+  dtbo_entry_2   329,240   144           144         rc0   rc=0 成功    否            否
+  dtbo_entry_3   329,098   143           143         rc0   rc=0 成功    否            否
+  dtbo_entry_4   329,340   144           144         rc0   rc=0 成功    否            否
+  dtbo_entry_5   329,356   145           145         rc0   rc=0 成功    否            否
+  dtbo_entry_6   329,356   145           145         rc0   rc=0 成功    否            否
+  dtbo_entry_7   329,352   145           145         rc0   rc=0 成功    否            否
+  dtbo_entry_8   329,352   145           145         rc0   rc=0 成功    否            否
+
+  每个 DTBO 的 fragment 全部带有 target 赋值（与真实 fragment 数相等），
+  并在 fdtoverlay 中全部解析成功（rc=0），因此不存在“解析能力不足”的残留。
+
+  在全部九个 DTBO 的反编译文本中：
+    "regulator-pm8150-l6"  0 次（不存在针对该节点的 overlay 节点定义）
+    "rpmh-regulator-ldoa6" 0 次（也不存在针对其父节点的 overlay）
+    "always-wait-for-ack"  0 次
+    "coupled-with" / "coupl" 0 次
+    "vdd-l6-l9"            0 次
+    "vin-supply"           0 次
+    "vph-pwr-supply"       0 次
+
+  需要特别记录的一点（这是九个 DTBO 与本节点唯一的关联）：
+  每个 DTBO 的 __fixups__ 中都有一条把符号 pm8150_l6 绑定到
+  fragment@64 的 overlay 属性上，内容为：
+    vccq-supply            和   qcom,vddp-ref-clk-supply
+  该 fragment@64 的 target 通过符号 ufshc_mem 指向 base 中的 UFS host 节点，
+  即：DTBO 是在 **UFS host 节点**上写 supply，引用了 L6 作为其 regulator；
+  它并没有创建、改写或重新定义 L6 节点本身，也没有给它加任何属性。
+
+  逐条目结论：
+    dtbo_entry_0..8  未覆盖目标属性（已完整解析）。
+                     判定依据：全部 fragment 的 target 均已解析；反编译文本中
+                     目标节点/父节点/六个目标属性名零命中；单条目合成后
+                     目标节点属性集合与 base 完全一致（7 个属性，无增减）。
+                     唯一关联是对 L6 的 consumer 侧 supply 引用（fragment@64）。
+
+
+7. base FDT 与 overlay 合成后状态（已执行，临时只读合成）
+--------------------------------------------------------------------------------
+合成方式：fdtoverlay -i <base candidate_2> -o $T/comp_<N>.dtb <dtbo_entry_N>（每次单独一条，
+未批量构建完整 Android DT table，未生成任何启动镜像）。
+
+九次合成结果：全部 rc=0，输出 824,833 – 824,921 B。
+
+合成后目标节点 /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6 属性集合
+（九次均相同）：
+
+  regulator-name, qcom,set, regulator-min-microvolt, regulator-max-microvolt,
+  qcom,init-voltage, qcom,init-mode, phandle
+
+即与 base 完全一致：DTBO 没有新增、删除或覆盖该节点上的任何属性。
+逐条 presence 复核（九次合成，全部同样结果）：
+
+  qcom,always-wait-for-ack   不存在
+  regulator-coupled-with     不存在
+  vdd-l6-l9-supply           不存在
+  vin-supply                 不存在
+  vdd-supply                 不存在
+  vph-pwr-supply             不存在
+
+合成后的 UFS host 节点 supply 指向见第 5 节（vccq 与 vddp-ref-clk -> L6）。
+
+
+8. 解析失败或缺失的范围
+--------------------------------------------------------------------------------
+  1) base candidate_3（173 B）是空 FDT 壳，目标节点与父节点均不存在。
+     结论只针对该对象标为 NOT CAPTURED，不代表整机 base 缺失该节点
+     （candidate_0/1/2 均完整包含该节点）。
+  2) base 的 dtb 段含 4 个 FDT，本报告对三者（0/1/2）分别独立取证并得到一致结果；
+     未对 ABL 在运行期按 qcom,msm-id 选择哪一个候选做推断（选型逻辑不在本任务范围，
+     且无运行期观测）。
+  3) 九次合成都使用 candidate_2 作为 base。由于三份有效 base 在该节点的属性集合
+     完全相同（逐属性 rc 判定一致），合成结论不依赖选哪一份；但严格地说，
+     合成实验本身只覆盖了 candidate_2 一种 base。
+  4) dtc 反编译产生的 241–242 行 warning 未逐条归档（与目标节点无关，rc=0）；
+     若需完整 warning 清单可另行索取，本报告不隐瞒其存在。
+  5) 未做任何运行期取证：本报告全部结论为静态 DT/FDT 事实，
+     不包含内核日志、regulator 状态、RPMh 交互时序。
+
+  未使用的手段（明确声明）：未连接设备、未用 ADB/fastboot、未读取设备分区、
+  未重新提取固件、未解码任何分区镜像、未反汇编任何闭源二进制。
+
+
+9. 清理后的临时目录 / git status 摘要
+--------------------------------------------------------------------------------
+  临时目录 $T（本次任务的临时工作目录，位于系统临时区，含 base/DTBO 反编译文本、
+  九份合成 dtb、解析 JSON）已在任务结束前删除并复核：REMOVED。
+  原始输入对象未改动：结束前重新计算 SHA-256，与任务开始时逐字节一致（见第 2 节）。
+  未在原始输入目录写入任何文件。
+
+  固定 ACK 源码树（只读查看，未检出、未修改、未编译）：
+    HEAD = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    git status --short 与本次任务开始前完全相同（沿用既有 pre-existing 状态）：
+      M BUILD.bazel
+      M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+      M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+      M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+      M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+      M drivers/ufs/host/ufs-qcom.c
+      M drivers/ufs/host/ufs-qcom.h
+      ?? arch/arm64/configs/dby_w09_storage_first.fragment
+    以上 7 个 M + 1 个 ?? 均为本任务之前既有的修改，本轮未新增、未改动、未提交。
+  未对任何 Git 分支、PR、DTS、binding、Kconfig、fragment、Image 做写操作。
+
+
+10. 边界声明
+--------------------------------------------------------------------------------
+  无设备访问；无 ADB / fastboot / recovery / root；无设备重启或连接；
+  未读取设备分区；未提取新固件；未刷写或改动固件；
+  未下载 / 安装 / 升级任何工具、源码或 Python 包；
+  未修改任何 Git tracked 文件、DTS、DTBO、binding、内核补丁、Kconfig、fragment、Image；
+  未修改 ROUND29 任务或任何 2号 AI 开发分支；
+  未上传固件二进制、DTB、DTBO、原始地址、物理坐标、密钥或其他敏感元数据；
+  本报告不含物理地址、坐标、原始二进制片段、固件二进制、私钥或签名数据
+  （节点单元地址除任务书本身指定的目标路径外一律省略）。
+
+
+11. 结论（按四级证据等级严格区分）
+--------------------------------------------------------------------------------
+[CONFIRMED PRESENT]
+  - 目标节点 /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+    在 base candidate_0 / 1 / 2 中均存在，父节点为 compatible =
+    "qcom,rpmh-vrm-regulator" 的 rpmh-regulator-ldoa6。
+  - 该节点属性（7 个）：regulator-name ("pm8150_l6")、qcom,set、
+    regulator-min-microvolt、regulator-max-microvolt、qcom,init-voltage、
+    qcom,init-mode、phandle。
+  - 在 base + DTBO 合成后，UFS host 节点通过 vccq-supply 与
+    qcom,vddp-ref-clk-supply 指向该节点（DT regulator-core 父子关系成立）。
+
+[CONFIRMED ABSENT IN COMPLETE INSPECTED SCOPE]
+  检查范围 = 3 个有效 base FDT（candidate_0/1/2，各自 37 个 reserved-memory 节点的完整树）
+           + 9 个 DTBO 条目的全部真实 fragment（143–145 个/条目，target 全部解析成功）
+           + 9 次 base+单 DTBO 合成结果 + 全文件属性名交叉检索。
+  在该范围内：
+  - qcom,always-wait-for-ack：不存在（base 全树 0 次、九个 DTBO 0 次、九次合成后仍不存在）。
+  - regulator-coupled-with：不存在；对应的 coupling spread 属性
+    （qcom,coupling-spread / regulator-coupled-max-spread）也不存在。
+  - vdd-l6-l9-supply：不存在（base 全树无 "vdd-l6-l9" 字符串，DTBO 亦无）。
+  - 其它上游 input supply：vin-supply 不存在；vdd-supply 不存在；vph-pwr-supply 不存在。
+  - 九个 DTBO 中没有任何 fragment 修改 L6 节点、其父节点或上述属性；
+    DTBO 对 L6 的唯一动作是在 UFS host 节点上把 vccq / vddp-ref-clk 指向 L6。
+
+[NOT CAPTURED]
+  - base candidate_3（173 B 空 FDT 壳）内无目标节点；该对象不构成 base 语义证据。
+  - 未做运行期取证（无 RPMh 交互日志、无 regulator 状态、无 ACK 超时观测）。
+
+[BLOCKED / PARSE INCOMPLETE]
+  - 无。全部九个 DTBO 的 fragment target 均解析成功（fdtoverlay rc=0 ×9），
+    不存在因工具能力不足而无法判断的条目。
+
+
+12. 与固定 ACK provider 行为的事实对照（只做对照，不含补丁建议）
+--------------------------------------------------------------------------------
+固定 commit 8ad08f75dd... 的 drivers/regulator/qcom-rpmh-regulator.c（只读查看）：
+
+  事实 A：PM8150 L6 的 provider 定义
+    文件内 pm8150_vreg_data[] 中有：
+      RPMH_VREG("ldo6", "ldo%s6", &pmic5_nldo, "vdd-l6-l9")
+    → 节点名 ldo6、RPMh 资源模板 "ldo%s6"、硬件描述 pmic5_nldo、
+      supply 名称字符串 "vdd-l6-l9"。
+
+  事实 B：pmic5_nldo 的硬件描述
+      .regulator_type = VRM
+      .ops            = &rpmh_regulator_vrm_drms_ops
+      .hpm_min_load_uA = 30000        （即 30 mA，HPM 阈值）
+      电压范围 320000 uV 起、步进 8000 uV、124 档
+    → 与任务书 §5 所述“pmic5_nldo / rpmh_regulator_vrm_drms_ops / HPM 阈值 30 mA”一致。
+
+  事实 C：supply 名称如何进入 regulator core
+    rpmh_regulator_init_vreg() 中：
+      vreg->rdesc.supply_name = rpmh_data->supply_name;
+    → "vdd-l6-l9" 只是 provider 表里声明的 supply 名称；
+      regulator core 会据此在该节点的 DT 中查找 "vdd-l6-l9-supply" 作为其 parent。
+      本任务第 4/6/7 节已确认：base、九个 DTBO、九次合成后均无该属性，
+      因此不存在 DT 层面的 parent regulator 指向。
+      即：该字符串是 provider 侧的名称声明，不是已存在的物理上游供电网络证据。
+
+  事实 D：qcom,always-wait-for-ack 的作用点
+    rpmh_regulator_init_vreg()：
+      vreg->always_wait_for_ack = of_property_read_bool(node, "qcom,always-wait-for-ack");
+    rpmh_regulator_send_request()：
+      if (wait_for_ack || vreg->always_wait_for_ack)
+              ret = rpmh_write(...);          /* 同步等待 ACK */
+      else
+              ret = rpmh_write_async(...);    /* 异步发送 */
+    rpmh_regulator_set_enable_state()：
+      ret = rpmh_regulator_send_request(vreg, &cmd, enable);
+    → 使能路径传入 wait_for_ack = true，禁用路径传入 wait_for_ack = false；
+      因此 disable 是否等待 ACK 完全取决于该节点的 qcom,always-wait-for-ack
+      （或调用方另行传入的 wait_for_ack）。
+    set_mode 路径（rpmh_regulator_vrm_set_mode_bypass）固定传入 true。
+
+  事实 E：load 与 mode 的关系
+    rpmh_regulator_vrm_drms_ops 提供 .get_optimum_mode =
+      rpmh_regulator_vrm_get_optimum_mode()：
+        load_uA >= hpm_min_load_uA(30000) → REGULATOR_MODE_NORMAL，否则 REGULATOR_MODE_IDLE
+    该 provider 的 ops 中没有 set_load / set_current_limit 回调，
+    即消费者负载通过 regulator core 汇总后反映为 mode 选择（HPM/LPM），
+    再由 set_mode 下发（该路径固定同步等待 ACK）。
+
+  与本次 DT 事实合并后的对照结论（仅陈述事实，不作因果断言）：
+    - HOS4.3 的静态 DT（base 全树 + 九个 DTBO + 九次合成）中，
+      PM8150 L6 节点没有 qcom,always-wait-for-ack，
+      故按上述 provider 代码，disable 走 rpmh_write_async 分支（除非有其它调用方
+      显式传入 wait_for_ack=true）。
+    - 该节点也没有任何 supply / coupling 属性，故在 DT 层面
+      L6 没有 parent regulator，也没有与其它 regulator 的 coupling 声明；
+      regulator core 不会因这些属性对 L6 做 post-decrement 式的父级投票扣减。
+    - L6 在 regulator-core 中确实有消费者：UFS host 的 vccq 与 vddp-ref-clk
+      （由 DTBO 提供）。因此 UFS 侧对 L6 的 enable/disable 会影响 L6 的
+      consumer 计数；但 L6 自身没有父级可扣减。
+    - 以上均为静态 DT/FDT 事实与 provider 代码路径的对照。
+      不得据此推断 PMIC 的物理电源输入或电气原理图关系；
+      不得据此断言控制器绝不等待 ACK（本报告只写“检查范围内未发现该属性”）；
+      亦不据此判定 VDDP 清理已经安全。
+
+（报告结束）

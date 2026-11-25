@@ -95,8 +95,8 @@ Mirror acceptance details and source HEADs remain in [ROUND131 acceptance and so
 
 ## 7. Actionable follow-ups for the current Stage A line
 
-1. **Finish ROUND133 HOS4.3 FDT/DTBO SMMU audit.** Compare the real base FDT and overlays with the fixed ACK inherited mapping; record each source node and provider. Do not change the DTS based only on the XNU stream IDs.
-2. **Keep UFS SMMU as a source-confirmed ACK property, not an HOS4.3 fact yet.** Existing board draft inherits it; Kconfig resolution and hardware/runtime proof remain separate.
+1. **ROUND133 HOS4.3 FDT/DTBO SMMU audit is complete.** The three existing base FDT candidates lack UFS Host `iommus`; all nine scanned DTBOs enable UFS/PHY and add supply consumers but do not add or override IOMMU properties. The detailed evidence and limits are recorded in `firmware-analysis/round133/TEST_AGENT_ROUND133_UFS_SMMU_FDT_REPORT.txt` and `kernel-baseline/round133/ROUND133_1AI_REVIEW.md`.
+2. **Keep the fixed ACK UFS SMMU mapping unchanged for now.** The current board draft inherits upstream SID `0x0e0` and `0x4e0`; do not duplicate or remove it because of HOS4.3 static absence. HOS4.3 runtime SMMU/bypass/bootloader state remains UNKNOWN.
 3. **Keep PMIC topology and memory handoff as the actual blockers.** Nothing in these six repositories proves the physical PM8150 parent supplies, final ABL-selected usable-memory map, reserved-memory map, or selected DTBO for this user's unit.
 4. **Preserve the touch firmware lead for later device-specific analysis.** First establish the exact panel/revision and unit-specific OEMINFO behavior; only then consider firmware selection. This is not a reason to pause current UFS/memory/boot-chain work.
 5. **Do not alter the immutable ACK source ref, 17-patch Stage A baseline, AI2 branch, protected DTS draft or PR #1 as a side effect of reading these references.** AI1/AI2 candidate series remain separately reviewed and tested.
@@ -106,3 +106,15 @@ Mirror acceptance details and source HEADs remain in [ROUND131 acceptance and so
 - Stage A remains the only active development stage; Android 17 DerpFest Stage B is deferred until Stage A hardware acceptance.
 - Phase E/F remain BLOCKED; Phase G remains NOT RUN.
 - No device was connected, no boot/flash/partition operation was performed, and no build or runtime validation is claimed by this reference synthesis.
+
+
+## 9. ROUND133 — HOS4.3 UFS Host SMMU/IOMMU static evidence (2026-11-26)
+
+- Agent report: [ROUND133 UFS SMMU/FDT report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round133/TEST_AGENT_ROUND133_UFS_SMMU_FDT_REPORT.txt), Git blob `b953aa1627a067dde6491ee85ea415f177ec5daa`. Independent review: [ROUND133 1AI review](../round133/ROUND133_1AI_REVIEW.md).
+- Three existing base FDT candidates (KONA v2.1/v2/v1) all contain `/soc/ufshc@1d84000` but have `status="disabled"` and no `iommus`, `iommu-map`, `iommu-map-mask`, `stream-match-mask`, or `iommu-parent`. UFS PHY `/soc/ufsphy_mem@1d87000` also has no IOMMU properties.
+- The SMMU provider exists independently at `/soc/apps-smmu@15000000`, compatible `qcom,qsmmu-v500`, `#iommu-cells=<2>`; this does **not** mean UFS Host is bound to it. The Host has no phandle/specifier.
+- All nine examined DTBOs resolve UFS PHY fragment@63 and UFS Host fragment@64. They enable the nodes and add PHY/Host supply consumers; none adds or overrides IOMMU properties, and none targets the SMMU provider. The report records 1299/1299 fragment targets resolved and no unresolved/ambiguous targets.
+- Fixed ACK `sm8250.dtsi` explicitly gives UFS two SMMU entries: SID `0x0e0`, mask `0`; SID `0x4e0`, mask `0`. HOS4.3 has no SID/mask value to compare (NOT_PRESENT); only `#iommu-cells=2` matches.
+- Provider compatible strings differ. Do not copy HOS4.3's `qcom,qsmmu-v500` into the ACK-derived board tree: the fixed ACK's SMMU match/implementation tables are keyed for the upstream SM8250 provider compatible list. The board DTS draft includes `sm8250.dtsi` and does not override `iommus`, so it inherits the two upstream entries.
+- Disposition: preserve the upstream ACK mapping; do not add a duplicate board property or delete the inherited mapping based solely on HOS4.3's static absence. Runtime SMMU translation/bypass, ABL-selected base FDT/DTBO, bootloader/secure-firmware SMMU setup, stream-table and context-bank state remain UNKNOWN.
+- This is static firmware evidence only. It does not clear the separate Phase E/F blockers or authorize device access/boot/flash.

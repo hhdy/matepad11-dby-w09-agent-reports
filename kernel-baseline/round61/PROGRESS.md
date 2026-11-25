@@ -603,3 +603,13 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - The Agent reports the disposable trial was removed and no new tracked files were modified; pre-existing modified files in the ROUND18 workspace were disclosed. No device/build/AVB action was performed.
 - Review disposition: **AI2-ROUND28 deliverable accepted as task-complete; pinned-source audit PASS; rootparam isolated validation PASS; overall Huawei board-schema result PARTIAL; UFS voltage ownership remains OPEN.**
 - Phase gates unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. No DTS or formal binding was changed by this review.
+
+## 2026-11-25 — AI2 ROUND29 assigned after independent ROUND28 review
+
+- Task ownership: **2号 AI 专属任务书**; task ID `AI2-ROUND29`; local Agent is executor; 1号 AI does not execute this task.
+- Taskbook: `firmware-analysis/round29/AI2_ROUND29_TASKBOOK.md` on `firmware-audit-v1`.
+- Taskbook commit: `39056dbcea3279c7155d274de19ee3520f8bfe3d`.
+- Purpose: resolve the still-open root compatible `oneOf` diagnostic with a fixed-ACK-valid Huawei board schema architecture, while retaining strict validation and avoiding broad top-level `additionalProperties: true` / `unevaluatedProperties: true`. Include positive/negative validation for root compatible and all five rootparam fields.
+- This assignment follows the explicit 2号 AI review of ROUND28; it is not an automatic Agent continuation. Agent must stop after the single report and must not start ROUND30.
+- UFS `vcc-voltage-level` remains unresolved vendor metadata; this task must not remove it, claim it is effective, or suppress its schema diagnostic.
+- Phase gates unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. No formal DTS/binding change, kernel build, boot package, AVB operation, or device action is authorized.

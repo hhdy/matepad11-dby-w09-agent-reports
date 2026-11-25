@@ -1428,30 +1428,43 @@ This is structurally aligned with the HOS4.3 template's bootloader-fill zero-siz
 Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.
 
 
-## 2026-11-25 — ROUND27 queued after ROUND25/ROUND26: real Kleaf device-tree target validation
+## 2026-11-25 — ROUND27 queued behind ROUND25/ROUND26: Kleaf/Bazel three-target DT build + composite schema validation
 
-Current status: ROUND25 and ROUND26 local read-only audits are still pending. ROUND27 is queued only; it must not start until both reports have been uploaded to firmware-audit-v1 and reviewed.
+**Authoritative start gate (user-confirmed): ROUND25 and ROUND26 must both be completed by their assigned responsible party and uploaded to `firmware-audit-v1`. The primary AI must then read and review both reports before ROUND27 is issued or resumed. Do not dispatch ROUND27 early, do not treat task-file creation as completion, and do not assume an unuploaded report exists.**
+
+Repository status checked on 2026-11-25:
+- `main` contains the ROUND25 and ROUND26 task instructions and the queued ROUND27 task instructions.
+- The exact required report paths were not present on `firmware-audit-v1` at the time of this check; the round25 and round26 report paths returned 404 and their directories were absent from that branch's `firmware-analysis` listing.
+- Therefore ROUND25/ROUND26 are still awaiting uploaded deliverables and primary-AI review; ROUND27 status is **QUEUED / NOT_STARTED**.
+
+Required sequence:
+1. Assigned responsible party completes ROUND25 read-only HOS4.3 MMCX/MX ARC request/dropout semantics audit and uploads `firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt` to `firmware-audit-v1`.
+2. Assigned responsible party completes ROUND26 read-only inherited SM8250 vs HOS4.3 reserved-memory interval comparison and uploads `firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt` to `firmware-audit-v1`.
+3. Primary AI opens both exact uploaded files, checks evidence/completeness/privacy boundaries, reviews the implications for the current rev2 DTS/UFS and memory gates, and records the review decision.
+4. Only after both reports are present and reviewed may ROUND27 be dispatched/resumed using its existing task file. If either report is missing, blocked, or materially incomplete, ROUND27 stays NOT_STARTED until the primary AI decides the remaining gate.
 
 Why ROUND27 is next:
 - ROUND22 validated the original board DTS syntax with cpp + dtc.
 - ROUND23 validated the rev2 candidate, rootparam-only DTBO and fdtoverlay composite using temporary dtc copies.
-- The next build-system gate is to run the same three outputs through the exact Bzlmod/Kleaf ruleset pinned in the existing ROUND18 local workspace, then run the strongest available DT binding validation on the resulting composite.
-- This can validate a reproducible DTB/DTBO source build graph without rebuilding the kernel Image or generating a DTBO partition package.
+- ROUND27 then exercises the same three outputs through the exact Bzlmod/Kleaf ruleset pinned in the existing ROUND18 local workspace and validates the resulting composite against the strongest supported pinned DT binding/schema path.
+
+ROUND27's three build outputs are exactly:
+1. Base DBY-W09 board DTB.
+2. Raw rootparam DTBO.
+3. DTB + rootparam DTBO composite-check DTB.
+
+This means a real three-target Kleaf/Bazel device-tree build plus composite property/schema validation. It is **not** a full kernel/Image build: no `kernel_build`, no Image rebuild and no `dtbo_image` package are authorized in ROUND27.
 
 Task files:
-- firmware-analysis/round27/AGENT_TASK.md
-- firmware-analysis/round27/START_PROMPT.md
+- ROUND25: `firmware-analysis/round25/AGENT_TASK.md`, `START_PROMPT.md`
+- ROUND26: `firmware-analysis/round26/AGENT_TASK.md`, `START_PROMPT.md`
+- ROUND27: `firmware-analysis/round27/AGENT_TASK.md`, `START_PROMPT.md`
 
-Start prerequisites:
-- firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt exists on firmware-audit-v1 and has been reviewed.
-- firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt exists on firmware-audit-v1 and has been reviewed.
-If either is absent, ROUND27 remains NOT_STARTED.
-
-ROUND27 scope after prerequisites:
+ROUND27 scope after the gate is satisfied:
 1. Inspect the exact local build/kernel Kleaf module link, Bzlmod module file and lock, repo manifest revision, and resolved rules_devicetree dependency/toolchain. Do not infer the local version from current upstream HEAD.
-2. In a disposable copy of the existing ROUND18 workspace, temporarily stage the main rev2 board DTS and rootparam overlay into the pinned qcom DTS directory. Create a temporary BUILD.bazel package using the local exact dtb(), dtbo() and dtb_composite() API plus //common:dtc_includes_aarch64.
-3. Run bazel query/cquery and build only the base DTB, raw DTBO and composite-check targets. No kernel_build, no Image rebuild, no dtbo_image.
-4. Inspect final composite properties and validate with the narrowest supported pinned schema/dtbs_check/dt-validate invocation. Report every diagnostic.
-5. Remove temporary source/BUILD files and verify pre-existing tracked source/config/Image outputs are unchanged. Upload one sanitized report only to firmware-audit-v1/firmware-analysis/round27/.
+2. In a disposable copy of the existing ROUND18 workspace, temporarily stage the main rev2 board DTS and rootparam overlay into the pinned qcom DTS directory. Create a temporary BUILD.bazel package using the local exact `dtb()`, `dtbo()` and `dtb_composite()` API plus `//common:dtc_includes_aarch64`.
+3. Run bazel query/cquery and build only the three targets listed above.
+4. Inspect final composite properties and validate with the narrowest supported pinned schema/`dtbs_check`/`dt-validate` invocation. Report every diagnostic.
+5. Remove temporary source/BUILD files and verify pre-existing tracked source/config/Image outputs are unchanged. Upload one sanitized report only to `firmware-audit-v1/firmware-analysis/round27/`.
 
 Hard limits: no ACK tracked source/config/patch edit, no main DTS candidate edit, no boot.img or dtbo.img packaging, no table id/rev selection, no AVB/signature operation, no device/ADB/fastboot/recovery/flash. Final memory/reserved-memory, PMIC physical input rails, DTBO ABL selection and AVB acceptance remain independent gates. A Kleaf DTB/DTBO composite PASS is not a device boot milestone.

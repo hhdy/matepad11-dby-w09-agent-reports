@@ -137,3 +137,18 @@ Source blobs examined:
 - ACK regulator Makefile: b3101376029d71b0e8e2133dd28aa6660815fee0
 
 This round is source-level review only. No source patch, Stage A branch, protected DTS branch, PR, firmware, build artifact, boot image, or device was changed or tested. This does not close Phase E/F/G and does not establish device bootability.
+
+
+## 3.4 额外确认：KONA 与 ACK 对“未启用 consumer 的 load vote”计入 DRMS 的规则也不同
+
+这不仅是 set_load 是否 rollback 的差异，还会影响 late-init handoff 时究竟有哪些负载被用于选择 HPM/LPM：
+
+- KONA drms_uA_update() 直接遍历 consumer_list，把每个 sibling->uA_load 全部加总，不检查该 handle 是否 enabled。见 [KONA DRMS aggregation](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250/blob/cad09e061ef6cf689a4a1e54d27562e0f042236a/drivers/regulator/core.c#L750-L828)。
+- 固定 ACK drms_uA_update() 仅当 sibling->enable_count 非零时才把 sibling->uA_load 加入 current_uA。见 [ACK DRMS aggregation](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c#L969-L1005)。
+- 因此 KONA regulator_set_load() 对尚未 enable 的 consumer 也会立即重新计算/应用 DRMS；ACK regulator_set_load() 对未 enabled handle 仅存储 vote，不立即执行 DRMS。ACK 需要等该 handle 后续 enable 才把 load 纳入 aggregate。
+
+这对 UFS/QMP 尤其重要：ROUND107 已确认 QMP 的 regulator bulk-get 会在 probe 期间设定 init_load_uA，即 load vote 可早于 power-on / enable 存在。不能简单假设“probe 已经执行”就等于它的 load 在 ACK DRMS aggregate 中有效。
+
+在 KONA 旧实现里，已 probe 但暂未 enabled 的 QMP/UFS handles 的 load 也会参与 DRMS；在 ACK 里则只有 enable_count > 0 的 handles 参与。ROUND108 还记录 UFS async scan 的异步生命周期，不能用“late_initcall_sync 已执行”推断 async scan 及 QMP/UFS 所有 consumer 已进入正确电源状态。
+
+因此 AI2-ROUND31 必须验证 late_initcall_sync 释放 100mA 临时 proxy vote 时，实际接手的 UFS/QMP consumer 是否已经 enable，或者是否有其他明确且有证据的 active vote 保持所需模式。不能因为 UFS regulator handles 已经 bulk-get / init_load 已保存，就直接声称 ACK aggregate 会持续计算这些电流。若没有实际 overlap 证据，应保留为 HOS→ACK DRMS accounting / boot handoff 差异，不得伪造 full semantic equivalence。

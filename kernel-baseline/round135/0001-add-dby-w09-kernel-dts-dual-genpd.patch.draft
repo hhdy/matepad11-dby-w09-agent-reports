@@ -1,0 +1,388 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] arm64: dts: qcom: add DBY-W09 board DTB with MMCX UFS mapping
+
+Add a real in-tree DBY-W09 DTS source and DTB target, based on the current
+reviewed board draft. The UFS Host declares RPMHPD MMCX as power-domain
+index 0 for its single required-opps slot, while retaining GCC
+UFS_PHY_GDSC at index 1. The UFS PHY's own GCC GDSC attachment is unchanged.
+
+This DTS is a candidate only. It does not solve the PM8150 physical input
+parent tree, HOS4.3 ARC/MMCX-to-MX equivalence, or final ABL memory handoff.
+It must be integrated with the SM8250 binding / ROUND45 driver candidates
+and validated in a disposable fixed-ACK worktree.
+
+---
+ arch/arm64/boot/dts/qcom/Makefile  |  1 +
+ arch/arm64/boot/dts/qcom/dby-w09.dts | 349 +++++++++++++++++++++++++++++
+ 2 files changed
+
+diff --git a/arch/arm64/boot/dts/qcom/dby-w09.dts b/arch/arm64/boot/dts/qcom/dby-w09.dts
+new file mode 100644
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/dby-w09.dts
+@@ -0,0 +1,349 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * Huawei MatePad 11 (2021), DBY-W09 — ACK android17-6.18 board DTS draft.
++ *
++ * DRAFT ONLY: not dtc-compiled, schema-validated, boot-tested or approved
++ * for packaging. This is the first minimal-storage bring-up skeleton.
++ *
++ * Source basis:
++ *   - local HOS4.3 ROUND7–ROUND9 static inventory and regulator map;
++ *   - ACK android17-6.18 SM8250 SoC DTSI;
++ *   - same-device public Linux DTS used only as a structural cross-reference.
++ *
++ * The original HOS4.3 DTBO entry 8 is NOT compatible with this minimal base:
++ * it contains 145 fragment targets into many Huawei vendor-only nodes.
++ * Pair this base only with a separately reviewed minimal DBY-W09 rootparam
++ * DTBO draft. Do not apply the stock entry 8 to this base.
++ */
++
++/dts-v1/;
++
++#include <dt-bindings/arm/qcom,ids.h>
++#include <dt-bindings/clock/qcom,gcc-sm8250.h>
++#include <dt-bindings/power/qcom,rpmhpd.h>
++#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
++
++#include "sm8250.dtsi"
++
++/ {
++	model = "Huawei MatePad 11 (2021) DBY-W09";
++	compatible = "huawei,dby-w09", "qcom,sm8250";
++	chassis-type = "tablet";
++
++	/*
++	 * Local ROUND3 identity: MSM-ID [356, 131073] = SM8250 v2.1.
++	 * Keep the SoC DTB board-id at zero; the separate DBY-W09 DTBO is
++	 * selected by board-id 0x206a and fills /rootparam for Huawei ABL.
++	 */
++	qcom,msm-id = <QCOM_ID_SM8250 0x20001>;
++	qcom,board-id = <0 0>;
++
++	/*
++	 * The label is required by dby-w09-ack18-rootparam.dtso.draft.
++	 * Board identity values are populated by the matching DTBO. The local
++	 * stock-DTBO inventory shows huawei,modem_id is the same generic
++	 * sentinel in all nine entries; the minimal overlay preserves it.
++	 */
++	rootparam: rootparam {
++	};
++};
++
++/*
++ * Mode-policy evidence and ACK translation (local ROUND13 + public ROUND48):
++ *
++ * ROUND13 scanned the HOS4.3 base FDT and all nine stock DTBO entries. The
++ * upstream regulator-* property spellings are NOT_FOUND_IN_INSPECTED_SCOPE;
++ * this firmware uses Qualcomm vendor qcom,supported-modes /
++ * qcom,mode-threshold-currents at provider level and qcom,init-mode at child
++ * level. All nine DTBO entries leave the target RSC regulator subtree
++ * untouched, but the selected entry is still UNKNOWN.
++ *
++ * Public Qualcomm SM8250 KONA vendor source at OnePlusOSS commit
++ * cad09e061ef6cf689a4a1e54d27562e0f042236a defines the vendor enum as
++ * PASS=0, RET=1, LPM=2, AUTO=3, HPM=4, and its driver maps PMIC5 LDO / HFSMPS
++ * modes by regulator type. This matches ROUND13's LDO <2 4> and HFSMPS
++ * <1 3>. The fixed ACK binding uses a different enum (RET=0, LPM=1,
++ * AUTO=2, HPM=3); use its symbolic constants below, never copy vendor
++ * integers directly.
++ *
++ * HOS4.3 initial modes: L5/L9=HPM, L6/L17=LPM; S4 has no mode metadata.
++ * L5/L9 each carry a 100mA vendor proxy-consumer vote. Public KONA
++ * proxy-consumer code removes these boot-time requests at late_initcall_sync;
++ * a permanent regulator-system-load would be semantically wrong. ACK lacks
++ * that temporary proxy helper, so the boot handoff remains an explicit gap.
++ * LDO allowed modes and set-load permission are enabled only where ACK
++ * hardware ops implement DRMS.
++ *
++ * S8's HOS4.3 static policy is RET initial with RET/AUTO support and a 200mA
++ * threshold. ACK's PMIC5 HFSMPS510 ops lack get_optimum_mode/set_load, and
++ * the UFS VCCQ-parent load-only request is ineffective/no-op in this ACK
++ * implementation. Therefore the earlier AUTO fallback has no valid trigger
++ * and is withdrawn: preserve the evidenced initial RET mode. Do not add
++ * regulator-boot-on/always-on or a forced UFS enable; ROUND14 found no such
++ * S8 enable property, and runtime enable state remains UNKNOWN.
++ */
++
++/*
++ * HOS4.3 ROUND11 parent/proxy topology result:
++ *
++ * ROUND11 identified four *-parent-supply links; ROUND14 confirmed a fifth
++ * one on the MX provider. At least five HOS4.3 base-FDT parent edges are now
++ * established (the full count is still unverified):
++ *   - cxlvl: pm8150_s3_level -> mxlvl / regulator-pm8150a-s3-level
++ *   - cxlvl: pm8150_s3_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
++ *   - mmcxlvl: pm8150a_s4_level -> mxlvl / regulator-pm8150a-s3-mmcx-sup-level
++ *   - mmcxlvl: pm8150a_s4_level_ao -> mxlvl / regulator-pm8150a-s3-level-ao
++ *   - mxlvl: pm8150a_s3_mmcx_sup_level -> cxlvl /
++ *     regulator-pm8150-s3-mmcx-sup-level (newly resolved in ROUND14)
++ * ROUND11 also identified six proxy-supply links, a separate ARC proxy
++ * mechanism rather than external input supplies. ROUND14 confirms MMCX ALL
++ * has a self-target proxy-supply and temporary TURBO..MAX enable/voltage
++ * request; this is not an always-on constraint.
++ *
++ * These are virtual voltage-level relationships, not PM8150 VRM input
++ * connections. The full HOS4.3 base-FDT property scan found no vdd-s1..s10,
++ * vin-supply or vph-pwr-supply properties. Do not add vph_pwr=3.7 V,
++ * vdd-s*-supply, or translate proxy-supply into a regulator input.
++ *
++ * ACK's upstream qcom-rpmh-regulator binding/driver handles PMIC VRM/XOB
++ * regulators, not the vendor qcom,rpmh-arc-regulator provider. SM8250's
++ * upstream SoC DTSI instead exposes rpmhpd performance levels/OPPs; the
++ * UFS OPP table uses required-opps against that provider. Keep this board
++ * file on that upstream model and do not copy vendor ARC nodes/properties.
++ *
++ * Important porting limit: the upstream SM8250 rpmhpd descriptor has a
++ * CX->MX parent relationship, while its selected MMCX descriptor has no MX
++ * parent. ROUND14 now confirms matching canonical corner numbers (MMCX
++ * LOW_SVS=64, MX RETENTION=16, min-dropout raw 0xffffffff interpreted by
++ * KONA as signed -1), but HOS has separate logical child-supply edges,
++ * including MX MMCX-supply -> CX MMCX-supply, and a temporary MMCX proxy
++ * request. A domain-level GenPD parent is not a proven one-to-one replacement.
++ * Do not alter the shared SM8250 domain table based on numeric corner overlap.
++ *
++ * The PM8150 VRM outputs below include the UFS main rails (S4/L5/L6/L9/L17)
++ * plus the independent VCCQ parent rail (PM8150L S8). Their output windows
++ * and consumer links are mapped from HOS4.3 evidence; their own physical
++ * input-parent paths are NOT locally resolved. ROUND11 found four ARC level
++ * parent-supply edges and ROUND14 confirmed a fifth (full parent-edge total
++ * remains unverified), plus six proxy-supply edges. No vdd-s1..s10-supply,
++ * vin-supply or vph-pwr-supply was found in the inspected base-FDT scope.
++ *
++ * ACK's upstream PM8150 VRM table assigns vdd-s4, grouped LDO supply names,
++ * and vdd-s8 as each regulator's physical input requirements. On a populated
++ * Device Tree, regulator core may fall back to a dummy parent when no real
++ * input is resolved. That fallback assumes the physical input is already
++ * present and enabled; it does NOT establish the board's electrical supply
++ * path. The UFS-level qcom,vccq-parent-supply is a separate consumer link
++ * from the host to PM8150L S8 and does not resolve S8's own vdd-s8 input.
++ *
++ * Do not add vph_pwr=3.7 V, vdd-s*-supply, fake fixed regulators or ARC
++ * properties as a substitute. Treat the missing physical input network as
++ * a power-tree validation gate before any boot test.
++ *
++ * Do not add vph_pwr=3.7 V, fake fixed regulators, vendor ARC properties or
++ * proxy-supply translations to silence the gap. Treat regulator parent-path
++ * verification as an electrical/bring-up gate before any boot test.
++ *
++ * ROUND22 source review confirms the HOS4.3 ARC level graph is a real vendor
++ * RPMh accelerator feature, not a generic regulator parent graph. Upstream
++ * ACK android17-6.18 qcom-rpmh-regulator only matches VRM/XOB, so these ARC
++ * child nodes must remain disabled/absent until an ARC-capable driver is
++ * deliberately ported and reviewed. Such an ARC platform provider must be a
++ * direct child of apps_rsc because ACK rpmh_write() uses the immediate parent
++ * RSC driver data. The SoC rpmhpd/OPP provider remains a separate system
++ * performance-domain mechanism, not a one-to-one substitute.
++ * The six proxy-supply phandles are not self-implementing: ACK lacks the
++ * vendor boot-time proxy-consumer helper. ROUND14 confirms MMCX ALL's
++ * proxy-consumer-enable plus voltage range 384..65535 (TURBO..MAX), with no
++ * current vote; it is a temporary boot request in the public KONA helper,
++ * not a permanent system-load/always-on setting. No equivalent ACK helper is
++ * implemented in this storage-first draft.
++ */
++&apps_rsc {
++	regulators-0 {
++		compatible = "qcom,pm8150-rpmh-regulators";
++		qcom,pmic-id = "a";
++
++		/* HOS4.3: PM8150 S4, 1.8–1.92 V, initial level 1.8 V. */
++		vreg_s4a_1p8: smps4 {
++			regulator-name = "pm8150_s4";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1920000>;
++			/* ROUND13: HOS4.3 has no mode metadata for S4; leave mode untouched. */
++		};
++
++		/* HOS4.3: PM8150 L5, fixed 0.88 V. */
++		vreg_l5a_0p88: ldo5 {
++			regulator-name = "pm8150_l5";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <880000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++		};
++
++		/* HOS4.3: PM8150 L6, fixed 1.2 V; shared by VCCQ and PHY refclk. */
++		vreg_l6a_1p2: ldo6 {
++			regulator-name = "pm8150_l6";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_LPM>;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++		};
++
++		/* HOS4.3: PM8150 L9, fixed 1.2 V. */
++		vreg_l9a_1p2: ldo9 {
++			regulator-name = "pm8150_l9";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++		};
++
++		/* HOS4.3: PM8150 L17, 2.496–3.008 V. */
++		vreg_l17a_3p0: ldo17 {
++			regulator-name = "pm8150_l17";
++			regulator-min-microvolt = <2496000>;
++			regulator-max-microvolt = <3008000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_LPM>;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++		};
++	};
++
++	/*
++	 * HOS4.3 identifies this resource as smpc8 / pmic5-hfsmps (the
++	 * child label "pm8150a" is legacy naming), 1.2–1.4 V, supported vendor
++	 * modes RET/AUTO, initial RET, 200mA threshold. ACK has no HFSMPS DRMS
++	 * set_load callback, so the UFS parent's 210mA load-only request is a no-op.
++	 * ROUND14 finds no qcom,init-enable, regulator-boot-on or
++	 * regulator-always-on on S8 in the inspected base FDT. Preserve the evidenced
++	 * RET initial mode; do not invent an enable/boot-on reference. Runtime enable
++	 * state is UNKNOWN. See ROUND51. No allow-set-load or guessed vdd-s8-supply
++	 * is added.
++	 */
++	regulators-1 {
++		compatible = "qcom,pm8150l-rpmh-regulators";
++		qcom,pmic-id = "c";
++
++		vreg_s8c_1p2_1p4: smps8 {
++			regulator-name = "pm8150l_s8";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1400000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_RET>;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_RET
++						   RPMH_REGULATOR_MODE_AUTO>;
++		};
++	};
++};
++
++/*
++ * The SoC DTSI already defines all SM8250 UFS register, clock, reset,
++ * interconnect and lane resources. The board explicitly maps the Host's
++ * single required-opps slot to RPMHPD MMCX (index 0) while retaining the
++ * GCC UFS_PHY_GDSC domain (index 1); it also adds board-level supplies/status.
++ *
++ * Notes:
++ *   - vdd-hba-supply: HOS maps this to UFS_PHY_GDSC, already expressed by
++ *     the SoC power-domains property; it is not a regulator.
++ *   - qcom,vccq-parent-supply and qcom,vddp-ref-clk-supply are
++ *     downstream Qualcomm UFS Host extensions. HOS4.3 resolves them to
++ *     PM8150A S8 and PM8150 L6 respectively. The first storage patch consumes
++ *     VDDP/L6 only. S8/VCCQ-parent is retained as topology metadata but is not
++ *     consumed by the initial ACK UFS patch: its load vote is a no-op and no
++ *     enable policy is justified by the base FDT. See ROUND51.
++ *   - vddp-ref-clk is the UFS device REF_CLK pad supply, not a QMP PHY rail.
++ *   - vcc-low-voltage-sup: not translated to vcc-supply-1p8 because the
++ *     verified HOS VCC operating window is 2.504–2.950 V.
++ */
++&ufs_mem_hc {
++	/*
++	 * ROUND45 driver contract: required-opps slot 0 votes RPMHPD MMCX;
++	 * GCC UFS_PHY_GDSC remains attached as the second domain.
++	 */
++	power-domains = <&rpmhpd RPMHPD_MMCX>,
++			<&gcc UFS_PHY_GDSC>;
++
++	vcc-supply = <&vreg_l17a_3p0>;
++	vcc-voltage-level = <2504000 2950000>;
++	vcc-max-microamp = <800000>;
++
++	vccq-supply = <&vreg_l6a_1p2>;
++	vccq-max-microamp = <800000>;
++
++	/*
++	 * HOS VCCQ-parent topology metadata only: ROUND22 confirms the current
++	 * ACK Image has no runtime consumer for qcom,vccq-parent-supply/S8.
++	 * Do not assume this enables or votes PM8150L S8.
++	 */
++
++	qcom,vccq-parent-supply = <&vreg_s8c_1p2_1p4>;
++	qcom,vccq-parent-max-microamp = <210000>;
++
++	/* UFS device REF_CLK pad supply, not a QMP PHY analog supply. */
++	qcom,vddp-ref-clk-supply = <&vreg_l6a_1p2>;
++	qcom,vddp-ref-clk-max-microamp = <100>;
++
++	vccq2-supply = <&vreg_s4a_1p8>;
++	vccq2-max-microamp = <800000>;
++
++	status = "okay";
++};
++
++&ufs_mem_phy {
++	vdda-phy-supply = <&vreg_l5a_0p88>;
++	/*
++	 * HOS4.3 DTBO inventory carries vdda-phy-always-on. ROUND63 adds an
++	 * ACK QMP UFS PHY consumer implementation that retains this rail's
++	 * enable reference across PHY power-off and drops its DRMS load vote.
++	 */
++	vdda-phy-always-on;
++
++	vdda-pll-supply = <&vreg_l9a_1p2>;
++
++	/* Pinned ACK SM8250 vreg_list supplies the 89900/18800uA load votes. */
++	status = "okay";
++};
++
++/*
++ * Memory / HOS reserved-memory is deliberately not reconstructed here yet.
++ *
++ * IMPORTANT: the included pinned sm8250.dtsi itself defines one
++ * device_type = "memory" node with a bootloader-filled zero-size reg
++ * placeholder. Therefore the compiled DTB does inherit a memory node even
++ * though this board file does not define one explicitly. Do not add a
++ * duplicate memory node until the HOS4.3 ABL fixup contract is verified.
++ * The final ABL-provided RAM tuple and reservation map remain UNKNOWN.
++ *
++ * ROUND19/20/22 corrected the stock HOS4.3 base-FDT fact:
++ * /memory exists with device_type = "memory", but reg = <0 0 0 0>
++ * is an all-zero placeholder, not a usable RAM map. ROUND24's direct child enumeration corrects the historical count: it contains
++ * 37 reserved-memory child nodes across hyp/XBL/AOP/SMEM/mailbox handoff,
++ * PIL firmware carveouts, reusable DSP/QSEE/secure/CMA pools and crash
++ * records. Physical addresses are redacted from the public inventory.
++ * The same-device Linux 7.0 board DTS also has no explicit /memory node
++ * and only four reserved-memory nodes; it is based on HOS4.2, not this
++ * HOS4.3 image.
++ *
++ * ABL may populate the usable-memory node dynamically, but that is not
++ * proven for the new ACK DTB. Do not infer the final live FDT from the stock
++ * boot-image base FDT, and do not copy HOS4.2 splash/DFPS addresses into this
++ * HOS4.3 tree. The memory map and reservation handoff are a separate gate
++ * before any build/boot attempt or enabling DSP/display/GPU consumers.
++ *
++ * Later stages, intentionally not enabled in this minimal draft:
++ *   &uart2 / GENI debug console (qcom,geni-debug-uart)
++ *   &uart6 / normal GENI UART (qcom,geni-uart; possible BT serdev)
++ *   &qupv3_id_2 / &spi14 / Huawei THP
++ *   panel / dual DSI / backlight
++ *   PCIe / WLAN + Bluetooth (UART6 binding not yet verified for HOS4.3)
++ *   ADSP / audio / camera / USB-C / DP
++ *
++ * Do not select a panel profile here: ACTIVE_PROFILE remains UNKNOWN.
++ */
+
+diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
+--- a/arch/arm64/boot/dts/qcom/Makefile
++++ b/arch/arm64/boot/dts/qcom/Makefile
+@@ -281,10 +281,11 @@
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8150-sony-xperia-kumano-griffin.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-hdk.dtb
++dtb-$(CONFIG_ARCH_QCOM)	+= dby-w09.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-mtp.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-samsung-r8q.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-samsung-x1q.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-sony-xperia-edo-pdx203.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-sony-xperia-edo-pdx206.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-xiaomi-elish-boe.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-xiaomi-elish-csot.dtb
+dtb-$(CONFIG_ARCH_QCOM)	+= sm8250-xiaomi-pipa.dtb

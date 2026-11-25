@@ -212,3 +212,8 @@ The decompressed stock HOS4.3 kernel has no PE/COFF EFI header. Because the norm
 ## ROUND24 correction — HOS4.3 reserved-memory count is 37, not 34
 
 A direct child enumeration of the existing ROUND19 decompiled HOS4.3 base_2.dts finds 37 immediate /reserved-memory child nodes. 35 have aliases; kerneldump and linux,cma do not. The historical count of 34 from ROUND7/18 is superseded. Both board DTS review files now state 37. No physical addresses are included.
+
+
+## ROUND76 — inherited memory placeholder
+
+The board source does not explicitly define /memory, but it includes the pinned ACK sm8250.dtsi. That source defines a top-level device_type="memory" node with zero size and a comment expecting bootloader fill. Therefore the compiled board DTB inherits a memory node. HOS4.3 also has a zero-size memory placeholder, but its initial base cells differ. ABL's fixup of the inherited node is still UNKNOWN; do not add a duplicate node or guessed RAM range. See [ROUND76](../kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md).

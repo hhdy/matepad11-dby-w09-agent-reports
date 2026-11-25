@@ -1625,3 +1625,17 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 **角色与边界：** ROUND84 是 **1号 AI 研究/复核报告**，仅供 2号 AI 评估；2号 AI 仍拥有实现决策和补丁。测试 Agent 仅在收到单独的 `AGENT_TEST_TASK.md` 后执行测试。本轮未修改任何源代码、DTS、binding、补丁、2号 AI 分支或受保护分支；未运行编译/schema/设备测试。
 
 **当前结论：** UFS VCC consumer voltage range 在 ACK 中确实缺失；共享 helper 和 disable-release error path 是实现必须顾及的两个额外边界。ROUND27 schema 仍 NOT CLEAN，待 2号 AI 实现修复并由测试 Agent 按新任务验证。
+
+
+## 2026-11-25 — ROUND85：1号 AI 独立复核 SM8250 board compatible / Huawei rootparam binding 设计
+
+报告：[ROUND85 — 1号 AI design review: SM8250 board compatible and Huawei rootparam schema](./kernel-baseline/round85/round85-1ai-board-compatible-and-rootparam-binding-design-review.md)。
+
+- 固定 ACK `Documentation/devicetree/bindings/arm/qcom.yaml` 的 SM8250 compatible tuple 使用 board-compatible enum + `const: qcom,sm8250`。DBY-W09 候选 `compatible = "huawei,dby-w09", "qcom,sm8250"` 的正确修复是把 `huawei,dby-w09` 加到该 enum，不新建 SoC tuple、不改 compatible 顺序。
+- 固定 ACK `vendor-prefixes.yaml` 已有 `^huawei,.*`，无需重复添加 Huawei vendor prefix。
+- `/rootparam` 不应为了消除 dt-schema 报错而添加未经 ABL 证据确认的 `compatible`。ACK 已有 Ethernet PHY binding 通过 `$nodename` 显式选择的先例；DBY-W09 可采用更窄的 `$nodename=rootparam` + `qcom,boardid` 和 `huawei,modem_id` 属性存在性 selector，避免匹配基础 DTB 中刻意保留的空 rootparam 占位节点。
+- 候选 overlay 的属性形状：`qcom,boardid` 4 个 u32；`huawei,modem_id` 2 个 u32；`qcom,board_name`、`qcom,product_name`、`hardware_version` 为字符串。binding 要分别准确声明类型和数组长度。
+- 当前 VG overlay 仍是候选；schema 正确不等于 HOS4.3 ABL 已确认选择该 DTBO，也不代表 table id/rev 已确定。
+- 本轮为 1号 AI 的 source/design review，仅供 2号 AI 评估。2号 AI 负责实现；测试 Agent 只有在收到单独 `AGENT_TEST_TASK.md` 后才执行验证。未修改任何分支、DTS、binding 或补丁，未运行 dt-schema/build/设备测试。
+
+**ROUND27 schema 状态继续保持 NOT CLEAN**，直至 2号 AI 在其实现分支完成 UFS VCC driver+binding、SM8250 root compatible、Huawei rootparam binding 的成套修复，并由测试 Agent 按新测试任务复验。

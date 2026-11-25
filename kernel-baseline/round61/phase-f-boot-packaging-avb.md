@@ -30,18 +30,51 @@ Full sanitized report (on `firmware-audit-v1`):
 - `vbmeta_cust.img` has an AVB footer whose original-image-size / vbmeta-blob pointer is outside the 1 MiB file. The referenced blob is reported as an empty `Algorithm: NONE` object with no descriptors. Whether this is intentional, a truncated extraction or a vendor layout variant is **UNKNOWN**; descriptor coverage for `cust` is not established.
 - Which of the nine DTBO entries ABL selects is **UNKNOWN**.
 - Whether ABL accepts a temporary/RAM boot remains **UNKNOWN**. ROUND62 is a same-device HOS4.2 cross-reference only and is not proof of HOS4.3 policy.
-- The Agent had no `mkbootimg` / `unpack_bootimg` executable on PATH. The AVB report's parser was used only for read-only metadata inspection; no packaging or signing command was executed.
+- ROUND64 reported no `mkbootimg` / `unpack_bootimg` executable on PATH. ROUND65 then found the pinned-tree prebuilt `prebuilts/kernel-build-tools/linux_musl-x86/bin/mkbootimg` (PyInstaller-packed AOSP-style executable) and inspected its `--help` read-only; it supports header v2 and embedded kernel/ramdisk/DTB options. `unpack_bootimg` was not found. No image-generation command was run.
 - No candidate image, modified footer, vbmeta or flash package was created.
 
 Therefore the AVB inventory requirement is **substantially satisfied for read-only classification**, but Phase F's package-exit gate is not met. The anomalous `vbmeta_cust`, unknown ABL DTBO selection, unproven HOS4.3 boot method, and unresolved Phase E memory/board-DTS inputs prevent a deterministic boot package. No guessed `mkbootimg` parameters or AVB changes are allowed.
 
-## 3. Packaging decision
+## 3. ROUND65 first-stage storage and boot-tool audit — completed
+
+Full sanitized local-Agent report:
+[ROUND65 — first-stage fstab, vbmeta_cust provenance and boot-tool contract](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md).
+
+### First-stage fstab (direct read of existing decompiled base FDT)
+
+- The base FDT node `/firmware/android/fstab` has **21 child entries** (19 core entries plus 2 patch filesystem variants). No new firmware extraction was performed.
+- `system`, `vendor`, `odm`, `cust` and `hw_product` each have ext4/erofs read-only variants using logical partitions and AVB semantics. `cust` and `hw_product` variants also carry `nofail`.
+- `version`, `preload`, `preas` and `preavs` each have ext4/erofs read-only variants by-name with `nofail` and AVB semantics.
+- `/metadata` is an ext4 read-write entry with `wait`, `first_stage_mount`, `check` and `formattable`; patch variants mount `/patch_hw` read-only and name `/patch_avb_key` through `avb_keys`.
+- The fstab explicitly lacks `verify`, `slotselect`, `latemount`, `quota`, `fileencryption` and `fsverity`; there is no userdata or recovery entry in this node. These absences are recorded as absences, not inferred as globally disabled features.
+- The fstab flags establish `avb`/`logical` intent but are not a substitute for the actual AVB descriptor chain or selected DTBO.
+
+### Ramdisk and modules
+
+- The standalone ramdisk contains `/init`, `/patch_avb_key`, `build.prop` and empty directories; it contains no init rc, ueventd rules, fstab, module list or `.ko` files. The fstab resides in the base FDT.
+- The built kernel has `CONFIG_MODULES=y`, but the prior build-tree inventory found no `.ko`, a zero-byte `Module.symvers` and an empty module-staging archive. This supports a monolithic current Image; it does **not** prove there is no alternate runtime module source in vendor/system partitions. That path remains UNKNOWN in the authorized corpus.
+
+### `vbmeta_cust` anomaly reconciliation
+
+- The file inventory is 1 MiB. ROUND19's offset-zero parser found a header with a `cust` hashtree descriptor but also an internal public-key/auth-size inconsistency. ROUND64's trusted AOSP avbtool read the footer at the image tail; its pointer refers to a vbmeta object at offset 10,375,168, outside the 1 MiB file, and that referenced object reports `Algorithm: NONE` with no descriptors.
+- These are observations of two different structures; this is not enough evidence to repair or reinterpret the image. No larger complete object or package/partition manifest entry explaining the pointer was found in the authorized local corpus. The anomaly and `cust` descriptor coverage therefore remain UNKNOWN.
+
+### Boot image tool contract
+
+- ROUND65 found a prebuilt executable at `prebuilts/kernel-build-tools/linux_musl-x86/bin/mkbootimg` inside the pinned ACK workspace. Read-only `--help` shows explicit header-v2, page-size, kernel, ramdisk and DTB arguments. It builds one boot image with embedded, page-aligned kernel/ramdisk/DTB sections; it is not a command for writing the separate `ramdisk` partition.
+- The executable is PyInstaller-packed; a related trusted Rust source is a parser/reader. The exact AOSP Python source tree is absent. The tool does not manage general AVB footers/vbmeta descriptors or Huawei ABL DTBO selection. `unpack_bootimg` was not found.
+- No boot image, ramdisk, DTBO or vbmeta was generated or changed. Knowing the builder's header-v2 syntax does not identify which stock ramdisk/embedded payload ABL consumes or authorize reconstruction.
+
+### HOS4.3 ABL decision remains unknown
+
+No direct evidence establishes the selected one of nine DTBO entries, classic-FDT versus EFI-stub handoff, or temporary/RAM-boot acceptance for the exact HOS4.3 build. HOS4.2 same-device references and board-id candidates are not accepted as proof. A direct ABL image/boot log or an already-authorized live handoff capture is still required.
+## 4. Packaging decision
 
 The ROUND58 Kleaf target is intentionally Image-first. It does not produce a DTB, DTBO, boot image, vendor_boot, init_boot or flash package. This is appropriate while the board DTS/memory gate and stock packaging metadata remain unresolved.
 
 Do not run `mkbootimg` with guessed arguments, append or strip AVB footers, or modify stock vbmeta/chained vbmeta images. Do not assume a modern `vendor_boot`/`init_boot` layout applies to this header-v2 image.
 
-## 4. Remaining gates before packaging
+## 5. Remaining gates before packaging
 
 The ROUND64 read-only Agent report has now completed much of this inventory. Remaining gates are:
 
@@ -54,7 +87,7 @@ The ROUND64 read-only Agent report has now completed much of this inventory. Rem
 
 Do not assume a RAM-only boot works, alter AVB, install tools, or bypass the evidence/tool gate.
 
-## 5. Phase F verdict
+## 6. Phase F verdict
 
 **BLOCKED FOR PACKAGING / NOT PACKAGED.** The ROUND64 read-only metadata inventory is complete, but no boot image, ramdisk, DTBO or vbmeta file has been generated or modified. Phase F is not a boot-package PASS; the ABL-selected DTBO, vbmeta_cust anomaly, actual HOS4.3 boot method and Phase E memory/board evidence remain open.
 

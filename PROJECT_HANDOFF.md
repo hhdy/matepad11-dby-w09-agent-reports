@@ -88,30 +88,33 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - `ack18-dby-w09-dts-draft`：ACK 6.18 板级 DTS / rootparam DTBO 草案分支。
 - PR #1：保持 Draft，不得擅自合并。
 
-## 5.1 双 AI 编号、任务书归属与派发规范（强制）
+## 5.1 三方角色、任务书归属与派发规范（强制）
 
-**角色编号固定，不因会话或任务变化：**
-- **1号 AI = ChatGPT（主 AI）**：负责公开网页/GitHub/上游源码研究、源码级设计与推理、GitHub 文档归档、任务拆分与任务书编写、审查 2号 AI 的本地报告，以及决定任务是否放行。1号 AI 不得假称自己已经读取用户本机文件或执行了本机命令。
-- **2号 AI = 本地 WorkBuddy Agent（执行 AI）**：负责任务书明确要求的本机文件/固件只读检查、本机工具与环境核验，以及明确授权的本机构建/验证任务。2号 AI 只能执行明确标注给自己的任务，不自行扩大范围。
+**本项目有三个彼此独立的参与者，身份固定：**
+- **1号 AI = ChatGPT**：负责公开资料和上游源码研究、独立技术设计、GitHub 主线文档、审查 2号 AI 的方案与实现、决定技术门槛是否放行。1号 AI 不得声称执行了用户本机命令或读取了未提供的本地文件。
+- **2号 AI = 另一套独立参与开发的 AI**：与 1号 AI 并行承担内核移植的研究、代码设计和实现工作；使用自己的专属分支（当前主开发分支为 `ai-parallel/stagea-port-until-boot`），不得被描述成本地 Agent。
+- **测试 Agent = 本地 WorkBuddy / 用户本机测试代理**：只负责任务书明确授权的测试、验证、只读采集、构建检查和报告上传。它不是 2号 AI，不承担项目架构决策或独立开发任务；测试结果由 1号/2号 AI 审查。
 
-**任务书必须显式标注接收方，不能只写“Agent”或“AI”：**
-- 发给 ChatGPT 的任务统一标记：`[1号AI任务书 / GPT_TASK]`，文件名使用 `AI1_TASK.md`（或 `AI1_TASK_主题.md`）；元数据写明“执行者：1号 AI（ChatGPT）”。
-- 发给本地 WorkBuddy 的任务统一标记：`[2号AI任务书 / LOCAL_AGENT_TASK]`，现有兼容文件名 `AGENT_TASK.md` 保留；元数据写明“执行者：2号 AI（本地 WorkBuddy Agent）”。
-- 对应启动提示也必须在第一行标记 `[发给1号AI]` 或 `[发给2号AI]`。不能让一份任务书同时要求两个 AI 执行。
-- 每份任务书开头固定写明：任务编号、任务类型/标签、执行者、审核者、执行环境（公开网络/GitHub 或用户本机）、输入、交付物、硬边界和停止条件。
-- 如果一个工作需要两个 AI 接力，必须拆成两份独立任务书，并写清交接条件；不得用含糊的“双方/AI/Agent”混合指令。
+**任务书必须标出“下发方”和“执行方”，不能只写 AI / Agent：**
+- 发给 1号 AI：`[1号AI任务书 / AI1_TASK]`，文件名 `AI1_TASK.md`；执行者为 ChatGPT。
+- 发给 2号 AI：`[2号AI任务书 / AI2_TASK]`，文件名 `AI2_TASK.md`；执行者为独立的第二套开发 AI。
+- 发给测试 Agent：`[测试Agent任务书 / AGENT_TEST_TASK]`，新文件名优先使用 `AGENT_TEST_TASK.md`；历史 `AGENT_TASK.md` 仅作为兼容名称，必须在文件开头明确“执行者：测试 Agent”，不能因此将它归属给 2号 AI。
+- 如果 2号 AI 编写并下发测试任务，任务书必须明确写成“下发方/技术负责人：2号 AI；执行方：测试 Agent”；这不表示 Agent 是 2号 AI。
+- 启动提示首行分别使用 `[发给1号AI]`、`[发给2号AI]` 或 `[发给测试Agent]`。每份任务书必须写明任务编号、下发方、执行方、审核方、执行环境、输入、交付物、硬边界和停止条件。
+- 多方接力必须拆成独立任务书，逐一写清交接条件；不得把 AI 开发工作与 Agent 测试命令混在同一执行者名下。
 
 **执行路由规则：**
-- 2号 AI 只执行 `[2号AI任务书]` / `AGENT_TASK.md`，不得把 `AI1_TASK.md` 当成自己的任务；发现归属不明，先停止并报告，不猜。
-- 1号 AI 读取 `AI1_TASK.md` 并自行完成公开研究/代码审查；对本地不可访问步骤才创建明确标记给 2号 AI 的任务书。
-- 用户说“Agent”时，在本项目默认指 2号 AI（本地 WorkBuddy Agent）；ChatGPT 自称或任务归属统一称 1号 AI。
-- ROUND 编号只标识工作轮次，不代表 AI 编号。不要把 ROUND25、ROUND26 误读成 AI 25/26。
+- 1号 AI 自行完成可由公开源码、GitHub、网页资料完成的研究和代码审查。
+- 2号 AI 承担分配给它的开发、设计和代码实现；只提交到其授权的专属分支，不覆盖 1号 AI 主线或测试报告分支。
+- 测试 Agent 只执行测试/验证/只读采集任务书，不自行设计或修改内核实现；如果发现需要修代码，形成报告交给 1号/2号 AI。
+- “Agent”在本项目专指测试 Agent，绝不能作为 2号 AI 的别称。用户提到 Agent 时不得将其误解为第二套开发 AI。
+- ROUND 编号仅表示工作轮次，不代表 AI 编号。
 
 **工作原则：**
-- 1号 AI 优先完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给 2号 AI。
-- 仅必须访问用户本机文件、检查本机已有工具/环境、对本地固件执行只读提取，或执行已授权的本机验证时，才派发 2号 AI 任务。
-- 2号 AI 遵守任务书的只读/构建边界；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件。若任务书要求的工具不存在，按任务规定标记 BLOCKED 并停止。
-- 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY；不能把源代码推理写成设备运行结论。
+- 1号 AI 与 2号 AI 的开发工作要尽量并行、互不覆盖；重要接口、补丁、阶段结果以 GitHub 记录和明确交接。
+- 测试 Agent 只测试被明确指定的候选版本，必须记录 commit / patch / 输入文件身份，报告真实命令、退出码、诊断和清理情况。
+- 所有参与者都必须区分 PASS / PARTIAL / NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY；源码推理或编译成功不得冒充设备运行结论。
+- 任何刷机、解锁、root、写分区或其他设备高风险操作，均不在测试 Agent 的默认授权内，必须另行审查并获得用户明确授权。
 
 ## 6. 已完成的内核移植研究（无需从零重做）
 
@@ -128,6 +131,7 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - [ROUND41：GKI defconfig 存储驱动缺口与 full-image Kleaf 构建决策](./kernel-baseline/round41/gki-defconfig-storage-driver-gap-and-full-kernel-build-decision.md)：精确 `.33_r00` GKI defconfig 未启用 Qualcomm UFS/QMP/GCC/RPMhPD/SM8250 ICC/SMMU 驱动；而首阶段要求它们 built-in、early module loading 未证实。故默认选择不含 `base_kernel` 的 full custom `kernel_build`，参考固定 BUILD.bazel 的 `yukawa` 例子；ROUND31 fragment 应放在 `post_defconfig_fragments`，Kleaf 会对 olddefconfig 后的最终 `.config` 做配置项检查；还需单独建立设备 KMI symbol list / `kernel_abi` 目标，不能自动继承官方 GKI enforcement。未执行 Kconfig/build/ABI。
 - [ROUND42：HOS4.3 内存交接与 SM8250 ABL FDT 前置条件](./kernel-baseline/round42/hos43-memory-handoff-sm8250-abl-fdt-prerequisite.md)：公开 SM8250 FreeABL/Qualcomm LinuxLoader 的标准路径会要求输入 FDT 已有 `/memory`，缺失时返回 `EFI_NOT_FOUND`；通过 UEFI RAM Partition Protocol 更新已有 `reg`，不自动创建该节点。该参考适用于另一台 SM8250 设备，不代表 Huawei HOS4.3 ABL；实际最终 FDT 仍 UNKNOWN。其可选 carveout 路径只消费已有 `/reserved-memory` no-map 子节点，不会重建 HOS4.3 的 34 个保留区。 进一步确认该参考上层除 RUMI 外会传播该错误并中止正常 Linux boot path。其路径查找可匹配唯一的 `/memory@...`，不要求字面节点名必须恰好为 `memory`。
 - [ROUND43：ACK 6.18.33 classic FDT 与 EFI-stub 内存交接区分](./kernel-baseline/round43/ack-6.18.33-fdt-memory-scan-classic-vs-efi-handoff.md)：内核 classic 路径只从 FDT 的 `device_type=memory` 节点读 `linux,usable-memory`/`reg`；`/reserved-memory` 是独立保留区路径。真正通过 EFI stub 启动且 `/chosen` 带完整 `linux,uefi-system-table` + `linux,uefi-mmap-*` 时，内核可从 UEFI map 重建 memblock 并替换 DT-derived ranges。不能把 Qualcomm UEFI ABL 等同 Linux EFI-stub entry；华为 HOS4.3 实际跳转路径仍 UNKNOWN。
+- [ROUND77：1号 AI 对 2号 AI UFS / QMP PHY 补丁的第二轮源码审查](./kernel-baseline/round77/round77-1ai-second-pass-ufs-qmp-phy-source-review.md)
 - [ROUND44：ROUND33 required-opps 首项检查与 ACK OPP parser 一致性](./kernel-baseline/round44/round33-required-opps-first-entry-parser-alignment.md)：固定 ACK `drivers/opp/of.c` 明确只需第一个可用 OPP entry 来发现 required-opps table/provider；后续每个 concrete OPP 的 required target 仍逐项 link。ROUND33 helper 正好沿用该语义，并验证 provider `operating-points-v2` 指向同一 table，当前无须增加逐项扫描。未 full-tree apply/build。
 
 - [ROUND32：SM8250 UFS binding 覆盖与 schema 补丁草案](./kernel-baseline/round32/sm8250-ufs-binding-coverage-and-schema-draft.md)：固定 ACK `qcom,ufs.yaml` 漏列 `qcom,sm8250-ufshc`；补丁 blob `efe2d932da34716c631de22d89aba19730cc7f50` 与仓库草案一致，目标源 blob `1dd41f6d5258014d59c8c8005bc54f7994351a52`。在该精确单文件 fixture 上 `git apply --check`、`git apply`、`git diff --check` 均 PASS；仍未运行 dt-schema/dtbs_check，也未在完整 ACK 工作树集成。
@@ -1518,3 +1522,16 @@ The local Agent may now execute the existing `firmware-analysis/round27/AGENT_TA
 6. Upload one sanitized report to `firmware-audit-v1/firmware-analysis/round27/round27_kleaf_dtb_dtbo_composite_schema_validation.txt`, then stop.
 
 This authorization is **not** permission to build `kernel_build`/Image, create `dtbo_image`, package/sign boot images, modify tracked sources or protected branches, access the device, or write partitions. A ROUND27 PASS is only a Kleaf DTB/DTBO/composite/schema validation milestone and does not close any hardware/runtime gate.
+
+
+## 2026-11-25 — ROUND77：1号 AI 完成 UFS / QMP PHY 第二轮源码审查
+
+报告：[ROUND77 — 1号 AI second-pass source review of 2号 AI UFS / QMP PHY integration](./kernel-baseline/round77/round77-1ai-second-pass-ufs-qmp-phy-source-review.md)。
+
+- 2号 AI 的 UFS required-OPP 节点向上回溯与 provider OPP table identity 检查，符合固定 ACK SM8250 DTS 的真实节点嵌套结构。
+- UFS VDDP cleanup 在 generic VCCQ shutdown 之后、managed regulator handle release 之前执行，ROUND40 指出的正常 teardown 次序问题已得到源码级化解。
+- QMP UFS PHY 的 `vdda-phy-always-on` 正常 power-on / power-off / retained enable / DRMS load 逻辑，与固定 ACK regulator/PHY core 语义一致。
+- 记录了 regulator disable 失败时的少数 cleanup/error-path 健壮性注意事项，交 2号 AI 评估；未修改 2号 AI 分支补丁。
+- 本审查为 source-only：没有执行真实 git apply、编译、Kleaf、dt-schema、功率测量或设备测试。
+
+**角色纠正：** 1号 AI 与 2号 AI 是两套独立开发 AI；测试 Agent 是第三个独立测试执行者。当前 ROUND27 由 **2号 AI 下发/负责，测试 Agent 执行，1号 AI复核报告**。测试 Agent 的 ROUND27 报告尚未出现在其唯一交付路径，因此 DTB/DTBO/composite/schema 仍不得标记 PASS。详见 `firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`（位于 `firmware-audit-v1`）。

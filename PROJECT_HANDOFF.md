@@ -2036,3 +2036,13 @@ Taskbook: [AI2 ROUND31 implementation addendum](./kernel-baseline/round118/AI2_R
 - ROUND118 clarifies the actual code executor is 2号 AI on ai-parallel/stagea-port-until-boot. Local Agent is only a separate test/build/read-only tool after code exists; it must not author or repair kernel patches.
 - Adds ROUND115/116 per-child proxy-supply and of_regulator_get constraints, Round114 ACK DRMS/load-disable semantics, Round117 QMP active-vote handoff order, and the non-vetoable ACK regulator_unregister/devres cleanup hazard.
 - At the time of this note the AI2 branch still matched its ROUND31 assignment commit 5ecf5f626ade4c365d1bfb0d5a2ea5c7a46aed10; no actual ROUND31 source implementation commit was present. Re-fetch before review.
+
+
+### ROUND119 — child self proxy-supply fw_devlink handling
+
+Report: [ROUND119 — child proxy self-cycle review](./kernel-baseline/round119/round119-1ai-child-proxy-supply-fw-devlink-review.md).
+
+- ACK drivers/of/property.c recognizes every "*-supply" property through its generic suffix supplier parser, so a child-local proxy-supply self-phandle is seen by fw_devlink.
+- ACK drivers/base/core.c explicitly detects a supplier fwnode equal to the consumer fwnode, marks the fwnode link FWLINK_FLAG_CYCLE, relaxes it to permissive cycle flags, and then skips device_link_add when con == sup_dev. The self-relation is not treated as a fatal probe dependency by this path.
+- This supports—but does not replace testing—the child-local self proxy-supply plus of_regulator_get(group_dev, child_node, "proxy") design. Build logs must still be checked for expected cycle-relaxed info and absence of fatal/deferred probe/device-link failures. Do not globally disable fw_devlink to hide issues.
+- Round119 is source-level review only; no code, DTS, build, firmware or device was changed.

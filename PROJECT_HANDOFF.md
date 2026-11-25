@@ -2002,3 +2002,15 @@ Report: [ROUND115 — ACK proxy-supply scope review](./kernel-baseline/round115/
 - Hook placement, lock ordering, device registration timing and self-reference handle lifetime still require proof in the actual implementation. Round115 is design review only; it modifies no source or DTS.
 - 2号 AI must implement and test this mapping; local Agent must not author kernel code. The published AI2 ROUND31 taskbook still has the executor-role conflict noted in ROUND114.
 
+
+
+### ROUND116 — ACK child-scoped proxy lookup and unregister lifetime constraints
+
+Report: [ROUND116 — child proxy lookup and lifetime](./kernel-baseline/round116/round116-1ai-ack-child-proxy-lookup-and-lifetime.md).
+
+- Prefer evaluating ACK's existing of_regulator_get(group_dev, child_node, "proxy") API. Its device argument and OF lookup-node argument are independent; the node is used directly by of_regulator_dev_lookup()/of_get_regulator(), so L5 and L9 can share the PMIC parent device while looking up their respective child self-phandles.
+- regulator_register() calls device_add(&rdev->dev) before devm_regulator_register() returns, so a post-registration child-specific phandle lookup can find the child regulator device by OF node.
+- regulator_get(&rdev->dev, "proxy") would use the right child node but enters the common self-device sysfs/device-link path; device_link_add rejects consumer==supplier, non-fatally. Explicit-node of_regulator_get(group_dev, child_node, ...) is cleaner.
+- ACK regulator_unregister() warns on nonzero rdev->open_count but continues device_unregister; regulator_put() warns if the consumer handle still has enable_count. A devres cleanup action added after devm_regulator_register runs earlier under reverse devres order, but its return cannot veto the following unregister action.
+- AI2 must solve late-init/individual unregister concurrency, proxy state object lifetime, load-zero/disable failure and no outstanding handle/ref at provider teardown. If impossible under the fixed ACK void-unregister/devres contract, report the blocker instead of claiming complete cleanup.
+- Round116 is source review only; no source/DTS/AI2 branch or device was modified.

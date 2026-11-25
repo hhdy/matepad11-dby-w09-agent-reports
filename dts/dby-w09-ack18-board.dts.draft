@@ -306,8 +306,8 @@
  *
  * ROUND19/20/22 corrected the stock HOS4.3 base-FDT fact:
  * /memory exists with device_type = "memory", but reg = <0 0 0 0>
- * is an all-zero placeholder, not a usable RAM map. It also contains 34
- * reserved-memory child nodes across hyp/XBL/AOP/SMEM/mailbox handoff,
+ * is an all-zero placeholder, not a usable RAM map. ROUND24's direct child enumeration corrects the historical count: it contains
+ * 37 reserved-memory child nodes across hyp/XBL/AOP/SMEM/mailbox handoff,
  * PIL firmware carveouts, reusable DSP/QSEE/secure/CMA pools and crash
  * records. Physical addresses are redacted from the public inventory.
  * The same-device Linux 7.0 board DTS also has no explicit /memory node

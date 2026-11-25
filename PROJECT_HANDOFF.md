@@ -2142,7 +2142,7 @@ For every future local Agent task, if a test or evidence step may require connec
 
 - Candidate branch: `ai1/round125-qmp-ufs-rail-state`.
 - Review/design: [ROUND125_QMP_UFS_RAIL_STATE_REVIEW.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round125-qmp-ufs-rail-state/kernel-baseline/round125/ROUND125_QMP_UFS_RAIL_STATE_REVIEW.md).
-- Patch: `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch`, Git blob `c192fe1488d82b12aa3d3108e036d1141f5e76db`, SHA-256 `31571a1e4449cb5cceae3f77a102e7d4af488f4ef878af3248e8624c7211617c`.
+- Patch: `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch`, Git blob `b2a9a1e6c8f75e858f75e93a5b4ed35ec6bed05d`, SHA-256 `71b8a64d20ca0fad1037099cbc864a6aceebacebce057eceb7d4a745cabde330`.
 - The patch is a delta after AI2 ROUND63, against the first 15 ROUND31/32 Stage A patches on fixed ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9`. It tracks load state and enable-reference state separately for QMP UFS `vdda-phy` and `vdda-pll`, zeroes each DRMS load before disable, preserves the always-on L5 enable while idle, and avoids a second enable when L9's previous disable failed before reference decrement. The original bulk path remains unchanged when `vdda-phy-always-on` is absent.
 - The authoring session derived the exact post-ROUND63 source, generated a three-hunk delta, verified hunk counts and re-applied the generated delta against the same derived source. Real `git apply`, checkpatch, object compilation and full Image build are still PENDING Agent validation.
 - Agent taskbook: [TEST_AGENT_ROUND125_TASKBOOK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round125/TEST_AGENT_ROUND125_TASKBOOK.md).

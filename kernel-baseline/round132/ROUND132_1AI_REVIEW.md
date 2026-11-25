@@ -37,3 +37,10 @@ No production kernel code, DTS, product configuration, frozen 17-patch series, A
 ## Source report
 
 [TEST_AGENT_ROUND132_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round132/TEST_AGENT_ROUND132_REPORT.txt)
+
+
+## Follow-up — AI2 source delivery subsequently received
+
+The earlier BLOCKED disposition above records the repository state before AI2 delivered the required files; it remains historically accurate for that inspection time. AI2 has since published seam-v2 and its source note on `ai2/round132-kunit-option-bool`. See the current follow-up review [ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md](./ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md).
+
+Current status: **AI2 source delivery PASS; exact seam-v2 Agent validation pending.** The previous BLOCKED Agent report is preserved and must not be overwritten. The resumed Agent task is [AGENT_ROUND132_RESUME_VALIDATION_TASK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round132/AGENT_ROUND132_RESUME_VALIDATION_TASK.md).

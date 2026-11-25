@@ -2231,3 +2231,28 @@ For every future local Agent task, if a test or evidence step may require connec
 - User approved a non-destructive mirror only if direct content reading is not possible. Issued [ROUND131 Agent taskbook](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round131/AGENT_ROUND131_GITEE_MIRROR_TASKBOOK.md), commit `72b72e01c982fff52d1d9a9a6e264908cef23805`.
 - The task mirrors six source repositories into new private repositories under `hhdy`, preserving refs, tags, Git LFS and recording submodule SHAs. Original Gitee repos remain read-only and unchanged. The sixth destination uses `UniXNU-dby_w09-gitee-mirror` to avoid overwriting any existing third-party GitHub repository.
 - Agent should verify account/permissions and target nonexistence first; never overwrite existing repos or push to Gitee. Task is offline with respect to the tablet: no USB/ADB/fastboot/serial or device commands.
+
+
+## 2026-11-26 — ROUND131 mirror completed and accepted; six DBY-W09 references read
+
+- ROUND131 Agent report: [AGENT_ROUND131_GITEE_MIRROR_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round131/AGENT_ROUND131_GITEE_MIRROR_REPORT.txt), blob `6be2c93dbe2f389617a3cc7ff27da7109f02b9ab`.
+- **Disposition: ACCEPTED, 6/6 private GitHub mirrors.** All destination repos independently report Private; source/target heads, tags and supported refs compare equal; independent clones pass `git fsck --full --no-dangling`. No LFS and no submodules were present. Four repos had 14 reserved `refs/pull/*` refs that GitHub cannot accept; those are explicitly listed in the Agent report and do not affect heads/tags. Gitee source HEADs remained unchanged and no Gitee write occurred.
+- Formal acceptance and content triage: [ROUND131_ACCEPTANCE_AND_SOURCE_TRIAGE.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round131/ROUND131_ACCEPTANCE_AND_SOURCE_TRIAGE.md), commit `9446887e4496fa87c9b0851d9e2589fc51d5ce50`.
+- Mirrors:
+  - `hhdy/gxde-kernel-dby-w09`: pinned vanilla Linux v7.0.14 scaffold, not ACK GKI 6.18.33; tracked board DTS/patch/config implementation is not present in the mirrored tree yet.
+  - `hhdy/gxde-hwsupport-dby-w09`, `hhdy/gxde-dby-w09`, `hhdy/gxde-touch-calibration`: GXDE userspace / product / calibration; not Stage A kernel implementation and not the Android DerpFest Stage B.
+  - `hhdy/pocket-linux`: HarmonyOS boot-switch APK that writes boot/ramdisk/dtbo; do not execute it as part of source-only work.
+  - `hhdy/UniXNU-dby_w09-gitee-mirror`: same-device XNU reference. It reports UFS root, display and input reaching iPadOS user space, and provides hardware source trails. It is not Linux/ACK code and is not directly mergeable into our GKI.
+- New same-device source leads: UniXNU's pinned SM8250 UFS feed records UFS stream IDs `0x0e0` and `0x4e0`; shared SM8250 DTS records UFS HC `0x1d84000` and QMP UFS PHY `0x1d87000`. These are leads to compare with fixed ACK / HOS4.3 data, not permission to import XNU SMMU or power policy.
+- UniXNU's tested unit is 6 GiB RAM / 128 GiB UFS; the record states per-unit 6/8 GiB and 128/256 GiB variants, and the memory section still asks to confirm DRAM against firmware memory-map evidence. **Do not copy those values to this user's expanded 12 GB tablet.**
+- No device access. Phase E/F remain BLOCKED and Phase G NOT RUN.
+
+## 2026-11-26 — ROUND35R evidence repair reviewed; ROUND132 KUnit option follow-up assigned
+
+- 2号 AI's ROUND35R result and all six artifacts were read and reviewed: [ROUND35R result](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round35r/AI2_ROUND35R_TASK_RESULT.md).
+- **ROUND35R disposition: accepted as PASS for the exact tested KUnit `=y` configuration.** Seventeen production patch identities matched; two clean trees applied 17 patches and independent seam; the UML KUnit suite actually ran 1/1 with `RUN_RC=0`; product .config was unchanged; host tests 38/38 + 83/83 passed. The seam is test-only and not part of the frozen production series.
+- 1号 AI review: [ROUND35R_1AI_REVIEW.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round35r/ROUND35R_1AI_REVIEW.md), commit `dd8a30ac77f2a7c34590e72a6d503aa42f9f7344`.
+- Follow-up defect found: the KUnit test option is declared `tristate`, but helper declarations/definitions and the built-in core observer are wrapped with `#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST`. The reported `=y` test is valid; the untested `=m` configuration would not compile/link the observer/helper contract correctly. The safe design is a built-in-only `bool` option. This affects only the test seam, not current production .config or the 17 production patches.
+- AI2 follow-up taskbook: [AI2 ROUND132 taskbook](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round132/AI2_ROUND132_TASKBOOK.md), commit `f73ee3e1ac1fa93525609d1e4faba4190e4a6739`. Isolated AI2 branch: `ai2/round132-kunit-option-bool`, created from `f0b00e38c8222be14adfb21f122db7f8cac94c14`. 2号 AI implements; local Agent tests only. No merge into Stage A production series.
+- ROUND132 must stop after the test-only Kconfig correction and independent validation. No product Image build or device action. Phase E/F remain BLOCKED; Phase G NOT RUN.
+

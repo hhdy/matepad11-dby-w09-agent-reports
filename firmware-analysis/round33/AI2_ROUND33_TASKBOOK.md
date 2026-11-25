@@ -122,3 +122,30 @@ Stage A 分支提交实际 patch、binding/DTS fixture（如有）、可复现�
 - 尚存限制及是否仍有 L5/L9 end-to-end 阻塞。
 
 只交付 ROUND33 这一份报告后立即停止。不得自动启动 ROUND34。
+
+---
+
+## 2号 AI 直接实现后的任务范围调整（2026-11-25）
+
+2号 AI 已先行完成本轮代码设计与提交，Agent **不得重写、替换或另行设计**这项修复。以下为当前待验证实现：
+
+- Stage A patch 16：`kernel-baseline/round61/patches/round33-0001-regulator-proxy-self-target-only.patch`
+- Patch blob：`262ab30f458ebb603902014be8bbc9a5a8654437`
+- SHA-256：`5505d1e3f8dbec696d797e15c0484263e532c3397174cd149915ae8b5c7ec0e9`
+- 实现策略：child-scoped 和 legacy provider-level 的 proxy-supply 都必须解析到当前请求 owner 的 reg_node；跨 regulator 目标在获取 handle 前返回 `-EINVAL`。Legacy group mapping 仅保留给唯一匹配的请求 child。
+- 测试 harness 已更新：`tests/mock/mock_core.h` 与 `tests/test_proxy_consumer_round32.c`；ROUND32 suite 增加9条断言。L5/L9 review DTS 保持各自 self-target。
+
+### Agent 本轮只执行验证，不得擅自改代码
+
+1. 检查 Stage A branch 当前 HEAD，确认 patch 16、测试变更、series、implementation note 和 PROGRESS 均存在。
+2. 在精确 ACK disposable worktree 对完整 16-patch series 逐一运行 `git apply --check`、`git apply`、`git diff --check`；如 patch 16 应用失败，记录完整错误并停止，不要自行改写 patch。
+3. 对 patch 16 运行 ACK `scripts/checkpatch.pl --strict`。
+4. 运行 `tests/run_tests.sh`，确认 ROUND31 原38 checks 与 ROUND32 新增9条后的完整 suite 均 PASS；记录实际 checks/failures。
+5. 运行真实 `dt_binding_check`、`dt-doc-validate` 和相关 DTS/schema gates，确保严格 schema 未放宽。
+6. 完整 manifest-pinned `tools/bazel build //common:dby_w09`；不能引用 ROUND32 旧 build。
+7. ROUND58 config 33/33 与 helper tests 11/11 regression。
+8. 检查所有临时 worktree/build staging 的清理情况；不得上传构建产物。
+9. 不得修改任何 source、patch、binding、fixture、test harness、series 或 PROGRESS；如果发现失败，只报告具体失败和证据，由2号 AI决定后续代码更改。
+10. 严格遵守本任务原有所有设备/分区/boot/DTBO/AVB/HOS4.3 禁止项。
+
+Agent 唯一交付仍为 `firmware-analysis/round33/AI2_ROUND33_TARGET_UNREGISTER_LIFECYCLE_REPORT.txt`。报告必须明确区分“代码已提交”与“本地验证通过”；不能把未执行的检查标为 PASS。报告提交后立即停止，不得启动 ROUND34。

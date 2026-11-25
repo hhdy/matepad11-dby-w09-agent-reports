@@ -231,3 +231,35 @@ The Phase-D Image artifact previously downloaded and independently checked conta
 Thus the actual Phase-D candidate includes the ACK dummy-regulator implementation and its early initialization path. Given the absent L5 parent-supply property, if ordinary supply lookup has no separately registered alias or matching mapped regulator, the regulator core has an available always-on dummy fallback for the L5 descriptor's software parent request.
 
 This strengthens the classification from “dummy fallback is theoretically available” to “the built candidate contains and early-registers the dummy provider.” It still does **not** prove that a particular L5 lookup selected that dummy at runtime; a separate supply alias or matching regulator map would take precedence. It also does not establish any physical L5 input net. No change to the Phase-D artifact or source tree was made.
+
+
+## 11. QMP bulk-get initializes the stored load before the first PHY power-on
+
+A final pinned-source check adds an important state-machine detail:
+
+- `devm_regulator_bulk_get_const()` copies the static QMP `vreg_list` into managed mutable storage, then calls `devm_regulator_bulk_get()`.
+- `_regulator_bulk_get()` acquires each regulator and immediately calls `regulator_set_load(consumer, init_load_uA)` for every positive initial load.
+- Therefore, after QMP probe succeeds, the L5 consumer handle already stores its 89.9mA `init_load_uA` request even though its enable count is still zero and the load is not yet included in DRMS aggregation.
+- The ROUND63 first-power-on call to `regulator_set_load(init_load_uA)` is initially a same-value request; it does not create the first load vote by itself. The subsequent `regulator_enable()` makes that stored request active for DRMS.
+- A successfully completed power-off `regulator_set_load(0)` changes the stored request to zero. Later power-on must restore the original init load before/with the enable transition.
+
+This means the state model must distinguish **stored load request** from **enabled consumer reference**. In particular, `vdda_phy_enabled == false` after probe does not mean the stored load is zero. The initial stored request is 89.9mA but is inactive until the handle is enabled.
+
+Suggested logical state (not a prescribed struct layout):
+- L5 enable reference held: false at probe; true after successful first enable; remains true during ordinary PHY off/on cycles; false only after successful final disable.
+- L5 stored load request: initialized to `init_load_uA` by bulk-get; becomes zero only after successful load-zero; returns to `init_load_uA` on subsequent successful restore.
+- trailing PHY rail state: false at probe; true after successful bulk-enable; false after successful bulk-disable.
+
+If load-zero fails, regulator core restores the previous stored load request, so the state must remain “init load” and the L5 enable reference must remain held. The cleanup action must reattempt load-zero before disable; it must not infer load state from the enable-reference flag.
+
+Pinned sources:
+- [ACK regulator bulk-get and init-load application](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c)
+- [ACK devm regulator bulk-get-const copy / lifetime](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/devres.c)
+
+## 12. Removal retry caveat for the UFS variant
+
+Pinned `ufs_qcom_exit()` is a void callback and currently ignores the return from `phy_power_off()`, then calls `phy_exit()`. Therefore an error returned by the QMP `.power_off()` implementation can be observed by other PHY API callers but is not currently used to stop the ordinary UFS variant teardown sequence.
+
+If an implementation chooses to propagate `qmp_ufs_power_off()` errors, it must not claim that this automatically retries UFS removal. Any retry/best-effort policy needs to be implemented and documented at the UFS variant-exit call site (or in the QMP managed cleanup strategy) without assuming the core can abort a void remove callback. The existing consumer-first teardown order still holds, but it is not an error-recovery mechanism.
+
+This distinction is important because a failed L5 load-zero can occur after the trailing PLL consumer has already been disabled successfully. Any explicit retry must remember that the trailing rail is off and must not call `regulator_disable()` on it a second time.

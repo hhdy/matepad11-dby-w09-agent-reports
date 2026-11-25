@@ -954,3 +954,39 @@ ROUND18 的最终 `.config` validator 实测 31/31 项为 `=y`，Image 编译成
 - 下一步继续 ROUND20 对现有 Image 做 EFI Stub / PE entry、memory handoff 路径和 boot-v2 payload 体积只读核验。
 - 在生成真实板级 DTB/DTBO 前，必须先确定实际 overlay/ABL handoff 证据；未确定的内存地址和 PMIC 物理 parent supply 仍然禁止猜测。
 - 本聊天由用户提供，属于有价值的移植经验线索，不等同于 WQSQW 源码或设备运行日志。可与已有报告互相印证的内容按上述边界使用，其他内容保持待验证。
+
+## 2026-11-25 — ROUND20 completed: EFI entry, memory handoff and boot-v2 size audit
+
+Final sanitized report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round20/round20_efi_stub_memory_handoff_and_boot_payload_compatibility.txt
+Blob: 4ff1928bd1cc3043f3908b69289503d5650ab900
+
+ROUND20 reused the ROUND18 Image/.config/vmlinux/System.map, pinned ACK source tree, ROUND2 boot.img extraction and ROUND19 image/ramdisk findings. It did not rebuild, modify source/config/firmware, create a boot image, touch AVB, or access the tablet.
+
+Verified results:
+- The exact ROUND18 Image has CONFIG_EFI_STUB=y and CONFIG_EFI_GENERIC_STUB=y, a valid ARM64 PE32+ header, EFI_APPLICATION subsystem, and an executable PE entry at RVA 0x23D7C40. The PE field, vmlinux symbol __efistub_efi_pe_entry, and pinned linker expression agree.
+- This proves Image capability only. It does NOT prove Huawei ABL invokes the PE entry or that the final runtime FDT includes UEFI metadata.
+- ACK source confirms classic arm64 memory discovery skips a /memory reg with size zero. On the EFI-memory path, efi_init() discards DT-derived memblocks and rebuilds from UEFI memory descriptors. Thus this path can bypass the zeroed memory node, but only if the required EFI system-table and memory-map metadata are actually available.
+- There are two possible firmware-side ways for kernel EFI memory discovery to be active: enter the PE/COFF EFI stub, which adds linux,uefi-* properties; or enter the ordinary arm64 Image while ABL itself supplies complete linux,uefi-* properties in /chosen. The latter remains possible even though the stock kernel has no PE header.
+- The stock kernel payload is gzip, max-compression, mtime=0. The decompressed stock Image has ARM64 magic but res5=0, proving it has no PE header and cannot be launched as an EFI application.
+- gzip -n -9 of the ROUND18 Image is 17,802,671 bytes and reproducible. Raw and gzip payload scenarios both fit the given 96 MiB boot capacity. The gzip scenario with the existing ramdisk and DTB ends at 19,996,672 bytes, 4,460,544 bytes below the stock footer original_image_size. This is capacity arithmetic only; any payload change invalidates existing AVB integrity, and ABL acceptance is unproven.
+- Storage chain built-ins from ROUND18 are present, and no .ko artefacts were produced. Two config gaps are real: CONFIG_DEVTMPFS is unset and CONFIG_PINCTRL_MSM is unset. Neither is yet proven to block boot; userspace device-node strategy and UFS DT pinctrl use need targeted inspection.
+
+Highest-priority unresolved items:
+1. ABL/runtime FDT: determine whether the loader enters PE or classic Image and whether it publishes the UEFI system-table + mmap properties. Existing extracted base DTB alone cannot answer this.
+2. DTB preservation on EFI path: CONFIG_EFI_ARMSTUB_DTB_LOADER is off. If the stub runs, it must obtain the existing platform DTB via DEVICE_TREE_GUID; otherwise it generates an empty DTB, losing /firmware/android/fstab and other Huawei nodes.
+3. First-stage /dev behavior with CONFIG_DEVTMPFS unset.
+4. Whether the actual UFS host/PHY nodes in base DTB and the nine DTBOs reference Qualcomm TLMM pinctrl states, and whether UFS rails/pinctrl are required at early boot.
+5. AVB re-signing/verification and exact ABL payload policy remain blocked; do not create or deploy a candidate image.
+
+## 2026-11-25 — ROUND21 dispatched: first-stage devtmpfs and UFS pinctrl/overlay audit
+
+Task files:
+- firmware-analysis/round21/AGENT_TASK.md
+- firmware-analysis/round21/START_PROMPT.md
+
+ROUND21 is a local, offline, read-only inspection of the existing ROUND19 ramdisk /init ELF, base DTB and nine DTBO work copies, plus the pinned ACK Kconfig/source and ROUND18 final .config. It must answer whether Android first-stage init can create/populate /dev without devtmpfs, and whether UFS host/PHY DTS properties actually require CONFIG_PINCTRL_MSM. It also maps only the relevant UFS supply/power-domain/pinctrl references across variants; no assumption that board-id 0x206a/VG is the runtime-selected overlay.
+
+No re-extraction, WSL deployment, repo sync, network download, package install, Image rebuild, source/config/DTS edits, boot packaging, signing, ADB/fastboot/device connection or flash. Upload one sanitized text report to firmware-audit-v1/firmware-analysis/round21/ and stop. Do not modify main source, protected DTS draft, second-AI branch or PR #1.
+
+The project remains at Stage A build-ready, not device-boot accepted. ROUND18 Image is the stable baseline; do not rebuild until ROUND21 determines whether the two configuration gaps should be corrected.

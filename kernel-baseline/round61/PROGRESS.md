@@ -760,3 +760,5 @@ Public source references used for triage: historical Qualcomm UFS property docum
   - patch 17 binding documentation, blob `d2e818296118672bd708db34ed08d817fcd3895b`, SHA-256 `d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05`.
 - Updated the ordered series to 17 patches. Static hunk-body counts now match all five hunk headers. This does not establish patch applicability, compilation, test success, or runtime correctness.
 - A fresh validation-only Agent run is required. Until it reports success, ROUND33 remains unverified. Phase E/F BLOCKED; Phase G NOT RUN; no device/partition/boot/DTBO/AVB operations.
+
+- Second validation-only taskbook addendum published on `firmware-audit-v1`: commit `3c39a37b21098554c141c55fe4e083d511453415`. Agent must verify the corrected 17-patch series and publish `firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt`; no source edits are authorized.

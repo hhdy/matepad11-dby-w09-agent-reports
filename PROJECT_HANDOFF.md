@@ -1657,3 +1657,16 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 **职责：** ROUND86 是 1号 AI 只读源码分析。2号 AI 拥有实现决定和补丁；测试 Agent 只有在收到单独 `AGENT_TEST_TASK.md` 后执行验证。本轮未修改源码、DTS、binding、2号 AI 分支或受保护分支，未运行构建、schema 或设备测试。
 
 ROUND27 schema 仍 NOT CLEAN，直到 driver+binding 和 root-compatible/rootparam binding 修复完成并重新验证。
+
+
+## 2026-11-25 — ROUND87：1号 AI 核对 UFS VCC DRMS load 与 PM8150 L17 模式切换
+
+报告：[ROUND87 — 1号 AI source review: PM8150 L17 DRMS load vote for UFS VCC](./kernel-baseline/round87/round87-1ai-pm8150-l17-ufs-vcc-drms-load-mode-review.md)。
+
+- ACK UFS core 将 `vcc-max-microamp` 读入 `ufs_vreg.max_uA`，并通过 `regulator_set_load()` 对 consumer 提交 DRMS load vote。该值不是 PMIC 硬件过流限流寄存器，也不是 UFS 实际持续电流的测量结果。
+- PM8150 L17 使用 `pmic5_pldo`，`hpm_min_load_uA=10000`，VRM-DRMS ops 的 optimum-mode 回调在 aggregated load >=10mA 时选择 NORMAL/HPM，否则 IDLE/LPM。
+- 当前候选 L17 设置 `regulator-allow-set-load`、允许 LPM/HPM、initial mode LPM；UFS VCC candidate `vcc-max-microamp=<800000>` 如被 regulator core 接受，将明显越过 10mA 门槛并请求 HPM；UFS disable 的 zero-load 请求可在无其他消费者维持高负载时允许回到 LPM。
+- **VCC 修复必须保留两种独立 consumer vote：** `vcc-voltage-level` 经新实现成为 min/max voltage request；`vcc-max-microamp` 继续走现有 DRMS load path。两者不能互相代替，错误回滚/释放也必须分别记录。
+- 这只是固定 ACK 源码路径核对，不代表实机 800mA 电流测量，不证明板级负载/热设计或 HOS ARC 完全等价。
+
+ROUND87 是 1号 AI 只读审查，供 2号 AI 实现评估；测试 Agent 仅在收到单独 `AGENT_TEST_TASK.md` 后测试。本轮无源码/DTS/binding/分支修改，无编译、schema 或设备操作。

@@ -187,3 +187,34 @@ Write a new addendum report (do not overwrite the first failure report):
 `firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt`
 
 Clearly distinguish PASS, FAIL, BLOCKED, and NOT RUN. A successful apply alone does not mean lifecycle behavior or hardware is verified. Agent must stop after filing this report; do not start ROUND34 or any follow-on round.
+
+
+
+---
+
+## 2号 AI 专属 — ROUND33 测试不一致修复后的第三次验证（仅验证，不改代码）
+
+第二次验证报告已确认 patch 16/17 可应用且 checkpatch 通过，但 host harness 与 self-target-only 运行时规则不一致。2号 AI 已直接修复测试夹具；Agent 现在只做重新验证，不得改动代码。
+
+### 本次 Stage A 测试修复
+
+- `tests/test_proxy_consumer_r31.c`：legacy provider-level 测试现在为每个模拟 provider 节点显式提供指向 owner child 的 `proxy-supply`，并在 mock regulator registry 中注册对应 target。双 regulator bulk-revoke 场景分别使用各自 provider/target，以符合 self-target-only 约束；ROUND31 的38项断言保留。
+- `tests/test_proxy_consumer_round32.c`：旧 ghost cross-target 用例不再期待 `-EPROBE_DEFER`。现在断言非 self-target ghost phandle 在 lookup 前返回 `-EINVAL`、不调用 regulator lookup、owner back-pointer 保持为空；另增 deferred self-target 的 individual unregister 清理覆盖。
+- 不改驱动运行时规则，不改 patch 16/17，不放宽 binding/schema。
+
+### Agent 必须完成的验证顺序
+
+1. 重新读取 Stage A 最新 HEAD，确认上述两个测试文件和 patch 16/17、17-patch series、implementation note、PROGRESS 均为最新提交。
+2. 在干净 disposable worktree、精确 ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 上按 series 顺序重跑17个 patch：每个 patch 分别执行 `git apply --check`、`git apply`、`git diff --check`，记录每步 RC、offset、fuzz。任一失败立即停止。
+3. Patch 16 与17分别执行 `scripts/checkpatch.pl --strict`。
+4. 运行仓库内 `tests/run_tests.sh`。必须真实运行两个 suite，记录准确的 checks/failures；不得只按源码 CHECK 数量推断通过。ROUND31 38项必须全通过，ROUND32/33 suite 必须全通过且无崩溃。
+5. 运行真实 `dt_binding_check`、`dt-doc-validate`、相关 DTS fixture 与严格正/负 schema gates。
+6. 在 manifest-pinned ACK build workspace 对当前17-patch tree 做 fresh full `tools/bazel build //common:dby_w09`；不得复用 ROUND32 或此前未完成验证的 build 结果。
+7. ROUND58 config helper 33/33 与 helper tests 11/11 必须对当前 build config 重新验证。
+8. 检查并清理临时 worktree/staging；不上传 build artifacts。
+9. Agent 只读验证，禁止修改任何 source、patch、binding、fixture、test、series、implementation note 或 PROGRESS。发现任何问题立即停止并报告精确证据，由2号 AI决定修复。
+10. 原任务全部设备、分区、boot、DTBO、AVB/vbmeta、HOS4.3 禁止项继续有效。不得启动 ROUND34。
+
+### 唯一交付
+
+新增报告：`firmware-analysis/round33/AI2_ROUND33_FINAL_REVALIDATION_REPORT.txt`（不得覆盖前两份失败/中间报告）。必须将每个门槛标记 PASS / FAIL / BLOCKED / NOT RUN，明确区分代码已提交与本地执行验证。报告提交后立即停止。

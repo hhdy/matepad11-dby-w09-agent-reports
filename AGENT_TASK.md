@@ -4,15 +4,23 @@
 >
 > **阶段顺序不可颠倒：A）先完成并验证 DBY-W09 的 ACK/GKI 6.18.33 内核移植；B）内核阶段验收后，才开始 Android 17 DerpFest 系统移植。** 当前主线仍是阶段 A。Android 12L 只作历史参考，不是当前目标，不要重复进行泛化调研。
 
-> **当前本地 Agent 队列：ROUND27（已由 1号 AI 审查 ROUND25/26 并正式授权）。** ROUND12 AVB 报告已上传但在可信工具门槛 BLOCKED；ROUND13 regulator 审计、ROUND14 ARC/S8 属性审计均已上传并完成。不要重跑 ROUND11/13/14，也不要安装 AVB 工具。ROUND13 与历史 `kernel-baseline/round13` DTS 设计属于不同工作流。当前只执行带有 **[2号AI任务书]** 标记的任务；ROUND27 任务书位于 `firmware-analysis/round27/AGENT_TASK.md`，执行后按停止条件上传一份脱敏报告并停止。
+> **测试 Agent 当前队列：ROUND27。** ROUND25/26 已由 1号 AI 审查；ROUND27 的技术任务书由 2号 AI 编写并下发，执行者是测试 Agent。当前唯一有效任务书位于 `firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`。预期报告 `AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` 尚未上传，故不能把三目标 DT 构建或 schema 验证标记为完成。不要重跑已完成报告，不要安装 AVB 工具。
 
-## 双 AI 任务归属（强制）
+## 三方角色归属（强制）
 
-- **1号 AI = ChatGPT**：公开研究、GitHub/上游源码调查、设计、任务拆分、任务书编写与报告审查。
-- **2号 AI = 本地 WorkBuddy Agent**：本机只读提取、工具/环境检查，以及任务书明确授权的本机验证/构建。
-- 本文件是 **2号 AI 的任务入口**。只执行标题/首段明确标为 **[2号AI任务书]** 的 `AGENT_TASK.md`；不要执行 `[1号AI任务书]` / `AI1_TASK.md`。
-- 任务书未明确执行者、任务标签或本地执行边界时，停止并向用户报告，不要自行推断。
-- 每个任务的启动提示第一行必须写明 `[发给2号AI]`。1号 AI 的任务使用独立 `AI1_TASK.md`，不得混在本文件任务中。
+- **1号 AI = ChatGPT**：公开研究、上游源码分析、技术审查、主线文档和阶段门槛把关。
+- **2号 AI = 另一套独立开发 AI**：负责分配给它的内核移植研究、设计和代码实现；当前使用 `ai-parallel/stagea-port-until-boot` 等专属开发分支。它不是 Agent。
+- **测试 Agent = 本地 WorkBuddy / 用户本机测试代理**：仅负责测试、验证、只读采集、受授权的本地构建检查和提交测试报告；不代替 2号 AI 做项目设计或内核开发。
+
+本文件是 **测试 Agent 的历史任务索引**，不是 2号 AI 的任务入口。只执行明确写明“执行者：测试 Agent”的测试任务书；不要把 `AI1_TASK.md` 或 `AI2_TASK.md` 当作 Agent 的任务。
+
+任务书必须区分“下发方”和“执行方”：
+- `[1号AI任务书 / AI1_TASK]`：执行者 1号 AI（ChatGPT）。
+- `[2号AI任务书 / AI2_TASK]`：执行者 2号 AI（独立开发 AI）。
+- `[测试Agent任务书 / AGENT_TEST_TASK]`：执行者测试 Agent。历史 `AGENT_TASK.md` 仅为兼容文件名，不代表其属于 2号 AI。
+- 例如 ROUND27：下发方/技术负责人为 2号 AI，实际执行本机命令并上传测试报告的是测试 Agent。
+
+每份任务书必须注明任务编号、下发方、执行方、审核方、环境、输入、交付物、权限边界和停止条件；启动提示首行必须写明 `[发给1号AI]`、`[发给2号AI]` 或 `[发给测试Agent]`。如果归属不清，Agent 停止并报告，不得猜测。
 
 
 ## 当前项目目标
@@ -986,17 +994,17 @@ ROUND27 is an isolated-copy Kleaf/Bzlmod device-tree validation only:
 No kernel_build/Image, no dtbo_image or table metadata, no boot packaging/AVB/signing, no device or partition access. Do not modify main candidates, protected DTS branch, second-AI branch or PR #1.
 
 
-## 2026-11-25 — 当前派发：ROUND27（[2号AI任务书]）
+## 2026-11-25 — 当前测试 Agent 任务：ROUND27（由 2号 AI 下发）
 
-**本节是当前最新且具执行效力的本地 Agent 指令；覆盖本文件中较早的“队列为空”“ROUND23 当前任务”或“ROUND27 queued”等历史快照。**
+**当前唯一有效的 ROUND27 测试任务书：** `firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`。该任务书由 **2号 AI 下发/负责技术方案**，实际执行者为 **测试 Agent（本地 WorkBuddy）**，1号 AI 负责审查测试报告。
 
-- 任务接收方：**2号 AI（本地 WorkBuddy Agent）**
-- 主 AI / 任务书编写者 / 结果审核者：**1号 AI（ChatGPT）**
-- 状态：**AUTHORIZED / READY TO EXECUTE**
-- 执行任务书：`firmware-analysis/round27/AGENT_TASK.md`
-- 启动提示：`firmware-analysis/round27/START_PROMPT.md`
-- 放行记录：`firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md`
+- 任务编号：`AI2-ROUND27`
+- 下发方/技术负责人：**2号 AI（独立开发 AI）**
+- 执行者：**测试 Agent（本地 WorkBuddy）**
+- 审核者：**1号 AI（ChatGPT）**
+- 状态：**AUTHORIZED / REPORT PENDING**；授权不等于测试完成。
+- 唯一报告路径：`firmware-audit-v1:firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt`
 
-ROUND25、ROUND26 两份报告已上传至 `firmware-audit-v1` 并由 1号 AI 完成审查。2号 AI 现在可以按 ROUND27 任务书执行三个 Kleaf/Bazel DT 目标（base DTB、raw rootparam DTBO、composite-check DTB）及指定 schema 验证。执行范围、一次性工作区副本、清理要求、禁止 kernel Image/dtbo_image/设备操作等边界，以 ROUND27 任务书全文为准。
+ROUND25、ROUND26 已由 1号 AI 审查通过，满足 ROUND27 前置条件。测试 Agent 只执行三个 Kleaf/Bazel DT 目标（base DTB、raw rootparam DTBO、composite-check DTB）和指定 schema 验证，并按任务书清理临时文件；不得构建 kernel/Image、dtbo_image、boot.img，不得操作设备或分区。
 
-**2号 AI 完成后只上传 ROUND27 一份脱敏报告，然后停止，等待 1号 AI 审查。不要自行开始下一轮。**
+**检查仓库时，若唯一报告尚未出现，继续标记 REPORT PENDING；测试 Agent 上传后停止，由 1号 AI 审查。2号 AI 是开发任务书下发方，不是测试 Agent。**

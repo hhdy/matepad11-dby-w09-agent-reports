@@ -56,8 +56,8 @@ NOT applied, deliberately:
 
 ROUND33 additions:
 
-16   round61/patches/round33-0001-regulator-proxy-self-target-only.patch 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe  7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 pending-local-apply-check
-17   round61/patches/round33-0002-regulator-proxy-self-target-binding.patch d2e818296118672bd708db34ed08d817fcd3895b  d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 pending-local-apply-check
+16   round61/patches/round33-0001-regulator-proxy-self-target-only.patch 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe  7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 PASS: 17-patch final revalidation 2026-11-25
+17   round61/patches/round33-0002-regulator-proxy-self-target-binding.patch d2e818296118672bd708db34ed08d817fcd3895b  d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 PASS: 17-patch final revalidation 2026-11-25
 
 patch 16 touches:
   drivers/regulator/proxy-consumer.c: reject any child-scoped or legacy

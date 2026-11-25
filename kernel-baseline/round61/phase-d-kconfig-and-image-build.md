@@ -66,15 +66,53 @@ and verifies the exact manifest-provided executable paths:
 
 In run `45529395645`, stage 4 passed, real ordered UFS / ROUND63 PHY / Kleaf patch apply passed in stage 5, strict checkpatch/buildifier/11 tests passed in stage 6, and the Bazel target query/cquery passed in stage 7.
 
-## 5. Current transparent repeat build
+## 5. Current transparent repeat build — PASS
 
-Run `45529395645`, job `138920645396`, was triggered from `eb37d21224a0878059b0ed5eef72a29cdbd69af9`. At the latest status snapshot:
-- stages 1–7 passed, including exact pinned compiler/toolchain discovery and Bazel query/cquery;
-- stage 8/9 `Build DBY-W09 Image` is `in_progress`, started at `2026-11-25T02:03:17Z`;
-- stage 9/9 final .config validation and artifact hashing is pending;
-- no failed step is reported.
+Run `45529395645`, job `138920645396`, triggered from `eb37d21224a0878059b0ed5eef72a29cdbd69af9`, completed with **success**. All nine stages passed, including exact toolchain discovery, real ordered patch application, strict static checks, Bazel query/cquery, Image compilation, final config validation, publication and artifact upload.
 
-This repeat run is to validate the newly split workflow and make the true compiler versions visible and reproducible. Do not mistake the previous accidental first-on-disk `clang-3289846`/Rust p2 report for the pinned Kleaf compiler. Do not mark this repeat run complete until stages 8 and 9 pass and the new artifact is inspected.
+### Pinned toolchain and build details
+
+- ACK common: `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`
+- Manifest commit: `46a1a5274ff0b40419952c861a8958bba5f28cfc`
+- Manifest XML SHA-256: `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`
+- build/kernel commit: `2bebe7c443d0e6d5d549fb2a2377dce980d1b15e`
+- Kleaf toolchain constants file SHA-256: `8fdd4673152978b45ae0349277892b546d1ce9225831a80ebe7e1c7d9b7b73af`
+- JDK: OpenJDK 11.0.15
+- Bazel: 8.7.0
+- Clang: Android Clang 22.0.1 based on pinned `r584948c`
+- Rust: `1.91.1.p3`, `rustc 1.91.1-dev` (Android toolchain build `15551131-linux-x86`)
+
+Bazel built 775 actions successfully; Bazel elapsed time 1362.003 s, critical path 1327.37 s. The stage-8 Actions step ran from 02:03:17Z to 02:26:00Z.
+
+### Final artifacts and independently verified hashes
+
+| Artifact | Size | SHA-256 |
+|---|---:|---|
+| `Image` | 44,820,992 B | `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf` |
+| `dby_w09.config` | 238,376 B | `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7` |
+| `System.map` | 7,610,772 B | `8fe0c256bc779ef90a4e6b4fad1dbfaaf0286c5538dd2c7b1793a879dca1d377` |
+| `vmlinux` | 230,254,408 B | `ff82e90b5867d0605dc715079ea414d51ef24e20f8035f5f35eb88a89cf3b720` |
+
+Second AI downloaded artifact `14985348694` and independently verified:
+- ZIP SHA-256 `0c8fabcd626d15aa36f32b3b7652d32b0f5389bc7fdca45bcd4d770e80123cf4`, matching the GitHub artifact digest;
+- all four file hashes and sizes above;
+- `Image` is identified as a little-endian Linux kernel ARM64 boot executable Image with 4K pages;
+- `vmlinux` is ELF64 AArch64.
+
+### Final .config acceptance — PASS
+
+The hosted stage-9 validator reported **33/33 required storage-first symbols present as `=y`**, no missing symbols and no duplicate assignments. A separate independent read of the downloaded config confirmed:
+- 33 required symbols;
+- all 33 values are `y`;
+- no missing symbols;
+- no non-y values;
+- no duplicate assignments.
+
+The config remains 238,376 bytes and SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`.
+
+Artifact: `round61-ack-6.18.33-image-build`, ID `14985348694`, 210,441,171 bytes.
+
+The earlier accidental first-on-disk `clang-3289846` / Rust p2 discovery is superseded. The current build's toolchain discovery validates the exact manifest-provided Clang `r584948c` and Rust `1.91.1.p3` binaries.
 
 ## 6. Build scope and safety boundary
 

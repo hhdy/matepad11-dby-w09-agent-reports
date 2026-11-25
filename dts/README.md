@@ -181,3 +181,7 @@ The public same-device Linux 7.0 reference confirms boot v2 + separate header-v0
 ## ROUND72 — exact Kleaf include dependency
 
 At the pinned ACK source, //common:dtc_includes_aarch64 contains arm64 include-prefix headers and depends on the dt-bindings header library; it does not itself supply arch/arm64/boot/dts/qcom/sm8250.dtsi. A qcom BUILD.bazel package should list both the new board DTS and same-directory sm8250.dtsi in dtb(srcs), and use //common:dtc_includes_aarch64 in deps for angle-bracket binding headers. Compile rootparam separately with dtbo(), then use dtb_composite() to validate it against a generate_symbols=True base DTB. dtbo_image() packaging remains blocked by HOS4.3 table ID selection ambiguity. See [ROUND72](../kernel-baseline/round72/round72-kleaf-qcom-dts-include-dependency-design.md).
+ 
+## ROUND24 — reserved-memory dependency audit
+
+ROUND24 inventories the HOS4.3 34-node reserved-memory tree and all memory-region consumers from existing ROUND19 decompiled files, with physical addresses redacted. It compares against the minimal board rev2 DTS and ACK SM8250 tree to decide which reservations might affect first-stage UFS boot versus deferred subsystems. The four reserved nodes in public same-device Linux 7.0/HOS4.2 are a semantic reference only, not reusable HOS4.3 coordinates.

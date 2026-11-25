@@ -185,3 +185,8 @@ ROUND52-0001's branch-local implementation is now placed in the shared `qcom,ufs
 ## Final source/style gate confirmation
 
 Hosted run `45451513173` re-applied the ordered UFS, ROUND63 PHY and Kleaf patches to the exact ACK commit with real `git apply --check` / `git apply`, verified the pristine source identity, and passed `git diff --check`, strict checkpatch, buildifier and all 9 config-helper tests. The only checkpatch ignore is the narrowly scoped `CAMELCASE` false positive for the existing API field `init_load_uA`; all other strict checks remain active. Phase A is PASS.
+
+
+## 2026-11-25 re-validation with deterministic manifest workflow
+
+Run `45529395645`, job `138920645396`, independently repeated the source and style gates using the nine-stage workflow. Stages 2–5 passed: immutable manifest sync, exact ACK pin, exact manifest-pinned toolchain discovery, and real ordered patch application. Stage 6 passed strict checkpatch, `buildifier -mode=check`, and the hardened 11-test config-helper suite. Thus the current patch series and check suite are revalidated immediately before the separate Image build stage. The toolchain constants path in this run is `$WORK/common/build.config.constants`, yielding Clang `r584948c` and Rust `1.91.1.p3`; the prior failed attempt searched under the wrong repo subdirectory and did not reach compiler discovery.

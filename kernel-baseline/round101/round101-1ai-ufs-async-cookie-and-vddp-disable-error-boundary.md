@@ -220,6 +220,17 @@ Implications:
 
 Do not infer the board's physical parent for L6 from the string "vdd-l6-l9"; it is a regulator-provider supply name, not a verified schematic net name. The HOS4.3 final PMIC input topology remains a Phase-E evidence requirement.
 
+#### RPMh transport return semantics
+
+The pinned lower layer was also inspected:
+- drivers/soc/qcom/rpmh.c SHA: 8903ed956312d0a2ac7f673d86ef504947e9b119
+- include/soc/qcom/rpmh.h SHA: bdbee1a97d3685d8a6153d586ddf650bd3bd3dde
+- [Pinned rpmh.c](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/soc/qcom/rpmh.c)
+
+rpmh_write_async() allocates a request with GFP_ATOMIC, validates/fills the message, then calls __rpmh_write(); the ACTIVE_ONLY path calls rpmh_rsc_send_data() and propagates its immediate return (roughly lines 170–240). Therefore an immediate negative disable result is not merely hypothetical: allocation, message validation, controller/request submission can fail before regulator-core decrements the consumer enable count.
+
+When qcom,always-wait-for-ack is set, the provider uses rpmh_write() rather than rpmh_write_async() for a disable. rpmh_write() waits for its completion with RPMH_TIMEOUT_MS and returns -ETIMEDOUT if no completion arrives (approximately lines 243–264). Without that property, the lower layer does not wait for the remote command completion. The actual HOS4.3 L6 node's property state remains unknown and must be read from the sanitized FDT evidence before describing the device's exact behavior.
+
 ### 5.5 Required focused cases
 
 

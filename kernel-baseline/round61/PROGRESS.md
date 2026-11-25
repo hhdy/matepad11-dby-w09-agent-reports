@@ -420,13 +420,18 @@ The workflow stage 4 is corrected to read `$WORK/common/build.config.constants`,
 This removes the invalid `build/kernel` constants search and avoids non-deterministic compiler selection. A new explicit marker trigger is queued below to validate the corrected stage and complete the remaining stages. No active run was cancelled.
 
 
-### Corrected nine-stage retry — active status snapshot (2026-11-25)
+### Corrected nine-stage retry — Image build in progress (2026-11-25)
 
-Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `45529395645`, job `138920645396`. At this snapshot:
-- Runner setup, checkout and stage 1/9 (preflight/dependencies/repo launcher) passed.
-- Stage 2/9 (repo init and immutable manifest sync) is `in_progress`, started at `2026-11-25T01:57:03Z`.
-- Stages 3–9 are pending; no failed step is reported.
-- No run has been cancelled. Wait for actual stage transitions; do not infer a dead runner from run-level `updated_at` or an unavailable in-progress log.
+Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `45529395645`, job `138920645396`. Stages 1–7 have all completed successfully:
+- preflight/dependencies/repo launcher;
+- immutable manifest sync;
+- exact ACK source pin and manifest record;
+- manifest-pinned Clang `r584948c` and Rust `1.91.1.p3` discovery with exact executable paths;
+- ordered UFS / ROUND63 PHY / Kleaf patch application;
+- strict checkpatch, buildifier and all 11 config-helper tests;
+- Bazel query/cquery and target output inventory.
+
+Stage 8/9, `Build DBY-W09 Image`, is `in_progress`, started at `2026-11-25T02:03:17Z`. Stage 9/9 final config/artifact validation remains pending. No failed step is reported and no run has been cancelled. The former step-4 constants-file path failure is fixed and has not recurred.
 
 
 ### Follow-up: watchdog-created duplicate Image run also completed

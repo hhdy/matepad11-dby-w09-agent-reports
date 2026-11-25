@@ -297,7 +297,11 @@
 	vccq-supply = <&vreg_l6a_1p2>;
 	vccq-max-microamp = <800000>;
 
-	/* Vendor Qualcomm UFS parent rails; both require the companion ACK driver patch. */
+	/*
+	 * HOS VCCQ-parent topology metadata only: ROUND22 confirms the current
+	 * ACK Image has no runtime consumer for qcom,vccq-parent-supply/S8.
+	 * Do not assume this enables or votes PM8150L S8.
+	 */
 	qcom,vccq-parent-supply = <&vreg_s8c_1p2_1p4>;
 	qcom,vccq-parent-max-microamp = <210000>;
 

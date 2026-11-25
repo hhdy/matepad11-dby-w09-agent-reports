@@ -579,3 +579,25 @@ ROUND18 的最终 `.config` validator 实测 31/31 项为 `=y`，Image 编译成
 - 下一步继续 ROUND20 对现有 Image 做 EFI Stub / PE entry、memory handoff 路径和 boot-v2 payload 体积只读核验。
 - 在生成真实板级 DTB/DTBO 前，必须先确定实际 overlay/ABL handoff 证据；未确定的内存地址和 PMIC 物理 parent supply 仍然禁止猜测。
 - 本聊天由用户提供，属于有价值的移植经验线索，不等同于 WQSQW 源码或设备运行日志。可与已有报告互相印证的内容按上述边界使用，其他内容保持待验证。
+
+## 2026-11-25 ROUND20 complete — current local task is ROUND21
+
+ROUND20 report is uploaded:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round20/round20_efi_stub_memory_handoff_and_boot_payload_compatibility.txt
+Blob: 4ff1928bd1cc3043f3908b69289503d5650ab900
+
+Key facts:
+- ROUND18 Image is genuinely EFI-stub capable and contains an ARM64 PE32+ EFI_APPLICATION entry. ABL invoking it remains UNKNOWN.
+- ACK source proves EFI memory discovery can replace zeroed DT memory with UEFI descriptors, but requires valid EFI table/mmap handoff. An ordinary arm64 Image entry can also use this kernel EFI path if ABL itself places the complete linux,uefi-* metadata in /chosen.
+- Stock kernel gzip payload has no PE header. The stock loader demonstrably handles gzip; whether gzip is mandatory remains unverified.
+- gzip -n -9 ROUND18 Image size is 17,802,671 bytes; calculated boot-v2 payload fits. This is not a boot image, not AVB-validity evidence and not ABL-acceptance evidence.
+- Two actual ROUND18 config gaps: CONFIG_DEVTMPFS unset; CONFIG_PINCTRL_MSM unset. Boot impact remains UNKNOWN pending first-stage /init and UFS DT analysis.
+
+**Current local Agent task: ROUND21**
+- firmware-analysis/round21/AGENT_TASK.md
+- firmware-analysis/round21/START_PROMPT.md
+- final report: firmware-audit-v1/firmware-analysis/round21/round21_first_stage_devtmpfs_and_ufs_pinctrl_overlay_audit.txt
+
+ROUND21 is read-only and must use existing ROUND19 local extraction plus ROUND18 pinned ACK/config work copies. Inspect static /init behavior for /dev/devtmpfs/tmpfs/mknod/ueventd; inspect base DTB and nine DTBOs for UFS host/PHY pinctrl, supply, clocks, resets and power-domain properties; resolve referenced pinctrl providers and regulator parents; inspect exact ACK Kconfig dependencies for DEVTMPFS and PINCTRL_MSM. Do not assume entry 8/VG is selected at runtime. No re-extraction, rebuild, source/config/DTS edits, package/AVB work, device/ADB/fastboot or flash. Upload one sanitized text report, then stop.
+
+Do not repeat ROUND18/19/20. Do not touch ack18-dby-w09-dts-draft, ai-parallel/stagea-port-until-boot, PR #1 or the protected branches. The current Stage A status is Image build pass / Stage A build-ready, not device boot accepted.

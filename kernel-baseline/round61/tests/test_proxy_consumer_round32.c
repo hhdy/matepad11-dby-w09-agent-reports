@@ -258,46 +258,39 @@ int main(void)
 	      "bulk revoke withdraws the retried consumer once");
 	CHECK(rdev5.proxy_consumer == NULL, "bulk revoke clears retried back-pointer");
 
-	/* 8. target that never registers is dropped at bulk revoke
-	 *    without ever voting
+	/* 8. a non-self ghost target is rejected before a consumer is
+	 *    allocated; it must never be treated as a deferred self-target.
 	 */
 	clear_nodes();
 	reset_mock();
 	add_supply(&l9_node, "proxy-supply", &ghost_node);
 	add_flag(&l9_node, "qcom,proxy-consumer-enable");
 	add_u32(&l9_node, "qcom,proxy-consumer-current", 100000);
-	rdev9.proxy_consumer = regulator_proxy_consumer_register(&group, &l9_node, &rdev9);
-	CHECK(!IS_ERR_OR_NULL(rdev9.proxy_consumer),
-	      "ghost target -> consumer parked");
-	mock_late_initcall_retry_fn();
-	CHECK(rdev9.proxy_consumer->deferred == true,
-	      "retry cannot resolve ghost target");
-	{
-		int d0 = mock.disable_calls;
-		int p0 = mock.put_calls;
+	c = regulator_proxy_consumer_register(&group, &l9_node, &rdev9);
+	CHECK(IS_ERR(c) && PTR_ERR(c) == -22,
+	      "non-self ghost target -> -EINVAL");
+	CHECK(mock.get_calls == 0,
+	      "non-self ghost rejected before regulator lookup");
+	CHECK(rdev9.proxy_consumer == NULL,
+	      "non-self ghost leaves owner back-pointer empty");
 
-		mock_late_initcall_fn();
-		CHECK(rdev9.proxy_consumer == NULL,
-		      "bulk revoke drops the ghost consumer");
-		CHECK(mock.disable_calls - d0 == 0 && mock.put_calls - p0 == 0,
-		      "ghost consumer never voted, never put a handle");
-	}
-
-	/* 9. individual unregister of a parked consumer is safe */
+	/* 9. individual unregister of a deferred self-target remains safe. */
 	clear_nodes();
 	reset_mock();
-	add_supply(&l9_node, "proxy-supply", &ghost_node);
-	add_flag(&l9_node, "qcom,proxy-consumer-enable");
-	add_u32(&l9_node, "qcom,proxy-consumer-current", 100000);
+	add_self_target_props(&l9_node);
 	rdev9.proxy_consumer = regulator_proxy_consumer_register(&group, &l9_node, &rdev9);
+	CHECK(!IS_ERR_OR_NULL(rdev9.proxy_consumer),
+	      "self-target without registered regulator is parked");
+	CHECK(rdev9.proxy_consumer->deferred == true,
+	      "self-target consumer is deferred");
 	{
 		int d0 = mock.disable_calls;
 		int p0 = mock.put_calls;
 
 		regulator_proxy_consumer_unregister(&rdev9);
 		CHECK(mock.disable_calls - d0 == 0 && mock.put_calls - p0 == 0,
-		      "unregistering a parked consumer does not touch regulators");
-		CHECK(rdev9.proxy_consumer == NULL, "parked consumer freed");
+		      "unregistering a deferred self-target does not touch regulators");
+		CHECK(rdev9.proxy_consumer == NULL, "deferred self-target consumer freed");
 	}
 
 	/* 10. child + group double declaration is rejected with -EINVAL */

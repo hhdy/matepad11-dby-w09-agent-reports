@@ -9,3 +9,5 @@
 
 限制：只使用 ROUND18/19 已有本地文件；不得重提取/下载/安装/编译/改 DTS/改配置/设备连接或刷写。
 只上传一份脱敏报告到 firmware-audit-v1/firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt，完成后停止。
+ 
+补充：同一轮顺带比较 pinned sm8250.dtsi 和 HOS4.3 base_2.dts 的顶层 memory 节点结构：节点路径 unit-address 脱敏、device_type、地址/大小 cell 数、reg tuple 数、base 是零/非零、size 是零/非零、初始占位是否结构相同。不要输出任何物理地址或大小数值。确认 rev2 通过 include 确实继承该 memory 节点。不得修改或新增 memory node。

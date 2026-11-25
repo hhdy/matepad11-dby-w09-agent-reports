@@ -7,7 +7,7 @@
 
 ## Current overall state
 
-**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS — latest nine-stage manifest-pinned build completed end-to-end (run 45529395645).** Final .config passes 33/33 required symbols, and the current Image plus System.map/vmlinux artifact hashes were independently verified. Phase E/F remain BLOCKED on HOS4.3 local evidence; Phase G remains NOT RUN.
+**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS — latest nine-stage manifest-pinned build completed end-to-end (run 45529395645).** Final .config passes 33/33 required symbols; Image/System.map/vmlinux hashes were independently verified. ROUND64 local-Agent read-only evidence is now received: Phase E remains BLOCKED on the final HOS4.3 memory handoff and PM8150 physical input topology; Phase F's AVB/boot metadata inventory is complete but boot packaging remains BLOCKED; Phase G remains NOT RUN.
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
@@ -15,13 +15,13 @@
 | B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
 | C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
 | D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
-| E — board DTS + memory/power handoff | BLOCKED | No trusted final HOS4.3 post-ABL FDT/EFI memory handoff or PM8150 physical supply-parent map. Do not guess. |
-| F — boot image / ramdisk / AVB | BLOCKED | ROUND62 same-device cross-reference warns fastboot RAM boot may be refused, but exact HOS4.3 AVB/footer/partition metadata and ABL behavior remain unverified. |
+| E — board DTS + memory/power handoff | BLOCKED | ROUND64 Agent confirms no authorized final post-ABL FDT/EFI handoff and no board-specific PM8150 input-parent evidence. Stock `/memory/reg` is an all-zero placeholder, not usable RAM. Keep the draft review-only. |
+| F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64 Agent used pinned-source AOSP avbtool 1.4.0 to inspect footer/descriptor metadata and confirmed header-v2 / separate ramdisk / 9-entry DTBO inventory. ABL-selected DTBO remains unknown and `vbmeta_cust` is anomalous; no candidate package. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
 Phase E blocker report: `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (committed 2026-11-25). It records the exact missing HOS4.3 final ABL memory handoff and physical PM8150 input-parent evidence, and keeps the DTS draft review-only.
 
-Phase F blocker report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (existing; reviewed 2026-11-25). It records the missing trusted AVB footer/vbmeta descriptor inspection and exact HOS4.3 header-v2 / separate-ramdisk packaging metadata.
+Phase F report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (updated 2026-11-25). ROUND64 completed the trusted read-only footer/descriptor inventory and header-v2 / ramdisk / DTBO inspection; packaging remains blocked by unknown ABL selection/acceptance, the `vbmeta_cust` anomaly and Phase E dependencies.
 
 ## 2026-11-24 execution evidence
 
@@ -117,7 +117,6 @@ The workflow now compiles the fixtures with `dtc`, validates the first two with 
 Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report update commit: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
-
 
 ### ROUND63 regulator-list cross-check (2026-11-25)
 
@@ -238,7 +237,6 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - The runner then failed before Bazel query because it invoked tools/bazel --version; the manifest-provided Kleaf wrapper interprets this as an unsupported startup option and exits with Unknown startup option: '--version'.
 - Corrected the preflight to invoke the Bazel version subcommand (tools/bazel version) in workflow commit 6594582ddd6758ba59ba0ec8ed85869cf73a517f.
 - Triggered a fresh manifest-pinned build in commit 17fc9603ce29f0dbaa270fd1c0cfe8922fd4e5e7. Await its actual result; no Bazel query, cquery, Kconfig resolution or Image build is claimed yet.
-
 ### Current gate summary
 
 - Phase A: PASS (hosted exact-source patch apply, diff-check and strict style gates).
@@ -359,7 +357,6 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - Acceptance scope: 33 explicit required symbols; 11 unit tests.
 - The current hosted UFS/PHY validation runs were triggered by these checker/test changes. Their terminal results are pending. These edits do not trigger a full Kleaf/Image build.
 
-
 ### Hosted validation after block-layer checker correction
 
 - Run `45456839358` reached and completed the `Validate Kleaf BUILD syntax and config helper tests` step successfully. This run includes the `CONFIG_BLOCK` required-symbol assertion and its regression test (10-test suite at that revision).
@@ -478,7 +475,6 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_E_READONLY_SEC
 
 
 ### Phase F — precise local Agent handoff prepared
-
 Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md` (commit `9c18289442fadb83434bfab62614e99adc824872`). It limits the task to local, read-only inspection of existing HOS4.3 boot-v2, separate ramdisk, DTBO and AVB footer/vbmeta metadata, using only an already-installed trusted tool. It prohibits tool installation, raw image upload, AVB metadata disclosure, repacking and all device operations. No AVB/boot-package gate is claimed closed.
 
 
@@ -491,12 +487,15 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SEC
 The build milestone is complete. The next progress dependency is no longer compilation: Phase E and Phase F need the local Agent's sanitized read-only HOS4.3 evidence described in `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` and `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`. Do not generate DTB/boot/flash packages or start device operations until those evidence gates and separate authorization are complete.
 
 
-### Build completion and local Agent handoff point (2026-11-25)
+### ROUND64 local-Agent handoff returned — 2026-11-25
 
-The current manifest-pinned Image build is complete; no further compile is needed for the Phase D Image milestone. Detailed Phase C/D report headers were synchronized to the terminal PASS result in commits `a9d6a5152fc395861a5f645cee0cbd3ace8f6deb` and `66c7ef16a52ec9567587dd7128cb0bb82cdb67f8`.
+The Phase E and Phase F read-only taskbooks have both been completed and their sanitized reports are available on `firmware-audit-v1`:
 
-**Next dependency is the local Agent, not another build:**
-- Phase E memory/power report: `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md`.
-- Phase F boot-v2/AVB report: `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`.
+- [Phase E final memory / PM8150 input evidence](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md)
+- [Phase F boot-v2 / ramdisk / DTBO / AVB evidence](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md)
 
-The two reports must be completed from already-authorized HOS4.3 local evidence. If a required value is unavailable or would require unapproved device access, the Agent must return BLOCKED rather than infer it. After those reports arrive, Second AI can assess whether the board DTS and packaging work can safely resume. Until then keep Phase E/F BLOCKED, Phase G NOT RUN, and overall Stage A incomplete.
+Phase E remains BLOCKED: the live final FDT was not available through the already-authorized read-only workflow, and no board-specific PM8150 physical input map exists in the authorized corpus. The corrected stock-FDT statement is **all-zero `/memory/reg` placeholder**, not “no `/memory` node.”
+
+Phase F read-only metadata inventory is complete, including trusted AOSP avbtool inspection, but package creation remains BLOCKED: ABL-selected DTBO and temporary-boot behavior are unknown, and `vbmeta_cust` has an unexplained out-of-file footer pointer / empty descriptor object. The Phase F blocker document has been updated to distinguish inventory completion from package readiness.
+
+No source, DTS, DTBO, boot image, ramdisk, AVB metadata or device state was changed. Phase G remains NOT RUN. The Phase E Agent report itself identifies the only two missing inputs: an already-authorized final HOS4.3 ABL-to-Linux FDT/EFI handoff capture and an authoritative DBY-W09 PMIC power-tree/schematic for the UFS rails.

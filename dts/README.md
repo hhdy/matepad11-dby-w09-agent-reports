@@ -143,3 +143,10 @@ The main branch now contains `dby-w09-ack18-rootparam.dtso.draft`. It is a **VG 
 A separate file, `dby-w09-ack18-board.dts.rev2.candidate`, now contains the ROUND37 two-domain UFS Host property (MMCX index 0, GCC UFS_PHY_GDSC index 1), the two power/clock binding headers, and corrected zeroed /memory-placeholder documentation. The original `.draft` remains unchanged for comparison.
 
 The rev2 candidate is not compiled or schema-validated and is not an input to the current Image build. Do not promote it until ROUND22's source/contract report and full pinned-ACK dtc/schema checks pass. Final ABL memory/reserved-memory and physical PM8150 input-parent gates remain BLOCKED.
+
+
+## ROUND68 — Kleaf DTB/DTBO pipeline
+
+The source/API design note is [ROUND68](../kernel-baseline/round68/round68-kleaf-dtb-dtbo-build-graph.md). It distinguishes base dtb(), overlay dtbo(), composite resolution via dtb_composite(), and DTBO partition packaging via Kleaf dtbo_image(). Do not confuse dtb_image() with DTBO partition packaging. Base DTB needs generate_symbols=True for the rootparam overlay.
+
+The HOS4.3 DTBO table header metadata is separate from compiling overlay DTS: stock page_size is 4096; entry 8 candidate is id 0x206a / rev 0. Any future package must set and verify dt_table_entry metadata separately, and the actual device variant must be confirmed first. This is not a package-ready result.

@@ -1,6 +1,6 @@
 # PROJECT_HANDOFF.md — DBY-W09 GKI 6.18.33 → Android 17 DerpFest 总交接
 
-更新：2026-11-25  
+更新：2026-11-26  
 适用：新 ChatGPT 会话、GPT 上游源码研究、本地 Agent 只读固件检查、内核与 ROM 移植规划。
 
 > **新会话必读：先读本文件，再读根目录 `AGENT_TASK.md`。本文件是项目目标、阶段顺序和反复调查事项的权威交接入口。不要重复询问已确认的目标，也不要把历史参考项目误作当前目标。**
@@ -2211,15 +2211,17 @@ For every future local Agent task, if a test or evidence step may require connec
 - Cleanup: source overlay restored to the exact 17-patch baseline and object/temp outputs removed; Agent retained its independent staging directory and Bazel artifacts locally as evidence. No binaries uploaded. This is a documented deviation from the taskbook's disposable-worktree cleanup instruction; no other workspace was modified.
 - No device connection or command. The result does not prove PMIC hardware behavior, final ABL/FDT/EFI memory handoff, DTBO selection, boot or UFS runtime stability. **Phase E/F remain BLOCKED; Phase G NOT RUN.**
 
-## 2026-11-25 — ROUND130 prepared: integrated four-candidate UFS lifecycle validation
+## 2026-11-26 — ROUND130 integrated four-candidate UFS lifecycle validation accepted
 
-- 1号 AI combined the previously validated AI1 groups into a fresh isolated candidate branch: [ai1/round130-stagea-ufs-lifecycle-integration](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ai1/round130-stagea-ufs-lifecycle-integration).
-- Base remains the exact Stage A 17-patch snapshot `2f21233148a04afdd61e44b1be7688399967d9d0` on immutable ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`.
-- Apply order after the 17-patch base: (18) ROUND120 per-HBA async scan join, (19) ROUND122 UFS load-first regulator shutdown, (20) ROUND128 V2 QMP dual-rail state, (21) ROUND126 proxy-consumer load-first.
-- The four source patches are copied byte-for-byte into `kernel-baseline/round130/`; their blobs match the independently validated origin identities: `f604c867...`, `64dd2ad9...`, `22ccec1c...`, `c180dbf4...`. The series manifest and integration source review are in the same branch.
-- This is a cross-group integration test, not a new implementation change: ROUND124 previously built ROUND120+122 on a 15-patch baseline; ROUND129 built ROUND128 V2+ROUND126 on the 17-patch baseline. ROUND130 must prove all four coexist in one 21-patch tree.
-- **Active test taskbook:** [ROUND130 Agent taskbook](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_TASKBOOK.md). It requires all 9 affected objects to compile before one full Image build and ROUND58 regression. No code modifications are authorized for Agent.
-- No source code was merged into AI2. The task is fully offline; any possible tablet access remains prohibited unless the user first gives explicit approval. ROUND130 is pending Agent validation; Phase E/F remain BLOCKED and Phase G NOT RUN.
+- Agent report was read in full and reviewed against the taskbook: [ROUND130 combined report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_REPORT.txt), blob `def62019b5760d991f41d674e227b9e1af0761df`.
+- **Disposition: ACCEPTED as an isolated, buildable AI1 candidate series.** Exact Stage A base `2f21233148a04afdd61e44b1be7688399967d9d0` on ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, with the 17 base patches followed by ROUND120, ROUND122, ROUND128 V2 and ROUND126 (21 total).
+- All 21 patch identities matched; ordered apply/check/diff-check passed with zero fuzz. Recorded offsets: base-series offsets as reported; ROUND128 V2 hunk #3 offset -19 lines. ROUND120/122 cross-region combination applied successfully.
+- Source gates for all four candidates passed. Host tests passed 38/38 + 83/83. All 9 affected target objects compiled. Full Kleaf `//common:dby_w09` build passed (`BUILD_RC=0`, 368s). .config byte-identical to Stage A baseline (SHA-256 `0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15`); ROUND58 config 33/33 and helper tests 11/11 passed.
+- Image SHA-256: `4ef82e03b2300fa37abc7927474d0f2357b27ca1e80ddf658b63a79f44c804f1`; System.map SHA-256 `3887cd87acc7e07dfe27abc14e5ddd54a1e767cd9043bf9b4`; vmlinux SHA-256 `1701b18ff918d0654ff155f72cbdca09e21636e008281a9961`.
+- Checkpatch findings disclosed: ROUND120 0E/4W/1C RC=1; ROUND122 0E/0W/2C RC=1; ROUND128 V2 0E/1W/0C RC=1; ROUND126 0E/0W/0C RC=0.
+- Four candidates were reverse-applied; tracked diff SHA exactly restored to the 17-patch baseline `3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf`; tracked and untracked path sets matched. Disposable staging/build/temp outputs were removed. No device was connected and no binary was uploaded.
+- Acceptance record and packaged series: [ROUND130 acceptance](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round130/ROUND130_ACCEPTANCE.md) and [AI1 integration branch](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ai1/round130-stagea-ufs-lifecycle-integration).
+- **Boundary:** this is buildability/integration acceptance only; it does not prove async runtime races, physical PMIC behavior, final ABL/FDT/EFI memory handoff, DTBO selection, device boot or hardware stability. Stage A Phase E/F remain BLOCKED and Phase G NOT RUN. AI2 Stage A branch, mainline device code, DTS draft and PR #1 were not modified; do not auto-merge this AI1 candidate into AI2.
 
 ## 2026-11-26 — Gitee direct access unavailable; ROUND131 mirror taskbook issued
 

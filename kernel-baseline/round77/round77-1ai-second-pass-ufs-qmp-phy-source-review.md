@@ -39,7 +39,7 @@ The two-domain attach strategy is also aligned with the known topology: MMCX is 
 
 The placement is also correct relative to the ACK UFS probe sequence: the Qualcomm probe helper runs before `ufshcd_pltfrm_init()`, while that platform helper parses/initializes the UFS OPP table later. The pinned `dev_pm_opp_set_config()` contract requires configuration before OPPs are initialized. The returned attach-list count is checked for exactly two domains; the OPP required-device mapping is registered as a devres action after the domain-attach resource, so OPP configuration is cleared before those attached GenPD devices are detached. The required-dev index is 0, matching the only required-opps entry. The later generic UFS clock-only OPP configuration is independently managed and does not overwrite that required-dev mapping.
 
-Pinned API references: [`drivers/opp/of.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf0563e1ee600e1339e0463c5fcbdc9a/drivers/opp/of.c) and [`drivers/opp/core.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf0563e1ee600e1339e0463c5fcbdc9a/drivers/opp/core.c).
+Pinned API references: [`drivers/opp/of.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/opp/of.c) and [`drivers/opp/core.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/opp/core.c).
 
 **Result: PASS (source-structure and intended mapping).** This does not establish HOS4.3 MMCX→MX voltage-corner equivalence; ROUND25 explicitly leaves that translation/dropout behavior unresolved. Do not add a bare MMCX→MX parent or invent corner conversion.
 

@@ -1597,3 +1597,12 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 - 本轮只做源码研究，没有改 2号 AI 补丁、DTS、binding 或测试 Agent 工作区。
 
 **ROUND27 schema 状态仍为 NOT CLEAN。** 需 2号 AI 制订修复实现，再发起新的测试 Agent 验证任务；现有测试 Agent 报告完成后已停止。
+
+
+## 2026-11-25 — ROUND83：PM8150 UFS 输出的 ACK driver supply-name 合同核对
+
+报告：[ROUND83 — ACK PM8150 RPMh regulator supply-name contract for DBY-W09 UFS rails](./kernel-baseline/round83/round83-pm8150-driver-supply-name-contract.md)。
+
+固定 ACK 的 qcom-rpmh-regulator.c 为所需输出定义了准确的父级供电 lookup key：PM8150 L5→vdd-l3-l4-l5-l18、L6/L9→vdd-l6-l9、L17→vdd-l13-l16-l17、S4→vdd-s4；PM8150L S8→vdd-s8。PM8150 regulator binding 也允许这些属性组。
+
+**重要边界：** 这些是 ACK regulator driver 的 supply_name/DT lookup 名称，不是实测板级物理 net 证据。HOS4.3 base FDT 检索仍未发现这些 parent-supply properties，也没有 DBY-W09 原理图或 power-tree。故不能推导其物理源头、不能猜 vph_pwr、不能给所有 rail 补相同 parent。ROUND83 将 ROUND64 后续需要的查询字段精确收窄为上述五组，PMIC physical input gate 仍 BLOCKED。

@@ -97,3 +97,26 @@ Do not upload AUX binary or raw firmware, and do not repeat ROUND11's phandle gr
 - Full HOS4.3 ARC equivalence: NOT ESTABLISHED.
 - Whether missing MX parent blocks first UFS link startup: UNKNOWN.
 - No source, DTS, config, build or device change.
+
+## ROUND74 refinement — missing MMCX parent is not an ACK probe-defer by itself
+
+A further exact-source pass reviewed rpmhpd_power_on(), rpmhpd_power_off(), rpmhpd_set_performance_state(), rpmhpd_aggregate_corner() and rpmhpd_probe() in the pinned drivers/pmdomain/qcom/rpmhpd.c.
+
+- rpmhpd_probe() validates each configured descriptor's Command DB address, ARC slave ID and AUX level map, initializes each GenPD, and only calls pm_genpd_add_subdomain() when that descriptor's .parent pointer is non-NULL. A missing optional parent pointer does not cause probe failure.
+- rpmhpd_power_on() sends the domain's enable/current corner through rpmhpd_aggregate_corner() and marks the domain enabled if the RPMh write succeeds.
+- rpmhpd_set_performance_state() maps the requested level into the local RPMhPD AUX level array. If the domain is enabled, it updates the RPMh vote; if not yet enabled, it stores the target corner for the later power-on path.
+- rpmhpd_aggregate_corner() aggregates the plain MMCX and MMCX_AO peer pair and sends ACTIVE_ONLY, WAKE_ONLY and SLEEP requests for their shared mmcx.lvl resource. It does not need a parent-domain link to issue these requests.
+- The GenPD parent hierarchy is handled in the generic PM-domain core separately. If there is no registered parent-child link, no parent request is propagated; the MMCX domain can still issue its own RPMh corner vote.
+
+This narrows the risk:
+- The absence of ACK SM8250 MMCX-to-MX parent propagation is not, by itself, a source-level reason for UFS probe to defer or for MMCX GenPD registration to fail.
+- The UFS OPP request can still reach MMCX and generate the configured MMCX resource vote, provided the RPMHPD provider and CMD_DB/AUX mapping are valid.
+- Whether this independent MMCX vote is enough for the real HOS4.3 UFS hardware path remains UNKNOWN. HOS4.3's reported ARC parent edge may be required for voltage/dropout margin, active/sleep aggregation or robustness even if Linux probe succeeds.
+
+Exact source anchors:
+- rpmhpd.c:L806-L890: RPMh command send and peer ACTIVE/WAKE/SLEEP aggregation.
+- rpmhpd.c:L893-L958: local power-on/off and performance-state handling.
+- rpmhpd.c:L1001-L1067: provider validation, GenPD initialization and conditional parent-link registration.
+- drivers/pmdomain/core.c:L400-L410,L434-L500: parent pstate translation/propagation only when a GenPD parent-child link exists.
+
+Do not downgrade the HOS ARC gate to PASS. Keep it as an open hardware-equivalence risk, not a proven probe blocker.

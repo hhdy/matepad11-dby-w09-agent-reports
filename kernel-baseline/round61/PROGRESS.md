@@ -738,3 +738,13 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - **Disposition:** accept ROUND32 as child-scoped mechanism + binding/fixture + reproducible host tests + full Image build completed, and confirm that its L5/L9 review DTS expresses separate self-target declarations. Do **not** mark the general target lifecycle fully closed or claim hardware/end-to-end validation. The missing target-unregister protection/test is a blocker for accepting the mechanism as generally safe.
 - Phase E/F remain BLOCKED; Phase G NOT RUN. L5 physical parent-supply remains unproven. No device/partition/boot/DTBO/AVB action or HOS4.3 upload was performed.
 - Next task assigned to local Agent: **AI2-ROUND33**, taskbook `firmware-analysis/round33/AI2_ROUND33_TASKBOOK.md` on `firmware-audit-v1`, taskbook commit `24f0ba7e7bb14bcef78a186c55984bed408d2dfc`. Objective: either safely track/clean all target references before target unregister, or enforce self-target-only at runtime (while auditing legacy group mapping), with lifecycle tests, full series apply and full Image rebuild. Agent must stop after ROUND33 and must not start ROUND34.
+
+
+## 2026-11-25 — 2号 AI direct code work for AI2-ROUND33 (verification pending)
+
+- Following the ROUND32 review, 2号 AI directly authored and committed patch `round61/patches/round33-0001-regulator-proxy-self-target-only.patch` (blob `262ab30f458ebb603902014be8bbc9a5a8654437`, SHA-256 `5505d1e3f8dbec696d797e15c0484263e532c3397174cd149915ae8b5c7ec0e9`).
+- Runtime policy: both child-scoped and legacy provider-level `proxy-supply` must resolve to the exact `reg_node` that owns the request. Cross-target requests return `-EINVAL` before handle acquisition/voting. Legacy provider-level behavior is retained only for its single matching request child; other request-bearing children are rejected.
+- Binding text was tightened to match runtime policy. L5/L9 review DTS remains self-targeted and unchanged.
+- Host harness additions: mock OF phandle parsing and provider `regulator_get()` target lookup; nine new assertions cover child cross-target rejection, legacy group cross-target rejection, and legacy self-target cleanup. Existing suites remain in place.
+- Files updated: `round32-stagea-series.txt`, `round32-child-scoped-proxy-implementation.md`, `tests/mock/mock_core.h`, `tests/test_proxy_consumer_round32.c`, and new patch 16.
+- **Not yet verified:** no claim of patch apply, checkpatch, schema gate, host test execution, or full Kleaf build for this new patch. Those local-environment checks are the remaining Agent task. Phase E/F remain BLOCKED; Phase G NOT RUN; no device or partition operation.

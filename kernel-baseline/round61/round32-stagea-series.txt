@@ -53,3 +53,26 @@ ack-6.18.33-a30 workspace root with the four ROUND32-touched files synced byte-i
 NOT applied, deliberately:
   any change to the HOS4.3-related board DTS draft (protected); any
   modification of patches 1-12; any relaxation of the binding schema.
+
+ROUND33 additions:
+
+16   round61/patches/round33-0001-regulator-proxy-self-target-only.patch 262ab30f458ebb603902014be8bbc9a5a8654437  5505d1e3f8dbec696d797e15c0484263e532c3397174cd149915ae8b5c7ec0e9 pending-local-apply-check
+
+patch 16 touches:
+  drivers/regulator/proxy-consumer.c: reject any child-scoped or legacy
+    provider-level proxy-supply phandle that does not point to the requesting
+    regulator child itself, before acquiring a handle or applying votes.
+  Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml:
+    document the runtime self-target-only rule for both mappings.
+
+ROUND33 policy: no cross-regulator proxy handles are permitted. The
+per-rdev owner unregister hook therefore releases the only proxy handle
+owned by that same rdev before regulator core continues unregistering it.
+The legacy group mapping remains available only for the single child that
+is also the group proxy-supply target; other requesting children are rejected.
+
+Host harness updates (not part of the kernel patch series):
+  tests/mock/mock_core.h: mock of_parse_phandle()/of_node_put() and
+    provider regulator_get() target resolution.
+  tests/test_proxy_consumer_round32.c: checks child and legacy cross-target
+    rejection before lookup, and legacy self-target teardown.

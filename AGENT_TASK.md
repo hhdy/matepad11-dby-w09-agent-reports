@@ -652,3 +652,22 @@ Pinned ACK source anchors:
 - `of_regulator.c:L647-L665`, `regulator/core.c:L2210-L2245`
 
 This is source/API evidence, not a runtime result. ROUND22 still performs the full local board-DTS / DTB readiness audit; no source, DTS or build input was changed.
+
+
+## 2026-11-25 — Supplemental source finding: board DTS must activate the ROUND33 MMCX dual-domain path
+
+The ROUND18 Image includes the ROUND33 UFS driver helper, but the current main-branch `dts/dby-w09-ack18-board.dts.draft` still inherits only one Host domain from the SoC DTSI: GCC UFS_PHY_GDSC. ROUND33 deliberately returns unchanged for a one-domain layout; its MMCX attach and `required_dev[0]` mapping occurs only for exactly two domains.
+
+This matters because:
+- ACK UFS platform parsing sets `hba->use_pm_opp = true` when the SoC `operating-points-v2` table is present.
+- UFS clock scaling calls `dev_pm_opp_set_opp()`.
+- ACK OPP core only emits a `required-opps` performance-state request when the corresponding `required_devs[index]` is non-NULL.
+- Without ROUND33's required-device mapping, the UFS OPP table can still scale the UFS clocks, but the associated RPMhPD MMCX vote is skipped.
+
+Therefore the device DTS candidate must integrate ROUND37's dual-domain delta for UFS Host:
+`power-domains = <&rpmhpd RPMHPD_MMCX>, <&gcc UFS_PHY_GDSC>;`
+with MMCX index 0 and GCC GDSC index 1, plus the required binding includes. The UFS PHY's own GCC GDSC domain remains unchanged. The nine HOS4.3 DTBO variants do not add this Host dual-domain array, so the new ACK board DTS must provide it.
+
+This is not a confirmed hardware failure; it is a source-proven missing performance-domain request in the current DTS draft. The ROUND37 patch was only applied to an isolated exact-file fixture and has not been integrated into an actual ACK DTS path or compiled as a DTB.
+
+Detailed review: `kernel-baseline/round65/round65-ufs-dual-genpd-dts-opp-routing-audit.md`.

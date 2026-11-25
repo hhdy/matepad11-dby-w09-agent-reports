@@ -1,0 +1,593 @@
+TEST-AGENT-ROUND106
+HOS4.3 PM8150 L5 — RPMh regulator ACK / coupling / parent-supply 静态 FDT 只读取证
+目标设备：Huawei MatePad 11 DBY-W09 / KONA / SM8250
+固定 ACK 对照：android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a（仅作对照，本轮未检出、未修改、未编译）
+
+================================================================================
+0. 结论摘要（先给答案，证据见后续各节）
+================================================================================
+
+问题：HOS4.3 的 PM8150 L5 provider / regulator 节点是否声明了会影响 ACK
+regulator_disable() 错误边界的 qcom,always-wait-for-ack 或 regulator coupling；
+是否存在其普通 upstream regulator parent supply 属性；九个 stock DTBO 是否覆盖？
+
+答案（全部为静态 FDT 证据，未含任何运行时推断）：
+
+ (1) qcom,always-wait-for-ack：**三个 base 候选全树为零实例**；九个 DTBO 全树同样零实例。
+     因此 ACK 的 disable 路径在本固件 DT 中完全不受该 vendor 标志影响。
+ (2) Regulator coupling：**三个 base 候选全树不存在任何 coupling 属性**
+     （regulator-coupled-with / -max-spread / -min-spread / -no-balance / qcom,coupling-spread
+     全部为 0 实例）；因此不存在"RSC 子树内其他 regulator 反向耦合到 L5"的情形。
+     L5 child 自身也未声明 coupling，三个 child（l5 / l5-ao / l5-so）均无。
+ (3) Parent supply：L5 group 与三个 child 节点上**没有任何 *-supply / *-parent-supply**
+     （vdd-l3-l4-l5-l18-supply、vin-supply、vdd-supply、vph-pwr-supply 均为 ABSENT）。
+     唯一出现在 group 上的 supply 类属性是 vendor 的 proxy-supply，它不是物理输入。
+ (4) Vendor proxy：`proxy-supply` 位于 L5 **group** 节点，phandle 解析后的唯一目标就是
+     L5 child 自身 `/soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5`
+     （即声明 qcom,proxy-consumer-* 的那个节点）。它**不证明**任何物理上游 input rail。
+ (5) Overlay matrix：九个 entry **没有任何 fragment 指向 L5 group / 任一 L5 child /
+     /soc/rsc@18200000 子树**，也没有任何 overlay 节点落在该子树下。
+     因此 nine-entry 对上述 A/B/C 字段的修改数均为 0，合成后的 L5 属性值与 base 完全相同。
+     九个 entry 在这一点上表现一致，"entry 8 才是实际生效 overlay"的假设不影响本结论。
+
+ 补充（非任务书要求项，单独标注）：九个 entry 均通过 fragment@63 把
+ `/soc/ufsphy_mem@1d87000`（QMP UFS PHY，base 内 status="disabled" 且无 compatible）
+ 的 `vdda-phy-supply` 指向 pm8150_l5、`vdda-pll-supply` 指向 pm8150_l9，
+ 并同时加入布尔属性 `vdda-phy-always-on`、status="ok"。
+ 即 L5 在本固件中唯一的 overlay 引入消费者就是该 UFS PHY；L5 自身配置未被任何 overlay 触碰。
+
+
+================================================================================
+1. 任务编号、归属、角色隔离、停止规则
+================================================================================
+任务编号      : TEST-AGENT-ROUND106
+任务归属      : 1号 AI（ChatGPT）下发给本地只读测试 Agent 的取证任务。
+                本 Agent 不是 2号 AI，未承担任何驱动实现。
+下发方/审查方 : 1号 AI（ChatGPT）
+执行方        : 本地只读测试 Agent（WorkBuddy / 本机代理）
+任务性质      : 既有固件工作副本的只读静态取证；不是驱动实现任务，不是补丁任务。
+唯一交付路径  : firmware-analysis/round106/TEST_AGENT_ROUND106_L5_RPMH_DISABLE_CONFIG_REPORT.txt
+上传分支      : firmware-audit-v1
+
+角色边界：
+  - 未修改内核、驱动、DTS、binding、补丁或 Git 开发分支；
+  - 未替 2号 AI 作任何实现决策，未判定 L5 相关改动是否安全；
+  - 未写出运行时 L5 电压、开关状态，未推断 ABL 当前选用哪个 DTBO entry。
+
+停止规则执行：
+  - 上传本报告后立即停止；
+  - 未启动 ROUND107 或任何后续任务；
+  - 未触碰 2号 AI 的源代码、补丁、patch series 或 PR。
+
+
+================================================================================
+2. 输入对象身份与结构校验
+================================================================================
+输入来源：ROUND3 已审查的 HOS4.3 工作副本（boot.img 的 dtb 段拆分对象 + dtbo.img 解包条目）。
+本轮**未重新提取、未重新解包固件，未创建替代固件工作区**；直接读取既有工作副本。
+
+2.1 base boot FDT 候选（任务书 §2 指定 candidate 0/1/2）
+
+  对象                        长度(B)   SHA-256
+  boot_fdt_candidate_0.dtb    556,524   df2730f3d2e9bdabad874c3ef7399534c5c6070b046c4524224aa461ba2c70f7
+  boot_fdt_candidate_1.dtb    556,520   f3dcba83e73f4d868e8e069369eb499ecde399a9034010be8bb34af4786e9817
+  boot_fdt_candidate_2.dtb    551,026   6cda673986bf814c9f118aa129e3e85f235def6ce6f607f6a724b6fa135a0835
+
+  与 ROUND103 已记录的 SHA-256 与长度逐字节一致。
+  candidate_3（173 B 空 FDT 壳）按任务书 §2 不在本轮 0/1/2 取证范围内，未纳入结论。
+
+2.2 stock DTBO entries 0..8
+
+  对象                    长度(B)   SHA-256
+  dtbo_entry_0.dtbo      329,044   6940ce1167a3a21cb677a422da4327682d5e6d266dc5af5a002acb28cfc72aef
+  dtbo_entry_1.dtbo      329,352   685a837e65a692da8780df6f9245c010128893ef22d0aeb1046b572eabe2872f
+  dtbo_entry_2.dtbo      329,240   0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b
+  dtbo_entry_3.dtbo      329,098   e68e5a48f64cfb686e2698b4dba07d58fa07fe4316522bbb4323ecfbeb9f486c
+  dtbo_entry_4.dtbo      329,340   866991056bef3a99d7e010bc13196f87ee5b93474e70a75a4c34ddcc4bad6cfc
+  dtbo_entry_5.dtbo      329,356   699df8950612ca3825db38050dceb20d08c85ded666e238a57b281c80ba7eec1
+  dtbo_entry_6.dtbo      329,356   fca5a7a83ea69a473720c180594cf95035c57707957e1effe0484b76bdbad844
+  dtbo_entry_7.dtbo      329,352   0a57a7f8ac678073542de72cef02e2bbbf9d40dd5aeb30000835258d55cff07b
+  dtbo_entry_8.dtbo      329,352   a7946352a86ab6e47b5ee79d84e5d6c4cf4e548c96b0221cec909f32ebd9d21d
+
+2.3 FDT 头与结构块校验（解码器判定，0 error）
+
+  对象                      totalsize  FDT版本  节点数  含属性路径数  字符串块(B)  结构块(B)
+  candidate_0                 556,524     17     3,471      3,281      48,104     508,364
+  candidate_1                 556,520     17     3,471      3,281      48,104     508,360
+  candidate_2                 551,026     17     3,433      3,243      48,034     502,936
+  dtbo_entry_0                329,044     17     1,687        —           —           —
+  dtbo_entry_1                329,352     17     1,690        —           —           —
+  dtbo_entry_2                329,240     17     1,688        —           —           —
+  dtbo_entry_3                329,098     17     1,686        —           —           —
+  dtbo_entry_4                329,340     17     1,689        —           —           —
+  dtbo_entry_5..8             329,356/329,352     17     1,690        —           —           —
+
+  13 个对象全部：magic 正确、totalsize ≤ 文件长度、结构块与字符串块不越界、
+  FDT END token 到达、节点深度闭合、无未终止节点名/属性名。解码 error 列表为空。
+  长度与 SHA-256 在本轮开始与结束时各计算一次，两次完全一致（见 §14）。
+
+
+================================================================================
+3. 工具、方法与取证边界（含必须如实披露的工具缺失）
+================================================================================
+
+3.1 本轮实际使用的解析器
+
+  ROUND3 已审查的只读 FDT 解码器：
+    tools/Analyze-DBY-W09-DeviceTree.py  —  parse_fdt_header() / decode_structure()
+  该解码器直接解析二进制 FDT 结构块 token（FDT_BEGIN_NODE / FDT_PROP / FDT_END_NODE /
+  FDT_END），不依赖 dtc，不写回任何输入文件。
+  另使用 ROUND103 已审查的定位规则（目标节点路径、phandle 必解析成完整节点路径、
+  fragment target 解析、per-entry 分别列示）。
+
+  本轮新增的仅是"遍历已解码树 / 解析 __symbols__ 与 __fixups__ / 汇总输出"的编排逻辑，
+  不含任何新的二进制工具、未下载、未安装、未编译任何东西。
+
+3.2 必须披露：dtc / fdtget / fdtoverlay 本轮**不可用**
+
+  本轮开始时的工具探测结果：
+    - dtc、fdtget、fdtoverlay 不在本机 Git Bash 的 PATH 中；
+    - 其原提供方（WSL 发行版 Ubuntu / Ubuntu-24.04）当前无法启动：
+        Wsl/Service/CreateInstance/MountDisk/HCS/ERROR_PATH_NOT_FOUND
+      （发行版已注册但 ext4.vhdx 缺失，属本机环境损坏，非本任务可修复项）；
+    - python 环境无 libfdt / pyfdt 模块。
+
+  因此本轮状态必须记为：
+    dtc 反编译            : NOT RUN（工具不可用）
+    fdtget 属性查询       : NOT RUN（工具不可用）
+    fdtoverlay 二进制合成 : NOT RUN（工具不可用）
+
+  处置：按任务书 §5「仅允许使用 ROUND3 已审查 parser 及既有已审查解析模式」，
+  改用该只读二进制解码器完成同等取证。**没有**下载/安装/编译任何工具来替代它，
+  也**没有**因为工具缺失而降低核对项或跳过多项检查。
+  上一轮（ROUND103）报告中记录的 dtc/fdtget 版本与命令退出码，属于那一轮的取证条件，
+  不可移用于本轮的"已执行命令"清单；本报告不复制那些退出码。
+
+  影响评估（如实说明）：
+    - 属性的 presence/absence、属性长度、cell 值、phandle 解析、fragment 目标解析
+      均不依赖 dtc，结论强度不受影响；
+    - 唯一受限项是"用 fdtoverlay 生成二进制合成镜像"。本轮改为**结构化合成判定**：
+      证明没有任何 fragment 指向目标子树、也没有 overlay 节点落在该子树，
+      因此合成对目标节点是空操作（详见 §11）。该判定是充分条件，不是近似。
+
+3.3 必须披露的判据陷阱：phandle 数值与非 phandle 裸数字的数值巧合
+
+  L5 相关节点的 phandle 是**小整数值**（本报告不记录其数值）。在同一棵树里，
+  以下非 phandle 类属性也含同样的小整数，若用"搜索所有等于该 phandle 的 cell"的
+  朴素做法，会产生大量假引用：
+
+    clocks（如 <&gcc N> 的第二个 cell 是 clock ID）、
+    thermal-sensors（sensor ID）、
+    reg、cell-id、cell-index、hw-tbuf、qcom,bc-elem-size、
+    qcom,fuse-disable-bit、qcom,spcom-sp2soc-rmb-initdone-bit、qcom,spss-scsr-bits、
+    qcom,sw-ctrl-gpio
+
+  candidate_2 上该误命中合计 19 处 / 11 种属性名；朴素搜索会得到 28 条"引用"，
+  其中只有 9 条是真正的 phandle 引用（全部为 *-supply 类）。
+  证据：i2c@888000 的 clocks = <23 X 23 136 23 137> 呈 phandle+ID 交替模式：
+  首 cell 是 clock provider 的 phandle，第二 cell 是该 provider 的 clock ID。
+  X 的数值恰好等于 L5 的 phandle（本报告不记录该数值），但它在 clocks 语境中是
+  clock ID，不是引用；同理 24/124 一类小整数在本树里大量作为 ID/偏移/位号出现。
+
+  因此本报告的引用搜索**限制在 *-supply 语义类属性**（1 cell = 1 phandle），
+  其余数值巧合单独计数并在此披露，未静默丢弃，也未计为引用。
+
+
+================================================================================
+4. 目标节点与其完整属性表（三个候选完全一致）
+================================================================================
+4.1 节点路径（与任务书 §1 给出的路径完全一致，无需按兼容链改写）
+
+  provider group : /soc/rsc@18200000/rpmh-regulator-ldoa5
+  L5 child       : /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5
+  sibling        : /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5-ao
+  sibling        : /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5-so
+
+  group 的直接子节点恰为上述 3 个，无其他 sibling。
+  /soc/rsc@18200000 子树共 109 个节点（三候选一致）。
+
+4.2 group 属性（candidate_0 / 1 / 2 完全相同）
+
+  属性                            长度(B)  值
+  compatible                       24      "qcom,rpmh-vrm-regulator"
+  qcom,resource-name                6      "ldoa5"
+  qcom,regulator-type              10      "pmic5-ldo"
+  qcom,supported-modes              8      <2 4>
+  qcom,mode-threshold-currents      8      <0 30000>
+  proxy-supply                      4      1 cell（phandle）→ 见 §8
+
+  group 上不存在 qcom,always-wait-for-ack，不存在任何 regulator-coupled-*，
+  不存在 vdd-l3-l4-l5-l18-supply / vin-supply / vdd-supply / vph-pwr-supply。
+
+4.3 L5 child 属性（三候选完全相同，共 9 个属性）
+
+  属性                            长度(B)  值
+  regulator-name                   10      "pm8150_l5"
+  regulator-min-microvolt           4       880000
+  regulator-max-microvolt           4       880000
+  qcom,init-voltage                 4       880000
+  qcom,init-mode                    4       4
+  qcom,set                          4       3
+  qcom,proxy-consumer-enable        0       布尔（存在，长度 0）
+  qcom,proxy-consumer-current       4       100000
+  phandle                           4       PRESENT
+
+4.4 L5-ao 属性（三候选完全相同，7 个）
+
+  regulator-name "pm8150_l5_ao"；min/max microvolt 880000；qcom,init-voltage 880000；
+  qcom,init-mode 4；qcom,set 1；phandle PRESENT。
+
+4.5 L5-so 属性（三候选完全相同，7 个；**无 phandle**）
+
+  属性                            长度(B)  值
+  regulator-name                   13      "pm8150_l5_so"
+  regulator-min-microvolt           4       880000
+  regulator-max-microvolt           4       880000
+  qcom,init-voltage                 4       880000
+  qcom,init-mode                    4       2
+  qcom,set                          4       2
+  qcom,init-enable                  4       0
+  phandle                           —       **NOT PRESENT**
+
+  重要：l5-so 既无 phandle，也不在 base 的 /__symbols__ 标签表中
+  （标签表只有 pm8150_l5 / L5A 与 pm8150_l5_ao / L5A_AO）。
+  因此在 FDT 层面，任何 phandle 引用或 overlay fragment 目标都不可能指向 l5-so；
+  它只能通过 target-path 字符串被指向，而九个 DTBO 的 target-path 属性数均为 0（见 §10）。
+
+  三候选对 group/l5/l5-ao/l5-so 四张属性表逐项相等（已程序化比对，全部 True）。
+
+
+================================================================================
+5. A 项：qcom,always-wait-for-ack
+================================================================================
+结论：**ABSENT（三个 base 候选、全部九个 DTBO、四个目标节点全部为零实例）**
+
+5.1 节点级（每个目标节点逐项查询）
+
+  节点                                       qcom,always-wait-for-ack
+  group（rpmh-regulator-ldoa5）              ABSENT
+  regulator-pm8150-l5                        ABSENT
+  regulator-pm8150-l5-ao                     ABSENT
+  regulator-pm8150-l5-so                     ABSENT
+
+5.2 全树级（避免属性名拼写或节点级假阴性）
+
+  属性实例搜索（遍历全部节点/全部属性名）：
+    candidate_0 / 1 / 2 中含该属性名的节点数 = 0 / 0 / 0
+    dtbo_entry_0..8     中含该属性名的节点数 = 0（九个 entry 全为 0）
+
+  字节级子串扫描（直接扫原始二进制文件，含字符串块）：
+    模式 "always-wait-for-ack"：12 个输入文件全部命中 0 次
+    模式 "wait-for-ack"       ：12 个输入文件全部命中 0 次
+
+  即：该属性名在这 12 个 FDT 对象的原始字节里根本不出现，
+  不是"目标节点上没有"，而是**整个固件 DT 空间都没有**。
+
+5.3 与 2号 AI 的 ACK 语义的关系（只陈述事实，不做实现判断）
+
+  由于该标志不存在，就本固件 DT 而言，不存在"通过 DT 让 L5 disable 也等待 ACK"的既有配置。
+  PM8150 L5 在 DT 中没有任何 vendor ACK 覆盖可供继承或与之冲突。
+  驱动侧的 enable/disable 等待行为属于内核源码语义，不是本轮 FDT 取证范围，
+  本报告不据此推断运行时行为。
+
+
+================================================================================
+6. B 项：Regulator coupling（含反向耦合搜索）
+================================================================================
+结论：**ABSENT（全树无任何 coupling 属性实例；不存在指向 L5 的反向耦合）**
+
+6.1 L5 child 自身
+
+  节点                                       regulator-coupled-with 与所有 spread/no-balance 变体
+  regulator-pm8150-l5                        ABSENT（全部变体）
+  regulator-pm8150-l5-ao                     ABSENT（全部变体）
+  regulator-pm8150-l5-so                     ABSENT（全部变体）
+  group（rpmh-regulator-ldoa5）              ABSENT（全部变体）
+
+  已逐项检查的属性名：
+    regulator-coupled-with
+    regulator-coupled-max-spread
+    regulator-coupled-min-spread
+    regulator-coupled-no-balance
+    qcom,coupling-spread（vendor 拼写变体，ROUND103 亦曾核对）
+
+6.2 反向耦合搜索（任务书明确要求：不能只查 L5 自己）
+
+  搜索范围一：整个 /soc/rsc@18200000 子树（109 个节点）的全部属性。
+  搜索范围二：整个 base FDT（3,433 / 3,471 节点）的全部属性。
+
+  结果：
+    candidate_0 / 1 / 2 的 regulator-coupled-* 实例数 = 0 / 0 / 0
+    含 "coupl" 子串的属性名（任意大小写，任意拼写）在三个候选中的实例数 = 0
+    九个 DTBO 中含 "coupl" 子串的属性名实例数 = 0（九个 entry 全部为 0）
+
+  结论的性质说明：
+    这是比"反向搜索 phandle 未命中"更强的结论——因为**属性本身在整个 DT 空间不存在**，
+    所以"某个其他 regulator 的 regulator-coupled-with 指向 L5"在语法上不可能成立。
+    同时也不存在任何别的 regulator 被 L5 耦合，L5 不是任何 coupling 组的成员。
+
+6.3 L5 在 RSC 子树内被 supply 语义引用的全部情况（唯一 1 处）
+
+  节点 /soc/rsc@18200000/rpmh-regulator-ldoa5  属性 proxy-supply  1 cell → L5 child
+  （即 §8 的 vendor proxy，不是 coupling，也不是物理输入。除此之外 RSC 子树内
+    没有任何节点以 *-supply 或 *-parent-supply 指向 L5 的任何变体。）
+
+  补充事实（避免"只查了目标节点"的质疑）：
+    RSC 子树内确实存在 *-parent-supply 用法，但全部落在 level regulator 上，与 L5 无关：
+      /soc/rsc@18200000/rpmh-regulator-cxlvl     pm8150_s3_level-parent-supply
+                                                 pm8150_s3_level_ao-parent-supply
+      /soc/rsc@18200000/rpmh-regulator-mxlvl     pm8150a_s3_mmcx_sup_level-parent-supply
+      /soc/rsc@18200000/rpmh-regulator-mmcxlvl   pm8150a_s4_level-parent-supply
+                                                 pm8150a_s4_level_ao-parent-supply
+    这些属性的 phandle 目标均解析到 level regulator，不是 L5（也不是 l5-ao）。
+
+
+================================================================================
+7. C 项：普通上游 supply / parent-supply
+================================================================================
+结论：**目标节点全部 ABSENT；L5 在 FDT 中没有任何物理上游 input rail 声明**
+
+7.1 任务书点名的属性（group + 三个 child 逐项）
+
+  属性                               group   l5      l5-ao   l5-so
+  vdd-l3-l4-l5-l18-supply            ABSENT  ABSENT  ABSENT  ABSENT
+  vin-supply                         ABSENT  ABSENT  ABSENT  ABSENT
+  vdd-supply                         ABSENT  ABSENT  ABSENT  ABSENT
+  vph-pwr-supply                     ABSENT  ABSENT  ABSENT  ABSENT
+  其他 *-supply / *-parent-supply    ABSENT  ABSENT  ABSENT  ABSENT
+                                     （唯一例外见 §8 的 proxy-supply）
+
+7.2 全树级交叉验证
+
+  字节级："vdd-l3-l4-l5-l18" 与 "vph-pwr" 在 12 个输入文件中命中 0 次；
+          "vin-supply" 命中 0 次。
+  属性名级："vdd-supply" 在全树存在 8 处，但全部挂在**其他消费者节点**上
+          （/soc/hsphy@88e3000、/soc/hsphy@88e4000 等，它们指向 L5，见 §9），
+          不在 L5 group / child 上；即"vdd-supply 存在"与"L5 有 parent supply"是两件事，
+          不可混淆成后者。
+
+7.3 必须区分两件事（任务书 §4.3 明确要求）
+
+  (a) DT 事实：L5 group 与三个 child 节点上**没有**任何普通 parent supply 属性。
+      这是可以直接从 FDT 断言的事实，不依赖任何内核实现细节。
+
+  (b) 内核 regulator core 的 dummy fallback：若某个 consumer 用非 optional 的
+      regulator 获取接口去取一个未在 DT 中声明的父电源，regulator core 可能返回
+      dummy regulator（取决于内核配置与获取 API 选择）。这属于**内核代码语义**，
+      不是 FDT 证据。
+      本报告**不**据 (a) 推断 (b) 的实际走向，也不声称"因此父电源一定为空/一定为 dummy"。
+      两者分列，交由 2号 AI 在源码层面判定。
+
+  另外，ROUND11 记录过的 vendor proxy-supply 见 §8：它是 proxy consumer 声明，
+  不能当作物理输入 rail，因此不能用来填补 7.1 的空缺。
+
+
+================================================================================
+8. Vendor proxy-supply：精确 phandle 目标
+================================================================================
+属性位置：/soc/rsc@18200000/rpmh-regulator-ldoa5        （group 节点，不是 child）
+属性长度：4 B（1 个 cell，即单个 phandle）
+phandle 解析结果（三个候选一致）：
+  → /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5
+
+即：group 的 proxy-supply 指向**它自己的 L5 child**，而该 child 节点本身携带
+qcom,proxy-consumer-enable（布尔）与 qcom,proxy-consumer-current = 100000。
+这与 "RPMh proxy consumer 节点" 的描述在实质上是同一件事：proxy consumer 的声明
+就写在 L5 child 上，group 只是用 proxy-supply 指回去。
+
+必须明确的两点边界：
+  - 该属性**不指向任何独立电源节点**，同级的 l5-ao / l5-so 也不是它的目标；
+  - 该属性**不证明** L5 有任何物理上游 input rail。它不是 vin/vdd/parent supply。
+  - 本报告不根据 ACK 的 supply_name 字符串或 regulator-name 字符串推断电路连接。
+    （regulator-name 为 "pm8150_l5"，仅是可读名字，不构成电气连接证据。）
+
+  phandle 数值本身按 ROUND103 的既有实践不在报告中记录，只记录解析后的完整节点路径。
+
+
+================================================================================
+9. L5 作为 supply 被谁引用（消费者方向，静态 FDT）
+================================================================================
+方法：在 *-supply 语义类属性中查找指向 L5 child / l5-ao 的 cell（1 cell = 1 phandle），
+      并把 phandle 解析成完整节点路径。l5-so 无 phandle，故不可能被引用。
+
+candidate_0 / 1 / 2 结果完全一致，共 9 处：
+
+  被引用对象        消费者节点                                属性
+  L5 (l5)          /soc/rsc@18200000/rpmh-regulator-ldoa5    proxy-supply          ← vendor proxy（§8）
+  L5 (l5)          /soc/qcom,pcie@1c00000                    vreg-0p9-supply
+  L5 (l5)          /soc/qcom,pcie@1c08000                    vreg-0p9-supply
+  L5 (l5)          /soc/qcom,pcie@1c10000                    vreg-0p9-supply
+  L5 (l5)          /soc/hsphy@88e3000                        vdd-supply
+  L5 (l5)          /soc/hsphy@88e4000                        vdd-supply
+  L5 (l5)          /soc/qcom,mdss_dsi_phy0@ae94400           vdda-0p9-supply
+  L5 (l5)          /soc/qcom,mdss_dsi_phy1@ae96400           vdda-0p9-supply
+  l5-ao            /soc/qcom,cpufreq-hw/qcom,limits-dcvs      isens_vref_0p8-supply
+
+  其中位于 RSC 子树内的仅 1 处（group 的 proxy-supply），其余 8 处均在 RSC 子树之外。
+  这 8 处是"消费者引用 L5"，与"L5 的父电源"方向相反，不能互相替代。
+
+  另：九个 DTBO 通过 fragment@63 新增 1 处对 L5 的引用（见 §12 补充观察）。
+
+
+================================================================================
+10. 九个 DTBO 逐 entry 覆盖矩阵
+================================================================================
+
+10.1 fragment 目标解析方法（无需 dtc/fdtoverlay）
+
+  base FDT 自带 /__symbols__（label → 节点路径）；每个 DTBO 自带 /__fixups__
+  （label → ["/fragment@N:target:0", "/fragment@N/__overlay__:<prop>:0", ...]）。
+  DTBO 中每个 fragment 的 target 都是占位值 <0xffffffff>，由 __fixups__ 的 label
+  在 base 的 __symbols__ 中解析成真实节点路径。
+
+  解析质量（九个 entry）：
+    entry 0 : fragment 143，target 属性 143，占位值 143，target-path 0，fixup label 165，
+              经 fixup+symbols 成功解析的目标数 143（100%），悬空 label 0
+    entry 1 : fragment 145，target 145，占位值 145，target-path 0，fixup label 166，
+              解析 145（100%），悬空 0
+    entry 2 : fragment 144，target 144，占位值 144，target-path 0，fixup label 166，
+              解析 144（100%），悬空 0
+    entry 3 : fragment 143，target 143，占位值 143，target-path 0，fixup label 165，
+              解析 143（100%），悬空 0
+    entry 4 : fragment 144，target 144，占位值 144，target-path 0，fixup label 165，
+              解析 144（100%），悬空 0
+    entry 5 : fragment 145，target 145，占位值 145，target-path 0，fixup label 166，
+              解析 145（100%），悬空 0
+    entry 6 : fragment 145，target 145，占位值 145，target-path 0，fixup label 166，
+              解析 145（100%），悬空 0
+    entry 7 : fragment 145，target 145，占位值 145，target-path 0，fixup label 166，
+              解析 145（100%），悬空 0
+    entry 8 : fragment 145，target 145，占位值 145，target-path 0，fixup label 166，
+              解析 145（100%），悬空 0
+
+  结论：**没有任何 unresolved fragment target**。九个 entry 的 fragment 计数互不相同
+  （143/144/145），进一步说明不能把 entry 8 当作唯一实际启动 overlay 来代表全部；
+  本报告按任务书要求逐 entry 列示。
+
+  DTBO 内 /__local_fixups__ 节点：九个 entry 均 NOT PRESENT（overlay 内部无互相引用）。
+  DTBO 内 target-path 属性：九个 entry 均为 0（因此无法通过 target-path 绕过 phandle 指向 l5-so）。
+
+10.2 覆盖矩阵（针对 L5 group / 三个 child / RSC 子树）
+
+  entry | 指向 L5 group 的 fragment | 指向 L5 child 的 fragment | 指向 RSC 子树 | ACK 实例 | coupling 实例
+    0   |            0              |             0             |       0       |    0     |      0
+    1   |            0              |             0             |       0       |    0     |      0
+    2   |            0              |             0             |       0       |    0     |      0
+    3   |            0              |             0             |       0       |    0     |      0
+    4   |            0              |             0             |       0       |    0     |      0
+    5   |            0              |             0             |       0       |    0     |      0
+    6   |            0              |             0             |       0       |    0     |      0
+    7   |            0              |             0             |       0       |    0     |      0
+    8   |            0              |             0             |       0       |    0     |      0
+
+  补充校验（防止"fragment 指向 /soc 后在 overlay 里重建 rsc 子树"这种绕过方式）：
+    对九个 entry 逐一扫描全部 overlay 节点路径，查找含 "rsc@18200000" / "ldoa5" /
+    "pm8150-l5" 的路径 → **九个 entry 命中数均为 0**。
+    即不仅 fragment 目标不在目标子树内，overlay 里也没有任何节点落在该子树。
+
+  因此 nine-entry 对 A/B/C 三类字段（ACK / coupling / supply）的添加、删除、替换
+  操作数均为 **0**，不存在"某 entry 悄悄改掉 L5 配置"的情形。
+
+10.3 九个 entry 之间是否一致
+
+  在 L5 相关维度上九个 entry 表现完全相同（均为零覆盖）；
+  差异只体现在 fragment 总数（143/144/145）与 fixup label 数（165/166），
+  这些差异均不落在 L5 group / child / RSC 子树上（10.2 已逐 entry 验证）。
+
+
+================================================================================
+11. Overlay 合成结果（结构化合成判定）
+================================================================================
+由于 fdtoverlay 二进制不可用（§3.2），本轮不做二进制合成镜像，改为可判定的结构化合成：
+
+  判定依据（对九个 entry 全部成立）：
+    (1) 无 fragment 的 target 解析到 /soc/rsc@18200000 或其任何后代；
+    (2) 无 fragment 的 target 解析到 L5 group、L5 child、l5-ao、l5-so；
+    (3) 无 overlay 节点路径包含 rsc@18200000 / ldoa5 / pm8150-l5；
+    (4) 无 __local_fixups__，故 overlay 内部不会产生对这些节点的新引用后门。
+
+  由于 overlay 只能通过 fragment(目标) / __overlay__(写入内容) 影响 base，
+  (1)(2)(3) 成立即意味着：**合成后目标节点的属性集合与属性值必然等于 base 原值。**
+
+  合成后目标节点 A/B/C 字段（对 entry 0..8 逐一成立，值同 §4）：
+    qcom,always-wait-for-ack        仍 ABSENT
+    regulator-coupled-*             仍 ABSENT
+    vdd-l3-l4-l5-l18 / vin / vdd / vph-pwr supply   仍 ABSENT
+    proxy-supply                    仍指向 L5 child（未变）
+    L5 child 的 min/max/init-voltage 仍为 880000（未变）
+
+  状态标注：BINARY_COMPOSITION = NOT RUN（fdtoverlay 不可用）；
+            STRUCTURAL_COMPOSITION = PERFORMED（上述判定，结论为"对目标节点为空操作"）。
+
+
+================================================================================
+12. 补充观察（非任务书 §3 要求项，单独标注，供 1号 AI 判断是否延伸）
+================================================================================
+这一节不是本任务的结论项，单独列出以免与 A/B/C/D 的结论混淆；
+内容为静态 FDT 事实，不含运行时推断。
+
+九个 entry **完全一致**地包含 fragment@63：
+  目标（经 __fixups__ label "ufsphy_mem" + base __symbols__ 解析）：
+    /soc/ufsphy_mem@1d87000            （base 内 status = "disabled"，且无 compatible）
+  __overlay__ 直接属性（九个 entry 同名同长）：
+    compatible            20 B   "qcom,ufs-phy-qmp-v4"
+    status                 3 B   "ok"
+    vdda-phy-supply        4 B   占位 <0xffffffff> → fixup label pm8150_l5  → L5 child
+    vdda-pll-supply        4 B   占位 <0xffffffff> → fixup label pm8150_l9  → 非 L5
+    vdda-phy-always-on     0 B   布尔（存在）
+    vdda-phy-max-microamp  4 B   89900
+    vdda-pll-max-microamp  4 B   18800
+    __overlay__ 子节点：无（该节点仅有属性）
+
+对 L5 取证的意义：
+  - 这是九个 entry 中**唯一**引入 L5 引用的地方，方向是"消费者引用 L5"（PHY 的 vdda-phy），
+    不是修改 L5 自身配置（§10.2 已证明）；
+  - 属性名 `vdda-phy-always-on` 属于**消费者侧**标志，可能与 PHY 侧 regulator 的
+    enable/disable 生命周期相关。本报告只记录该属性在 DT 中存在及其长度（0 B 布尔），
+    不据此推断运行时 disable 行为，也不把它当成 L5 provider 的 ACK 配置；
+  - vdda-phy-max-microamp = 89900 与 vdda-pll-max-microamp = 18800 为 PHY 侧电流上限，
+    与 L5 group 的 qcom,mode-threshold-currents = <0 30000> 是不同节点的不同语义，不可混用。
+
+
+================================================================================
+13. unresolved / not present / not run 清单
+================================================================================
+NOT PRESENT（目标节点的缺项，均为确定性结论）
+  - qcom,always-wait-for-ack：group / l5 / l5-ao / l5-so 均无（且全树无）
+  - regulator-coupled-with / -max-spread / -min-spread / -no-balance / qcom,coupling-spread：
+    group / l5 / l5-ao / l5-so 均无（且全树无）
+  - vdd-l3-l4-l5-l18-supply / vin-supply / vdd-supply / vph-pwr-supply：
+    group / l5 / l5-ao / l5-so 均无
+  - l5-so 的 phandle 属性：不存在（亦不在 /__symbols__ 标签表中）
+  - 九个 DTBO 的 target-path 属性：不存在（0 处）
+  - 九个 DTBO 的 /__local_fixups__ 节点：不存在
+
+NOT RUN（工具不可用，已在 §3.2 披露）
+  - dtc 反编译
+  - fdtget 节点/属性查询
+  - fdtoverlay 二进制 overlay 合成
+
+NOT INFERRED（明确未做，属任务边界）
+  - 未推断 ABL 当前实际选用哪个 DTBO entry
+  - 未推断任何运行时 L5 电压、开关状态或 regulator 使能状态
+  - 未评估 L5 相关改动的安全性，未给出任何实现建议
+  - 未依据字符串名（regulator-name / supply_name）推断电气连接
+
+UNRESOLVED
+  - 无。九个 entry 的全部 fragment target 均已解析（100%），无悬空 label，
+    L5 相关节点与属性均可确定判定。
+
+
+================================================================================
+14. 输入未被修改的声明（含结束时的复核）
+================================================================================
+本轮在任务开始与结束时各计算一次 13 个输入对象的长度与 SHA-256，两次结果完全一致：
+  boot_fdt_candidate_0.dtb  556,524  df2730f3…ba2c70f7
+  boot_fdt_candidate_1.dtb  556,520  f3dcba83…786e9817
+  boot_fdt_candidate_2.dtb  551,026  6cda6739…135a0835
+  dtbo_entry_0..8           329,044 / 329,352 / 329,240 / 329,098 / 329,340 /
+                            329,356 / 329,356 / 329,352 / 329,352
+                            （SHA-256 同 §2.2，逐项一致）
+四舍五入显示的前后缀与 §2 的完整值对应，完整值以 §2 为准。
+
+声明：
+  - 未重新提取、未重新解包、未重打包任何固件对象；未改写、覆盖、截断任何 base FDT / DTBO；
+  - 未修改 ROUND3 工作副本、未修改 ROUND3 已审查 parser；
+  - 未修改其他 ROUND 的工作目录、既有报告或 Git checkout 状态；
+  - 未修改内核源码、DTS、binding、补丁、patch series 或任何开发分支；
+  - 未创建 boot / DTBO image / AVB / vbmeta 产物；
+  - 未访问设备，未使用 ADB / fastboot / recovery / reboot / unlock / root / flash；
+  - 未读写任何设备分区；
+  - 未上传二进制 FDT、DTBO、固件、完整原始 property dump 或任何本地绝对路径；
+  - 临时输出仅写入本轮专属临时目录，中间 JSON 与探查脚本已删除；
+    该目录内的辅助方法脚本为本轮取证过程留档，未上传到仓库。
+
+
+================================================================================
+15. 停止
+================================================================================
+本报告为 TEST-AGENT-ROUND106 的唯一交付物。
+上传至 firmware-audit-v1:firmware-analysis/round106/TEST_AGENT_ROUND106_L5_RPMH_DISABLE_CONFIG_REPORT.txt 后立即停止。
+未启动 ROUND107，未启动任何后续任务。
+本任务的唯一成果是只读证据报告，不是代码补丁。
+================================================================================

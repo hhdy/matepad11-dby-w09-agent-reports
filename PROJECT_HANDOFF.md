@@ -2068,3 +2068,15 @@ Validated candidate branch: `ai1/round120-ufs-async-domain-validated`.
 - ROUND118 addendum remains binding for AI2 implementation: ROUND31 cleanup currently has a dangerous disable-before-load-zero sequence and frees/puts state even after cleanup errors; do not accept this lifecycle as safe until corrected and failure-path tested. ACK void `regulator_unregister()` cannot be vetoed by a devres action error.
 - ROUND116 / ROUND117 / ROUND119 remain relevant source constraints: child-node lookup API and unregister lifetime, normal UFS/QMP rail vote handoff timing, and fw_devlink self-cycle relaxation. Do not turn source-level cycle handling into a claim of runtime log/boot validation.
 - Role boundary: 1号 AI owns independent review and its separate candidate branch; 2号 AI owns actual AI2 Stage A driver implementation; local Agent is test/build/evidence executor only and must not author kernel code.
+
+
+### ROUND121 — ACK child-scoped proxy handle / device-link boundary
+
+Report: [ROUND121 — child proxy handle device-link review](./kernel-baseline/round121/round121-1ai-child-proxy-handle-device-link-review.md).
+
+- For AI2-ROUND32, of_regulator_get(group_dev, child_node, "proxy") passes the explicit child node into of_regulator_dev_lookup() and of_get_regulator(); proxy-supply is parsed from the child node, then the target rdev is found by OF-node identity in the regulator class.
+- _regulator_get_common() still attempts device_link_add(group_dev, &rdev->dev, DL_FLAG_STATELESS). Because the target regulator class device has rdev->dev.parent = group_dev, ACK's device_is_dependent(group_dev, child_rdev) detects that the supplier is a child of the consumer and device_link_add returns NULL.
+- This NULL link is non-fatal: _regulator_get_common() only sets regulator->device_link when a link is returned, and still returns the regulator handle. Do not report this expected parent-to-child dependency rejection as a failed lookup; do not force or fake a reverse link.
+- This does not relax rdev lifetime cleanup. Each proxy handle still must be released before its target provider unregisters. Device refcount does not guarantee devm provider data survives after parent teardown.
+- ROUND118 load-zero-before-disable and failed-cleanup retention constraints remain mandatory.
+- Review only; no AI2 source, DTS, binding or device was modified.

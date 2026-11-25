@@ -267,7 +267,12 @@
 	vccq-supply = <&vreg_l6a_1p2>;
 	vccq-max-microamp = <800000>;
 
-	/* Vendor Qualcomm UFS parent rails; both require the companion ACK driver patch. */
+	/*
+	 * HOS VCCQ-parent topology metadata only: ROUND22 confirms the current
+	 * ACK Image has no runtime consumer for qcom,vccq-parent-supply/S8.
+	 * Do not assume this enables or votes PM8150L S8.
+	 */
+
 	qcom,vccq-parent-supply = <&vreg_s8c_1p2_1p4>;
 	qcom,vccq-parent-max-microamp = <210000>;
 
@@ -299,13 +304,15 @@
 /*
  * Memory / reserved-memory is deliberately not reconstructed here yet.
  *
- * ROUND7's HOS4.3 base-FDT inventory has no /memory node or device_type
- * property, but does contain 34 reserved-memory child nodes in multiple
- * classes (hyp/XBL/AOP/SMEM/mailbox handoff, PIL firmware carveouts,
- * reusable DSP/QSEE/secure/CMA pools and crash records). Physical addresses
- * are redacted from the public inventory. The same-device Linux 7.0 board
- * DTS also has no explicit /memory node and only four reserved-memory nodes;
- * it is based on HOS4.2, not this HOS4.3 image.
+ * ROUND19/20/22 corrected the stock HOS4.3 base-FDT fact:
+ * /memory exists with device_type = "memory", but reg = <0 0 0 0>
+ * is an all-zero placeholder, not a usable RAM map. It also contains 34
+ * reserved-memory child nodes across hyp/XBL/AOP/SMEM/mailbox handoff,
+ * PIL firmware carveouts, reusable DSP/QSEE/secure/CMA pools and crash
+ * records. Physical addresses are redacted from the public inventory.
+ * The same-device Linux 7.0 board DTS also has no explicit /memory node
+ * and only four reserved-memory nodes; it is based on HOS4.2, not this
+ * HOS4.3 image.
  *
  * ABL may populate the usable-memory node dynamically, but that is not
  * proven for the new ACK DTB. Do not infer the final live FDT from the stock

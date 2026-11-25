@@ -1,0 +1,446 @@
+================================================================================
+AI2-ROUND32 — CHILD-SCOPED PROXY-SUPPLY IMPLEMENTATION REPORT (2号 AI)
+================================================================================
+date            : 2026-11-25
+taskbook        : firmware-analysis/round32/AI2_ROUND32_TASKBOOK.md @ firmware-audit-v1
+executor        : 2号 AI (local Agent)
+pinned ACK      : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (android17-6.18.33_r00)
+stage branch    : ai-parallel/stagea-port-until-boot
+round31 baseline: c96167c8c45f (a32-apply baseline commit carrying patches 1-12)
+deliverable     : this report only.  Per taskbook §8: deliver ROUND32 and STOP;
+                  ROUND33 is NOT started.
+
+--------------------------------------------------------------------------------
+0. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+ROUND31 confirmed a topology blocker: the ACK board tree flattens the whole
+PM8150 into ONE synthetic platform device ("pm8150-regulators"), whose of_node
+is the regulator provider container. The ROUND31 group-level proxy-supply is
+resolved with regulator_get(dev, "proxy") against that single provider device,
+so only ONE proxy target can be expressed — L5 and L9 cannot each vote for
+their own regulator, which is what the HOS4.3 evidence (ROUND13) shows the
+original firmware does.
+
+ROUND32 implements and verifies the child-scoped mechanism:
+
+  * each regulator child node may carry its own `proxy-supply` phandle; the
+    proxy consumer handle is then resolved BY THAT CHILD'S NODE via the pinned
+    core's existing exported API of_regulator_get(dev, node, id);
+  * legacy provider-level group behavior is byte-for-byte unchanged when no
+    child carries proxy-supply;
+  * child-scoped + provider-level declaration on the same provider is
+    rejected at registration with -EINVAL (explicit, testable — no silent
+    priority);
+  * -EPROBE_DEFER (target rdev not yet registered / coupling unresolved —
+    the normal case for self-targets) parks the consumer; a late_initcall
+    (level 7) retry re-resolves parked consumers once, strictly BEFORE the
+    late_initcall_sync (7s) bulk revoke;
+  * the three-patch series (driver, binding, review DTS) is committed on the
+    stagea branch together with the previously-missing reproducible test
+    harness (fixing the recorded ROUND31 defect that the 38-check harness
+    was never committed).
+
+Verification: 15/15 patches apply (45/45 rc=0), checkpatch 0 errors,
+schema gate 14/14 PASS with content assertions across dtschema 2023.9 and
+2026.9, host mock suites 38/38 + 73/73 PASS compiling the REAL driver source,
+full Kleaf //common:dby_w09 rebuild PASS (BUILD_RC=0, 363 s), product hashes
+changed vs ROUND31 proving the new code is in the artifact, config regression
+33/33 + helper tests 11/11 PASS.
+
+Status of the overall mission after ROUND32: the KERNEL MECHANISM and the
+DECLARATIVE EXPRESSION (review DTS) for per-child L5+L9 proxy voting are
+complete. Phase E (boot-time always-on rework) and Phase F (hardware
+measurement) remain BLOCKED exactly as before; no hardware was touched;
+the L5 parent-supply question is still unproven (see §9).
+
+--------------------------------------------------------------------------------
+1. TASKBOOK REQUIREMENTS MAPPED TO SECTIONS
+--------------------------------------------------------------------------------
+  §2 design gate (core API safety, no fake device, no refcount bypass) -> §2, §4
+  §3 strict binding, no relaxed keys, group+child ambiguity policy     -> §5, §6
+  §4 lifecycle (per-child handles, bulk revoke, individual unregister,
+     error-path rollback, self-target timing)                          -> §4
+  §5 reproducible tests committed INTO the repo                        -> §7
+  §6 series update, checkpatch, real dt_binding_check/dt-doc-validate,
+     content-assertion negative controls, full Kleaf rebuild,
+     config 33/33 + helper 11/11                                       -> §6, §8
+  §8 single report, then stop                                          -> §0, §10
+
+--------------------------------------------------------------------------------
+2. DESIGN GATE — THE PINNED CORE ALREADY HAS A SAFE REGULATOR-BY-NODE API
+--------------------------------------------------------------------------------
+All line numbers refer to the pinned commit 8ad08f75ddf056e1ee600e1339e0463c5f
+cbdc9a. Conclusion of the gate: NO new core API is required; the mechanism is
+built entirely on existing exported core surfaces, so no device is faked and
+no reference count is bypassed.
+
+Evidence chain:
+
+(1) of_regulator_get(dev, node, id) EXISTS and is EXPORT_SYMBOL_GPL
+    (drivers/regulator/of_regulator.c), declared __must_check in
+    include/linux/regulator/consumer.h.
+      of_regulator_get -> _of_regulator_get ->
+        _regulator_get_common_check()
+        of_regulator_dev_lookup(dev, node, id)
+        _regulator_get_common(rdev, dev, id, type)   [core.c:2204]
+    _regulator_get_common is the SHARED allocation path used by every
+    consumer_get: coupling check, regulator_resolve_supply(), module refcount,
+    create_regulator() under regulator_lock(), open_count accounting,
+    device_link_add(). Nothing is invented around it.
+
+(2) Lookup semantics:
+    of_get_regulator(dev, node, supply) reads `<id>-supply` from the EXPLICIT
+    node via of_parse_phandle(); its fallback of_get_child_regulator() is a
+    RECURSIVE descent — which is precisely why the ROUND31 group-level shape
+    could not distinguish L5 from L9.
+    of_regulator_dev_lookup (of_regulator.c:663) resolves the phandle, finds
+    the rdev by node via of_find_regulator_by_node ->
+    class_find_device_by_of_node (class-core refcount +1, released by the
+    matching regulator_put), and returns -EPROBE_DEFER when the node exists
+    but no rdev is registered yet.
+
+(3) Defer vs dummy: _regulator_get_common's dummy-regulator fallback triggers
+    ONLY on -ENODEV; -EPROBE_DEFER propagates untouched. "Target not
+    registered yet" is therefore distinguishable from "no such supply" —
+    the exact property the deferred-parking design needs.
+
+(4) Plain regulator_get() is safe by the same route: regulator_get
+    (core.c:2358) -> _regulator_get (:2331) -> regulator_dev_lookup (:2003)
+    -> regulator_dt_lookup (:1975) -> of_regulator_dev_lookup(dev,
+    dev_of_node(dev), supply) — the legacy path only ever reads the consumer
+    device's OWN node, which is why legacy behavior is unaffected by this
+    round.
+
+(5) Coupling: non-coupled regulators are initialized with n_coupled =
+    n_resolved = 1 (regulator_init_coupling), so self-targets pass the
+    coupling gate in _regulator_get_common immediately.
+
+The gate therefore PASSES: the by-node path uses the standard class-device
+lookup with its refcount, and the handle lifecycle is the standard
+regulator_put path (_regulator_put -> put_device). No fabrication required.
+
+--------------------------------------------------------------------------------
+3. IMPLEMENTATION — THREE PATCHES (13, 14, 15 of the stagea series)
+--------------------------------------------------------------------------------
+patch 13  round32-0001-regulator-child-scoped-proxy-consumer.patch
+          git blob 6b4f6d9969dde82733523d713b810df8451e934c
+          sha256  9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650
+          drivers/regulator/proxy-consumer.c  (+206/-44)
+          drivers/regulator/Kconfig           (+5/-2)
+
+patch 14  round32-0002-regulator-child-scoped-proxy-binding.patch
+          git blob ae349d95b011c2193c18e0352a8f482513501e85
+          sha256  30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15
+          Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+          (+16/-1)
+
+patch 15  round32-0003-dby-w09-child-scoped-proxy-review-dts.patch
+          git blob 14f0219736c018c3cf361b7608eb00023dacbf77
+          sha256  3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594
+          arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts (NEW, +41;
+          review-only file, referenced by NO build target)
+
+3.1 Driver semantics (patch 13)
+  * struct proxy_consumer gains reg_dev / reg_node / child_scoped / deferred.
+  * Resolution: child node has `proxy-supply` ->
+      of_regulator_get(reg_dev, reg_node, "proxy")   (child-scoped)
+    child node has none ->
+      regulator_get(reg_dev, "proxy")                (legacy ROUND31 path,
+      unchanged, including its recursive child search on the provider node).
+  * AMBIGUITY GATE: child-scoped declaration while the provider node ALSO
+    carries `proxy-supply` -> dev_err + -EINVAL, no lookup performed.
+    Chosen over a silent priority rule because it is explicit and testable
+    (taskbook §3 requires "clear precedence or reject ambiguity").
+  * Shared vote helper proxy_consumer_apply_votes() applies load/enable with
+    REVERSE-ORDER rollback on partial failure (registered in System.map as a
+    static symbol; see §8 evidence).
+  * Error paths: set_load failure -> no enable; enable failure -> load vote
+    withdrawn; any failure -> regulator_put once, rdev back-pointer cleared.
+    All covered by tests (§7).
+
+3.2 Deferred parking and retry (patch 13)
+  * rc == -EPROBE_DEFER at registration -> the consumer is PARKED, not an
+    error: reg handle stays NULL, no vote is made, the consumer is queued,
+    registration returns the consumer so the rdev back-pointer and a later
+    unregister still clean it up.
+  * regulator_proxy_consumer_remove() on a parked consumer (reg == NULL)
+    releases it without touching any regulator.
+  * A late_initcall (level 7) retry pass, regulator_proxy_consumer_retry_
+    deferred, re-resolves parked consumers ONCE and applies their votes; a
+    vote failure inside the retry unwinds and frees the consumer (back-
+    pointer cleared, logged). During implementation a use-after-free was
+    found and fixed in this path (the failure log referenced consumer->
+    reg_node after kfree; the pr_err now runs before the release).
+  * Consumers still parked at the bulk revoke are dropped WITHOUT EVER HAVING
+    VOTED (explicit log). Nothing claims a rail was kept on.
+  * Ordering proof: the retry is linked at level 7, the bulk revoke at 7s;
+    kernel late_initcall (7) strictly precedes late_initcall_sync (7s).
+    This is verified at LINK LEVEL from the built System.map — see §8.
+
+3.3 Kconfig (patch 13, follow-up hunk — allowed)
+  REGULATOR_PROXY_CONSUMER now `depends on OF`. Reason: the child-scoped
+  path calls of_regulator_get(), which has NO !CONFIG_OF inline stub in the
+  pinned consumer.h (only the _optional variants have one) — building without
+  OF would fail at link time. Proxy properties only ever come from DT, so the
+  dependency is semantic, not just mechanical.
+
+3.4 Binding (patch 14) — see §5 for the negative-control consequences.
+
+3.5 Review DTS (patch 15)
+  dby-w09-proxy-review.dts expresses the HOS4.3 ROUND13 evidence in the ACK
+  flattened shape (provider "pm8150-regulators", qcom,pm8150-rpmh-regulators):
+    ldo5: proxy-supply = <&vreg_l5a>  (self-phandle)
+          qcom,proxy-consumer-enable;  qcom,proxy-consumer-current = <100000>;
+    ldo9: proxy-supply = <&vreg_l9a>  (self-phandle)
+          qcom,proxy-consumer-enable;  qcom,proxy-consumer-current = <100000>;
+  matching the ACK board structure where ldo5/ldo9 are DIRECT children of the
+  provider container (one rdev per child). No voltages/modes are restated
+  (board-draft territory). Not referenced by any build target.
+
+--------------------------------------------------------------------------------
+4. LIFECYCLE / SELF-TARGET TIMING PROOF (taskbook §4)
+--------------------------------------------------------------------------------
+* Per-child handles: each child-scoped consumer owns an independent struct
+  regulator handle; unregister of one child never touches the other (tested:
+  l5 unregister -> l9 not disabled, l9 handle untouched).
+* Bulk revoke: late_initcall_sync hook runs once; per-rdev back-pointers are
+  cleared inside regulator_proxy_consumer_remove(), so individual unregister
+  and bulk revoke can never act on the same consumer twice; repeated teardown
+  is a no-op (tested).
+* Self-target timing (source-level proof at the pinned commit):
+    regulator_register() sets rdev->dev.of_node = of_node_get(config->of_node)
+    (core.c:5880) and calls device_add(&rdev->dev) BEFORE rdev_init_debugfs()
+    (:5998). The proxy hook runs after both, so at hook time
+    class_find_device_by_of_node already finds the just-registered rdev: a
+    child whose proxy-supply phandle points at ITSELF resolves to its own
+    rdev. No recursion into regulator_register occurs and no lock is held
+    across the lookup. (For self-targets the coupling is not yet resolved at
+    hook time — this is exactly the case the deferred parking covers.)
+* Target unregister window: core regulator_unregister() carries
+  WARN_ON(rdev->open_count) — a regulator with a live consumer handle cannot
+  be unregistered; for self-targets the handle is dropped inside the same
+  driver, so no such window exists.
+* Cleanup semantics inherited from ROUND31: revoking proxy votes neither
+  guarantees a rail turns off nor that it stays on — the core's delayed
+  unused-regulator cleanup runs after the revoke decision point. No
+  always-on semantics were introduced.
+
+--------------------------------------------------------------------------------
+5. BINDING — STRICT, WITH DOCUMENTED META-SCHEMA LIMITATION (taskbook §3)
+--------------------------------------------------------------------------------
+* Child-level `proxy-supply` declared inside the existing
+  ^(smps|ldo|lvs|bob)[0-9]+$ patternProperties; additionalProperties /
+  unevaluatedProperties flags preserved everywhere; NO key relaxed.
+* Provider-level proxy-supply description extended (legacy mapping + the
+  mixing prohibition, enforced at runtime by the -EINVAL gate).
+* `$ref: dtschema/definitions/phandle` was deliberately NOT added: the
+  dtschema META-SCHEMA (core.yaml, rule on '-supply$') restricts every
+  *-supply property to keys {description, deprecated} only. Adding a $ref
+  FAILS dt-doc-validate (observed RC=1, then removed — this is the honest
+  negative-control outcome, not a shortcut).
+* Consequences, all covered by fixtures and asserted in the gate (§6.3):
+    - a plain u32 instead of a phandle cannot be rejected at schema level;
+      accepted by the validator, surfaces at RUNTIME as -EPROBE_DEFER (the
+      "phandle target" never registers). Documented, not hidden.
+    - a dangling LABEL reference is rejected by dtc at COMPILE time
+      (negative fixture round32-proxy-child-scoped-bad-phandle.dts:
+      phandle_references ERROR, RC=2).
+
+--------------------------------------------------------------------------------
+6. SERIES AND VALIDATION (taskbook §6)
+--------------------------------------------------------------------------------
+6.1 Series: 12 ROUND31 patches UNCHANGED + 3 new patches = 15.
+  Ordered apply record committed as kernel-baseline/round61/round32-stagea-
+  series.txt. Protocol per patch: git apply --check ; git apply ;
+  git diff --check. Result: 15/15 patches, 45/45 exit codes = 0.
+  Patches 1-12 re-verified byte-identical to round31-stagea-series.txt by
+  git blob AND sha256 (MATCH on all 12).
+
+6.2 checkpatch --strict on the three new patches:
+    patch 13: 0 errors, 0 checks
+    patch 14: 0 errors, 0 checks
+    patch 15: 0 errors, 2 DOCUMENTED warnings:
+              (a) generic new-file MAINTAINERS reminder — kept, same as
+                  ROUND31 patch 10;
+              (b) "huawei,dby-w09 compatible undocumented" — this is the
+                  KNOWN ROUND29 board-binding gap F1 (arm/qcom.yaml has no
+                  such board entry). Deliberately NOT "fixed" by editing
+                  arm/qcom.yaml in this series; asserted explicitly in the
+                  fixture gate instead.
+
+6.3 Binding validation — REAL tools, dual dtschema versions, content assertions
+  binding file sha256 (post-implementation):
+    88c34b63973b4178286ab9cd6f9e78434f4c5155ae4ff9a1b55df3ae38fd6b31
+  dtc phase (fixtures): 5/5 compile RC=0; bad-phandle negative RC=2 with
+  phandle_references diagnostic (expected).
+  dtc phase (review DTS): RC=0, 0 warnings.
+  dt_binding_check (make DT_BINDING_CHECK=1 dt_binding_check
+  DT_SCHEMA_FILES=Documentation/devicetree/bindings/regulator/qcom,rpmh-
+  regulator.yaml):
+    dtschema 2023.9: RC=0, processed schema present  -> PASS
+    dtschema 2026.9: RC=0, processed schema present  -> PASS
+  dt-doc-validate (DT_DOC_CHECK=1): RC=0 on both versions.
+  NOTE (known tool behavior): dt-validate returns 0 even when it prints
+  diagnostics — so the gate uses CONTENT assertions, not exit codes:
+    PASS v2023_9 + v2026_9  child-scoped valid (L5+L9 self targets) accepted
+    PASS v2023_9 + v2026_9  mixed group+child accepted by schema (runtime
+                            -EINVAL is the enforcement point — by design,
+                            since the meta-schema cannot express this)
+    PASS v2023_9 + v2026_9  undeclared child property REJECTED, diagnostic
+                            names 'qcom,proxy-consumer-bogus' (proves the
+                            child pattern block is actually enforced, i.e.
+                            additionalProperties/unevaluatedProperties NOT
+                            loosened)
+    PASS v2023_9 + v2026_9  plain-u32 proxy-supply accepted (meta-schema
+                            forbids $ref on *-supply) — documented above
+    PASS v2023_9 + v2026_9  legacy provider-level declaration accepted
+    PASS v2023_9 + v2026_9  review DTS: ONLY the known ROUND29 F1 root-
+                            compatible diagnostic; regulator node clean
+    PASS dtc dangling-reference compile-time rejection
+    PASS dtc review DTS compiles (-@)
+  TOTAL_FAILURES=0  SCHEMA_GATE=PASS  (14/14)
+
+--------------------------------------------------------------------------------
+7. REPRODUCIBLE TESTS COMMITTED INTO THE REPO (taskbook §5)
+--------------------------------------------------------------------------------
+Fixes the recorded ROUND31 defect ("38-check harness existed only on the
+runner, never committed"). Committed on the stagea branch under
+kernel-baseline/round61/ (see §9 for the commit):
+
+  tests/run_tests.sh                      repo runner; compiles the REAL
+                                          drivers/regulator/proxy-consumer.c
+                                          against a host mock core
+  tests/mock/mock_core.h (400 lines)      dev_of_node, of_regulator_get mock
+                                          (phandle->registry; unregistered
+                                          target -> ERR_PTR(-EPROBE_DEFER)),
+                                          vote recorder, late_initcall macro
+  tests/mock/linux/errno.h                static shim intercepting
+                                          <linux/errno.h> so no kernel
+                                          errno leaks into host builds
+  tests/mock/linux/regulator/{consumer,driver}.h
+  tests/test_proxy_consumer_r31.c         legacy 38-check suite (regression)
+  tests/test_proxy_consumer_round32.c     73-check child-scoped suite
+  fixtures/round32-proxy-*.dts            6 fixtures used by the schema gate
+
+Results (driver source sha256
+4625eb9d11928e8ba941feebdaa56e5bb72a0f1dab180cafa43486bd04286e48, gcc 13.3.0,
+host x86_64):
+
+  ROUND31 legacy suite : checks=38 failures=0  RESULT: PASS
+  ROUND32 child-scoped : checks=73 failures=0  RESULT: PASS
+
+  ROUND32 suite coverage highlights:
+    - per-child independent registration and votes (L5 and L9 each resolve
+      via their OWN node phandle, one 100000 uA vote each, one enable each)
+    - independence (l5 unregister: l9 not disabled, l9 handle untouched,
+      global enable balance drops by exactly one)
+    - bulk revoke vs individual unregister interleavings, repeated teardown
+      no-op
+    - deferred parking, retry success, retry vote failure (frees consumer,
+      back-pointer cleared, never enabled), parked consumers dropped at bulk
+      revoke without voting
+    - ghost target (phandle to a never-registered node) NEVER votes
+    - ambiguity gate -> -EINVAL, no lookup performed
+    - resolution errors, reverse-order rollback, enable-failure unwind
+    - legacy registration after revoke -> -EPERM (inherited)
+
+--------------------------------------------------------------------------------
+8. FULL KLEAF REBUILD AND PRODUCT EVIDENCE (taskbook §6)
+--------------------------------------------------------------------------------
+Build: tools/bazel build //common:dby_w09 from the a30 build workspace
+(common HEAD = pinned 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a + 15 patches):
+  BUILD_RC=0   ELAPSED=363 s (360.3 s bazel-reported)   3 incremental actions
+  Targets: bazel-bin/common/dby_w09/{Image,System.map,vmlinux}
+
+Artifacts (sha256, full):
+  Image     44,820,992 B  b6efb34769316a6f3d23c933498509d373f0a47f5319ecde7b2fcd383036d95a
+  System.map 7,611,637 B  568b577db8eb9c33113f75170b0b42c8ddf01a62a32f0b9794c0d92a786444af
+  vmlinux  230,257,912 B  5085cc8f19c0aa9d9e7d55f6e33bc84f90e333a7bd0eefb6db7e01cb2af8eaf8
+  .config    238,410 B    0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+
+  Image hash DIFFERS from ROUND31 (2b902902...) while .config is byte-
+  identical (same 0850213d... — verified also against the ROUND116 record):
+  the delta is the ROUND32 code itself, nothing else.
+
+System.map evidence:
+  13 proxy_consumer symbols (ROUND31 had 10; +3: proxy_consumer_apply_votes,
+  regulator_proxy_consumer_retry_deferred, deferred-list state).
+  INITCALL ORDER PROOF AT LINK LEVEL:
+    __initcall...regulator_proxy_consumer_retry_deferred7   <- late_initcall (7)
+    __initcall...regulator_proxy_consumer_remove_all7s      <- late_initcall_sync (7s)
+  '7' precedes '7s' in the kernel's initcall levels, so the deferred retry
+  is guaranteed to run before the bulk revoke — the ordering claim in §3.2
+  is proven by the built artifact, not by documentation.
+
+Config regression (ROUND58 harness):
+  storage-first validator: PASS — all 33 required symbols =y, no duplicates.
+  helper unit tests: 11/11 OK.
+
+Worktree integrity:
+  a32-apply vs baseline delta (the 3-patch series, git diff --binary)
+  sha256 814ce1aa761983dd91a677a627b50fafa11e5c17bc9b1731b8eda091d181ff40;
+  tree clean after build; all four ROUND32-touched files byte-identical
+  between the a32-apply worktree and the a30 build workspace (sha256 match).
+
+--------------------------------------------------------------------------------
+9. PERSISTENCE — STAGEA BRANCH COMMIT AND PUSH
+--------------------------------------------------------------------------------
+Commit: 98fda4151bea7b4a7a717054c431f59a7ff23bb6
+  parent 37dceaaec5a7b1e8b7b86ae7465d2a6b00e3fac3
+  branch  ai-parallel/stagea-port-until-boot
+  message "AI2-ROUND32: child-scoped proxy-supply (3 patches), fixtures,
+           committed host test suites, series table, integration record"
+  19 files changed, +2006 lines; no binary/pyc artifacts committed
+  (an initially-staged __pycache__/*.pyc was removed before the final
+  commit).
+
+Content:
+  kernel-baseline/round61/patches/round32-000{1,2,3}-*.patch  (the series)
+  kernel-baseline/round61/tests/{run_tests.sh,test_proxy_consumer_r31.c,
+      test_proxy_consumer_round32.c,mock/...}                  (§7)
+  kernel-baseline/round61/fixtures/round32-proxy-*.dts         (6 files)
+  kernel-baseline/round61/round32-stagea-series.txt            (§6.1)
+  kernel-baseline/round61/round32-child-scoped-proxy-implementation.md
+                                                               (API trace)
+  kernel-baseline/round61/PROGRESS.md                          (appended)
+
+Push: PUSH_RC=0; remote ls-remote matches local
+  98fda4151bea7b4a7a717054c431f59a7ff23bb6  refs/heads/ai-parallel/stagea-port-until-boot
+
+--------------------------------------------------------------------------------
+10. CONCLUSIONS, HONEST BOUNDARIES, AND STOP
+--------------------------------------------------------------------------------
+CONCLUSION: the ROUND31 topology blocker is resolved at the MECHANISM level.
+With child-scoped proxy-supply, L5 and L9 can each declare and each receive
+their own proxy vote on their own regulator, matching the HOS4.3 evidence
+shape (ROUND13); the review DTS (patch 15) expresses that declaration against
+the ACK board structure and validates clean on the regulator subtree; the
+full build/test/schema/config matrix is green and the reproducible harness
+is now IN the repository.
+
+BOUNDARIES (stated explicitly, none hidden):
+  * Phase E (boot-time always-on rework) and Phase F (hardware verification)
+    remain BLOCKED, unchanged from ROUND31.
+  * NO hardware was touched; all evidence is build/host-test level.
+  * The L5 parent-supply question is still UNPROVEN — this round changes
+    nothing about it.
+  * Revoking proxy votes does not guarantee rail on/off state (core delayed
+    unused cleanup runs afterwards); no always-on semantics introduced.
+  * Schema cannot reject a plain u32 in *-supply (dtschema meta-schema
+    forbids $ref there); enforcement for that malformed case is runtime
+    -EPROBE_DEFER, compile-time rejection covers dangling labels only.
+    Mixed group+child declarations pass the schema and are rejected at
+    runtime by the explicit -EINVAL gate — both are documented, tested
+    consequences, not gaps silently waved through.
+  * ROUND29 F1 (arm/qcom.yaml lacks the huawei,dby-w09 board compatible)
+    remains open and is NOT patched in this series; the review DTS's only
+    diagnostics are exactly that known F1 root-compatible message.
+
+STOP: per taskbook §8, this report is the sole ROUND32 deliverable and it is
+filed at firmware-analysis/round32/AI2_ROUND32_CHILD_SCOPED_PROXY_
+IMPLEMENTATION_REPORT.txt on branch firmware-audit-v1. ROUND33 is NOT
+started.
+
+================================================================================
+END OF REPORT
+================================================================================

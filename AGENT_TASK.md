@@ -953,3 +953,25 @@ Although the DBY-W09 board DTS source itself does not explicitly write /memory, 
 This is structurally aligned with the HOS4.3 template's bootloader-fill zero-size memory node, but the initial base cells differ. The final HOS4.3 ABL fixup behavior and actual runtime RAM tuple remain UNKNOWN. Do not add a duplicate manual /memory node or hardcode RAM.
 
 Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.
+
+
+## ROUND27 queued after ROUND25 and ROUND26 — actual Kleaf device-tree target validation
+
+Do not start ROUND27 until both of these reports exist on firmware-audit-v1 and have been reviewed:
+- firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt
+- firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt
+
+Then execute the task in:
+- firmware-analysis/round27/AGENT_TASK.md
+- firmware-analysis/round27/START_PROMPT.md
+
+ROUND27 is an isolated-copy Kleaf/Bzlmod device-tree validation only:
+- resolve the exact local rules_devicetree dependency from the workspace module file and lock, not generic upstream HEAD;
+- stage byte-verified main rev2 board DTS and rootparam overlay temporary copies in the ACK qcom DTS directory;
+- create a temporary BUILD package for dtb, dtbo and dtb_composite;
+- run query/cquery and build only those three device-tree targets;
+- inspect the composite and run the strongest supported schema validation;
+- remove temporary sources and BUILD package, and confirm pre-existing files and ROUND18 Image/config are unchanged;
+- upload one sanitized report.
+
+No kernel_build/Image, no dtbo_image or table metadata, no boot packaging/AVB/signing, no device or partition access. Do not modify main candidates, protected DTS branch, second-AI branch or PR #1.

@@ -684,3 +684,20 @@ Exact ACK 6.18.33 source review confirms:
 This establishes why an ACK board DTS may be syntactically/schema-acceptable without the PM8150 input parents, but it does not prove the physical upstream rails exist or are enabled on DBY-W09. Do not fabricate `vph_pwr`, `vdd-s*` links or voltages. Retain the electrical parent map as an independent pre-boot gate.
 
 Detailed note: `kernel-baseline/round66/round66-pm8150-rpmh-parent-supply-dummy-fallback-audit.md`.
+
+
+## 2026-11-25 — Rootparam-only overlay candidate reconciled against HOS4.3 ROUND19
+
+ROUND19 proves that every HOS4.3 DTBO entry fills the base empty `/rootparam` node with the same five property names; the nine variants differ only in identity values and some product-specific fragments. The VG candidate entry 8 is:
+- board-id `0x206a 0x00`;
+- board name `DBY_W09_VG`;
+- hardware version `SH1DBSLM`;
+- `qcom,boardid = <0x08 0x02 0x09 0x08>`;
+- product `DBY-W09`;
+- common `huawei,modem_id` sentinel.
+
+The already-referenced public same-device Linux rootparam-only overlay uses those same VG values and records ABL rejection of a DTBO that did not populate `/rootparam` like stock overlay 8 (its own HOS4.2-based project evidence). The HOS4.3 Round19 data independently matches its rootparam property values. This supports the minimal-overlay structure, but does **not** prove the user's current hardware variant or runtime ABL selection is VG.
+
+The project main `dts/` directory currently lists only README and the board DTS draft; the README mentions a separate rootparam overlay draft that is not present in that branch listing. No overlay was fabricated in this round because variant selection remains unknown.
+
+Detailed note: `kernel-baseline/round67/round67-hos43-rootparam-overlay-candidate-reconciliation.md`.

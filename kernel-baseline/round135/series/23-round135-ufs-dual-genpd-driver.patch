@@ -1,0 +1,272 @@
+From: DBY-W09 kernel-port draft
+Subject: [PATCH DRAFT] scsi: ufs: qcom: route SM8250 UFS OPP to RPMhPD
+
+For an SM8250 UFS host with the supported two-domain topology, attach MMCX
+as power-domains index 0 and keep GCC UFS_PHY_GDSC as index 1. The generic
+device-core GenPD attach path intentionally skips consumers with multiple
+power-domains, so the Qualcomm UFS probe owns the attach-list operation.
+
+Before attaching the domains, validate every available UFS OPP entry:
+each entry must have exactly one required-opps reference to the SM8250
+RPMhPD provider's exact operating-points-v2 table. Then map required_dev
+slot 0 to the MMCX virtual GenPD device before ufshcd_pltfrm_init() adds
+the UFS OPP table.
+
+The one-domain generic path is unchanged. Unsupported multi-domain
+arrangements fail closed because the generic GenPD core skips them rather
+than attaching any one of their domains. This defines the currently
+supported two-domain contract for SM8250 UFS hosts; DBY-W09 is the board
+currently adding this topology.
+
+The code uses PD_FLAG_DEV_LINK_ON so the attached suppliers are
+runtime-active while the UFS consumer is active. It deliberately does not
+use PD_FLAG_REQUIRED_OPP, because this OPP table has one required-OPP slot,
+not one slot for each attached domain.
+
+This patch does not implement MMCX-to-MX parent propagation. ROUND30 records
+that this remains a separate unresolved HOS4.3 corner-equivalence gate.
+
+Draft only: not applied to a full kernel tree, compiled, checkpatched,
+schema-validated or tested on hardware.
+
+---
+ drivers/ufs/host/ufs-qcom.c | 205 insertions(+)
+
+diff --git a/drivers/ufs/host/ufs-qcom.c b/drivers/ufs/host/ufs-qcom.c
+--- a/drivers/ufs/host/ufs-qcom.c
++++ b/drivers/ufs/host/ufs-qcom.c
+@@ -11,12 +11,18 @@
+ #include <linux/gpio/consumer.h>
+ #include <linux/interconnect.h>
+ #include <linux/module.h>
++#include <linux/errno.h>
+ #include <linux/of.h>
+ #include <linux/phy/phy.h>
+ #include <linux/platform_device.h>
++#include <linux/pm_domain.h>
++#include <linux/pm_opp.h>
+ #include <linux/reset-controller.h>
+ #include <linux/time.h>
+ #include <linux/unaligned.h>
+ #include <linux/units.h>
+ 
++#include <dt-bindings/clock/qcom,gcc-sm8250.h>
++#include <dt-bindings/power/qcom,rpmhpd.h>
++
+ #include <soc/qcom/ice.h>
+@@ -2802,15 +2808,214 @@
+ 	.tx_eqtr_notify		= ufs_qcom_tx_eqtr_notify,
+ };
+ 
++/*
++ * Validate one UFS OPP's required-opps reference against the SM8250 RPMhPD
++ * provider. The required OPP must belong to the provider's exact OPP table.
++ */
++static int ufs_qcom_validate_required_opp(struct device *dev,
++					 struct device_node *opp)
++{
++	struct device_node *req_opp_np, *req_table_np, *req_pd_np;
++	struct device_node *provider_table_np;
++	int num_required_opps, num_provider_tables, ret;
++
++	num_required_opps = of_count_phandle_with_args(opp, "required-opps",
++						       NULL);
++	if (num_required_opps != 1) {
++		ret = num_required_opps < 0 ? num_required_opps : -EINVAL;
++		return dev_err_probe(dev, ret,
++				     "expected one required-opps entry in %pOF\n",
++				     opp);
++	}
++
++	req_opp_np = of_parse_phandle(opp, "required-opps", 0);
++	if (!req_opp_np)
++		return dev_err_probe(dev, -EINVAL,
++				     "invalid required-opps target in %pOF\n",
++				     opp);
++
++	if (!of_device_is_available(req_opp_np)) {
++		ret = -EINVAL;
++		goto out_put_req_opp;
++	}
++
++	req_table_np = of_get_parent(req_opp_np);
++	if (!req_table_np) {
++		ret = -EINVAL;
++		goto out_put_req_opp;
++	}
++
++	req_pd_np = of_get_parent(req_table_np);
++	if (!req_pd_np) {
++		ret = -EINVAL;
++		goto out_put_req_table;
++	}
++
++	if (!of_device_is_compatible(req_table_np, "operating-points-v2") ||
++	    !of_device_is_compatible(req_pd_np, "qcom,sm8250-rpmhpd")) {
++		ret = -EINVAL;
++		goto out_put_req_pd;
++	}
++
++	/* The SM8250 RPMhPD provider must advertise exactly this one OPP table. */
++	num_provider_tables = of_count_phandle_with_args(req_pd_np,
++							 "operating-points-v2",
++							 NULL);
++	if (num_provider_tables != 1) {
++		ret = num_provider_tables < 0 ? num_provider_tables : -EINVAL;
++		goto out_put_req_pd;
++	}
++
++	provider_table_np = of_parse_phandle(req_pd_np,
++					     "operating-points-v2", 0);
++	if (!provider_table_np) {
++		ret = -EINVAL;
++		goto out_put_req_pd;
++	}
++
++	ret = provider_table_np == req_table_np ? 0 : -EINVAL;
++	of_node_put(provider_table_np);
++
++out_put_req_pd:
++	of_node_put(req_pd_np);
++out_put_req_table:
++	of_node_put(req_table_np);
++out_put_req_opp:
++	of_node_put(req_opp_np);
++
++	if (ret)
++		return dev_err_probe(dev, ret,
++				     "required-opps in %pOF is not from SM8250 RPMhPD table\n",
++				     opp);
++
++	return 0;
++}
++
++/*
++ * Check every available UFS OPP entry before configuring the required_dev
++ * mapping. This prevents a later-added OPP from bypassing the MMCX provider
++ * and table-identity checks.
++ */
++static int ufs_qcom_validate_opp_table(struct device *dev)
++{
++	struct device_node *opp_np, *opp;
++	unsigned int num_opps = 0;
++	int ret = 0;
++
++	opp_np = dev_pm_opp_of_get_opp_desc_node(dev);
++	if (!opp_np)
++		return dev_err_probe(dev, -ENODEV, "missing UFS OPP table\n");
++
++	for_each_available_child_of_node(opp_np, opp) {
++		ret = ufs_qcom_validate_required_opp(dev, opp);
++		if (ret) {
++			of_node_put(opp);
++			goto out_put_opp_table;
++		}
++
++		num_opps++;
++	}
++
++out_put_opp_table:
++	of_node_put(opp_np);
++	if (ret)
++		return ret;
++
++	if (!num_opps)
++		return dev_err_probe(dev, -EINVAL, "empty UFS OPP table\n");
++
++	return 0;
++}
++
++/*
++ * The supported SM8250 two-domain contract is MMCX first and GCC
++ * UFS_PHY_GDSC second. The one-domain generic path remains unchanged.
++ * Unknown two-domain layouts fail closed because the generic GenPD core
++ * deliberately skips automatic attachment for multi-domain consumers.
++ */
++static int ufs_qcom_attach_sm8250_domains(struct device *dev)
++{
++	struct dev_pm_domain_attach_data pd_data = {
++		.pd_flags = PD_FLAG_DEV_LINK_ON,
++	};
++	struct dev_pm_domain_list *pd_list;
++	struct dev_pm_opp_config opp_config = {};
++	struct of_phandle_args pd_args;
++	int num_domains, ret;
++
++	if (!dev->of_node ||
++	    !of_device_is_compatible(dev->of_node, "qcom,sm8250-ufshc"))
++		return 0;
++
++	num_domains = of_count_phandle_with_args(dev->of_node, "power-domains",
++						 "#power-domain-cells");
++	/* Preserve the existing generic one-domain path and no-domain case. */
++	if (num_domains == 1 || num_domains == -ENOENT)
++		return 0;
++
++	if (num_domains != 2)
++		return dev_err_probe(dev,
++				     num_domains < 0 ? num_domains : -EINVAL,
++				     "unsupported SM8250 UFS power-domain count\n");
++
++	/* The board DTS contract is MMCX index 0, GCC UFS_PHY_GDSC index 1. */
++	ret = of_parse_phandle_with_args(dev->of_node, "power-domains",
++					 "#power-domain-cells", 0, &pd_args);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to parse MMCX power domain\n");
++
++	if (!of_device_is_compatible(pd_args.np, "qcom,sm8250-rpmhpd") ||
++	    pd_args.args_count != 1 || pd_args.args[0] != RPMHPD_MMCX)
++		ret = -EINVAL;
++	of_node_put(pd_args.np);
++	if (ret)
++		return dev_err_probe(dev, ret, "first UFS domain is not RPMhPD MMCX\n");
++
++	ret = of_parse_phandle_with_args(dev->of_node, "power-domains",
++					 "#power-domain-cells", 1, &pd_args);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to parse UFS PHY power domain\n");
++
++	if (!of_device_is_compatible(pd_args.np, "qcom,gcc-sm8250") ||
++	    pd_args.args_count != 1 || pd_args.args[0] != UFS_PHY_GDSC)
++		ret = -EINVAL;
++	of_node_put(pd_args.np);
++	if (ret)
++		return dev_err_probe(dev, ret, "second UFS domain is not UFS_PHY_GDSC\n");
++
++	ret = ufs_qcom_validate_opp_table(dev);
++	if (ret)
++		return ret;
++
++	ret = devm_pm_domain_attach_list(dev, &pd_data, &pd_list);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "failed to attach UFS power domains\n");
++	if (ret != 2)
++		return dev_err_probe(dev, -EINVAL, "unexpected attached power-domain count\n");
++
++	opp_config.required_dev = pd_list->pd_devs[0];
++	opp_config.required_dev_index = 0;
++
++	ret = devm_pm_opp_set_config(dev, &opp_config);
++	if (ret)
++		return dev_err_probe(dev, ret, "failed to map UFS OPP to MMCX\n");
++
++	return 0;
++}
++
+ /**
+  * ufs_qcom_probe - probe routine of the driver
+  * @pdev: pointer to Platform device handle
+  *
+  * Return: zero for success and non-zero for failure.
+  */
+ static int ufs_qcom_probe(struct platform_device *pdev)
+ {
+ 	int err;
+ 	struct device *dev = &pdev->dev;
+ 
++	err = ufs_qcom_attach_sm8250_domains(dev);
++	if (err)
++		return err;
++
+ 	/* Perform generic probe */
+-- 

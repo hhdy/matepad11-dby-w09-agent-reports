@@ -1,3 +1,18 @@
+# SUPERSEDED — DO NOT EXECUTE THIS STANDALONE TASKBOOK
+
+ROUND33 has now passed all gates and AI1 has prepared ROUND126. The active
+Agent task is the combined AI1 ROUND127 taskbook, which validates both
+ROUND125 and ROUND126 on the same verified Stage A 17-patch baseline and uses
+one full Image build:
+
+firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_TASKBOOK.md
+
+The older standalone ROUND125 instructions below are retained as history
+only. Do not use their 15-patch baseline or their instruction to exclude
+ROUND33 patches 16/17.
+
+---
+
 # [发给测试Agent] AI1-ROUND125 独立验证任务书
 ## QMP UFS PHY 的 L5/L9 双 rail 状态管理候选
 

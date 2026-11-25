@@ -88,12 +88,30 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - `ack18-dby-w09-dts-draft`：ACK 6.18 板级 DTS / rootparam DTBO 草案分支。
 - PR #1：保持 Draft，不得擅自合并。
 
-协作规则：
-- GPT 优先自行完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给本地 Agent。
-- 只有必须访问用户本机文件、检查已有工具/环境、对本地固件执行只读提取或读取设备状态时，才编写本地 Agent 任务书。
-- 本地 Agent 只读；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件、不编译内核。任务书要求的工具不存在时必须 BLOCKED 并停止。
-- 需要新建本地任务时，先检查 ROUND 编号和既有任务，确保不重复。ROUND12 已上传并按工具门槛 BLOCKED；firmware-analysis ROUND13/14 均已上传完成；当前本地 Agent 队列为空。ROUND13 与历史 kernel-baseline/round13 ACK DTS 设计属于不同目录/工作流。
-- 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY。不能把源代码推理写成设备运行结论。
+## 5.1 双 AI 编号、任务书归属与派发规范（强制）
+
+**角色编号固定，不因会话或任务变化：**
+- **1号 AI = ChatGPT（主 AI）**：负责公开网页/GitHub/上游源码研究、源码级设计与推理、GitHub 文档归档、任务拆分与任务书编写、审查 2号 AI 的本地报告，以及决定任务是否放行。1号 AI 不得假称自己已经读取用户本机文件或执行了本机命令。
+- **2号 AI = 本地 WorkBuddy Agent（执行 AI）**：负责任务书明确要求的本机文件/固件只读检查、本机工具与环境核验，以及明确授权的本机构建/验证任务。2号 AI 只能执行明确标注给自己的任务，不自行扩大范围。
+
+**任务书必须显式标注接收方，不能只写“Agent”或“AI”：**
+- 发给 ChatGPT 的任务统一标记：`[1号AI任务书 / GPT_TASK]`，文件名使用 `AI1_TASK.md`（或 `AI1_TASK_主题.md`）；元数据写明“执行者：1号 AI（ChatGPT）”。
+- 发给本地 WorkBuddy 的任务统一标记：`[2号AI任务书 / LOCAL_AGENT_TASK]`，现有兼容文件名 `AGENT_TASK.md` 保留；元数据写明“执行者：2号 AI（本地 WorkBuddy Agent）”。
+- 对应启动提示也必须在第一行标记 `[发给1号AI]` 或 `[发给2号AI]`。不能让一份任务书同时要求两个 AI 执行。
+- 每份任务书开头固定写明：任务编号、任务类型/标签、执行者、审核者、执行环境（公开网络/GitHub 或用户本机）、输入、交付物、硬边界和停止条件。
+- 如果一个工作需要两个 AI 接力，必须拆成两份独立任务书，并写清交接条件；不得用含糊的“双方/AI/Agent”混合指令。
+
+**执行路由规则：**
+- 2号 AI 只执行 `[2号AI任务书]` / `AGENT_TASK.md`，不得把 `AI1_TASK.md` 当成自己的任务；发现归属不明，先停止并报告，不猜。
+- 1号 AI 读取 `AI1_TASK.md` 并自行完成公开研究/代码审查；对本地不可访问步骤才创建明确标记给 2号 AI 的任务书。
+- 用户说“Agent”时，在本项目默认指 2号 AI（本地 WorkBuddy Agent）；ChatGPT 自称或任务归属统一称 1号 AI。
+- ROUND 编号只标识工作轮次，不代表 AI 编号。不要把 ROUND25、ROUND26 误读成 AI 25/26。
+
+**工作原则：**
+- 1号 AI 优先完成可通过公开源码、GitHub、上游文档和已有报告完成的研究、对照与设计；不要把这些任务交给 2号 AI。
+- 仅必须访问用户本机文件、检查本机已有工具/环境、对本地固件执行只读提取，或执行已授权的本机验证时，才派发 2号 AI 任务。
+- 2号 AI 遵守任务书的只读/构建边界；不刷机、不解锁、不 root、不写分区、不执行 fastboot 写操作、不安装工具、不下载固件。若任务书要求的工具不存在，按任务规定标记 BLOCKED 并停止。
+- 未运行、未验证的步骤明确标注 NOT_RUN / BLOCKED / UNKNOWN / DESIGN ONLY；不能把源代码推理写成设备运行结论。
 
 ## 6. 已完成的内核移植研究（无需从零重做）
 
@@ -1428,7 +1446,9 @@ This is structurally aligned with the HOS4.3 template's bootloader-fill zero-siz
 Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.
 
 
-## 2026-11-25 — ROUND27 queued behind ROUND25/ROUND26: Kleaf/Bazel three-target DT build + composite schema validation
+## 2026-11-25 — ROUND27 prerequisites queue snapshot (superseded; now released)
+
+**状态更新：** 本节记录的是 ROUND25/26 报告上传前的历史状态。两份报告现已由 1号 AI 审查并通过 ROUND27 前置门槛。当前权威状态见后文“ROUND25/ROUND26 primary review complete; ROUND27 released to local Agent”及对应审查报告。ROUND27 现在是明确发给 **2号 AI** 的任务。
 
 **Authoritative start gate (user instruction): ROUND25 and ROUND26 must both be completed by the responsible local Agent and uploaded to `firmware-audit-v1`. The primary AI (ChatGPT) must then read and review both reports before ROUND27 is issued or resumed. Do not dispatch ROUND27 early, do not treat task-file creation as completion, and do not assume an unuploaded report exists.**
 

@@ -551,3 +551,20 @@ The 2号 AI has issued a replacement, explicitly owned taskbook for the local Ag
 - Required output is only `firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` on `firmware-audit-v1`.
 
 This task assignment does not change the phase gates: Phase A-D remain PASS; Phase E/F remain BLOCKED; Phase G remains NOT RUN. Await the Agent's report before claiming the ROUND27 DTB/schema checks passed.
+
+### AI2-ROUND27 completed and reviewed (2026-11-25)
+
+The local Agent completed the explicitly 2号 AI-owned taskbook and uploaded the sole required sanitized report:
+[AI2-ROUND27 Kleaf DTB/DTBO/composite/schema report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt).
+
+Delivery compliance was rechecked against `firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`:
+- The report confirms task ID AI2-ROUND27, issuing party 2号 AI, executor local Agent; older generic task prompts were treated as background only.
+- Both locked DTS inputs were recovered by exact Git blob SHA. The older locked board candidate (16089 bytes; blob `9918efe3f253a3e4821689ffeb899d5a0f237e8f`) was used, not the newer main HEAD blob.
+- The required report path was used. ROUND25 and ROUND26 prerequisites were readable.
+- The three constrained Kleaf/Bazel targets (base DTB, rootparam DTBO, composite DTB) passed query, cquery and build. Output sizes: 145849, 536 and 146045 bytes respectively.
+- Required rootparam and UFS Host/PHY properties were inspected. Temporary staging files were removed and source-tree integrity checks were reported clean.
+- No kernel/Image, dtbo_image, boot/AVB packaging or device operation was performed.
+
+**Technical verdict is deliberately not a clean schema pass:** targeted `dt-validate` returned RC=0 but emitted one error-level diagnostic for UFS Host `vcc-voltage-level`; the full schema run emitted eight error-level diagnostics, including the UFS property, generic root-compatible matching and Huawei `/rootparam` vendor properties. The report retains these diagnostics and does not claim schema PASS. The checkout also lacked `MODULE.bazel.lock`; the report discloses this while recording the locally pinned Bazel/rules_devicetree versions.
+
+Review decision: **AI2-ROUND27 deliverable accepted as task-complete; DTB/DTBO/composite Kleaf builds PASS; schema PARTIAL / NOT CLEAN.** This does not close Phase E or F, does not establish HOS4.3 ABL overlay selection, final RAM handoff, PM8150 physical input topology, or bootability. Stage A gates remain Phase A-D PASS, Phase E/F BLOCKED, Phase G NOT RUN. Do not generate a boot package or perform device actions from this result alone.

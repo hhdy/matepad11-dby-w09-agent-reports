@@ -17,8 +17,8 @@ ROUND63; this patch must not add a second definition. It does not change the AI2
 branch. Source/build validation is pending.
 
 ---
- drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | 346 ++++++++++++++++++++++++++++++----------------
- 1 file changed, 211 insertions(+), 135 deletions(-)
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | 351 ++++++++++++++++++++++++++++++----------------
+ 1 file changed, 216 insertions(+), 135 deletions(-)
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c

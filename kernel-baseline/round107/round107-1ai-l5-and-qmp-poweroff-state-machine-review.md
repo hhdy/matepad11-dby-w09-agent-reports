@@ -286,3 +286,17 @@ This double-reference scenario is conditional on a provider disable failure; it 
 For the SM8250 two-rail list, a per-tail-rail enabled flag is sufficient to avoid re-enabling a reference that remains held after an error. The special property path should also consider whether a DRMS load-zero request is needed for the trailing L9 consumer before disable, because it is itself a DRMS-capable NLDO. With its 18.8mA request below the 30mA threshold, an isolated L9 consumer remains in LPM on both sides of the disable; however, any additional active consumer could change the aggregate and cross the mode threshold. Do not assume absence of other consumers without an exact phandle-reference inventory.
 
 The HOS4.3 100mA L9 proxy-consumer field does not establish an ACK Linux DRMS load: the pinned ACK provider has no implementation for that vendor property. Keep the ARC/proxy parity gap separate.
+
+
+### ROUND107 dummy-provider operational semantics (additional pinned-source check)
+
+Pinned ACK `drivers/regulator/core.c::_regulator_is_enabled()` returns 1 when a regulator provider has no `.is_enabled` operation, with the explicit comment “If we don't know then assume that the regulator is always on.” The built-in dummy provider has no regulator ops and has `constraints.always_on = 1`. Therefore, if L5's missing parent is resolved to the dummy regulator:
+- regulator-core treats that parent as logically already enabled;
+- no physical upstream enable/disable operation exists on the dummy;
+- the dummy consumer reference can still be accounted by regulator core;
+- this mechanism is a software assumption that the physical PMIC input is already available, not an actual power source.
+
+This supports the statement that the built candidate can proceed without a declared L5 parent phandle, but does not prove the regulator lookup selected dummy rather than an alias/mapping, and does not close the L5 electrical input topology.
+
+Pinned source:
+[`_regulator_is_enabled()`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/regulator/core.c#L3240-L3255)

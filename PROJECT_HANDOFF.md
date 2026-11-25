@@ -866,3 +866,41 @@ ROUND18 原始任务书第 5 节曾把 ROUND32 的旧 patch blob `efe2d932da3471
 4. 首次启动目标为进入 Android 17 DerpFest 桌面；显示/触摸及系统分区挂载等必需路径优先。其他硬件功能作为第二阶段完善。
 5. 任何烧写或分区操作仍需用户另行明确授权；不得从“已有开发者成功”推导出本设备已授权写入。
 
+
+
+## 2026-11-25 ROUND19 completed; ROUND20 is the next local task
+
+### ROUND19 report and findings
+
+Final sanitized report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round19/round19_hos43_boot_ramdisk_avb_dtbo_audit.txt
+Blob: c96b30ca763b29dcc58aada6e93c25faaea8e34d
+
+ROUND19 reused the existing ROUND2/ROUND3 firmware work copies. It did not re-extract firmware, deploy WSL, repo sync, rebuild Image, access the device or modify any original image.
+
+Results:
+- Boot-chain inventory and boot-header parsing PASS. boot.img is Android header v2 / 4096-byte page; ramdisk.img is standalone header v0 with kernel_size=0; stock boot payload includes kernel, embedded ramdisk and DTB.
+- Ramdisk inventory PASS. The ramdisk is gzip + SVR4 CPIO newc with 17 entries. /init is a statically linked AArch64 ELF; no text fstab, ueventd, init rc, SELinux policy, .ko, modules.load or modules.blocklist is present. /firmware/android/fstab exists in the base DTB. The Android 12 ramdisk/system fingerprint and Android 11 kernel/vendor metadata split is evidenced in the stock package.
+- AVB parser audit PASS WITH PRELIMINARY status. No trusted avbtool was installed. A local read-only parser with bounds checks passed 7/7 synthetic tests. Footer/header/descriptor results have independent arithmetic and DTB-list cross-checks, but no independent trusted AVB implementation cross-check exists. Do not treat it as final AVB verification.
+- Nine-DTBO audit PASS. Base DTB contains /memory but its reg is all zero. /chosen has bootargs but no linux,uefi-* memory-map metadata. None of the nine DTBOs changes /memory, /chosen, /reserved-memory or /firmware/android/fstab. No stock overlay solves the memory handoff.
+- ABL triage BLOCKED / not applicable: no ABL binary exists in the existing extraction directory.
+- Important unresolved AVB inconsistency U-8: AVB hashtree image_size values for system, odm and cust exceed independently measured LP partition sizes; the five AVB hashtree image sizes also exceed super.img. Do not use these values as partition geometry until reconciled.
+
+### Superseding user instruction: no further public-repository search for the private success precedent
+
+The user has explicitly clarified that the same-device Android 17 DerpFest developer does not intend to open-source the implementation. Previous handoff wording that asked AIs to locate this private implementation through public repositories/posts is superseded. Do NOT search for it, ask the user to provide it, or repeat the same public repository lookup. The user-confirmed same-device / same ACK-GKI 6.18.33 success is already an accepted project premise. We must implement independently from existing HOS4.3 evidence and the pinned ACK source.
+
+### ROUND20 active task
+
+Task:
+- firmware-analysis/round20/AGENT_TASK.md
+- firmware-analysis/round20/START_PROMPT.md
+- report destination: firmware-audit-v1/firmware-analysis/round20/round20_efi_stub_memory_handoff_and_boot_payload_compatibility.txt
+
+Purpose: read-only inspection of the already-built ROUND18 Image, .config, vmlinux and System.map to determine EFI_STUB / PE-COFF capability and trace ACK's normal-vs-EFI memory handoff path; inspect the stock boot.img kernel payload format; measure deterministic gzip and raw/gzip boot-v2 payload capacity; verify storage drivers are built-in. No rebuild, source modification, firmware modification, device access, ADB/fastboot or boot packaging. Use only existing local files and installed tools.
+
+The most important distinction: an EFI-capable Image does not prove Huawei ABL invokes EFI Stub. Only local Image capability can be established offline; ABL entry choice and final runtime FDT remain UNKNOWN without ABL/device evidence.
+
+ROUND18 must not be repeated: the Image is already built at /home/kerneldev/work/matepad11/ack-6.18.33-round18/bazel-bin/common/dby_w09/Image, size 44,820,992 bytes, SHA-256 983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884. No board DTB/DTBO/boot image exists yet.
+
+Continue to keep all device writes/flash/boot operations gated on separate explicit user authorization.

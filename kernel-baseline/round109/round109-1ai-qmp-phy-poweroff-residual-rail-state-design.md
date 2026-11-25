@@ -171,3 +171,18 @@ Runtime hardware measurement and failure injection remain separate; this report 
 - Actual patch, apply, checkpatch, compile, failure injection and device test: NOT RUN.
 
 No source, patch, binding, DTS, configuration, development branch, protected branch, PR or firmware artifact was modified by this report.
+
+
+## 9. All pinned QMP UFS PHY regulator tables are exactly two rails
+
+I parsed every `static const struct regulator_bulk_data ..._vreg_l[]` initializer in the exact pinned `drivers/phy/qualcomm/phy-qcom-qmp-ufs.c` source:
+
+- 15 regulator-list arrays found;
+- every array has exactly two entries;
+- every array orders them `vdda-phy` first and `vdda-pll` second;
+- the SM8250 list is `vdda-phy = 89900µA`, `vdda-pll = 18800µA`.
+
+This confirms that the current pinned tree's vendor property path has one retained L5 rail and exactly one trailing L9 rail for every existing QMP UFS compatible. Therefore a single tail-enabled state is sufficient for the exact pinned source revision, provided 2号 AI does not broaden the supported list or alter its ordering. The driver's fail-closed first-entry validation remains appropriate.
+
+The binding declares the optional boolean in the shared QMP UFS PHY schema, whose compatible enum contains `qcom,sm8250-qmp-ufs-phy` and the other listed QMP UFS variants. The property is therefore schema-accepted for any of those compatible strings, not syntactically restricted to SM8250. The fixed ACK source currently makes all 15 lists the same two-rail ordering, so this does not create a different current list layout. Future additions to a list must revisit the state machine.
+

@@ -2127,3 +2127,25 @@ Test-only taskbook: [TEST_AGENT_ROUND124_TASKBOOK.md](https://github.com/hhdy/ma
 ## Explicit user instruction — tablet connection approval gate (2026-11-25)
 
 For every future local Agent task, if a test or evidence step may require connecting the Huawei MatePad DBY-W09 by USB, ADB, fastboot, serial or any other device interface, stop before connecting or issuing device commands. Notify the user what connection/access is needed and why, then obtain explicit approval and issue a separate device taskbook. A general instruction to continue the kernel port or testing is not permission to connect the tablet; this applies even to read-only device access. Offline source review, local compilation and build validation remain allowed within each taskbook's stated scope.
+
+
+
+## 2026-11-25 — ROUND33 revalidation failure and follow-up state (2号 AI)
+
+- Agent revalidation report: [AI2_ROUND33_REVALIDATION_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt), report blob `382726ddf1f089226dbbc703cf0c22e27f3c63d2`.
+- The tested branch snapshot was `ai-parallel/stagea-port-until-boot@c4ee77184e2bf4e4eadf6280e67a510be5e729e5`. Its 17-patch apply and patch16/17 checkpatch passed, but the committed host harness failed: legacy ROUND31 suite 38 checks / 12 failures; ROUND32 suite SIGSEGV 139 after the non-self ghost-target test expected deferred parking even though patch16 returns `-EINVAL`. Schema gates, fresh Image build and ROUND58 regression were NOT RUN under the stop-on-defect rule.
+- The report identified two committed test/mocking inconsistencies: legacy provider-level fixtures did not provide the required self-target proxy-supply / registered target, and stale ghost-target tests dereferenced the `ERR_PTR(-EINVAL)` result.
+- The AI2 branch has since advanced to `2f21233148a04afdd61e44b1be7688399967d9d0`. 2号 AI reports that it changed only host tests/mock: legacy fixtures now provide group self-target phandles and target registrations; ghost non-self-target tests now assert `-EINVAL` without dereferencing the error pointer, and a deferred self-target unregister test was added. **This follow-up test change is not yet independently revalidated.** ROUND33 remains incomplete; do not treat the earlier failed run as a PASS or assume the latest fixes pass.
+- Preserve the previous failure report. The next Agent run must verify the current exact branch snapshot, full 17-patch series, both host suites, schemas, full Image build and ROUND58 config/helper regressions.
+
+## 2026-11-25 — ROUND125: AI1 QMP UFS dual-rail state candidate (Agent validation pending)
+
+- Candidate branch: `ai1/round125-qmp-ufs-rail-state`.
+- Review/design: [ROUND125_QMP_UFS_RAIL_STATE_REVIEW.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round125-qmp-ufs-rail-state/kernel-baseline/round125/ROUND125_QMP_UFS_RAIL_STATE_REVIEW.md).
+- Patch: `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch`, Git blob `c192fe1488d82b12aa3d3108e036d1141f5e76db`, SHA-256 `31571a1e4449cb5cceae3f77a102e7d4af488f4ef878af3248e8624c7211617c`.
+- The patch is a delta after AI2 ROUND63, against the first 15 ROUND31/32 Stage A patches on fixed ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9`. It tracks load state and enable-reference state separately for QMP UFS `vdda-phy` and `vdda-pll`, zeroes each DRMS load before disable, preserves the always-on L5 enable while idle, and avoids a second enable when L9's previous disable failed before reference decrement. The original bulk path remains unchanged when `vdda-phy-always-on` is absent.
+- The authoring session derived the exact post-ROUND63 source, generated a three-hunk delta, verified hunk counts and re-applied the generated delta against the same derived source. Real `git apply`, checkpatch, object compilation and full Image build are still PENDING Agent validation.
+- Agent taskbook: [TEST_AGENT_ROUND125_TASKBOOK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round125/TEST_AGENT_ROUND125_TASKBOOK.md).
+- This candidate overlaps the QMP PHY source path touched by AI2 ROUND63. It remains isolated on AI1 branch and must not be merged into AI2 automatically.
+- Full Image build is held until the current AI2 ROUND33 repair is independently revalidated and its full build slot is released. Agent may perform ROUND125's identity/apply/source/checkpatch/object prechecks in an independent disposable workspace, but must not run a concurrent full Image build.
+- Known limits remain explicit: an API error can be post-decrement in generic regulator core; HOS4.3 static evidence narrows the L5/L9 path but does not prove every runtime parent/alias. The void devm cleanup action cannot veto the later managed regulator_put. No device or hardware behavior is claimed.

@@ -1957,3 +1957,15 @@ Report: [zytstudio DBY-W09 Kernel reference audit](./kernel-baseline/references/
 ### Current AI2 work branch
 
 At this handoff append, latest observed ai-parallel/stagea-port-until-boot HEAD is 5ecf5f626ade4c365d1bfb0d5a2ea5c7a46aed10 (ROUND61 assignment of AI2 ROUND31 proxy-consumer port). This is a task-assignment commit, not evidence that ROUND31 implementation is complete. 2号 AI implementation must remain on its designated branch; 1号 AI must not modify that branch. Re-fetch its head/diff before the next review.
+
+
+### ROUND113 — 同型号 vendor 4.19 与 ACK 6.18.33 配置差异映射
+
+Report: [ROUND113 — same-device config mapping](./kernel-baseline/round113/round113-1ai-same-device-4.19-vs-6.18-config-map.md).
+
+- Compared zytstudio/DBY-W09-Kernel running.config (4.19.157-perf, blob 4cf9559611d4c1c2f8bacfc3b98f76fb62cead1a) against ROUND61 Phase D dby_w09.config (238,376 bytes, SHA-256 5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7).
+- The Stage A 6.18 config already enables UFS core/platform/QCOM host, QMP UFS PHY, QCOM RPMh regulator, QCOM inline crypto engine, SM8250 GCC, QCOM RPMh/GDSC, ARM SMMU and QCOM SMMU integration.
+- Vendor 4.19 proxy consumer (REGULATOR_PROXY_CONSUMER) has no same-named ACK Kconfig option; the temporary L5/L9 proxy consumer behavior remains a source-level compatibility feature under AI2 ROUND31. Do not substitute a permanent system-load or always-on vote.
+- The main additional stage distinction: vendor 4.19 had KGSL + Kona GPU/display/camera clocks enabled. Current Stage A 6.18 config has SM8250 GCC enabled but SM8250 GPUCC/DISPCC/CAMCC disabled; DRM_MSM is also disabled and the fixed ACK config has no QCOM_KGSL symbol. This is a Stage B graphics/acceleration gap to address after Stage A boot/storage acceptance, not a reason to reorder the project.
+- HI1861 vendor command and crypto implementation equivalence remain open; symbol-name differences must be traced through real source and runtime use, not guessed.
+- No code, device, boot image, firmware or AI2 branch was modified in this audit.

@@ -139,3 +139,13 @@ board entry), asserted explicitly in the fixture gate instead of being
 - Schema gate 14/14 across dtschema 2023.9 and 2026.9 with content
   assertions on negative cases.
 - Full `//common:dby_w09` Kleaf Image rebuild PASS (hashes in the report).
+
+
+## ROUND33 follow-up: enforce self-target lifetime ownership (2号 AI implementation)
+
+- Source patch: `patches/round33-0001-regulator-proxy-self-target-only.patch` (blob `262ab30f458ebb603902014be8bbc9a5a8654437`, SHA-256 `5505d1e3f8dbec696d797e15c0484263e532c3397174cd149915ae8b5c7ec0e9`).
+- The per-rdev `proxy_consumer` back-pointer is the owner and teardown hook. A child-scoped or legacy provider-level `proxy-supply` must now resolve through `of_parse_phandle()` to the exact `reg_node` that owns the request. A cross-target phandle returns `-EINVAL` before regulator handle acquisition or any vote.
+- Legacy provider-level mapping remains available for the single request-bearing child that is itself the provider phandle target. If another child on the same provider attempts a proxy request, it is rejected rather than sharing a foreign target.
+- Binding descriptions now state the same runtime self-target rule. L5 and L9 review DTS already uses separate self-targets and remains unchanged.
+- Host harness now mocks OF phandle parsing and provider-level regulator lookup against the named target. ROUND32 suite adds nine assertions: child cross-target rejection, legacy cross-target rejection, and legacy self-target register/teardown. Existing 38-check ROUND31 suite and all prior ROUND32 coverage are retained.
+- **Verification status:** code and tests committed to the Stage A branch; patch application against the pinned ACK, strict checkpatch, dtschema/dt_binding_check, full Kleaf Image rebuild, ROUND58 config and helper regressions still require the local Agent execution. Do not mark this follow-up PASS until those checks complete.

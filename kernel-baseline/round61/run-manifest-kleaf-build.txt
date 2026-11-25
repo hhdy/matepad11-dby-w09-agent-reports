@@ -11,3 +11,5 @@ retry=ubuntu-22.04-libtinfo5-compat-for-manifest-clang
 retry=ignore-only-upstream-CAMELCASE-init_load_uA-checkpatch
 retry=watchdog-recovery-after-stalled-run-45453412267
 retry=validate-nine-stage-workflow-and-pinned-toolchains-2026-11-25
+
+retry=fix-common-build-config-constants-path-and-exact-pinned-prebuilt-toolchains-2026-11-25

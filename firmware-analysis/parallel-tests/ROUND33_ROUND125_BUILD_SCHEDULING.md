@@ -29,3 +29,13 @@ ROUND125 目标是 AI1 ROUND63 后的 QMP UFS L5/L9 双 rail state accounting，
 3. 在 ROUND33 发布完整构建时段释放前，ROUND125 不得运行第二个完整 Image build。
 4. 两个 Agent 窗口必须使用独立 clone/worktree/build workspace。
 5. 任一任务需要设备访问时，必须在连接前停下并征求用户明确许可。当前两个任务均不需要设备访问。
+
+
+## Agent assignment confirmation (2026-11-25)
+
+用户已确认：**ROUND33 修复后的重新验证任务已经由 2号 AI 交给本地 Agent 再次处理。**
+因此：
+- 不再重复派发 ROUND33，也不向用户要求再次安排；
+- ROUND33 复测期间，Agent 优先执行 2号 AI 的 ROUND33 任务；
+- ROUND125 任务书已就绪，但不能假定 Agent 已开始它；
+- 1号 AI 继续独立源码审查/补丁工作。ROUND125 等 ROUND33 完成后再占用 Agent 进行独立验证；完整 Image 构建仍按前文顺序排队。

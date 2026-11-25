@@ -465,3 +465,8 @@ No board DTB/boot package or device operation has been attempted. Phase E/F rema
 ### Phase G — controlled device validation plan prepared
 
 Second AI committed `kernel-baseline/round61/phase-g-device-validation.md` (commit `a8f8d71116d0d3db309e64c0c14b2cb571a20831`). It defines strict entry gates, the pre-boot review packet, first-boot evidence checklist, stop conditions and Stage-A device acceptance criteria. It authorizes no operation: Phase G remains NOT RUN; no device connection, bootloader action, reboot, partition write or hardware test has been performed.
+
+
+### Phase E — precise local Agent handoff prepared
+
+Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` (commit `69e890925b7e968c0db12217394e1b8c46d01dd8`). It requests only a sanitized, source-backed HOS4.3 final ABL-to-Linux FDT/EFI memory handoff and PM8150 physical input-parent map, with strict no-reboot/no-write/no-unlock/no-policy-bypass limits. It explicitly allows the Agent to return BLOCKED if those facts cannot be obtained from already-authorized evidence. This taskbook does not authorize device access or change Phase E's BLOCKED status.

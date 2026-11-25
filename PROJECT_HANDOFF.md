@@ -2185,3 +2185,14 @@ For every future local Agent task, if a test or evidence step may require connec
 - One isolated Agent workstream will perform both patch identities/applications, source gates, test suites, checkpatch, target objects and one full Image build. ROUND127 must not modify AI2 branch or files.
 - The standalone ROUND125 taskbook is superseded. Do not use its former 15-patch baseline instructions.
 - All tasks remain offline. Any possible device access still requires stopping before connection and obtaining the user's explicit approval.
+
+## 2026-11-25 — ROUND127 reviewed; ROUND128 V2 correction and ROUND129 combined revalidation
+
+- ROUND127 Agent report was read in full: `firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_REPORT.txt`, blob `aae6c9f7876caa786f680ab0a64c4c6be31a9e40`.
+- **ROUND127 overall = FAILED at QMP object compile.** ROUND126 passed all source gates, host tests, checkpatch and `proxy-consumer.o` compilation. Original ROUND125 applied cleanly and passed source gates, but `phy-qcom-qmp-ufs.o` failed because ROUND125 added a duplicate `qmp_ufs_power_off()`; ROUND63 already defines the callback. Full Image build, artifact hashes, and ROUND58 regression were correctly NOT RUN under the stop rule. Workspace restore passed. No device was connected.
+- ROUND125 original must remain historical/unaccepted. Do not reuse `kernel-baseline/round125/0001-qmp-ufs-rail-state.patch` in future testing.
+- 1号 AI prepared ROUND128 V2 on isolated branch `ai1/round128-qmp-ufs-rail-state-v2`: `kernel-baseline/round128/0001-qmp-ufs-rail-state-v2.patch`, final Git blob `22ccec1cabf2d78e61442d19219985135f8341e7`. It removes only the newly-added duplicate `.power_off()` block and reuses the existing ROUND63 callback, which already calls the updated `qmp_ufs_regulators_disable()`. The state-machine implementation is otherwise retained. This is a compile-defect correction, **not yet Agent-validated**.
+- Review: [ROUND128 V2 review](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round128-qmp-ufs-rail-state-v2/kernel-baseline/round128/ROUND128_QMP_UFS_RAIL_STATE_V2_REVIEW.md).
+- New combined taskbook: [ROUND129 Agent taskbook](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round129/TEST_AGENT_ROUND129_COMBINED_TASKBOOK.md). It requires fresh validation of Stage A 17-patch baseline + ROUND128 V2 + ROUND126 together, host suites, checkpatch, both target objects, then (only if both compile) one full Image build and ROUND58 config/helper regression. Agent must not modify code.
+- ROUND126's previous object PASS is historical evidence only; it must be rerun in the combined tree before the series can be accepted. No candidate is merged into AI2.
+- This task is fully offline. No USB/ADB/fastboot/serial/device access, no flashing, no boot or partition actions. Phase E/F remain BLOCKED; Phase G NOT RUN.

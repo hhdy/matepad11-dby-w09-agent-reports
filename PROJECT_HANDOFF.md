@@ -53,6 +53,10 @@ Android 17 DerpFest 稳定后，才评估 ColorOS 或其他 Android ROM。ColorO
 - https://github.com/svesnav/linux-dby-w09
 - https://github.com/CoWave-Fall/linux-on-arm-matepad11
 
+## 2.1 本批外部仓库研究（2026-11-25）
+
+新增加的 [外部仓库研究记录](./external-research/REFERENCE_REPOSITORIES_2026-11-25.md) 汇总了 DBY-W09 专用 UEFI、同设备 HarmonyOS 4.x Linux 4.19 厂商内核、Adreno 650/A740 XNU GPU 代码，以及 TheBula97 EDL/固件资料的当前审查边界。后续会话先读此记录，不要重复从零搜索这些仓库；尤其要区分“同设备参考”“作者自述验证”和“DBY-W09/ACK 6.18.33 已独立验证”，不能把 UEFI、4.19 vendor kernel 或 XNU KEXT 当作 6.18.33 内核底座。
+
 ## 3. 上游基线与版本控制注意事项
 
 - DerpFest Android 17 manifest：https://github.com/DerpFest-AOSP/android_manifest/tree/17

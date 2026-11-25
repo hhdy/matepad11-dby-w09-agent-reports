@@ -1688,3 +1688,21 @@ ROUND87 是 1号 AI 只读审查，供 2号 AI 实现评估；测试 Agent 仅�
 **角色：** ROUND88 是 1号 AI 只读调用链审查，仅供 2号 AI 实现时评估。测试 Agent 仅在收到独立 `AGENT_TEST_TASK.md` 后测试。本轮未修改代码/DTS/binding/补丁/分支，也未执行构建、schema 或设备操作。
 
 **实现要求新增：** UFS VCC min/max 不能只在 `ufs_qcom_init()` 中解析；必须在第一次 regulator enable 之前准备好。
+
+
+## 2026-11-25 — ROUND89：1号 AI 澄清 legacy UFS VCC off-state 电压请求语义
+
+报告：[ROUND89 — 1号 AI correction: legacy UFS VCC disable relaxes the lower bound, it does not clear the entire voltage vote](./kernel-baseline/round89/round89-1ai-legacy-vcc-voltage-relaxation-and-disable-error-semantics.md)。
+
+进一步对照历史 Qualcomm UFS driver 后，明确 ROUND84 中“释放 voltage request”的准确含义：
+
+- legacy Qualcomm `ufs_qcom_config_vreg(on)` 设置 `regulator_set_voltage(reg, vreg->min_uV, vreg->max_uV)`，之后独立设置 `regulator_set_load(max_uA)`。
+- off 时不是 `[0, INT_MAX]` 完全撤销约束，而是 `regulator_set_voltage(reg, 0, vreg->max_uV)`：放宽 lower bound，保留 max voltage ceiling；另行 `regulator_set_load(reg, 0)`。
+- 对当前 DBY-W09 候选，状态为 ON：2.504–2.950 V + 800,000 uA DRMS load；OFF：0–2.950 V + 0 uA DRMS load。
+- 这意味着 off 状态仍保留一个 upper-voltage bound，可能继续参与共享 regulator 的 consumer aggregation。若要改成完全撤销 max bound，必须作为语义变更明确评审，不能暗中用 `INT_MAX` 替代。
+- ACK 目前 disable 路径会忽略 config(false) 的错误；历史 Qualcomm 代码虽检查错误，却可能在 regulator_disable 已成功、后续 config 失败时仍把 software `enabled` 留为 true。新实现应避免两种问题：enable reference 在 regulator_disable 成功后应记录为已释放，voltage-relaxation 与 DRMS zero-load 两种请求则分别记录成功/失败，不能互相掩盖。
+- ROUND88 的首次 VCC enable 前解析/应用要求仍成立：ON voltage + ON load 两项都应先成功，之后才 regulator_enable；失败时按独立 state 执行可诊断 rollback。
+
+**职责：** ROUND89 是 1号 AI 只读纠正说明；2号 AI 负责实现决策和补丁；测试 Agent 仅在收到独立 `AGENT_TEST_TASK.md` 后执行。本轮未修改任何源代码、DTS、binding、补丁、分支或设备。
+
+该结论细化 ROUND84/87 的“释放”用词，不改变 ROUND86 L17 电压档位可满足 UFS consumer interval 的结论。ROUND27 schema 仍 NOT CLEAN。

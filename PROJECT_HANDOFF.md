@@ -2046,3 +2046,25 @@ Report: [ROUND119 — child proxy self-cycle review](./kernel-baseline/round119/
 - ACK drivers/base/core.c explicitly detects a supplier fwnode equal to the consumer fwnode, marks the fwnode link FWLINK_FLAG_CYCLE, relaxes it to permissive cycle flags, and then skips device_link_add when con == sup_dev. The self-relation is not treated as a fatal probe dependency by this path.
 - This supports—but does not replace testing—the child-local self proxy-supply plus of_regulator_get(group_dev, child_node, "proxy") design. Build logs must still be checked for expected cycle-relaxed info and absence of fatal/deferred probe/device-link failures. Do not globally disable fw_devlink to hide issues.
 - Round119 is source-level review only; no code, DTS, build, firmware or device was changed.
+
+
+
+## 2026-11-25 — ROUND120: 1号 AI UFS per-HBA async scan join implemented and independently validated
+
+Report: [ROUND120 — UFS per-HBA async join acceptance](./kernel-baseline/round120/ROUND120_ACCEPTANCE.md).  
+Validated candidate branch: `ai1/round120-ufs-async-domain-validated`.
+
+- 1号 AI implemented the ROUND108 per-HBA registered async-domain design against exact ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`.
+- The change stores the async domain, scan cookie and schedule state in the existing `ufs_hba_priv`, leaves public `struct ufs_hba` unchanged, converts the one UFS scan schedule site to `async_schedule_domain()`, and joins that exact callback at the first functional point of `ufshcd_remove()` using cookie + 1.
+- Local test Agent executed the test-only task and uploaded [TEST_AGENT_ROUND116_UFS_ASYNC_DOMAIN_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round116/TEST_AGENT_ROUND116_UFS_ASYNC_DOMAIN_REPORT.txt). It reported zero-offset `git apply --check`, successful apply/diff check, 8/8 source-flow gates, checkpatch 0 errors (4 preamble comment warnings + 1 alignment check), patched object compile PASS, and full manifest-pinned `//common:dby_w09` Image build PASS. Workspace restoration PASS.
+- Patch SHA-256: `12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7`. Built Image SHA-256: `f2aa719fddfddc1f20097bcf53fac5833813a92e5fadff1f6229969667c3d750`.
+- **Disposition:** accepted as an independently validated UFS core source change. It remains isolated on the 1号 AI branch and is NOT merged into `ai-parallel/stagea-port-until-boot`; coordinate with 2号 AI before any integration because both changes may touch `ufshcd.c` / `ufshcd-priv.h`.
+- No hardware action occurred. A successful Image link does not close boot/storage acceptance; Phase E/F remain BLOCKED and Phase G NOT RUN.
+
+### Current 2号 AI status after ROUND31
+
+- 2号 AI ROUND31 generic proxy-consumer helper was submitted on `ai-parallel/stagea-port-until-boot` and independently recorded as compiled/tested. It is accepted only as a generic helper implementation, **not** as end-to-end L5 + L9 integration: ACK's one-PM8150-group layout cannot express both targets with the inherited group-level lookup.
+- The Stage A branch has advanced to AI2-ROUND32 assignment (latest observed branch head at this handoff: `37dceaaec5a7b1e8b7b86ae7465d2a6b00e3fac3`). ROUND32 must solve child-scoped lookup and preserve independent L5/L9 votes, add reproducible tests, and rerun the complete build/config regressions.
+- ROUND118 addendum remains binding for AI2 implementation: ROUND31 cleanup currently has a dangerous disable-before-load-zero sequence and frees/puts state even after cleanup errors; do not accept this lifecycle as safe until corrected and failure-path tested. ACK void `regulator_unregister()` cannot be vetoed by a devres action error.
+- ROUND116 / ROUND117 / ROUND119 remain relevant source constraints: child-node lookup API and unregister lifetime, normal UFS/QMP rail vote handoff timing, and fw_devlink self-cycle relaxation. Do not turn source-level cycle handling into a claim of runtime log/boot validation.
+- Role boundary: 1号 AI owns independent review and its separate candidate branch; 2号 AI owns actual AI2 Stage A driver implementation; local Agent is test/build/evidence executor only and must not author kernel code.

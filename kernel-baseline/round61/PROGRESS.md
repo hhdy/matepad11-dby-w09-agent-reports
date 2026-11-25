@@ -448,3 +448,13 @@ This is an additional successful Image-build result, but remains the accidental 
 ### Phase E — board DTS and memory/power handoff blocker report committed
 
 Second AI inspected the current board draft and committed `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (commit `3cb01092277b0750faa534160639fc81bf128b68`). The report preserves the two hard blockers: no evidenced final HOS4.3 ABL-to-Linux memory handoff (or EFI memory-map handoff), and no source-backed physical PM8150 VRM input-parent map. It distinguishes the HOS ARC/proxy graph from physical VRM inputs and records a narrow read-only evidence request for the local Agent. No DTS source input, DTB target, memory address or regulator parent was invented.
+
+
+### Phase C–E report synchronization (2026-11-25)
+
+The detailed reports have been reconciled with verified evidence:
+- `phase-c-kleaf-target-validation.md` now records run `45529395645` stages 2–7 passing, including exact Clang/Rust pin discovery and Bazel query/cquery. Its repeat Image build is tracked separately in Phase D.
+- `phase-d-kconfig-and-image-build.md` now corrects the prior stale NOT RUN label: actual Image builds succeeded in runs `45453412267` and `45455279898`; the archived final config passes 33/33 required symbols. The current transparent retry `45529395645` is still compiling at stage 8/9 as of the latest poll; stage 9 remains pending.
+- `phase-e-board-dts-and-memory-handoff.md` is now committed and linked above. It documents the actual HOS4.3 final-memory-handoff and PM8150 physical-input-parent evidence required before DTS promotion.
+
+No board DTB/boot package or device operation has been attempted. Phase E/F remain BLOCKED; Phase G remains NOT RUN.

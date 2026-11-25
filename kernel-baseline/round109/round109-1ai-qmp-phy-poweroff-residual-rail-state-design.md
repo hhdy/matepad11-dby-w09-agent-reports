@@ -186,3 +186,26 @@ This confirms that the current pinned tree's vendor property path has one retain
 
 The binding declares the optional boolean in the shared QMP UFS PHY schema, whose compatible enum contains `qcom,sm8250-qmp-ufs-phy` and the other listed QMP UFS variants. The property is therefore schema-accepted for any of those compatible strings, not syntactically restricted to SM8250. The fixed ACK source currently makes all 15 lists the same two-rail ordering, so this does not create a different current list layout. Future additions to a list must revisit the state machine.
 
+
+
+## 10. L9 tail load must also be zeroed before disable
+
+A final integration of the ROUND90 regulator-core rule with the exact SM8250 QMP list yields a concrete requirement for the trailing rail:
+
+- Pinned ACK's SM8250 QMP `vdda-pll` entry has `init_load_uA = 18800`.
+- Pinned ACK PM8150 L9 uses `pmic5_nldo`, whose DRMS ops and HPM threshold are 30mA.
+- HOS4.3 ROUND13 records L9 vendor mode thresholds of 30mA and a vendor 100mA proxy-consumer request. The ACK driver does not consume that vendor proxy property, so it is not an ACK Linux consumer load; other Linux consumers of L9 are not assumed absent.
+- Generic regulator core invokes DRMS after decrementing the final nonzero-load consumer reference. If removing this QMP 18.8mA request changes the aggregate L9 load across the 30mA mode threshold, a synchronous RPMh mode update can fail after the QMP consumer reference has already been decremented.
+
+Therefore the DBY-W09 special power-off path should not rely on the 18.8mA vote being below the threshold. It should use load-zero-before-disable for **both** PMIC5 NLDO consumers:
+
+1. while the L9 tail reference is held, call `regulator_set_load(vdda_pll, 0)`;
+2. if load-zero fails, abort L9 disable and retain both the stored nonzero load and the enable reference;
+3. after successful load-zero, call `regulator_disable(vdda_pll)`;
+4. mark L9 reference absent only after disable succeeds;
+5. on a later power-on, restore its 18.8mA load before reusing an already-held reference or acquiring a new reference.
+
+This remains correct whether L9 is the only active consumer or shares its DRMS aggregate with another consumer: regulator core recalculates the aggregate while the QMP reference is still held, so the subsequent disable no longer has a nonzero QMP load to remove after decrement.
+
+The HOS4.3 vendor proxy-consumer 100mA remains separate from this ACK consumer load; this ordering does not port the proxy framework.
+

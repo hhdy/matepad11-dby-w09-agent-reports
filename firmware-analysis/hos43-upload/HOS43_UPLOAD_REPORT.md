@@ -135,9 +135,14 @@ fact of this package, not a copy error.
   1–21, 61, 64, 65 only). No comparison was fabricated for missing reports.
 
 ## 13. Branch, commit and links
-- Branch: `hos43-firmware-evidence` (created from `main` @ 6de45832).
-- Commit SHA and per-file links: see the delivery message / `MANIFEST.csv`.
+- Branch: `hos43-firmware-evidence` (created from `main` @ 6de45832af030f38339b6273ea8506c9181e84f9).
+- Final HEAD commit (after all uploads): `dd9fafebe77206c3b6400e4bdd505841f52a02c6`.
+  Tree: `35a9aff34d3fc2abc8b99087de1808dd9b8e8256`.
+- 40 new commits on this branch (7 documents + 33 images); each file was
+  uploaded byte-identically and its SHA-256 re-verified by raw GET readback
+  (33/33 match, 0 failures).
 - Report path on branch: `firmware-analysis/hos43-upload/HOS43_UPLOAD_REPORT.md`.
+- Per-file links: `https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/hos43-firmware-evidence/firmware-analysis/hos43-upload/<path>`
 
 ## Boundaries
 Read-only; no device/ADB/fastboot/flash; no repacking; no HOS4.2 substitution;

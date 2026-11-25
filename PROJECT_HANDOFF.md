@@ -1908,3 +1908,14 @@ struct ufs_hba_priv {
 截至本交接更新前最后一次核对，`ai-parallel/stagea-port-until-boot` HEAD 仍为 `40f5555bc78fc54ee17c5b12f1294c43368ea30c`（AI2 ROUND30 task assignment）。ROUND61 的旧 Phase A–D Image build 仍然是有效的历史构建证据，但不验证这些 ROUND105–110 后续 teardown / async 设计改动。**下一次审查必须重新 fetch AI2 分支 head 和 diff；不能假设 ROUND30 implementation 已完成。**
 
 本组 1AI 报告均未修改 AI2 分支、protected DTS 分支、PR #1、固件、配置、源代码或 build artifact，也没有执行 device boot/flash/AVB 操作。Stage A Phase E/F 继续 BLOCKED，Phase G NOT RUN；DerpFest Stage B 仍须等待 Stage A 实际启动和 UFS/storage/basic hardware acceptance。
+
+
+### ROUND111 — 等待 1号 AI 本地 Agent 只读取证：PM8150 L17
+
+Taskbook：[ROUND111 TEST_AGENT_TASKBOOK.md](./kernel-baseline/round111/TEST_AGENT_TASKBOOK.md)。
+
+- 任务归属：1号 AI 下发；本地测试 Agent 只读取证；不是 2号 AI 编程任务。
+- 原因：ROUND103 已核实 L6，ROUND106 已核实 L5，但尚未以同样证据标准核实 UFS VCC 所用 PM8150 L17 的 `qcom,always-wait-for-ack`、regulator coupling、普通 parent-supply 和九个 DTBO 覆盖。
+- 范围：只读取既有 ROUND3 base FDT candidates 0/1/2、九个现有 DTBO；只检查 L17 group/child 和相关 reverse coupling；禁止重新提取固件、访问设备、改源代码/DTS/binding。
+- 唯一报告目标：`firmware-analysis/round111/TEST_AGENT_ROUND111_L17_RPMH_DISABLE_CONFIG_REPORT.txt`，分支 `firmware-audit-v1`。
+- Agent 上传报告后立即停止。该证据用于 1号 AI 完成 L17 disable failure boundary 审查；实际驱动修复仍属于 2号 AI。

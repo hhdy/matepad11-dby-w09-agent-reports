@@ -288,6 +288,9 @@
 	 * Keep this order in sync with ufs_qcom_attach_sm8250_domains().
 	 * OPEN POWER GATE: pinned ACK SM8250 selects plain MMCX without an MX
 	 * GenPD parent; HOS4.3 ARC reports an MMCX->MX logical parent edge.
+	 * ACK can still register/vote plain MMCX without that parent link, so
+	 * this is not a proven UFS probe blocker. Whether the HOS parent edge
+	 * is required for UFS voltage/dropout margin remains UNKNOWN.
 	 * Exact HOS request/dropout semantics are not yet captured. This
 	 * routes the OPP but does NOT claim full HOS ARC equivalence.
 	 */

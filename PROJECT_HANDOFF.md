@@ -1065,3 +1065,16 @@ with MMCX index 0 and GCC GDSC index 1, plus the required binding includes. The 
 This is not a confirmed hardware failure; it is a source-proven missing performance-domain request in the current DTS draft. The ROUND37 patch was only applied to an isolated exact-file fixture and has not been integrated into an actual ACK DTS path or compiled as a DTB.
 
 Detailed review: `kernel-baseline/round65/round65-ufs-dual-genpd-dts-opp-routing-audit.md`.
+
+
+## 2026-11-25 — Supplemental source finding: PM8150 missing input-parent properties are schema-optional, but electrical path remains unknown
+
+Exact ACK 6.18.33 source review confirms:
+- `qcom,rpmh-regulator.yaml` permits PM8150/PM8150L input supply names in compatible-specific property sets but does not list them as required; top-level required keys are only `compatible` and `qcom,pmic-id`.
+- `qcom-rpmh-regulator.c` assigns PMIC descriptor `supply_name` values such as `vdd-s4` and grouped PM8150 LDO parent names into regulator descriptors.
+- `regulator/core.c` considers full constraints active when `of_have_populated_dt()` is true. On missing parent lookup `-ENODEV`, the normal regulator get path may use dummy regulator; its comment explicitly assumes the physical parent supply exists and is already enabled.
+- A phandle to an existing DT node with no registered regulator is different: `of_regulator.c` returns `-EPROBE_DEFER`, which is not replaced by dummy in that branch.
+
+This establishes why an ACK board DTS may be syntactically/schema-acceptable without the PM8150 input parents, but it does not prove the physical upstream rails exist or are enabled on DBY-W09. Do not fabricate `vph_pwr`, `vdd-s*` links or voltages. Retain the electrical parent map as an independent pre-boot gate.
+
+Detailed note: `kernel-baseline/round66/round66-pm8150-rpmh-parent-supply-dummy-fallback-audit.md`.

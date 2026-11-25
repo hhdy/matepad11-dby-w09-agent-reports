@@ -1,0 +1,545 @@
+ROUND133 - HOS4.3 UFS Host SMMU/IOMMU FDT 只读取证报告
+====================================================================================
+任务归属: 1号 AI (ChatGPT)   执行: 用户本地 WorkBuddy Agent (只读固件证据执行者)
+日期: 2026-11-26   固定 ACK: android17-6.18.33_r00 / 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+任务书: firmware-analysis/round133/TEST_AGENT_ROUND133_UFS_SMMU_FDT_TASKBOOK.md
+背景审查: kernel-baseline/round133/ROUND133_ACK_SM8250_UFS_IOMMU_CROSSCHECK.md
+
+总判定: PASS - 任务书 §3/§4/§5 全部条目均已用既有 ROUND3 工作副本完成只读结构化取证。
+          所有 fragment target 均解析成功 (0 个 unresolved/ambiguous)。
+          本报告不含原始 DTB/DTBO 二进制, 未上传任何固件对象。
+
+0. 结论摘要
+------------------------------------------------------------------------------------
+0.1 一句话结论
+    三个 base FDT candidate 的 /soc/ufshc@1d84000 均存在但 status="disabled", 且
+    iommus / iommu-map / iommu-map-mask / stream-match-mask / iommu-parent 全部
+    ABSENT; 九个 DTBO 各自只有 fragment@63 -> /soc/ufsphy_mem@1d87000 与
+    fragment@64 -> /soc/ufshc@1d84000 命中 UFS 节点, 覆盖内容仅为 regulator
+    consumers 与 status="ok", 三个候选与九个 overlay 中均无任何 iommu 属性。
+    因此 HOS4.3 静态 DT/FDT 侧 UFS Host 没有 SMMU stream-ID 描述 (NOT_PRESENT),
+    与 ACK 的两个 stream-ID (0x0e0/0x4e0) 不构成数值匹配。
+
+0.2 判定表
+    检查项                                         结果
+    base FDT candidate 0/1/2 可解析                  PASS (FDT v17, 0 decode error)
+    UFS Host 节点存在                                PASS (三个候选均存在)
+    UFS Host iommus 属性                             NOT_PRESENT (三个候选均无)
+    UFS Host 其它 iommu-* 属性                       NOT_PRESENT (5 类均无)
+    UFS PHY iommus 属性                              NOT_PRESENT (三个候选均无)
+    SMMU provider 存在                               PASS (apps-smmu@15000000)
+    UFS Host 是否绑定该 provider                     NO (无 phandle 可解析, 未绑定)
+    九个 DTBO FDT 有效性                             PASS (9/9)
+    九个 DTBO fragment target 解析                    PASS (1299/1299 RESOLVED)
+    九个 DTBO 是否新增/覆盖 iommu 属性               NO (0 处)
+    九个 DTBO 是否指向 SMMU provider                 NO (0 个 fragment)
+    ACK #iommu-cells 对照                            MATCH (2 vs 2)
+    ACK SID 0x0e0/mask 0 对照                        NOT_PRESENT
+    ACK SID 0x4e0/mask 0 对照                        NOT_PRESENT
+
+1. 输入与工具 (§6)
+------------------------------------------------------------------------------------
+1.1 输入清单 (既有 ROUND3 工作副本, 未重新提取/解包)
+    路径前缀: D:/DBY-W09_FirmwareAnalysis_round3/dtb_work/
+    file                              bytes  sha256
+
+    boot_fdt_candidate_0.dtb         556524  df2730f3d2e9bdabad874c3ef7399534c5c6070b046c4524224aa461ba2c70f7
+    boot_fdt_candidate_1.dtb         556520  f3dcba83e73f4d868e8e069369eb499ecde399a9034010be8bb34af4786e9817
+    boot_fdt_candidate_2.dtb         551026  6cda673986bf814c9f118aa129e3e85f235def6ce6f607f6a724b6fa135a0835
+    dtbo_entry_0.dtbo                329044  6940ce1167a3a21cb677a422da4327682d5e6d266dc5af5a002acb28cfc72aef
+    dtbo_entry_1.dtbo                329352  685a837e65a692da8780df6f9245c010128893ef22d0aeb1046b572eabe2872f
+    dtbo_entry_2.dtbo                329240  0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b
+    dtbo_entry_3.dtbo                329098  e68e5a48f64cfb686e2698b4dba07d58fa07fe4316522bbb4323ecfbeb9f486c
+    dtbo_entry_4.dtbo                329340  866991056bef3a99d7e010bc13196f87ee5b93474e70a75a4c34ddcc4bad6cfc
+    dtbo_entry_5.dtbo                329356  699df8950612ca3825db38050dceb20d08c85ded666e238a57b281c80ba7eec1
+    dtbo_entry_6.dtbo                329356  fca5a7a83ea69a473720c180594cf95035c57707957e1effe0484b76bdbad844
+    dtbo_entry_7.dtbo                329352  0a57a7f8ac678073542de72cef02e2bbbf9d40dd5aeb30000835258d55cff07b
+    dtbo_entry_8.dtbo                329352  a7946352a86ab6e47b5ee79d84e5d6c4cf4e548c96b0221cec909f32ebd9d21d
+
+    说明: 同目录另存在 boot_fdt_candidate_3.dtb (173 B)。任务书 §2 只允许 candidate
+    0/1/2, 故该文件未纳入解析, 仅记录其存在, 未做任何推断。
+
+1.2 解析工具与版本
+    python                : 3.13.14
+    ROUND3 parser         : D:/DBY-W09_FirmwareAnalysis_round3/tools/Analyze-DBY-W09-DeviceTree.py
+    ROUND3 parser sha256  : e584d8546226665606d3a0acfd42a3c6d19a2baa8c23af6e4e17032edc51f914
+    dtc / fdtget / fdtoverlay : NOT AVAILABLE (不在 PATH, 按 §6 未下载未安装)
+
+1.3 解析方法与边界
+    - FDT header 校验与 structure token 解码直接复用 ROUND3 已审核 parser
+      (parse_fdt_header / decode_structure)。
+    - 为取得 phandle 与 fixup 所需的原始属性字节, 另实现同 token 语法的
+      value-preserving 解码 (BEGIN_NODE/END_NODE/PROP/NOP/END, 4 字节对齐,
+      string block 边界检查), 并对每个输入做一致性交叉校验:
+      node 数一致 且 每个路径的属性名集合完全一致 -> 全部 12 个文件 crosscheck=True。
+    - phandle 解析: 建立 phandle/linux,phandle -> 节点路径映射 (重复值检测)。
+    - overlay 解析: fragment target 原始值为 0xFFFFFFFF 占位, 由 __fixups__ 中
+      symbol -> "/fragment@N:target:0" 定位, 再用 base FDT 的 __symbols__ 把
+      symbol 解析为真实 base 节点路径; 不使用节点名猜测。
+    - 不解析、不推断 ABL 实际选择哪一份 DTBO。
+
+1.4 实际执行命令与退出码
+    python3 D:/workbuddy/2026-11-23-22-29-12/_r133/analyze133.py     RC=0
+    python3 D:/workbuddy/2026-11-23-22-29-12/_r133/supplement.py     RC=0
+    python3 D:/workbuddy/2026-11-23-22-29-12/_r133/make_report.py    RC=0
+    各输入均以只读方式打开 (open(...,"rb")); 未写入 dtb_work。
+
+2. base FDT 逐候选结果 (§3)
+------------------------------------------------------------------------------------
+2.1 boot_fdt_candidate_0.dtb
+    size=556524 sha256=df2730f3d2e9bdabad874c3ef7399534c5c6070b046c4524224aa461ba2c70f7
+    FDT: totalsize=556524 version=17 last_comp=16 off_struct=56 size_struct=508364
+    root: model='Qualcomm Technologies, Inc. kona v2.1 SoC' compatible=['qcom,kona']
+    nodes=3471 decode_errors=NONE parser_crosscheck=True phandle_values=1693 all_unique=True
+
+    A. UFS Host  /soc/ufshc@1d84000
+       present            = True
+       compatible         = ['qcom,ufshc']
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+       其它 iommu/iova/stream 命名属性 = NONE
+       解析结论: 无 iommus 属性 -> 不存在可解析的 provider phandle;
+                 因此 provider 绑定判定为 NOT_BOUND (不是 dangling)。
+
+    B. SMMU provider (按 phandle 解析; Host 无 iommus 时为 NOT_APPLICABLE)
+       host_iommus 解析 = NOT_APPLICABLE (无该属性)
+       独立 provider 盘点 (#iommu-cells 存在者):
+         /soc/kgsl-smmu@3da0000                     compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+         /soc/apps-smmu@15000000                    compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+       apps_smmu 等价 provider 是否存在          = True
+       /soc/apps-smmu@15000000 phandle=72 唯一解析=['/soc/apps-smmu@15000000']
+       明确声明: provider 存在 != UFS Host 已绑定。本条不得被读作已绑定。
+
+    C. UFS PHY  /soc/ufsphy_mem@1d87000 (与 Host 严格分开)
+       present            = True
+       compatible         = ABSENT (base 无该属性)
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+
+2.2 boot_fdt_candidate_1.dtb
+    size=556520 sha256=f3dcba83e73f4d868e8e069369eb499ecde399a9034010be8bb34af4786e9817
+    FDT: totalsize=556520 version=17 last_comp=16 off_struct=56 size_struct=508360
+    root: model='Qualcomm Technologies, Inc. kona v2 SoC' compatible=['qcom,kona']
+    nodes=3471 decode_errors=NONE parser_crosscheck=True phandle_values=1693 all_unique=True
+
+    A. UFS Host  /soc/ufshc@1d84000
+       present            = True
+       compatible         = ['qcom,ufshc']
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+       其它 iommu/iova/stream 命名属性 = NONE
+       解析结论: 无 iommus 属性 -> 不存在可解析的 provider phandle;
+                 因此 provider 绑定判定为 NOT_BOUND (不是 dangling)。
+
+    B. SMMU provider (按 phandle 解析; Host 无 iommus 时为 NOT_APPLICABLE)
+       host_iommus 解析 = NOT_APPLICABLE (无该属性)
+       独立 provider 盘点 (#iommu-cells 存在者):
+         /soc/kgsl-smmu@3da0000                     compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+         /soc/apps-smmu@15000000                    compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+       apps_smmu 等价 provider 是否存在          = True
+       /soc/apps-smmu@15000000 phandle=72 唯一解析=['/soc/apps-smmu@15000000']
+       明确声明: provider 存在 != UFS Host 已绑定。本条不得被读作已绑定。
+
+    C. UFS PHY  /soc/ufsphy_mem@1d87000 (与 Host 严格分开)
+       present            = True
+       compatible         = ABSENT (base 无该属性)
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+
+2.3 boot_fdt_candidate_2.dtb
+    size=551026 sha256=6cda673986bf814c9f118aa129e3e85f235def6ce6f607f6a724b6fa135a0835
+    FDT: totalsize=551026 version=17 last_comp=16 off_struct=56 size_struct=502936
+    root: model='Qualcomm Technologies, Inc. kona v1 SoC' compatible=['qcom,kona']
+    nodes=3433 decode_errors=NONE parser_crosscheck=True phandle_values=1692 all_unique=True
+
+    A. UFS Host  /soc/ufshc@1d84000
+       present            = True
+       compatible         = ['qcom,ufshc']
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+       其它 iommu/iova/stream 命名属性 = NONE
+       解析结论: 无 iommus 属性 -> 不存在可解析的 provider phandle;
+                 因此 provider 绑定判定为 NOT_BOUND (不是 dangling)。
+
+    B. SMMU provider (按 phandle 解析; Host 无 iommus 时为 NOT_APPLICABLE)
+       host_iommus 解析 = NOT_APPLICABLE (无该属性)
+       独立 provider 盘点 (#iommu-cells 存在者):
+         /soc/kgsl-smmu@3da0000                     compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+         /soc/apps-smmu@15000000                    compatible=['qcom,qsmmu-v500'] #iommu-cells=2 status=ABSENT reg=PRESENT
+       apps_smmu 等价 provider 是否存在          = True
+       /soc/apps-smmu@15000000 phandle=72 唯一解析=['/soc/apps-smmu@15000000']
+       明确声明: provider 存在 != UFS Host 已绑定。本条不得被读作已绑定。
+
+    C. UFS PHY  /soc/ufsphy_mem@1d87000 (与 Host 严格分开)
+       present            = True
+       compatible         = ABSENT (base 无该属性)
+       status             = 'disabled'
+       iommus             = ABSENT
+       iommu-map          = ABSENT
+       iommu-map-mask     = ABSENT
+       stream-match-mask  = ABSENT
+       iommu-parent       = ABSENT
+
+2.4 三个候选一致性
+    比对项                         candidate 0 / 1 / 2
+    Host compatible/status/iommus   IDENTICAL
+    PHY  status/iommus             IDENTICAL
+    apps_smmu compatible/cells     IDENTICAL
+    node 计数                       3471 / 3471 / 3433 (候选间 model 不同, 属 SoC 版本差异)
+    三个候选的 model 分别为: Qualcomm Technologies, Inc. kona v2.1 SoC | Qualcomm Technologies, Inc. kona v2 SoC | Qualcomm Technologies, Inc. kona v1 SoC
+    结论: 就本任务关心的 UFS/SMMU 事实而言, 三个候选完全一致。
+
+3. 九个 DTBO 逐项结果 (§4)
+------------------------------------------------------------------------------------
+3.1 总表 (逐 entry 独立统计)
+    entry  size    totalsize  frags  fixups  ufs_frag  smmu_frag  iommu_props  unresolved  board-id
+    0      329044  329044     143    165     2         0          0            0           [8200, 0]
+    1      329352  329352     145    166     2         0          0            0           [8296, 0]
+    2      329240  329240     144    166     2         0          0            0           [8206, 0]
+    3      329098  329098     143    165     2         0          0            0           [8208, 0]
+    4      329340  329340     144    165     2         0          0            0           [8202, 0]
+    5      329356  329356     145    166     2         0          0            0           [8238, 0]
+    6      329356  329356     145    166     2         0          0            0           [8302, 0]
+    7      329352  329352     145    166     2         0          0            0           [8240, 0]
+    8      329352  329352     145    166     2         0          0            0           [8298, 0]
+
+    九个 entry 均: model='Huawei Technologies, Inc. DBY-W09', base symbol 解析源为 candidate 0 的 __symbols__。
+    __local_fixups__ 出现情况: [False, False, False, False, False, False, False, False, False]
+    __symbols__ 出现情况:       [True, True, True, True, True, True, True, True, True]
+    原始字节中 "iommus" 字符串出现次数 (独立于属性解码的旁证): [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+3.2 全量 fragment target 矩阵 (所有 entry 的所有 target, 已解析为真实 base 路径)
+    单元格 = 该 target 在该 entry 中的 fragment 编号; '-' = 该 entry 无此 target。
+    完整矩阵见附录 A (73 个不同 target, 覆盖 9 个 entry 的全部 fragment)。
+
+3.3 命中 UFS 节点 / SMMU provider 的 fragment 明细
+    entry 0:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 1:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 2:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 3:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 4:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 5:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 6:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 7:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+    entry 8:
+      fragment@63 -> /soc/ufsphy_mem@1d87000
+         target symbol      = ['ufsphy_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (7)  = ['compatible', 'status', 'vdda-phy-always-on', 'vdda-phy-max-microamp', 'vdda-phy-supply', 'vdda-pll-max-microamp', 'vdda-pll-supply']
+         overlay 中 iommu 属性 = NONE
+      fragment@64 -> /soc/ufshc@1d84000
+         target symbol      = ['ufshc_mem']
+         status (overlay)   = 'ok'
+         overlay 属性 (15)  = ['qcom,vccq-parent-max-microamp', 'qcom,vccq-parent-supply', 'qcom,vddp-ref-clk-max-microamp', 'qcom,vddp-ref-clk-supply', 'status', 'vcc-low-voltage-sup', 'vcc-max-microamp', 'vcc-supply', 'vcc-voltage-level', 'vccq-max-microamp', 'vccq-supply', 'vccq2-max-microamp', 'vccq2-supply', 'vdd-hba-fixed-regulator', 'vdd-hba-supply']
+         overlay 中 iommu 属性 = NONE
+      指向 SMMU provider 的 fragment: NONE
+
+3.4 UFS fragment 内 __fixups__ 明细 (已解析到真实 base 路径)
+    每个 entry 的 fragment@63/64 内 fixup 数量与内容在 9 个 entry 中完全一致:
+      pm8150_l17     /fragment@64/__overlay__:vcc-supply:0                -> /soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17
+      pm8150_l5      /fragment@63/__overlay__:vdda-phy-supply:0           -> /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5
+      pm8150_l6      /fragment@64/__overlay__:vccq-supply:0               -> /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+      pm8150_l6      /fragment@64/__overlay__:qcom,vddp-ref-clk-supply:0  -> /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+      pm8150_l9      /fragment@63/__overlay__:vdda-pll-supply:0           -> /soc/rsc@18200000/rpmh-regulator-ldoa9/regulator-pm8150-l9
+      pm8150_s4      /fragment@64/__overlay__:vccq2-supply:0              -> /soc/rsc@18200000/rpmh-regulator-smpa4/regulator-pm8150-s4
+      pm8150a_s8     /fragment@64/__overlay__:qcom,vccq-parent-supply:0   -> /soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8
+      ufs_phy_gdsc   /fragment@64/__overlay__:vdd-hba-supply:0            -> /soc/qcom,gdsc@177004
+      ufshc_mem      /fragment@64:target:0                                -> /soc/ufshc@1d84000
+      ufsphy_mem     /fragment@63:target:0                                -> /soc/ufsphy_mem@1d87000
+    合计 10 处: 2 处 target phandle + 8 处 regulator/GDSC supply phandle。
+    其中无任何 apps_smmu / smmu 相关 symbol; 名称含 smmu/iommu 的 fixup symbol: NONE
+
+3.5 结构层面的不可能性说明 (§4.4)
+    (a) 每个 entry 的全部 fragment target 均已解析 (见 3.1 unresolved=0 与附录 A),
+        与 UFS 节点相等的 target 仅 /soc/ufshc@1d84000 与 /soc/ufsphy_mem@1d87000,
+        每个 entry 各出现 1 次 (fragment@64 / fragment@63)。
+    (b) overlay 只能通过自身 __overlay__ 子树新增或覆盖属性; 九个 entry 的全部
+        __overlay__ 子树中 iommu 家族属性出现 0 次 (表 3.1 iommu_props=0, 且原始
+        字节计数也为 0), 故不存在对 iommus 的新增或覆盖。
+    (c) FDT overlay 格式不提供属性删除表达 (无 delete-property 等价物), 因此
+        "删除 iommus" 在本格式中不可表达; 且 base 中本来就没有该属性。
+    (d) 无任何 fragment 指向 /soc/apps-smmu@15000000 或任一 *smmu* 路径,
+        故 overlay 不可能修改 SMMU provider 节点本身。
+    (e) 以上结论不依赖"反编译文本零命中", 而是基于 fragment target 全枚举 +
+        fixup 全解析 + 属性集合逐节点比对。
+
+4. 与固定 ACK 的静态数值对照 (§5)
+------------------------------------------------------------------------------------
+    ACK 侧 (pinned 8ad08f75, arch/arm64/boot/dts/qcom/sm8250.dtsi):
+      Host:      iommus = <&apps_smmu 0x0e0 0>, <&apps_smmu 0x4e0 0>;
+      Provider:  apps_smmu #iommu-cells = <2>;
+
+    对照表 ('-' 表示该侧不存在该项)
+    项目                        HOS4.3 base FDT (0/1/2)        ACK            判定
+    Host iommus 属性            ABSENT (三个候选)               PRESENT        NOT_PRESENT
+    SID  (第 1 个 specifier)    - (无属性)                      0x0e0          NOT_PRESENT
+    MASK (第 1 个 specifier)    - (无属性)                      0              NOT_PRESENT
+    SID  (第 2 个 specifier)    - (无属性)                      0x4e0          NOT_PRESENT
+    MASK (第 2 个 specifier)    - (无属性)                      0              NOT_PRESENT
+    Provider #iommu-cells       2 (apps-smmu@15000000)          2              MATCH
+    Provider status 属性        ABSENT (无该属性)               无 status="disabled"  MATCH(均未禁用)
+    Provider reg 属性           PRESENT                         文档未给出      UNRESOLVED
+    Provider compatible (附注)  ['qcom,qsmmu-v500']              ['qcom,sm8250-smmu-500',
+                                                                  'qcom,smmu-500',
+                                                                  'arm,mmu-500']  DIFFERENT
+    Provider 节点名 (附注)      apps-smmu@15000000              iommu@15000000  DIFFERENT
+
+    说明: ACK 侧取值仅来自 ROUND133 ACK 对照文档 §1 的引用内容 (sm8250.dtsi
+    lines 2507-2521 / 5867-5871)。该文档未给出 provider 的 reg 属性, 故记
+    UNRESOLVED 而不猜测。compatible / 节点名两行是文本层面附加观察, 不参与
+    SID/MASK 判定, 也不用于推断任何运行时含义。
+
+    判定口径: HOS 侧没有 iommus, 因此 SID/MASK 无值可比 -> NOT_PRESENT,
+    而不是 DIFFERENT; 只有 #iommu-cells 两侧都有值, 故为 MATCH。
+
+    明确不声称: 属性描述相同 / 不同 都不等于 runtime SMMU 配置等价或不等价。
+    本报告未观察 SMMU 寄存器、stream table、context bank、翻译模式或 bypass 状态。
+
+5. 明确未证明 / 未执行
+------------------------------------------------------------------------------------
+    - 未判定 ABL 实际加载了 dtbo_entry_0..8 中的哪一个, 也未把任一 entry 当作已选中。
+    - 未探测真实 SMMU 硬件、未读取寄存器、未做任何运行时 translation 观察。
+    - 未推断 UFS 是否在运行时走 bypass 或由 bootloader 预配置; 该问题超出静态 DT 范围。
+    - base FDT candidate 只是 boot.img 内扫描并通过 header 校验的候选, 未声称其为
+      设备实际启动所用的确定 DTB。
+    - 未重新提取/解包固件, 未创建替代固件工作目录, 未下载或安装任何工具。
+    - 未执行编译、Kleaf、dtc build、boot packing、AVB、boot 或 flash。
+
+6. 安全边界合规
+------------------------------------------------------------------------------------
+    - 未连接平板; 未使用 USB / ADB / fastboot / recovery / root / serial 或任何设备接口。
+    - 未读取设备分区, 未执行设备命令。
+    - 未修改内核源、DTS、DTBO、binding、Kconfig、config、patch、PR 或任一 Git 分支。
+    - 输入文件仅以只读方式打开; dtb_work 目录内容未改动 (仅读取)。
+    - 报告不含原始固件二进制或 dtb/dtbo 内容; 未上传 dtb/dtbo。
+    - 唯一提交物为本报告; 上传并回读校验后停止, 未启动 ROUND134。
+
+7. 复现步骤 (只读)
+------------------------------------------------------------------------------------
+    cd D:/workbuddy/2026-11-23-22-29-12/_r133
+    python3 analyze133.py      # -> structure133.txt / evidence133.json
+    python3 supplement.py      # -> supplement133.txt
+    python3 make_report.py     # -> 本报告
+
+附录 A - 全量 fragment target 矩阵 (73 个不同 target x 9 个 entry)
+------------------------------------------------------------------------------------
+target_path                                              E0         E1         E2         E3         E4         E5         E6         E7         E8        
+/antenna_board_detect                                    102        115        115        115        115        115        115        115        115       
+/battery_core                                            129        103        103        103        103        103        103        103        103       
+/battery_fault                                           132        106        106        106        106        106        106        106        106       
+/battery_ui_capacity                                     130        104        104        104        104        104        104        104        104       
+/btkb_led                                                141        140        140        140        141        140        140        140        140       
+/dev_detect                                              100        116        116        116        116        116        116        116        116       
+/deviceboxID                                             97         124        124        124        124        124        124        124        124       
+/direct_charge_ps                                        120        94         94         94         94         94         94         94         94        
+/direct_charger                                          121        95         95         95         95         95         95         95         95        
+/direct_charger_sc                                       122        96         96         96         96         96         96         96         96        
+/huawei,lcd_panel                                        83         83,142     83,142     83,141     83,142     83,142     83,142     83,142     83,142    
+/huawei_accessory                                        136        110        110        110        110        110        110        110        110       
+/huawei_audio_info                                       90         117        117        117        117        117        117        117        117       
+/huawei_batt_soh                                         117        91         91         91         91         91         91         91         91        
+/huawei_bt_info                                          77         77         77         77         77         77         77         77         77        
+/huawei_gps_info                                         -          141        141        -          -          141        141        141        141       
+/huawei_hall_sensor                                      112        134        134        134        135        134        134        134        134       
+/huawei_mixed_battery                                    128        102        102        102        102        102        102        102        102       
+/huawei_power_proxy                                      124        98         98         98         98         98         98         98         98        
+/huawei_power_supply                                     127        101        101        101        101        101        101        101        101       
+/huawei_ptst                                             126        100        100        100        100        100        100        100        100       
+/huawei_slpi_sensor                                      113        135,144    135        135        136        135,144    135,144    135,144    135,144   
+/huawei_wifi_info                                        76,99      76,136     76,136     76,136     76,137     76,136     76,136     76,136     76,136    
+/hw_adsp_misc                                            98         125        125        125        125        125        125        125        125       
+/pd_dpm                                                  125        99         99         99         99         99         99         99         99        
+/power_thermalzone                                       123        97         97         97         97         97         97         97         97        
+/product_name_camera                                     106        128        128        128        129        128        128        128        128       
+/rootparam                                               142        143        143        142        143        143        143        143        143       
+/singleap_no_modem                                       115        138        138        138        139        138        138        138        138       
+/singleap_wifionly                                       114        137        137        137        138        137        137        137        137       
+/smartpakit                                              96         123        123        123        123        123        123        123        123       
+/soc                                                     8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+ 8,40,49,5+
+/soc/hsphy@88e3000                                       75         75         75         75         75         75         75         75         75        
+/soc/i2c@884000                                          66,119     66,93      66,93      66,93      66,93      66,93      66,93      66,93      66,93     
+/soc/i2c@984000                                          60         60         60         60         60         60         60         60         60        
+/soc/i2c@98c000                                          94,138     112,121    112,121    112,121    112,121    112,121    112,121    112,121    112,121   
+/soc/i2c@a8c000                                          61,86      61,86      61,86      61,86      61,86      61,86      61,86      61,86      61,86     
+/soc/i2c@a94000                                          62,87      62,87      62,87      62,87      62,87      62,87      62,87      62,87      62,87     
+/soc/pinctrl@f000000                                     39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+ 39,70,88,+
+/soc/qcom,cci@ac4f000                                    109        131        131        131        132        131        131        131        131       
+/soc/qcom,cci@ac50000                                    110        132        132        132        133        132        132        132        132       
+/soc/qcom,dp_display@ae90000                             11,41      11,41      11,41      11,41      11,41      11,41      11,41      11,41      11,41     
+/soc/qcom,mdss_dsi_pll@ae94900                           84         84         84         84         84         84         84         84         84        
+/soc/qcom,mdss_dsi_pll@ae96900                           85         85         85         85         85         85         85         85         85        
+/soc/qcom,mdss_mdp@ae00000                               12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+ 12,13,14,+
+/soc/qcom,msm-audio-apr/qcom,q6core-audio                43,48,58   43,48,58   43,48,58   43,48,58   43,48,58   43,48,58   43,48,58   43,48,58   43,48,58  
+/soc/qcom,msm-audio-apr/qcom,q6core-audio/bolero-cdc     44,46      44,46      44,46      44,46      44,46      44,46      44,46      44,46      44,46     
+/soc/qcom,msm-audio-apr/qcom,q6core-audio/sound          47,59,93   47,59,120  47,59,120  47,59,120  47,59,120  47,59,120  47,59,120  47,59,120  47,59,120 
+/soc/qcom,msm-dai-cdc-dma/qcom,msm-dai-va-cdc-dma-0-tx   45         45         45         45         45         45         45         45         45        
+/soc/qcom,msm-dai-mi2s/qcom,msm-dai-q6-mi2s-tert         57         57         57         57         57         57         57         57         57        
+/soc/qcom,msm-dai-tdm-pri-rx                             91         118        118        118        118        118        118        118        118       
+/soc/qcom,msm-dai-tdm-pri-tx                             92         119        119        119        119        119        119        119        119       
+/soc/qcom,qup_uart@980000                                56         56         56         56         56         56         56         56         56        
+/soc/qcom,qup_uart@998000                                55         55         55         55         55         55         55         55         55        
+/soc/qcom,qup_uart@a90000                                54         54         54         54         54         54         54         54         54        
+/soc/qcom,spmi-debug@6b0f000                             67         67         67         67         67         67         67         67         67        
+/soc/qcom,spmi@c440000                                   0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7  0,2,4,6,7 
+/soc/qcom,wil6210                                        74         74         74         74         74         74         74         74         74        
+/soc/sdhci@8804000                                       69         69         69         69         69         69         69         69         69        
+/soc/ssphy@88e8000                                       10,139     10,113     10,113     10,113     10,113     10,113     10,113     10,113     10,113    
+/soc/ssusb@a600000                                       9,72       9,72       9,72       9,72       9,72       9,72       9,72       9,72       9,72      
+/soc/ssusb@a800000                                       73         73         73         73         73         73         73         73         73        
+/soc/thermal-zones                                       1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+ 1,3,5,51,+
+/soc/ufshc@1d84000                                       64         64         64         64         64         64         64         64         64        
+/soc/ufsphy_mem@1d87000                                  63         63         63         63         63         63         63         63         63        
+/soc_decimal                                             131        105        105        105        105        105        105        105        105       
+/switch_interface                                        140        139        139        139        140        139        139        139        139       
+/vendor                                                  52,71      52,71      52,71      52,71      52,71      52,71      52,71      52,71      52,71     
+/vibrator_hw_config                                      104        127        127        127        127        127        127        127        127       
+/water_check                                             133        107        107        107        107        107        107        107        107       
+/wireless_aux_tx                                         134        108        108        108        108        108        108        108        108       
+/wireless_ps_aux                                         137        111        111        111        111        111        111        111        111       
+/wireless_tx_pen_kb                                      135        109        109        109        109        109        109        109        109       
+
+附录 B - base FDT 的 __symbols__ 关键标签映射 (candidate 0)
+------------------------------------------------------------------------------------
+    ufshc_mem      -> /soc/ufshc@1d84000
+    ufsphy_mem     -> /soc/ufsphy_mem@1d87000
+    apps_smmu      -> /soc/apps-smmu@15000000
+    kgsl_smmu      -> /soc/kgsl-smmu@3da0000
+    ufs_phy_gdsc   -> /soc/qcom,gdsc@177004
+
+附录 C - 九个 entry 的 UFS overlay 关键属性原始值 (entry 0 与其余 8 个一致)
+------------------------------------------------------------------------------------
+    /fragment@63/__overlay__
+      compatible                         u32=[1902341997, 745891443, 762341497, 762408304, 762721280] hex=71636f6d2c7566732d7068792d716d702d763400
+      status                             str=ok
+      vdda-phy-always-on                 <empty>
+      vdda-phy-max-microamp              u32=[89900] hex=00015f2c
+      vdda-phy-supply                    u32=[4294967295] hex=ffffffff
+      vdda-pll-max-microamp              u32=[18800] hex=00004970
+      vdda-pll-supply                    u32=[4294967295] hex=ffffffff
+      (compatible 十六进制按 ASCII 解码 = 'qcom,ufs-phy-qmp-v4')
+    /fragment@64/__overlay__
+      qcom,vccq-parent-max-microamp      u32=[210000] hex=00033450
+      qcom,vccq-parent-supply            u32=[4294967295] hex=ffffffff
+      qcom,vddp-ref-clk-max-microamp     u32=[100] hex=00000064
+      qcom,vddp-ref-clk-supply           u32=[4294967295] hex=ffffffff
+      status                             str=ok
+      vcc-low-voltage-sup                <empty>
+      vcc-max-microamp                   u32=[800000] hex=000c3500
+      vcc-supply                         u32=[4294967295] hex=ffffffff
+      vcc-voltage-level                  u32=[2504000, 2950000] hex=00263540002d0370
+      vccq-max-microamp                  u32=[800000] hex=000c3500
+      vccq-supply                        u32=[4294967295] hex=ffffffff
+      vccq2-max-microamp                 u32=[800000] hex=000c3500
+      vccq2-supply                       u32=[4294967295] hex=ffffffff
+      vdd-hba-fixed-regulator            <empty>
+      vdd-hba-supply                     u32=[4294967295] hex=ffffffff
+
+END OF REPORT

@@ -1,0 +1,68 @@
+Subject: [PATCH DRAFT] regulator: proxy-consumer: drop load before enable
+
+Remove the proxy consumer's current-load vote before dropping its enable
+reference. ACK regulator core can run a DRMS update after decrementing
+the final consumer enable_count; if that synchronous update fails, the
+disable call can return an error after the reference has already been
+decremented. Clearing the load first moves that failure-prone transition
+ahead of the decrement on the normal path.
+
+Keep best-effort cleanup behavior if load-zero itself fails; this hook
+runs from regulator_unregister(), which cannot be vetoed by this void
+cleanup path. This patch does not claim to solve a persistent provider
+disable failure or the managed-handle warning that can follow it.
+
+This is an isolated AI1 candidate against the AI2 ROUND31/32/33 source
+series. It does not modify the AI2 branch.
+
+---
+ drivers/regulator/proxy-consumer.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
+--- a/drivers/regulator/proxy-consumer.c
++++ b/drivers/regulator/proxy-consumer.c
+@@ -375,25 +375,29 @@
+ 		list_del(&consumer->list);
+ 		kfree(consumer);
+ 		return 0;
+ 	}
+ 
+-	if (consumer->enable) {
+-		ret = regulator_disable(consumer->reg);
+-		if (ret) {
+-			pr_err("regulator_disable failed, rc=%d\n", ret);
+-			rc = ret;
+-		}
+-	}
+-
+-	if (consumer->current_uA > 0) {
+-		ret = regulator_set_load(consumer->reg, 0);
+-		if (ret < 0) {
+-			pr_err("regulator_set_load failed, rc=%d\n", ret);
+-			rc = ret;
+-		}
+-	}
++	/*
++	 * Clear the load vote before dropping the enable reference. The
++	 * regulator core may run DRMS after decrementing the last reference.
++	 */
++	if (consumer->current_uA > 0) {
++		ret = regulator_set_load(consumer->reg, 0);
++		if (ret < 0) {
++			pr_err("regulator_set_load failed, rc=%d\n", ret);
++			rc = ret;
++		}
++	}
++
++	if (consumer->enable) {
++		ret = regulator_disable(consumer->reg);
++		if (ret) {
++			pr_err("regulator_disable failed, rc=%d\n", ret);
++			rc = ret;
++		}
++	}
+ 
+ 	if (consumer->voltage_set) {
+ 		ret = regulator_set_voltage(consumer->reg, 0, INT_MAX);
+ 		if (ret) {
+ 			pr_err("regulator_set_voltage failed, rc=%d\n", ret);

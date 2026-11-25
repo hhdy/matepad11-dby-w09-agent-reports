@@ -7,14 +7,14 @@
 
 ## Current overall state
 
-**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS (archived .config independently rechecked 33/33).** The latest nine-stage workflow retry exposed and isolated a toolchain-discovery path bug; it did not invalidate the earlier successful Image build.
+**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS — latest nine-stage manifest-pinned build completed end-to-end (run 45529395645).** Final .config passes 33/33 required symbols, and the current Image plus System.map/vmlinux artifact hashes were independently verified. Phase E/F remain BLOCKED on HOS4.3 local evidence; Phase G remains NOT RUN.
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
 | A — real Git patch application | PASS | Hosted validation run 45457083961: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and 11-test config-helper suite passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
 | B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
-| C — Kleaf target validation | PASS | Original successful run 45453412267 completed official manifest sync, exact ACK pin, Bazel query/cquery and the manifest-pinned `//common:dby_w09` target. It resolved `.config`, `Image`, `System.map`, and `vmlinux`. Run 45463060672 additionally passed manifest sync and ACK pin; its later toolchain-discovery step failed on a bad constants-file path, not on Kleaf target analysis. |
-| D — final Kconfig + Image build | PASS (33/33 archived config recheck) | Original run 45453412267 built Image successfully (44,820,992 B). Its archived `.config` was independently checked against the current 33-symbol validator: 33/33 =y, no missing symbols, no non-y values, no duplicates; 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`. The new nine-stage retry is to validate exact toolchain discovery in a transparent workflow; its stage-4 fix is now committed. |
+| C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
+| D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
 | E — board DTS + memory/power handoff | BLOCKED | No trusted final HOS4.3 post-ABL FDT/EFI memory handoff or PM8150 physical supply-parent map. Do not guess. |
 | F — boot image / ramdisk / AVB | BLOCKED | ROUND62 same-device cross-reference warns fastboot RAM boot may be refused, but exact HOS4.3 AVB/footer/partition metadata and ABL behavior remain unverified. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
@@ -424,18 +424,23 @@ The workflow stage 4 is corrected to read `$WORK/common/build.config.constants`,
 This removes the invalid `build/kernel` constants search and avoids non-deterministic compiler selection. A new explicit marker trigger is queued below to validate the corrected stage and complete the remaining stages. No active run was cancelled.
 
 
-### Corrected nine-stage retry — Image build in progress (2026-11-25)
+### Corrected nine-stage build — COMPLETE / PASS (2026-11-25)
 
-Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `45529395645`, job `138920645396`. Stages 1–7 have all completed successfully:
-- preflight/dependencies/repo launcher;
-- immutable manifest sync;
-- exact ACK source pin and manifest record;
-- manifest-pinned Clang `r584948c` and Rust `1.91.1.p3` discovery with exact executable paths;
-- ordered UFS / ROUND63 PHY / Kleaf patch application;
-- strict checkpatch, buildifier and all 11 config-helper tests;
-- Bazel query/cquery and target output inventory.
+Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `45529395645`, job `138920645396`. All nine stages completed successfully. Stages 1–7 passed preflight, immutable manifest sync, exact ACK source pin, pinned Clang/Rust discovery, real ordered source patch application, strict checkpatch/buildifier/11 tests, and Bazel query/cquery. Stage 8 built the Image successfully; stage 9 validated final .config and kernel artifacts. Summary publication and artifact upload also passed.
 
-Stage 8/9, `Build DBY-W09 Image`, is `in_progress`, started at `2026-11-25T02:03:17Z`. Stage 9/9 final config/artifact validation remains pending. No failed step is reported and no run has been cancelled. The former step-4 constants-file path failure is fixed and has not recurred.
+- Build artifact ID: `14985348694`, size 210,441,171 bytes.
+- Artifact ZIP SHA-256: `0c8fabcd626d15aa36f32b3b7652d32b0f5389bc7fdca45bcd4d770e80123cf4`.
+- Manifest XML SHA-256: `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`.
+- Clang: Android Clang 22.0.1 based on pinned `r584948c`.
+- Rust: `1.91.1.p3`.
+- Bazel: 8.7.0.
+- Bazel build: 775 actions, elapsed 1362.003 s, critical path 1327.37 s.
+- Final .config: 238,376 bytes, 33/33 required symbols `=y`, no missing, non-y or duplicate assignments.
+- Image: 44,820,992 bytes, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`.
+- System.map: 7,610,772 bytes, SHA-256 `8fe0c256bc779ef90a4e6b4fad1dbfaaf0286c5538dd2c7b1793a879dca1d377`.
+- vmlinux: 230,254,408 bytes, SHA-256 `ff82e90b5867d0605dc715079ea414d51ef24e20f8035f5f35eb88a89cf3b720`.
+
+Second AI independently downloaded the artifact, matched its ZIP digest, verified the four internal hashes/sizes, confirmed ARM64 Image + AArch64 vmlinux file identity, and independently re-parsed the final config: 33/33 `=y`, no missing/non-y/duplicates. The former stage-4 path error is resolved; no additional kernel compile is required for the Stage-A Image milestone.
 
 
 ### Follow-up: watchdog-created duplicate Image run also completed
@@ -475,3 +480,12 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_E_READONLY_SEC
 ### Phase F — precise local Agent handoff prepared
 
 Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md` (commit `9c18289442fadb83434bfab62614e99adc824872`). It limits the task to local, read-only inspection of existing HOS4.3 boot-v2, separate ramdisk, DTBO and AVB footer/vbmeta metadata, using only an already-installed trusted tool. It prohibits tool installation, raw image upload, AVB metadata disclosure, repacking and all device operations. No AVB/boot-package gate is claimed closed.
+
+
+### Phase C/D final report links updated
+
+- `phase-c-kleaf-target-validation.md`: end-to-end nine-stage build and target validation PASS.
+- `phase-d-kconfig-and-image-build.md`: final Image, config and artifact hashes; independent 33-symbol recheck.
+- `hosted-build-latest.md`: published run `45529395645` summary; all stages success.
+
+The build milestone is complete. The next progress dependency is no longer compilation: Phase E and Phase F need the local Agent's sanitized read-only HOS4.3 evidence described in `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` and `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`. Do not generate DTB/boot/flash packages or start device operations until those evidence gates and separate authorization are complete.

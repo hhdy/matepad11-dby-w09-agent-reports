@@ -101,6 +101,15 @@ Do not assume a RAM-only boot works, alter AVB, install tools, or bypass the evi
 **BLOCKED FOR PACKAGING / NOT PACKAGED.** The ROUND64 read-only metadata inventory is complete, but no boot image, ramdisk, DTBO or vbmeta file has been generated or modified. Phase F is not a boot-package PASS; the ABL-selected DTBO, vbmeta_cust anomaly, actual HOS4.3 boot method and Phase E memory/board evidence remain open.
 
 
+## 8. ROUND23 rootparam and rev2 base validation — temporary only
+
+The local Agent's [ROUND23 report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt) confirms that the main-branch rev2 base DTS and one rootparam-only plugin overlay compile and compose in temporary copies with cpp/dtc 1.7.0 and fdtoverlay. The composite preserves the intended UFS dual-domain order (MMCX index 6, then UFS_PHY_GDSC index 4), leaves the PHY on the GCC GDSC, inserts the five `/rootparam` identity properties and contains no `vdd-hba-supply` mis-bound to GDSC.
+
+No Android DT table was generated: the overlay's root `qcom,board-id=<0x206a 0>` is separate from `dt_table_entry.id/rev`, and HOS4.3 ABL matching remains unknown. The result is only temporary syntax/fixup evidence; no dt-schema/dtbs_check, Kleaf target, boot package or device operation ran. It does not close Phase F.
+
+## 9. ROUND24 first-boot memory dependency update
+
+The [ROUND24 reserved-memory report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt) identifies 37 HOS4.3 base reserved-memory children (correcting the previous 34-node count) and no memory-region references in any of the nine stock DTBOs. The current rev2 UFS Host/PHY have no reserved-memory consumer, but firmware-owned early reservations remain a safety gate until the actual post-ABL memory handoff is known. No `dtbo.img` or boot artifact may be built from this evidence alone.
 ## ROUND62 same-device boot-chain cross-reference (not HOS4.3 proof)
 
 The primary report `kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md` reviews public DBY-W09 Linux source pinned at `116cb1fe06110543ce03217e8bd8f35c12ca89c3`. It reports Huawei ABL consuming a header-v2 `boot` image plus a separate `ramdisk` partition, and that `fastboot boot` was refused on that project's tested setup. It also documents a required ABL-selected DTBO fragment that populates `/rootparam`.

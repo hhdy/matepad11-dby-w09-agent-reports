@@ -1404,3 +1404,13 @@ Verdict:
 - No addresses should be invented, copied from HOS4.2 or assumed from upstream SM8250.
 
 A targeted follow-up ROUND26 is dispatched to compare the inherited sm8250.dtsi reserved ranges with HOS4.3 ranges locally using address-equality/overlap results only; no coordinates are to be uploaded.
+
+## 2026-11-25 — ROUND26 dispatched: inherited SM8250 carveout interval comparison
+
+Task files:
+- firmware-analysis/round26/AGENT_TASK.md
+- firmware-analysis/round26/START_PROMPT.md
+
+ROUND26 compares, locally and with no coordinate disclosure, every reserved-memory child in the pinned ACK sm8250.dtsi against the HOS4.3 base_2.dts / 37-child inventory. The report must classify exact match, same-base/different-size, overlap, ACK-only, HOS-only or no clear match and state which inherited nodes/consumers appear in the rev2 candidate.
+
+Reason: ROUND24 found that the current rev2 DTS inherits generic SM8250 reserved-memory nodes from sm8250.dtsi, but those generic ranges are not proven to match HOS4.3. A wrong inherited no-map range could reserve the wrong physical RAM or overlap firmware-owned memory. This local-only comparison must compare physical intervals in memory and redact every coordinate from the report. No change to DTS or build is authorized in this round.

@@ -146,3 +146,27 @@ For the new ACK Image, the safer compatibility-first assumption is to preserve t
 ## 13. Current verdict
 
 **PHASE E: BLOCKED.** The draft remains a review artifact. The unresolved facts are real boot-critical inputs, not documentation polish. Keep Phase E open until actual HOS4.3 memory handoff and physical PM8150 supply topology are evidenced and the resulting board source passes the real pinned-kernel DT compilation/schema checks.
+
+
+## 14. ROUND25 — HOS4.3 MMCX/MX ARC request and dropout semantics (2026-11-25)
+
+Local-Agent report:
+[ROUND25 — HOS4.3 MMCX/MX ARC request and dropout semantics](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt).
+
+The report reuses the already-decompiled HOS4.3 base DTS and sanitized ROUND11/ROUND14 evidence. It is read-only and does not establish runtime regulator state.
+
+**Confirmed ARC topology (not physical PMIC inputs):**
+- HOS4.3 has `mmcx.lvl` and `mx.lvl` ARC providers.
+- The MMCX ALL and AO children have phandle-confirmed parent edges to MX children. The separate MX→CX raw property is retained as observed topology, not promoted to a proven performance-parent edge.
+- MMCX ALL/AO children carry init corner `0x40`; their MX parent-target children carry `0x10`. MMCX ALL/AO `qcom,min-dropout-voltage-level` is stored as `0xffffffff`. Its semantic meaning, AUX corner-name table and parent-state derivation rule remain unknown. Literal ACTIVE/SLEEP bit-name mapping for `qcom,set` is also not captured.
+- These are vendor ARC voltage-level relationships. They must not be converted into PM8150 `vin-supply`, `vph-pwr-supply` or `vdd-s*-supply` physical input links.
+
+**UFS participation boundary:**
+The inspected base FDT's UFS host and UFS bus nodes do not explicitly reference MMCX/MX ARC rails; the observed MMCX/MX consumers are camera/display/video/GPU-class nodes. Whether UFS participates in ACTIVE or SLEEP requests through another firmware/runtime mechanism remains UNKNOWN. This is not proof that UFS never depends on those rails.
+
+**Pinned ACK compatibility consequence:**
+ACK's generic GenPD parent propagation passes the same incoming pstate unless a required-opps translation is explicitly supplied. Therefore a bare MMCX→MX parent descriptor would forward the same state and would not reproduce the observed HOS MMCX `0x40` / MX `0x10` corner relationship. An evidence-backed translation and documented `0xffffffff` dropout encoding would be needed; neither is currently available.
+
+**Decision:** do not add a bare MMCX→MX parent descriptor, invent required-opps corner mappings, or port vendor ARC semantics speculatively. Keep the existing ACK UFS OPP→MMCX route as a distinct ACK-side request path, but do not claim it is HOS ARC-equivalent. ROUND25 classifies this as an unresolved hardware-equivalence / voltage-margin risk, not a demonstrated UFS probe blocker.
+
+ROUND25 does not close either Phase E primary gate: final ABL-to-Linux memory handoff and authoritative DBY-W09 PM8150 physical input-parent topology remain BLOCKED. The board DTS remains review-only; no build/package/device action is authorized by this evidence.

@@ -1095,3 +1095,39 @@ The already-referenced public same-device Linux rootparam-only overlay uses thos
 The project main `dts/` directory currently lists only README and the board DTS draft; the README mentions a separate rootparam overlay draft that is not present in that branch listing. No overlay was fabricated in this round because variant selection remains unknown.
 
 Detailed note: `kernel-baseline/round67/round67-hos43-rootparam-overlay-candidate-reconciliation.md`.
+
+
+## 2026-11-25 — ROUND64 Phase E/F local evidence completed; blockers confirmed
+
+Second AI's independent local Agent completed two additional read-only evidence tasks. This supersedes the earlier Round19 AVB-parser-only status and adds an explicit proof that the final FDT / PMIC schematic data are unavailable through the authorized local corpus.
+
+### Phase E / memory and PMIC parent report
+
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md
+Blob: 56e32d7989157d6c4eab22cb8ddf8a83a9c2f960
+
+- The existing /sys/firmware/fdt read was already attempted in ROUND2 and returned Permission denied; live.dtb.sha256 says NOT AVAILABLE. No final post-ABL FDT exists in the authorized evidence corpus.
+- Stock base FDT is a pre-ABL template with an all-zero /memory/reg placeholder and 34 reserved-memory children; it cannot supply physical RAM ranges or prove final post-ABL reserved-memory values.
+- Stock kernel is not EFI-stub capable; ROUND20's candidate EFI path belongs to the new Image, but HOS4.3 ABL entry selection remains unobserved.
+- No DBY-W09 schematic / authoritative PMIC tree exists in the authorized corpus. UFS consumer outputs are named (PM8150 L5/L6/L9/L17/S4 and PM8150L S8) but their physical input parents remain BLOCKED.
+- ARC parent links, proxy-supply links, qcom,vccq-parent-supply and dummy regulator fallback are not accepted as physical PMIC input edges.
+- Result: Phase E remains BLOCKED. No values were fabricated.
+
+### Phase F / Boot-v2 and AVB metadata report
+
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md
+Blob: b1e27ce5ad37280ed4ed48f1560e10cfad332617
+
+- A trusted AOSP avbtool 1.4.0 already present in the pinned ACK source tree was used read-only in info_image mode. No tool was installed or downloaded.
+- The report inventories footer state, original-image-size, descriptor class, target partition and chain relationships for boot, standalone ramdisk, dtbo, recovery, erecovery and vbmeta-family images. This is metadata inspection, not signature verification and not proof that a new image will be accepted.
+- boot.img footer original-image-size 24,457,216 B matches ROUND19/20 boot-v2 payload-end arithmetic; standalone ramdisk footer 1,325,056 B matches its payload end; dtbo.img footer original-image-size 2,963,810 B matches the DTBO container total size.
+- Root vbmeta chain explicitly covers boot, ramdisk and dtbo among other child images. boot, ramdisk and dtbo have their own hash descriptors. System/vendor/odm/hw_product have hashtree descriptors.
+- vbmeta_cust.img is anomalous: its footer points to a 1,344-byte vbmeta object at offset 10,375,168, outside the 1 MiB file; avbtool reports algorithm NONE and no descriptors. Root vbmeta still declares a chain target vbmeta_cust, so cust descriptor coverage remains UNKNOWN.
+- Nine DTBO board-id variants are inventoried; which one ABL selects remains UNKNOWN. Entry 8 / 0x206a / VG remains only a candidate.
+- Result: read-only metadata inventory substantially complete; Phase F remains BLOCKED for packaging. Do not copy/retain stock footer or vbmeta after payload modification, and do not assume AVB bypass or signer availability.
+
+### Project consequence
+
+The current limiting factors are no longer only missing source analysis. The exact final RAM/reserved-memory handoff and physical PMIC inputs require authoritative device-specific evidence that is not present in the authorized local corpus; the current read attempt was permission-denied. Boot packaging is blocked by ABL/DTBO selection, the unexplained vbmeta_cust footer target, and absence of an evidenced accepted signing/boot path. No device action or permission escalation is authorized.
+
+The Stage A Image build milestone remains PASS; board DTB and boot package are not ready; Stage A device boot acceptance remains incomplete.

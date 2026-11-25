@@ -108,6 +108,31 @@ The sidecar is OEM-specific state and must not become a general vendor data chan
 
 This is a candidate, not a claim that it is already implemented or validated.
 
+## 4.2 Sidecar allocation lifetime and teardown order
+
+A second fixed-source check confirms that the proposed `devm_kzalloc()` sidecar can fit the existing HBA/devres lifetime, provided it is allocated during the early regulator parser and accessed through the HBA directly.
+
+Pinned sources:
+- [drivers/ufs/core/ufshcd-priv.h](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/ufs/core/ufshcd-priv.h)
+- [drivers/ufs/core/ufshcd.c](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/ufs/core/ufshcd.c)
+- [drivers/ufs/host/ufshcd-pltfrm.c](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/ufs/host/ufshcd-pltfrm.c)
+- [drivers/scsi/hosts.c](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/scsi/hosts.c)
+
+Exact order:
+1. `ufshcd_pltfrm_init()` calls `ufshcd_alloc_host(dev, &hba)` before it sets vops or parses regulators.
+2. `ufshcd_alloc_host()` calls `scsi_host_alloc(..., sizeof(struct ufs_hba_priv))`; `scsi_host_alloc()` allocates the Scsi_Host plus private bytes with `kzalloc()`.
+3. `struct ufs_hba_priv` is `{ struct ufs_hba hba; bool zwor_sup; }`, and `shost_priv(host)` points at that first `hba` member. Therefore the existing `android_oem_data1` u64 slot starts zeroed with the host private allocation.
+4. Still inside `ufshcd_alloc_host()`, `devm_add_action_or_reset(dev, ufshcd_devres_release, host)` registers the host-release action.
+5. Only after that does `ufshcd_pltfrm_init()` call `ufshcd_parse_regulator_info(hba)`. A sidecar allocated there with `devm_kzalloc()` is registered later than the host-release action.
+6. During normal removal, `ufshcd_pltfrm_remove()` explicitly calls `ufshcd_remove(hba)` before returning to platform-device devres release. `ufshcd_remove()` / `ufshcd_hba_exit()` performs final `ufshcd_setup_vreg(hba, false)` while the HBA and sidecar are still alive.
+7. When device devres is finally released, entries are released in reverse registration order: the later sidecar allocation is freed before the earlier `ufshcd_devres_release(host)` action releases the Scsi_Host/HBA private allocation.
+
+This ordering is compatible with a devm-managed sidecar allocated during `ufshcd_parse_regulator_info()`: it remains alive throughout `ufshcd_remove()` and final regulator cleanup, then is freed before the HBA private memory. On a probe failure after parsing but before successful initialization, the same reverse order frees the sidecar before the HBA-host allocation.
+
+Important access rule: the early parser runs before `ufshcd_init()` calls `dev_set_drvdata(dev, hba)`. It already has the `hba` pointer as an argument, so set/read the sidecar through `hba->android_oem_data1`; do not depend on `dev_get_drvdata()` being populated at parse time.
+
+This validates devres ordering only. It does **not** establish that the OEM slot is unused by another downstream consumer, that the final `.config` enables `CONFIG_ANDROID_VENDOR_OEM_DATA`, or that the resulting patch passes Kleaf ABI validation. Those remain mandatory checks before adoption.
+
 ## 5. Implementation checks required before adoption
 
 2号 AI should verify:

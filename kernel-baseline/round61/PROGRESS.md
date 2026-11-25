@@ -762,3 +762,12 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - A fresh validation-only Agent run is required. Until it reports success, ROUND33 remains unverified. Phase E/F BLOCKED; Phase G NOT RUN; no device/partition/boot/DTBO/AVB operations.
 
 - Second validation-only taskbook addendum published on `firmware-audit-v1`: commit `3c39a37b21098554c141c55fe4e083d511453415`. Agent must verify the corrected 17-patch series and publish `firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt`; no source edits are authorized.
+
+
+
+## 2026-11-25 — ROUND33 second validation failure and 2号 AI host-test repair
+
+- The second validation report confirms patch 16/17 identity, 17/17 sequential apply and both strict checkpatch runs PASS. The committed host harness FAILS: legacy ROUND31 fixtures lack the provider phandle/target registration required by the updated mock; ROUND32 ghost cross-target tests still expect deferred parking and dereference the resulting `ERR_PTR(-EINVAL)`. Schema, fresh full build and ROUND58 regression were not run.
+- 2号 AI directly updated only the host tests: legacy fixtures now provide explicit provider self-target phandles and mock target registrations; the two-provider bulk-revoke fixture keeps each legacy request self-targeted. Ghost cross-target tests now expect pre-lookup `-EINVAL`; a deferred self-target individual-unregister case was added. Runtime patches 16/17 and binding rules are unchanged.
+- No test execution is claimed for these edits. New validation-only taskbook addendum is being published; Agent must rerun full 17-patch apply, checkpatch, both host suites, schema gates, fresh full `//common:dby_w09` build, and ROUND58 33/33 + helper 11/11. ROUND33 remains incomplete until all required gates pass.
+- Phase E/F remain BLOCKED; Phase G NOT RUN. No device/partition/boot/DTBO/AVB action or firmware upload.

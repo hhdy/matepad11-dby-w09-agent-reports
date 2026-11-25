@@ -1,0 +1,231 @@
+================================================================================
+AI2-ROUND33 — TARGET-UNREGISTER LIFECYCLE VERIFICATION REPORT (2号 AI)
+================================================================================
+date            : 2026-11-25
+taskbook        : firmware-analysis/round33/AI2_ROUND33_TASKBOOK.md @ firmware-audit-v1
+role            : verification-only Agent. Per the taskbook's "Agent 本轮只执行
+                  验证" scope adjustment, 2号 AI authored and committed the code
+                  in advance; this agent executed ONLY verification and was
+                  forbidden from modifying any source/patch/binding/fixture/
+                  test/series/PROGRESS. No rewrite was performed.
+pinned ACK      : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (android17-6.18.33_r00)
+ROUND32 baseline: 98fda4151bea7b4a7a717054c431f59a7ff23bb6
+candidate       : kernel-baseline/round61/patches/round33-0001-regulator-proxy-
+                  self-target-only.patch  (stagea branch)
+                  blob  262ab30f458ebb603902014be8bbc9a5a8654437
+                  sha256 5505d1e3f8dbec696d797e15c0484263e532c3397174cd149915ae8b5c7ec0e9
+
+--------------------------------------------------------------------------------
+0. VERDICT SUMMARY
+--------------------------------------------------------------------------------
+** VERIFICATION FAILED AT THE FIRST GATE — patch 16 cannot be applied. **
+
+The patch blob published on the stagea branch is byte-identical to the
+taskbook's recorded sha256/blob (its identity is authentic), but the patch
+TEXT itself is INTERNALLY CORRUPT: four of its five hunk headers declare line
+counts that do not match their own bodies. git apply rejects it with
+"error: corrupt patch at line 64" (RC=128) on both a pristine pinned-ACK
+worktree and the Stage A 15-patch build copy. GNU patch independently rejects
+it ("malformed patch at line 61"). The failure is universal, not
+environment-specific.
+
+Per taskbook instruction 2 ("如 patch 16 应用失败，记录完整错误并停止，不要自行
+改写 patch"), the apply chain STOPPED here and the patch was NOT rewritten.
+Every downstream check that depends on the 16-patch tree (host test suites,
+binding/schema gates, full Kleaf rebuild) was therefore NOT executed and is
+reported as BLOCKED — explicitly not PASS.
+
+CODE-COMMITTED vs LOCALLY-VERIFIED distinction (taskbook requirement):
+  * CODE COMMITTED   : YES — verified on the branch (§1).
+  * LOCALLY VERIFIED : NO — the committed patch is not even machine-applicable.
+    Nothing about the self-target-only runtime behavior has been locally
+    verified in this round.
+
+1-item status table (taskbook "Agent 本轮只执行验证" checklist):
+  1 Stage A HEAD + artifacts present                PASS
+  2 full 16-patch series apply verification        FAIL (patch 16 corrupt;
+                                                    patches 1-15 all PASS)
+  3 checkpatch --strict on patch 16                 EXECUTED (0E/1W/0C, RC=1)
+  4 tests/run_tests.sh (38 + 73+9)                  BLOCKED (needs patch 16)
+  5 dt_binding_check / dt-doc-validate / gates      BLOCKED (needs patch 16)
+  6 full manifest-pinned Kleaf rebuild              BLOCKED (needs patch 16)
+  7 ROUND58 config 33/33 + helper 11/11             BLOCKED (not executed; see
+                                                    §6 rationale)
+  8 temp worktree/staging cleanup                   PASS
+  9 no modifications to any source/patch/…          PASS
+ 10 device/DTBO/AVB/HOS4.3 prohibitions             PASS (nothing connected)
+
+--------------------------------------------------------------------------------
+1. STAGE A BRANCH STATE (checklist item 1) — PASS
+--------------------------------------------------------------------------------
+stagea branch HEAD: 5f587aaa40853cf3ec754f7455930aa404bf9b9a
+  ("ROUND61: publish hosted UFS and PHY validation evidence" — the platform
+  side advanced the branch again with evidence-publish commits; verified
+  98fda4151bea7b4a7a717054c431f59a7ff23bb6 IS an ancestor of HEAD via
+  git merge-base --is-ancestor, so the ROUND32 baseline is inherited).
+
+ROUND33 commit chain present on the branch (between 98fda41 and HEAD):
+  f963f6e Record AI2-ROUND32 independent review and assign ROUND33
+  c084c06 Add self-target-only proxy consumer lifetime guard
+  d65f17e Mock OF phandle parsing and legacy regulator target resolution
+  07d2d0c Test rejection of cross-target proxy consumer mappings
+  062e3cd Append ROUND33 self-target-only patch to Stage A series
+  caa70ff Assert legacy proxy votes on the resolved self target
+  855abf9 Document ROUND33 self-target-only lifetime guard
+  00defaa Record 2号 AI direct ROUND33 self-target patch and pending validation
+  9c6ea62 Record validation-only scope for AI2-ROUND33 local Agent
+
+Artifacts verified present and identity-matched on HEAD:
+  * patch 16: remote blob via git cat-file -> sha256 5505d1e3... = taskbook
+    value; working-tree copy (git worktree of FETCH_HEAD) hashes identically.
+  * round32-stagea-series.txt: appended "ROUND33 additions:" section listing
+    patch 16 (blob+sha256, marked "pending-local-apply-check" — which is
+    exactly what this round resolves: it must stay PENDING; see §3).
+  * tests/run_tests.sh, tests/test_proxy_consumer_r31.c,
+    tests/test_proxy_consumer_round32.c, tests/mock/mock_core.h (+mock OF
+    phandle parsing per d65f17e) — all present on HEAD.
+  * PROGRESS.md: "2026-11-25 — 2号 AI direct code work for AI2-ROUND33
+    (verification pending)" section present.
+  * Patch 16 intent (from its text, UNVERIFIED locally): runtime
+    self-target-only for BOTH child-scoped and legacy provider-level
+    proxy-supply; cross-regulator targets rejected -EINVAL before handle
+    acquisition; binding descriptions tightened accordingly.
+
+--------------------------------------------------------------------------------
+2. FULL 16-PATCH SERIES APPLY (checklist item 2) — patch 16 FAIL
+--------------------------------------------------------------------------------
+Protocol: exact ACK disposable detached worktree r33-apply at 8ad08f75dd...,
+clean before apply; per patch: git apply --check / git apply / git diff --check;
+patch files taken from the checked-out stagea HEAD; each file's sha256 verified
+against the series record column (16/16 MATCH — patches 1-15 blobs are also
+unchanged from the ROUND32 record).
+
+Result per patch:
+  idx 1-15 : check=0 apply=0 diffcheck=0, ZERO offset/fuzz lines in output,
+             sha256 MATCH.  15/15 PASS — identical result to the ROUND32
+             record, series history untouched.
+  idx 16   : git apply --check -> "error: corrupt patch at line 64" RC=128.
+             apply not attempted.  FAIL.
+
+Post-15-patch tree state (before patch 16 failure): 12 files changed,
+544 insertions(+), 8 deletions(-) — matches the ROUND32 record; key files
+present (proxy-consumer.c 466 lines, proxy-consumer.h 41, Kconfig, binding
+yaml 602, dby-w09-proxy-review.dts 41).
+
+The failure REPRODUCES on the Stage A 15-patch build copy
+(ack-6.18.33-a30/common): git apply --check -> same "corrupt patch at line 64"
+RC=128; the build copy's working tree was left byte-identical (apply --check
+touches nothing; dirty lines 16 before and after).
+
+--------------------------------------------------------------------------------
+3. PATCH 16 CORRUPTION DIAGNOSIS (evidence for 2号 AI; NOT fixed per taskbook)
+--------------------------------------------------------------------------------
+patch 16: 6084 bytes, 135 lines, sha256 5505d1e3... (authentic). Its five
+hunks declare line counts inconsistent with their own bodies:
+
+  hunk header (file)                          declared     actual
+  @@ -212,6 +212,27 @@ proxy-consumer.c        -6/+27      old=6  new=30  (+3 extra)
+  @@ -225,6 +246,7 @@  proxy-consumer.c        -6/+7       old=6  new=7   OK
+  @@ -250,6 +272,21 @@ proxy-consumer.c        -6/+21      old=6  new=25  (+4 extra)
+  @@ -118,9 +118,12 @@ binding yaml           -9/+12      old=7  new=9   (2/3 off)
+  @@ -148,11 +151,11 @@ binding yaml          -11/+11     old=12 new=11  (1/1 off)
+
+Parser evidence:
+  git apply --check --verbose : error: corrupt patch at line 64   RC=128
+  git apply --stat            : error: corrupt patch at line 64   RC=128
+  patch -p1 --dry-run         : malformed patch at line 61: " /**"  RC=2
+
+Pattern: every hunk whose body was extended relative to some earlier edit has
+a header count that was not recomputed — i.e. the patch text was hand-edited
+or regenerated without re-deriving the hunk counts (a plain `git diff`
+re-export would have produced consistent counts). The header-vs-body deltas
+(+3, +4 on the driver; -2/-3 and +1/-1 on the binding) are exactly the kind of
+artifact left by pasting additional lines into hunks without updating the
+@@ -a,b +c,d @@ numbers. This agent did NOT repair the counts, per the
+explicit prohibition; the corrective step belongs to 2号 AI (re-export the
+patch from the committed tree state so blob identity changes accordingly).
+
+checkpatch --strict on patch 16 (checklist item 3) — EXECUTED, recorded:
+  total: 0 errors, 1 warnings, 0 checks, 85 lines checked  (RC=1)
+  WARNING: "DT binding docs and includes should be a separate patch."
+  Note: checkpatch's lenient parser accepted the patch text for style review;
+  this does NOT contradict or soften the git apply corruption verdict —
+  applicability is governed by git apply/patch, both of which reject it.
+
+--------------------------------------------------------------------------------
+4. BLOCKED ITEMS (checklist items 4, 5, 6) — NOT EXECUTED, NOT PASS
+--------------------------------------------------------------------------------
+All three depend on a 16-patch tree, which cannot exist until patch 16 is
+re-issued:
+
+  * tests/run_tests.sh (expected ROUND31 38 checks + ROUND32 suite with the
+    +9 cross-target/legacy-rejection assertions): the committed suite encodes
+    the self-target rejection behavior; running it against a 15-patch tree
+    would measure the MISSING patch, not the patch quality. Not run.
+  * dt_binding_check / dt-doc-validate / DTS fixtures / runtime negative
+    gates: the binding under test includes patch 16's description changes and
+    the strictness check ("schema 未放宽") must be run on the 16-patch
+    binding. Not run.
+  * full manifest-pinned tools/bazel build //common:dby_w09: taskbook forbids
+    substituting the ROUND32 build, and the 16-patch overlay cannot be
+    produced. Not run.
+
+--------------------------------------------------------------------------------
+5. ROUND58 CONFIG REGRESSION (checklist item 7) — BLOCKED with rationale
+--------------------------------------------------------------------------------
+The 33/33 + helper 11/11 validator technically runs against the current
+ROUND32-state .config and would PASS, but the taskbook item exists to gate the
+ROUND33 build. Running it now would create a green line that references a
+tree state that patch 16 has never been validated against — precisely the
+"未执行的检查标为 PASS" the taskbook forbids conflating. Not executed;
+recorded as BLOCKED (rationale stated, not silently skipped).
+
+--------------------------------------------------------------------------------
+6. CLEANUP AND NON-INTERFERENCE (checklist items 8, 9, 10) — PASS
+--------------------------------------------------------------------------------
+  * Disposable worktrees created this round (r33-apply from ack-6.18.33-a30/
+    common; r33-repo from reports-a30) plus the earlier ROUND122 temporaries
+    (r122-apply, r122-pristine, r122-obj-*) are REMOVED (git worktree list
+    verified). Remaining worktrees are the pre-existing a30-apply and
+    a32-apply from the ROUND32 era, left untouched.
+  * ack-6.18.33-a30/common (build copy): dirty_lines = 16 before and after —
+    byte-identical to the ROUND32 state; patch 16 was never applied there
+    (apply --check only, which mutates nothing).
+  * No source file, patch, binding, fixture, test harness, series record, or
+    PROGRESS was modified anywhere — locally or remotely. No branch was
+    created or pushed. The stagea branch was only fetched/read.
+  * No device connection, ADB, fastboot, root, reboot, boot, flash, partition
+    access, DTBO/AVB/vbmeta operation, or firmware upload. No build artifacts
+    uploaded.
+  * ROUND34 NOT started.
+
+--------------------------------------------------------------------------------
+7. CONCLUSIONS AND HANDOFF
+--------------------------------------------------------------------------------
+CONCLUSION: ROUND33's verification objective is INTACT but UNMET — the
+candidate patch is authentic to its recorded identity yet mechanically
+corrupt, so the entire downstream verification matrix (lifecycle tests,
+schema gates, full Image rebuild, config regression) could not be exercised.
+The taskbook's stop-on-failure clause was followed; nothing was repaired or
+substituted.
+
+WHAT IS ALREADY PROVEN THIS ROUND (and does not need redoing after the fix):
+  * Patches 1-15 apply to the exact ACK with zero offset/fuzz and 45/45
+    zero exit codes; all 16 patch sha256 identities match the series record.
+  * The corruption is precisely localized: 4 of 5 hunk headers with wrong
+    counts (§3 table) — a mechanical re-export from the committed state
+    (e.g. regenerating the patch with git diff against the pre-patch tree)
+    fixes it without touching any semantic content.
+
+NEXT STEP (2号 AI's decision, not this agent's): re-issue patch 16 with
+consistent hunk counts, update the series record blob/sha256, then re-run this
+validation chain. L5/L9 end-to-end status is unchanged from ROUND32 (Phase E/F
+still BLOCKED; hardware untouched).
+
+STOP: per taskbook §7, this is the sole ROUND33 deliverable, filed at
+firmware-analysis/round33/AI2_ROUND33_TARGET_UNREGISTER_LIFECYCLE_REPORT.txt
+on firmware-audit-v1. ROUND34 is not started. Execution ends here.
+
+================================================================================
+END OF REPORT
+================================================================================

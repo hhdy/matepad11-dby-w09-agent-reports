@@ -1,0 +1,65 @@
+ROUND132 taskbook v2 — 17-patch series re-verified by direct path fetch
+generated: 2026-11-26
+taskbook: firmware-analysis/round132/AI2_AGENT_VALIDATION_TASK.md
+          sha256 577fa1398ae0497c017896481b06395ad6c218b839c2f5528a178092b02b2c3b
+          (taskbook v1 was ff90f60f..., 11387 B; v2 is 11417 B)
+manifest: kernel-baseline/round61/round32-stagea-series.txt @ ai-parallel/stagea-port-until-boot
+          sha256 36e1ab53bca5d8fb832a60644055f18ff37abbf02b135be4ce3dd4170efa2e15
+          git blob 9a93b7e3a500d807533517a92b98fe244b2ea456  6599 B / 81 lines
+
+why this run exists: taskbook v1 pointed the manifest URL at branch `main`,
+which returns HTTP 404. The previous run therefore fell back to resolving
+patch identity by reverse blob-SHA lookup inside the stagea tree. Taskbook v2
+corrects the URL to `ai-parallel/stagea-port-until-boot`, so the series can now be
+fetched by its declared paths. This log does that and re-checks identity.
+
+idx path                                                                           blob       sha256     verdict
+--- ------------------------------------------------------------------------------ ---------- ---------- -------
+1   round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft       dad87ef8   9bd87c76   MATCH
+    expected blob dad87ef8dfefee6141b8a7949982c007c4a03b4a / sha256 9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171  (bytes 1575)
+2   round61/patches/round52-0001-context-corrected.patch                           e47219d4   74ef3729   MATCH
+    expected blob e47219d4a944b44f5c1461689b76e77b4f0317a8 / sha256 74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6  (bytes 5093)
+3   round61/patches/round36-corrected-power-domain-range.patch                     79b00af9   5b3dbd2f   MATCH
+    expected blob 79b00af904454f637098b2882b78b01d52c831cf / sha256 5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764  (bytes 1006)
+4   round61/patches/round32-corrected-sc7180-clock-names.patch                     2a038774   f1fe33f0   MATCH
+    expected blob 2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb / sha256 f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836  (bytes 1151)
+5   round61/patches/round33-checkpatch-clean.patch                                 f1d54e5e   e95e2ee7   MATCH
+    expected blob f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 / sha256 e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65  (bytes 8481)
+6   round61/patches/round52-0002-checkpatch-clean.patch                            7e5df841   d3f9bc52   MATCH
+    expected blob 7e5df841b756dfef803edec486d9a5e3e753f47b / sha256 d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4  (bytes 4773)
+7   round61/patches/round63-0002-qmp-ufs-phy-binding.patch                         a6668eeb   534412c3   MATCH
+    expected blob a6668eebe293f9a35e9c08d6be4f37c4340e7ddd / sha256 534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0  (bytes 1152)
+8   round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch                  99fffb10   d33e1d40   MATCH
+    expected blob 99fffb10603b38bc30a0e6c9db99b0e9888a7b82 / sha256 d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539  (bytes 7402)
+9   round61/patches/round58-kleaf-target.patch                                     dc8f4b59   bd9f124a   MATCH
+    expected blob dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec / sha256 bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec  (bytes 8513)
+10  round61/patches/round31-0001-regulator-add-proxy-consumer.patch                c7438eb8   38f8daf2   MATCH
+    expected blob c7438eb8772c0b90a319ba5a37d5fa71b9342964 / sha256 38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003  (bytes 14865)
+11  round61/patches/round31-0002-regulator-proxy-consumer-binding.patch            d810e771   1f89f0b7   MATCH
+    expected blob d810e771bc16e531bc01082af0e9feea157aeb7a / sha256 1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6  (bytes 2657)
+12  round61/patches/round31-0003-dby-w09-enable-proxy-consumer.patch               2a486d06   c5552918   MATCH
+    expected blob 2a486d066b8eeb914665730feb9d42b21e847fd6 / sha256 c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435  (bytes 1230)
+13  round61/patches/round32-0001-regulator-child-scoped-proxy-consumer.patch       6b4f6d99   9b47f5bf   MATCH
+    expected blob 6b4f6d9969dde82733523d713b810df8451e934c / sha256 9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650  (bytes 14265)
+14  round61/patches/round32-0002-regulator-child-scoped-proxy-binding.patch        ae349d95   30a1ee71   MATCH
+    expected blob ae349d95b011c2193c18e0352a8f482513501e85 / sha256 30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15  (bytes 2945)
+15  round61/patches/round32-0003-dby-w09-child-scoped-proxy-review-dts.patch       14f02197   3f524acc   MATCH
+    expected blob 14f0219736c018c3cf361b7608eb00023dacbf77 / sha256 3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594  (bytes 2625)
+16  round61/patches/round33-0001-regulator-proxy-self-target-only.patch            3899e2b7   7b4858f5   MATCH
+    expected blob 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe / sha256 7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4  (bytes 3375)
+17  round61/patches/round33-0002-regulator-proxy-self-target-binding.patch         d2e81829   d19fb3b6   MATCH
+    expected blob d2e818296118672bd708db34ed08d817fcd3895b / sha256 d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05  (bytes 2848)
+
+SUMMARY
+  patches_declared            17
+  patches_fetched_by_path      17
+  patches_match_identity      17
+  patches_failed              0
+  SERIES_PATH_REFETCH=PASS
+
+Effect on the ROUND132 verdict: none. The seam-v2 patch is unchanged
+(sha256 1fbc32a3..., blob 890b584b..., 16797 B), both trees still sit on the
+declared 17-patch base content tree 77e2b2b1515b3813f7538aedffe4c5a4e90edb57,
+and every KUnit / host / config result was produced from those exact bytes.
+This run only removes deviation D-1 (manifest URL) by proving the corrected
+URL serves the same 17 patches at the same declared paths.

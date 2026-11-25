@@ -1988,3 +1988,17 @@ Report: [ROUND114 — KONA proxy-consumer ACK compatibility](./kernel-baseline/r
 
 - Additional fixed-source comparison: KONA drms_uA_update() sums every consumer's stored uA_load regardless of enable state, while ACK drms_uA_update() only sums consumer handles with enable_count > 0. KONA set_load on a disabled UFS/QMP handle can immediately affect mode; ACK only stores the load until that handle is enabled.
 - ROUND107 notes QMP bulk-get sets init_load_uA at probe time. Thus in ACK, probe/bulk-get is not proof that the QMP load is already contributing to DRMS. AI2 ROUND31 must validate the 100mA proxy-vote handoff against actual UFS/QMP enable timing at late_initcall_sync; UFS async scan lifetime from ROUND108 remains relevant. Do not claim vendor DRMS equivalence from matching load values alone.
+
+
+### ROUND115 — critical ACK per-PMIC / KONA per-regulator proxy lookup scope mismatch
+
+Report: [ROUND115 — ACK proxy-supply scope review](./kernel-baseline/round115/round115-1ai-ack-per-pmic-proxy-scope-review.md).
+
+- Fixed ACK qcom-rpmh-regulator.c creates one platform device for the entire PMIC group, then registers each child regulator with the same reg_config.dev but its own reg_config.of_node. Stage A regulators-0 similarly contains L5, L6, L9 and L17.
+- KONA vendor 4.19's proxy helper receives a separate provider device for each rail group; its group-level proxy-supply plus regulator_get(group_dev, "proxy") is valid in that layout.
+- Copying that helper unchanged to ACK is incorrect: L5 and L9 both use the same PMIC group device, so both regulator_get(group_dev, "proxy") calls resolve the same one group-level proxy-supply property. The helper could silently place both 100mA votes/enable refs on only L5 or only L9.
+- ACK regulator class device retains the individual child of_node from regulator_of_get_init_data(), while rdev->dev.parent remains the shared PMIC group. A viable adaptation is child-scoped lookup from &rdev->dev with each child's own self proxy-supply property, plus an explicit check that the resolved handle is exactly the current L5/L9 rdev. Current main DTS draft has no proxy properties yet.
+- The actual electrical parent lookup uses rdev->dev.parent and the driver's supply_name, distinct from proxy lookup through the child rdev of_node. The schema must explicitly define the child-local Qualcomm proxy control properties; do not put both requests on one group node.
+- Hook placement, lock ordering, device registration timing and self-reference handle lifetime still require proof in the actual implementation. Round115 is design review only; it modifies no source or DTS.
+- 2号 AI must implement and test this mapping; local Agent must not author kernel code. The published AI2 ROUND31 taskbook still has the executor-role conflict noted in ROUND114.
+

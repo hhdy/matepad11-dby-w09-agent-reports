@@ -222,3 +222,12 @@ No device access or power-rail measurement is authorized by this review.
 - Hardware regulator transitions, failure injection, PHY power cycles and device boot: NOT RUN.
 
 No source, patch, binding, DTS, config, branch, PR or firmware artifact was modified by this report.
+
+
+## 10. ROUND61 built-config cross-check: dummy regulator implementation is present
+
+The Phase-D Image artifact previously downloaded and independently checked contains `CONFIG_REGULATOR=y` in its final `.config`. The exact pinned ACK `drivers/regulator/Makefile` places `dummy.o` in the `CONFIG_REGULATOR` object list. The pinned `drivers/regulator/core.c` calls `regulator_dummy_init()` from its `core_initcall(regulator_init)`, and `drivers/regulator/dummy.c` registers the dummy regulator with an `always_on = 1` constraint.
+
+Thus the actual Phase-D candidate includes the ACK dummy-regulator implementation and its early initialization path. Given the absent L5 parent-supply property, if ordinary supply lookup has no separately registered alias or matching mapped regulator, the regulator core has an available always-on dummy fallback for the L5 descriptor's software parent request.
+
+This strengthens the classification from “dummy fallback is theoretically available” to “the built candidate contains and early-registers the dummy provider.” It still does **not** prove that a particular L5 lookup selected that dummy at runtime; a separate supply alias or matching regulator map would take precedence. It also does not establish any physical L5 input net. No change to the Phase-D artifact or source tree was made.

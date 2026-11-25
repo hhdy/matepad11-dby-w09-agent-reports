@@ -72,3 +72,23 @@ Agent taskbook:
 ## 6. Acceptance boundary
 
 If Agent identity/apply/source gates, strict checkpatch, target object compilation and fresh full Image build all pass, this may be accepted as an isolated AI1 buildable QMP rail-state candidate. It does not prove runtime fault-injection behavior, actual physical PMIC rails, device boot, or safe final put under a persistent provider failure. Do not merge automatically into AI2 Stage A.
+
+
+## 7. Additional exact ACK RPMh failure-boundary clarification
+
+A further fixed-source pass over ACK commit 8ad08f75 narrows what a negative L5/L9 RPMh provider-disable result means:
+
+- qcom-rpmh-regulator's disable helper selects rpmh_write_async() for the inspected HOS4.3 per-regulator ACK-property absence.
+- rpmh_write_async() can fail before RSC submission while allocating the request (GFP_ATOMIC), validating/filling the one-command message, or adding the command to the RPMh cache (the latter also has a GFP_ATOMIC allocation path).
+- rpmh_rsc_send_data() selects the ACTIVE_ONLY TCS group, then waits on tcs_wait until claim_tcs_for_req() obtains a free TCS. It does not report a "no free TCS" failure; that path waits. Once claimed, it writes the command buffer, triggers the TCS, and returns 0. There is no synchronous ACK wait in this branch.
+- Consequently, on the provider's direct async-disable error path, the failure occurs before the provider request is triggered, and regulator core returns before _regulator_handle_consumer_disable() decrements the consumer enable_count.
+
+This statement is deliberately limited to the RPMh provider's direct .disable() error. Generic regulator core still has later failure paths: after the child provider successfully submits its disable and its consumer reference is decremented, _regulator_disable() can return an error from a later coupling balance or recursive parent-supply disable. HOS4.3 FDT has no coupling links for the inspected rails and no ordinary physical parent-supply phandles, so absent any platform alias the missing-parent case can use the dummy regulator fallback under full constraints. However, this repository/source review has not proven that no out-of-DT supply alias is installed on the live board. The candidate therefore preserves the last confirmed state on any error and does not claim to solve every parent-alias post-decrement case.
+
+Exact source locations in the pinned ACK:
+- drivers/soc/qcom/rpmh.c:222-240 (rpmh_write_async allocation/fill/submit);
+- drivers/soc/qcom/rpmh.c:111-157 (cache_rpm_request; cache allocation may return -ENOMEM);
+- drivers/soc/qcom/rpmh-rsc.c:642-684 (ACTIVE TCS lookup, wait for free TCS, buffer write, trigger, return);
+- drivers/regulator/core.c:3030-3070 (_regulator_disable ordering: provider disable, consumer decrement, coupling, then parent supply).
+
+No code was changed by this clarification; ROUND125 patch identity remains unchanged.

@@ -1044,3 +1044,12 @@ ROUND78 输入身份核验已由 ROUND27 报告解决：测试 Agent 从历史 c
 - 1号 AI 建议 2号 AI 修复：移除 ACK UFS driver 不消费的 `vcc-voltage-level`；补齐 DBY-W09 board compatible 与 rootparam vendor binding；随后由 2号 AI 下发新的、范围明确的测试任务给测试 Agent复验。
 - 当前不需要测试 Agent自行续跑；测试 Agent已经按单报告任务停止。任何新验证都要有新的任务书，执行者标记为测试 Agent。
 - Round27 schema 清洁通过前，不得声称整轮所有工作包 PASS。板级 DT 构建通过也不代表设备 boot ready。
+
+
+## ROUND82 — 1号 AI 对 VCC voltage-level 的进一步源码核对
+
+- 报告：`kernel-baseline/round82/round82-corrected-vcc-voltage-level-schema-remediation.md`。
+- 修正 ROUND81 初始建议：旧 Qualcomm UFS binding/driver 将 `vcc-voltage-level` 作为 VCC 的 min/max 电压请求，旧 UFS core 会调用 `regulator_set_voltage()`。当前 ACK 6.18.33 已删除这条 consumer path（`struct ufs_vreg` 没有 min/max 字段，平台 parser 不读取该属性，generic core 只做 set_load）。
+- 因此不能仅为 schema 通过而从 DTS 删除这个属性。2号 AI 应评估在 ACK 中恢复 VCC consumer voltage range parsing + regulator_set_voltage 及匹配 binding，或证明 regulator/provider 约束等效地满足原要求。
+- Huawei `/rootparam` 可以评估按 node-name + 特征属性 select 的 binding；固定 ACK 的 `ethernet-phy.yaml` 已有 nodename selector 先例，避免在 ABL-owned 节点新增未知 compatible。
+- 本轮是 1号 AI 的只读源码研究，不派发测试 Agent；如 2号 AI 后续实现，再由其签发独立的 AGENT_TEST_TASK。

@@ -167,3 +167,10 @@ ROUND23 now checks the current board rev2 candidate plus the restored VG-only ro
 
 
 ROUND68 package-layout detail: at the pinned ACK common commit, arch/arm64/boot/dts/qcom has no BUILD.bazel (516 entries); arch/arm64/boot/dts also has no BUILD.bazel. A future Kleaf target therefore requires a new BUILD package and explicit dtc include dependency; no qcom Bazel target currently exists.
+
+
+## ROUND70 — DTBO table ID is not the root overlay board-id
+
+A public same-device Linux reference (based on an earlier HOS generation) keeps the base DTS board-id at 0, uses 0x206a in the rootparam overlay, but packages a one-entry DTBO table with id=0/rev=0/page_size=4096. This shows table entry metadata and the overlay's root qcom,board-id are separate layers. It does **not** prove the HOS4.3 ABL accepts the same one-entry wildcard/default table. The exact replacement table id/rev policy remains UNKNOWN. Do not generate dtbo.img until that contract is evidenced.
+
+See [ROUND70](../kernel-baseline/round70/round70-dby-w09-dtbo-table-id-selection-ambiguity.md).

@@ -1,14 +1,14 @@
 # ROUND61 hosted UFS / ROUND63 PHY validation
 
-- Workflow commit: 98fda4151bea7b4a7a717054c431f59a7ff23bb6
-- Workflow run ID: 45619481984
+- Workflow commit: c084c06c0315052daae31b21fc63949e1ced5497
+- Workflow run ID: 45622133859
 - Branch: ai-parallel/stagea-port-until-boot
 - Job status: success
 - Fixed ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
 
 ## Processed schema SHA-256
-987fa5856d95c1267c7f6d497fa5bb6f90ccffe5be97c236d23cb9259f7625e5  /home/runner/work/_temp/round61-processed-schema.json
+cb60634237420d616e470fb82c669aca258d13c22ccb77bc5e9f30260163a206  /home/runner/work/_temp/round61-processed-schema.json
 ## Patch application
 b6897118cbef2fe36216d8fa00c22707531b7d6ba6aa5b35417c547185d54b90  /home/runner/work/_temp/round61-ufs-applied.diff
 ACK HEAD: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
@@ -83,30 +83,30 @@ NOTE: Ignored message types: CAMELCASE
 /home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
   int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
   DTC [C] Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
-  DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  root_node = re.search('/\s*{', ex)
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
-  DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
-  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  root_node = re.search('/\s*{', ex)
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
-  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
-  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  root_node = re.search('/\s*{', ex)
-/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
-  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
-  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
   DTEX    Documentation/devicetree/bindings/ufs/ufs-common.example.dts
 /home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
   root_node = re.search('/\s*{', ex)
 /home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
   int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
   DTC [C] Documentation/devicetree/bindings/ufs/ufs-common.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
+  DTEX    Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dts
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:75: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  root_node = re.search('/\s*{', ex)
+/home/runner/work/_temp/dtschema-venv/bin/dt-extract-example:79: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  int_val = re.search('\sinterrupts\s*=\s*<([0-9a-zA-Z |()_]+)>', ex).group(1)
+  DTC [C] Documentation/devicetree/bindings/ufs/qcom,ufs-common.example.dtb
 
 ## round61-ufs-example-validation.log
 
@@ -120,4 +120,4 @@ vdda-phy-always-on: size (4) error for type flag
 	from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
 
 ## dt_binding_check log SHA-256
-a87faad1f06f6db6839b141aeeec6dffd241e8e3444a39c21cbe687af053cb2e  /home/runner/work/_temp/round61-dt-binding-check.log
+3991e6bd283b3e1e09f6b185c6337839fed89fa21f48e329775b094d1bba4258  /home/runner/work/_temp/round61-dt-binding-check.log

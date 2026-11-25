@@ -145,3 +145,8 @@ A later hosted run repeated the full source/schema gate at head `055e4b5a51bbfd1
 - Artifact: `round61-ufs-phy-validation`, ID `14951770706`.
 
 The scanner again noted two unrelated malformed upstream YAML files that it ignored (`firmware/gunyah-cma-mem.yaml` and `iommu/pkvm,pviommu.yaml`). The modified UFS/PHY schema and explicit fixture gates passed. This re-run closes the schema/source validation for the current patch set; it does not prove final board DTS, hardware regulator behavior, or a compiled Image.
+
+
+## Re-confirmed in current nine-stage build workflow — 2026-11-25
+
+Run `45529395645` stage 5 re-applied the full ordered source patch stack, including the UFS/PHY binding changes, and passed real Git apply/diff checks. Stage 6 then passed the strict checkpatch/buildifier gates and the **11-test** strengthened config-helper suite. The authoritative device-tree binding check itself remains the separately completed run `45457083961` (artifact `14951770706`): dtschema 2023.9, UFS 2/2 positive + 8/8 negative fixtures, PHY 2/2 positive + 1/1 negative fixture, with expected results. The current build workflow does not redundantly rerun schema validation in stage 6; it relies on the dedicated UFS/PHY validation run for this gate.

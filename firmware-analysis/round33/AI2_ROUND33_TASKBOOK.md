@@ -149,3 +149,41 @@ Stage A 分支提交实际 patch、binding/DTS fixture（如有）、可复现�
 10. 严格遵守本任务原有所有设备/分区/boot/DTBO/AVB/HOS4.3 禁止项。
 
 Agent 唯一交付仍为 `firmware-analysis/round33/AI2_ROUND33_TARGET_UNREGISTER_LIFECYCLE_REPORT.txt`。报告必须明确区分“代码已提交”与“本地验证通过”；不能把未执行的检查标为 PASS。报告提交后立即停止，不得启动 ROUND34。
+
+
+---
+
+## 2号 AI 专属 — ROUND33 补丁格式修复后的第二次验证（仅验证，不改代码）
+
+第一次 Agent 验证已经确认原 patch 16 hunk counts 错误，导致 `git apply --check` 失败；该报告是有效失败记录，不得删除或覆盖。2号 AI 已修复格式并拆分为 patch 16 + patch 17。现在请在同一 ROUND33 内进行第二次验证。
+
+### 当前候选输入（Stage A branch: ai-parallel/stagea-port-until-boot）
+
+- patch 16：`kernel-baseline/round61/patches/round33-0001-regulator-proxy-self-target-only.patch`
+  - blob `8b7869b42c64fc808c6b2e2e328be793bbe50f91`
+  - SHA-256 `a43b87447255469f87c4219e7d2fe8d88786cadea6ac9c9394ea8e1133ef56d8`
+- patch 17：`kernel-baseline/round61/patches/round33-0002-regulator-proxy-self-target-binding.patch`
+  - blob `9dd73d2dce8892c58c5a2b502029d671a9e055dc`
+  - SHA-256 `3b4f7a5a4b517beecca663b70bde7a444e0df98fcebae0a7c3722fda81784d5b`
+- Ordered series is now 17 patches: `kernel-baseline/round61/round32-stagea-series.txt`.
+- 2号 AI has checked all five hunk header counts against actual hunk bodies (driver 6/30, 6/7, 6/25; binding 7/9, 11/11). This is only a static text check, not an apply result.
+
+### Strict execution order
+
+1. Fetch current Stage A branch HEAD and verify both patch blobs/SHA-256 exactly match the above identities and the series record.
+2. Use a pristine disposable worktree at exact pinned ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`. Apply the full 17-patch series in order. For every patch run `git apply --check`, `git apply`, and `git diff --check`; record exact return codes and offsets/fuzz. If any patch fails, stop and report; do not edit or regenerate it.
+3. Run `scripts/checkpatch.pl --strict` separately on patch 16 and patch 17. Record warnings/errors/checks. Binding patch is deliberately separated from driver patch.
+4. Run committed `tests/run_tests.sh`, including the 38-check ROUND31 suite and complete ROUND32 suite with the nine ROUND33 assertions. Report exact totals and failures.
+5. Run true `dt_binding_check`, `dt-doc-validate`, relevant DTS fixtures and strict positive/negative schema gates on the 17-patch tree. Do not loosen schema.
+6. Sync the 17-patch result into the manifest-pinned Stage A build workspace and run a fresh full `tools/bazel build //common:dby_w09`. Do not reuse ROUND32 build evidence.
+7. Run ROUND58 config helper 33/33 and helper tests 11/11 regression against the current build config.
+8. Verify temporary worktree/staging cleanup. Do not upload build artifacts.
+9. Do not modify any source, patch, binding, fixture, test, series or PROGRESS. If a defect is found, stop and report exact evidence to 2号 AI.
+10. All existing safety prohibitions remain in force. No device, ADB, fastboot, root, reboot, flash, partition access, boot/DTBO/AVB/vbmeta operation, firmware upload or HOS4.3 evidence upload.
+
+### Deliverable and stop rule
+
+Write a new addendum report (do not overwrite the first failure report):
+`firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt`
+
+Clearly distinguish PASS, FAIL, BLOCKED, and NOT RUN. A successful apply alone does not mean lifecycle behavior or hardware is verified. Agent must stop after filing this report; do not start ROUND34 or any follow-on round.

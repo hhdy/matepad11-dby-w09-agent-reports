@@ -529,3 +529,53 @@ The most important distinction: an EFI-capable Image does not prove Huawei ABL i
 ROUND18 must not be repeated: the Image is already built at /home/kerneldev/work/matepad11/ack-6.18.33-round18/bazel-bin/common/dby_w09/Image, size 44,820,992 bytes, SHA-256 983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884. No board DTB/DTBO/boot image exists yet.
 
 Continue to keep all device writes/flash/boot operations gated on separate explicit user authorization.
+
+## 2026-11-25 — WQSQW 移植群聊补充：base DTB 空壳、DTBO 变体选择、驱动 built-in
+
+用户提供了另一位 DBY-W09 内核移植者 WQSQW 的群聊记录。该聊天不是正式设计文档，个别架构性说法尚未独立验证；但其中三个工程判断与我们已有 HOS4.3 固件证据高度吻合，应作为后续移植原则：
+
+### 1. Base DTB 可能只是骨架，必须以最终 overlay 后的有效树为准
+
+WQSQW 表述：“华为是留了个空壳指向 DTBO，多固件就由 DTBO 抉择。”
+
+已有本机证据相互印证：
+- ROUND7：base FDT 有 `/rootparam` 空节点；root memory node 存在但 `reg` 为全零占位值。
+- ROUND8：原厂九个 DTBO entry 均已从已有 work copy 解出，fragment targets 145/145 resolved；entry 8（board-id `0x206a` / VG）包含 UFS Host/PHY 的状态、供电和 `vdda-phy-always-on` overlay 属性。该报告明确说明 overlay 是配置意图，不代表已证明 runtime selection。
+- ROUND19：九个变体分别填充 `/rootparam` 的五项产品/板型属性；没有一个 overlay 写入 `/memory`、`/chosen`、`/reserved-memory` 或 `/firmware/android/fstab`。
+
+后续规则：
+1. 禁止仅凭 base DTB 直接断定某个硬件节点最终状态。
+2. 板级 DTS 对照应按 `base DTB + 实际选中的唯一 DTBO entry + ABL 运行时修改` 重建有效树；不能把九个 DTBO 全部叠加，也不能假设 entry 8 一定在当前设备被 ABL 选中，除非有同次启动证据。
+3. 每个关键节点（UFS Host/PHY、panel、touch、Wi-Fi/BT、audio、camera、regulators、reserved-memory、memory、rootparam）都要标记其属性来自 base、selected overlay 还是 ABL handoff。
+4. 九个 stock DTBO 不提供 RAM range 或 EFI handoff，不能把 memory gate 误认为只需选择正确 overlay 就会自动解决。
+
+### 2. 启动关键驱动优先 built-in，而不是依赖未挂载分区中的 .ko
+
+WQSQW 表述：“驱动直接编进内核。”
+
+这与当前 storage-first 设计一致，并且 ROUND18 已把第一阶段最关键的驱动设置为 built-in：
+- UFS Host / Qualcomm UFS / QMP UFS PHY；
+- SM8250 GCC、RPMh、RPMhPD、Interconnect；
+- ARM SMMU；
+- DM / DM-Verity / FEC；
+- EROFS。
+
+ROUND18 的最终 `.config` validator 实测 31/31 项为 `=y`，Image 编译成功。不要重复这些已完成的配置检查。
+
+后续规则：
+1. 任何 first-stage mount 必需驱动，优先 built-in，除非能证明模块在系统分区挂载前由可用的 ramdisk/vendor-ramdisk/bootloader 路径加载。
+2. 明确区分四种对象：Linux driver（可 built-in 或 `.ko`）、外部 firmware blob（由驱动在运行时加载）、DTB/DTBO 硬件描述、vendor 用户态 HAL/service。不能把“驱动编进内核”误解为驱动需要的 firmware blob 也必须静态链接进 Image。
+3. ROUND19 只证明 standalone `ramdisk.img` 的 CPIO 中没有 `.ko` / modules.load；这不证明 vendor、odm 或其他分区绝对没有模块。若未来依赖模块，必须明确其实际分区、加载时机和 first-stage 可达性。
+4. 为尽快首次进入桌面，继续采用启动依赖优先：UFS、PHY、RPMh/电源、内存交接、显示/触摸优先；非启动关键相机、蓝牙、音频和传感器可后续完善。
+
+### 3. “HarmonyOS 微内核”群聊解释仅作背景，不直接作为本项目技术结论
+
+群聊中关于“微内核只保留进程调度、内存管理、IPC，文件系统/网络/驱动全部用户态”的表述是概括性讨论，不能据此断定 DBY-W09 HOS4.3 的 Linux/Android 驱动实际架构。我们当前移植目标是 Linux ACK 6.18.33，仍按 Linux kernel driver、device tree、firmware、vendor userspace 的实际分层推进；不要因为群聊措辞改造成微内核式设计。
+
+### 4. 对当前实施的直接影响
+
+- ROUND18 的 built-in storage-first Image 是正确 checkpoint，不回退。
+- ROUND19 已有九个 DTBO 证据作为后续有效设备树构建的输入，不重跑九个 entry 的扫描。
+- 下一步继续 ROUND20 对现有 Image 做 EFI Stub / PE entry、memory handoff 路径和 boot-v2 payload 体积只读核验。
+- 在生成真实板级 DTB/DTBO 前，必须先确定实际 overlay/ABL handoff 证据；未确定的内存地址和 PMIC 物理 parent supply 仍然禁止猜测。
+- 本聊天由用户提供，属于有价值的移植经验线索，不等同于 WQSQW 源码或设备运行日志。可与已有报告互相印证的内容按上述边界使用，其他内容保持待验证。

@@ -489,3 +489,14 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SEC
 - `hosted-build-latest.md`: published run `45529395645` summary; all stages success.
 
 The build milestone is complete. The next progress dependency is no longer compilation: Phase E and Phase F need the local Agent's sanitized read-only HOS4.3 evidence described in `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` and `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`. Do not generate DTB/boot/flash packages or start device operations until those evidence gates and separate authorization are complete.
+
+
+### Build completion and local Agent handoff point (2026-11-25)
+
+The current manifest-pinned Image build is complete; no further compile is needed for the Phase D Image milestone. Detailed Phase C/D report headers were synchronized to the terminal PASS result in commits `a9d6a5152fc395861a5f645cee0cbd3ace8f6deb` and `66c7ef16a52ec9567587dd7128cb0bb82cdb67f8`.
+
+**Next dependency is the local Agent, not another build:**
+- Phase E memory/power report: `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md`.
+- Phase F boot-v2/AVB report: `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`.
+
+The two reports must be completed from already-authorized HOS4.3 local evidence. If a required value is unavailable or would require unapproved device access, the Agent must return BLOCKED rather than infer it. After those reports arrive, Second AI can assess whether the board DTS and packaging work can safely resume. Until then keep Phase E/F BLOCKED, Phase G NOT RUN, and overall Stage A incomplete.

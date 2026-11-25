@@ -1,7 +1,7 @@
 AI1 ROUND130 — FOUR-PATCH UFS LIFECYCLE INTEGRATION SERIES
 =========================================================
 Owner: 1号 AI (ChatGPT)
-Status: PREPARED; full combined Agent validation REQUIRED.
+Status: ACCEPTED as an isolated, buildable AI1 candidate series after ROUND130 full combined validation.
 This is an isolated candidate branch. Do not merge to the AI2 Stage A branch.
 
 Immutable source:
@@ -59,3 +59,11 @@ The ROUND130 Agent taskbook is on firmware-audit-v1:
 
 No source files, DTS, tests, configs, firmware or AI2 branches are changed by
 this patch-only candidate package.
+
+Validation record:
+  Agent report: firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_REPORT.txt
+  Report blob: def62019b5760d991f41d674e227b9e1af0761df
+  Acceptance: kernel-baseline/round130/ROUND130_ACCEPTANCE.md
+  Result: PASS — 21-patch integrated source gates, host tests, 9 objects,
+  full Image build and ROUND58 regression; baseline restore hash exact.
+  Scope: buildable AI1 candidate only; no device validation; do not merge AI2.

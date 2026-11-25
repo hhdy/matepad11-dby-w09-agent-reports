@@ -74,11 +74,21 @@ The latter completed log recorded:
 
 The archived .config has subsequently been independently rechecked against the hardened current 33-symbol requirement list: **33/33 =y, no missing symbols, no non-y assignments, and no duplicate assignments**. The same config SHA is present in the duplicate successful run. Those earlier build results are not device-boot acceptance.
 
-## 6. Current separate Phase D build gate
+## 6. Final nine-stage workflow validation — PASS
 
-In run `45529395645`, stage 8/9 `Build DBY-W09 Image` is currently `in_progress` (started `2026-11-25T02:03:17Z`). Stage 9/9 will validate the generated final .config against the 33-symbol checker and hash/size the resulting kernel artifacts.
+Run `45529395645`, job `138920645396`, completed with **overall success**:
+- stage 8 Image build: success, 2026-11-25 02:03:17Z to 02:26:00Z;
+- stage 9 final config/artifact validation: success;
+- complete summary publication: success;
+- artifact upload: success.
 
-Do not mark the current retry's Phase D complete until stage 8 and stage 9 both pass and the uploaded artifact is inspected. Earlier successful Image builds remain valid independent evidence.
+The run used the immutable manifest commit `46a1a5274ff0b40419952c861a8958bba5f28cfc`, ACK common commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, build/kernel commit `2bebe7c443d0e6d5d549fb2a2377dce980d1b15e`, and manifest-pinned compiler tools Clang `r584948c` / Rust `1.91.1.p3`. The manifest XML SHA-256 in this run is `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`.
+
+Artifact `round61-ack-6.18.33-image-build`, ID `14985348694`, size 210,441,171 bytes, ZIP SHA-256 `0c8fabcd626d15aa36f32b3b7652d32b0f5389bc7fdca45bcd4d770e80123cf4`.
+
+Stage 9 output: all 33 required storage-first symbols are `=y`; no duplicate assignments. Second AI independently re-opened the downloaded artifact, recomputed all four output SHA-256 values and reran a separate parser over the 238,376-byte .config; 33/33 required symbols were `=y`, with no missing, non-y or duplicate assignments.
+
+The build completed 775 Bazel actions successfully (elapsed 1362.003 s, critical path 1327.37 s). Phase C is PASS, and the current transparent manifest-pinned build workflow is validated end-to-end.
 
 ## 7. Scope boundary
 

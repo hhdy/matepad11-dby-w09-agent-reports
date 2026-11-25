@@ -1365,3 +1365,13 @@ Important limits:
 - dt_table_entry id/rev and DTBO image packaging remain UNKNOWN; no dtbo.img/mkdtimg run.
 - dt_binding_check/dtbs_check and Kleaf/Bazel targets were not run.
 - Final memory/reserved-memory and PM8150 physical input-parent gates remain BLOCKED; no boot package or device operation.
+
+## 2026-11-25 — Stock boot route inference: preserve normal arm64/FDT compatibility first
+
+ROUND20 established that the decompressed stock HOS4.3 kernel has ARM64 magic but res5=0, hence no PE/COFF EFI entry. The stock kernel therefore cannot be launched as an EFI application. ROUND20's pinned ACK source trace establishes the normal arm64 path obtains RAM from the FDT memory node and skips size=0; the arm64 memory init path does not invent a DRAM range.
+
+Since the stock HOS4.3 system does boot, the extracted base DTB's all-zero /memory/reg is not the value actually passed unchanged to that stock kernel. The boot chain must either patch the base/template FDT's memory node or select/construct another final FDT with usable RAM before normal arm64 entry. The precise ABL actor and live memory tuples remain UNKNOWN because the local live-FDT read was permission-denied and the ABL binary is unavailable.
+
+Stage A should therefore prioritize preserving the stock normal arm64 Image entry + x0 FDT contract. Keep gzip as compatibility-first because the stock loader demonstrably decompresses gzip. Treat the new Image's EFI Stub as a conditional alternate path only; do not assume ABL invokes it, and remember that an EFI stub without DEVICE_TREE_GUID can generate an empty DTB and lose the Huawei DT fstab.
+
+Detailed reasoning: kernel-baseline/round75/round75-stock-hos43-entry-and-live-fdt-inference.md.

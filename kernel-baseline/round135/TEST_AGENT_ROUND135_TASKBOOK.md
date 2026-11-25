@@ -129,6 +129,7 @@ ROUND32 历史记录中 `huawei,dby-w09` 的 root compatible 有已知 undocumen
 
 - 用本轮最终 23-patch 工作树、最终产品 .config 和固定 manifest 对应工具链，构建实际 `huawei-dby-w09.dtb`。不得只用单独 hand-written fixture 代替。
 - 可以使用 Kbuild 标准目标 `make ARCH=arm64 ... qcom/huawei-dby-w09.dtb` 或完整 `dtbs` 目标；必须记录完整命令、输出目录、工具链版本、退出码。若当前 Kleaf workspace 采用其他标准 DTB target，请把 target 解析依据和实际命令写入报告。
+- 在同一最终工作树、相同 `O=` / 工具链 / schema 版本下，额外运行完整 `dtbs_check`（例如 `make ARCH=arm64 ... dtbs_check`）。若必须全量构建 DTB，保留完整日志；不得用单文件 `dtc` 代替 `dtbs_check`。
 - 使用 `scripts/dtc/dtc -I dtb -O dts`、`fdtdump` 或等价工具反编译**刚刚生成的 DTB**，保存完整或足够定位的原始输出。
 - 逐项核验 Host dual-domain phandles / cells / 顺序、PHY 原有 domain、UFS SID、UFS supplies、model/compatible、Makefile 目标名。
 - 仅 DTS 源码 grep、临时单文件 dtc 或源 schema fixture 不算完成本节。
@@ -165,7 +166,7 @@ ROUND32 历史记录中 `huawei,dby-w09` 的 root compatible 有已知 undocumen
 至少交付：
 1. `TEST_AGENT_ROUND135_FINAL_REPORT.txt` — 最终完整报告；
 2. `round135-23patch-identity-and-apply.log` — 23 个 patch 的输入 SHA / blob / 顺序 / check / apply / offset / tree；
-3. `round135-dt-schema-and-dtb.log` — schema、真实 DTB build、dtb 反编译和结构断言；
+3. `round135-dt-schema-and-dtb.log` — schema、dtbs_check、真实 DTB build、dtb 反编译和结构断言；
 4. `round135-kconfig-and-kleaf-build.log` — final .config、依赖符号、object compile、Image build 与 artifacts hash；
 5. `round135-host-regression.log` — Host 38/38 + 83/83 完整结果；
 6. `round135-checkpatch-and-diff.log` — diff check、checkpatch、SPDX、所有 warning/check。
@@ -174,7 +175,7 @@ ROUND32 历史记录中 `huawei,dby-w09` 的 root compatible 有已知 undocumen
 
 ## 9. 结论规则
 
-- 所有 23 个 patch 身份正确并成功应用，offset 已完整披露且无 fuzz / reject / 未审阅的新 offset；schema、DTB compile/inspection、Kconfig、C object、full Image build、Host regressions 与静态检查均有真实日志，才能标记 `PASS — BUILD/DTB INTEGRATION ONLY`。
+- 所有 23 个 patch 身份正确并成功应用，offset 已完整披露且无 fuzz / reject / 未审阅的新 offset；schema、dtbs_check、DTB compile/inspection、Kconfig、C object、full Image build、Host regressions 与静态检查均有真实日志，才能标记 `PASS — BUILD/DTB INTEGRATION ONLY`。
 - 任一身份不符、patch 错误、错误 topology、C compile / DTB / build / regression 失败：`FAIL`。
 - 工具、依赖、schema已知兼容 gap 或环境造成必需检查无法完成：`BLOCKED/PARTIAL`，逐项列明。
 - 禁止把 source review、旧轮次 build、临时 DTS fixture 或报告计划写成实测。

@@ -790,3 +790,15 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - Runtime driver/binding patches, product config, DTS/DTBO and existing 17-patch series are frozen. If a real regulator-core test cannot be run without altering production semantics, Agent must report BLOCKED/PARTIAL rather than create a simulated integration test.
 - No full Image rebuild is requested. Existing host suites must remain 38/38 and 83/83. No device, partition, boot, DTBO, AVB, firmware or HOS4.3 evidence-upload operation is authorized.
 - Agent must stop after the single report; ROUND35 is not authorized automatically. Phase E/F remain BLOCKED and Phase G remains NOT RUN.
+
+## 2026-11-25 — 2号 AI independent review: ROUND34 accepted as a valid blocker report
+
+- Reviewed `firmware-analysis/round34/AI2_ROUND34_KERNEL_NATIVE_LIFECYCLE_TEST_REPORT.md` on `firmware-audit-v1`. Report confirms exact ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, Stage A HEAD `05ec10c35e6b39881f2faae3e60d19c45de2ba75`, 17/17 patch identity/apply checks, source-level `regulator_unregister()` order, and host regressions 38/38 + 83/83.
+- ROUND34 disposition: **accepted as BLOCKED**, not as a KUnit implementation. The report correctly distinguishes real source-path audit and host mocks from a native regulator-core KUnit integration test. The two blockers are the init-only bulk revoke helper and the absence of a test-only observation point before regulator core teardown. Product `.config` remained byte-identical; no Image build or device operation occurred.
+
+## 2026-11-25 — AI2 ROUND35 assigned: isolated KUnit lifecycle test seam
+
+- Ownership: **2号 AI 专属任务书**; executor is the user's local Agent. Taskbook: `firmware-analysis/round35/AI2_ROUND35_TASKBOOK.md` on `firmware-audit-v1`; commit `fac41203257376a10fe13121fe3b7e2fd3649972`.
+- 2号 AI explicitly authorizes only test-config-gated seams: a shared non-`__init` revoke helper used by the unchanged `late_initcall_sync` wrapper, and an unregister-order observation hook compiled only for the independent KUnit test option. ROUND33's 17 production patches and product config remain frozen; test patches stay outside the production series.
+- ROUND35 requires actual KUnit execution through real regulator core + ROUND33 proxy-consumer code, with a fake test provider permitted only for provider ops. Compile-only or host-mock results cannot be called KUnit integration PASS. Product `.config` must remain byte-identical; host regressions 38/38 and 83/83 must pass. No full Image build or device/partition/boot/DTBO/AVB operation is authorized.
+- Agent must stop after the single report; ROUND36 is not automatically authorized. Phase E/F remain BLOCKED and Phase G remains NOT RUN.

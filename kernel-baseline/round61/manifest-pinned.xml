@@ -15,7 +15,7 @@
   <project name="kernel/common-modules/wonder" path="common-modules/wonder" revision="f70b3a428939460201f8ebbca0bf309027dd7320" upstream="android17-6.18" dest-branch="android17-6.18"/>
   <project name="kernel/devices/google/raviole" path="devices/google/raviole" revision="a40488880d90f354ea095fcc0547a391e8cc0998" upstream="android17-6.18-gs101" dest-branch="android17-6.18-gs101"/>
   <project name="kernel/prebuilts/build-tools" path="prebuilts/kernel-build-tools" revision="78af2daf5d9d36fc6e1ddb28ee0d7b6516709eb4" upstream="main-kernel-2026" dest-branch="main-kernel-2026" groups="ddk" clone-depth="1"/>
-  <project name="platform/bootable/libbootloader" path="bootable/libbootloader" revision="4fedf1a9b07770b2b3a1af637b50a268c5fea7d6" upstream="gbl-android17" dest-branch="gbl-android17"/>
+  <project name="platform/bootable/libbootloader" path="bootable/libbootloader" revision="e2436e8532b6ceefceb1195704c3a2bb77f1ce4c" upstream="gbl-android17" dest-branch="gbl-android17"/>
   <project name="platform/external/argp-standalone" path="external/argp-standalone" revision="29ae3b2a652d911463989a0274581553ae210bec" upstream="main-kernel-2026" dest-branch="main-kernel-2026" groups="ddk"/>
   <project name="platform/external/arm-trusted-firmware" path="external/arm-trusted-firmware" revision="927547008fb6ce6b61d3a9820f102089d391aff2" upstream="main-kernel-2026" dest-branch="main-kernel-2026"/>
   <project name="platform/external/avb" path="external/avb" revision="514f55780226bd2832b13442e7d59966153c1283" upstream="main-kernel-2026" dest-branch="main-kernel-2026" groups="ddk"/>

@@ -2319,3 +2319,11 @@ For every future local Agent task, if a test or evidence step may require connec
 - Current source review: [ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md](./kernel-baseline/round132/ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md). **Source delivery PASS only; exact v2 KUnit/host/checkpatch validation remains NOT_RUN.**
 - Agent's prior BLOCKED report remains preserved as historical. New test-only resume task is [AGENT_ROUND132_RESUME_VALIDATION_TASK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round132/AGENT_ROUND132_RESUME_VALIDATION_TASK.md). Agent must validate the exact SHA above using fresh worktrees against fixed ACK + 17-patch manifest and upload a separate final report.
 - No production patches, DTS, product config, AI1 branch, frozen 17-patch series, firmware, or tablet state were changed/accessed. No product Image build, boot or flash. Phase E/F remain BLOCKED; Phase G NOT RUN.
+
+## 2026-11-26 — Correction: AI2 must issue its own Agent validation task
+
+- The previous 1号 AI-authored `AGENT_ROUND132_RESUME_VALIDATION_TASK.md` was **withdrawn before execution** and replaced with an explicit DO NOT EXECUTE notice. No Agent test was started under that task.
+- Per the project's three-party task-routing rules, the owner of the implementation (2号 AI) must author and issue the corresponding test Agent task. 1号 AI must not directly dispatch this test on AI2's behalf.
+- Instruction for 2号 AI: [AI2_ISSUE_AGENT_VALIDATION_TASK.md](./kernel-baseline/round132/AI2_ISSUE_AGENT_VALIDATION_TASK.md). Required Agent task path is `firmware-analysis/round132/AI2_AGENT_VALIDATION_TASK.md` on `firmware-audit-v1`, with the header identifying 2号 AI as dispatcher/technical owner and the local WorkBuddy Agent as executor.
+- Exact source artifact remains accepted by 1号 AI review: seam-v2 SHA-256 `1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f`. No code, test, or device action occurred during this dispatch correction.
+- Current state: waiting for 2号 AI to publish its own Agent taskbook. Only after the user forwards that taskbook should the Agent begin validation. Phase E/F remain BLOCKED; Phase G NOT RUN.

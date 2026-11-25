@@ -60,3 +60,7 @@ The Agent must validate this exact patch SHA against fixed ACK `8ad08f75ddf056e1
 No code was modified by 1号 AI in AI2's branch. No production patch series or AI1 candidate was changed. No tablet/device interface, firmware extraction, product Image build, boot, flash, or partition action is authorized.
 
 **Final status:** AI2 source delivery accepted for independent validation. The local Agent may resume test-only validation using the exact seam-v2 artifact. Do not declare the round fully PASS until the Agent's report is reviewed.
+
+## Follow-up — task-dispatch ownership correction
+
+The earlier 1号 AI-created Agent resume task was withdrawn before execution. Per the project's task-routing rule, the code owner (2号 AI) must author and issue the corresponding Agent validation task. A request to 2号 AI is recorded at [AI2_ISSUE_AGENT_VALIDATION_TASK.md](./AI2_ISSUE_AGENT_VALIDATION_TASK.md). The withdrawn Agent task file is retained only as a DO NOT EXECUTE notice. No Agent test was started under the 1号 AI task.

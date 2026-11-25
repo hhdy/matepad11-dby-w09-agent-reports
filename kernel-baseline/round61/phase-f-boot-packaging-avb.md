@@ -8,9 +8,9 @@
 
 ROUND12's original tool-availability blocker is superseded by the local Agent's ROUND64 report below. ROUND12 remains historical context only; its `AVB0` magic scan was not AVB evidence. ROUND64 used the already-present AOSP `external/avb/avbtool.py` from the pinned ACK source tree (version 1.4.0) in read-only `info_image` mode, with a sanitizer that suppresses keys, signatures, salts, image/hashtree digests and rollback values. The tool gate for metadata inspection is therefore satisfied; this does not provide signing capability or permission to modify an image.
 
-ROUND2's previously reported sizes are 96 MiB for `boot.img`, 2 MiB for `ramdisk.img` and 24 MiB for `dtbo.img`. Sizes and an `AVB0` magic observation do not establish footer placement or AVB coverage.
+ROUND2's reported whole-file sizes (96 MiB `boot.img`, 2 MiB `ramdisk.img`, 24 MiB `dtbo.img`) are only inventory facts; sizes and an `AVB0` magic observation do not establish footer placement or AVB coverage. ROUND64 adds the following header/payload facts, distinguishing prior-round header parsing from the new AVB parser output: stock `boot.img` is header v2 / page 4096, with kernel 22,264,379 bytes at offset 4,096, embedded ramdisk 519,986 bytes at offset 22,269,952, embedded DTB 1,664,243 bytes at a header-derived offset, and payload end 24,457,216. The separate `ramdisk.img` is header v0 / page 2048, with a 1,322,962-byte payload ending at 1,325,056. The DTBO image has nine entries and a container `total_size` of 2,963,810 bytes. These describe stock inputs only, not a replacement image layout.
 
-ROUND43 describes the HOS4.3 boot-image context as header v2 with a separate ramdisk and DTBO image. Exact packaging offsets/alignment, footer state and vbmeta descriptor relationships remain unverified.
+ROUND43 first identified the header-v2 / separate-ramdisk / DTBO layout. ROUND64 now supplies trusted footer and descriptor classification plus the prior inventory's header offsets. The exact ABL-composed runtime layout, selected DTBO and whether ABL will accept a test image remain unverified.
 
 ## 2. ROUND64 local-Agent read-only inventory — completed, packaging still blocked
 
@@ -34,6 +34,7 @@ Full sanitized report (on `firmware-audit-v1`):
 - No candidate image, modified footer, vbmeta or flash package was created.
 
 Therefore the AVB inventory requirement is **substantially satisfied for read-only classification**, but Phase F's package-exit gate is not met. The anomalous `vbmeta_cust`, unknown ABL DTBO selection, unproven HOS4.3 boot method, and unresolved Phase E memory/board-DTS inputs prevent a deterministic boot package. No guessed `mkbootimg` parameters or AVB changes are allowed.
+
 ## 3. Packaging decision
 
 The ROUND58 Kleaf target is intentionally Image-first. It does not produce a DTB, DTBO, boot image, vendor_boot, init_boot or flash package. This is appropriate while the board DTS/memory gate and stock packaging metadata remain unresolved.

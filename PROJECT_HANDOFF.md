@@ -1789,3 +1789,22 @@ ROUND84–ROUND93 现已形成完整 UFS VCC/VCCQ 设计审查约束：首次 en
 - ON/OFF voltage-request state 只能在 API 返回成功后更新；OFF 请求为 ROUND89 定义的 `[0,max_uV]`，失败时保留此前状态并记录 pending cleanup。未来如果增加 max_uV_step、真实上游 regulator parent 或 coupling，需要重新审核可能的二级错误路径。
 
 ROUND94 为 1号 AI 只读 regulator-core 审查，供 2号 AI 实现评估；测试 Agent 只在单独 `AGENT_TEST_TASK.md` 下执行。本轮未修改 source/DTS/binding/patch/branch，未运行 build/schema/electrical/device tests。
+
+
+## 2026-11-25 — ROUND95：1号 AI 确认 UFS 公共结构的 KMI 约束，并找到 OEM sidecar 槽位候选
+
+报告：[ROUND95 — 1号 AI KMI review: preserve UFS exported structures and use the existing OEM data slot for sidecar state](./kernel-baseline/round95/round95-1ai-ufs-kmi-safe-sidecar-state-storage-review.md)。
+
+**这次是基于固定 ACK 的真实 GKI ABI 符号清单与 abi.stg 图，而不只是结构源码推断。**
+
+- pinned `gki/aarch64/symbols/qcom` 明确包含 `ufshcd_pltfrm_init` 和 `ufshcd_populate_vreg`。
+- `abi.stg` 中 `ufshcd_pltfrm_init` 的函数参数图直接指向 const `struct ufs_hba_variant_ops`，该结构 280 bytes、无 KABI reserve。贸然追加早期 parser callback 会改变 KMI-visible type。
+- `abi.stg` 中 `ufshcd_populate_vreg` 的第三参数图指向 `struct ufs_vreg`，该结构 24 bytes、无 KABI reserve。贸然给它增加 voltage min/max/state 字段同样会改变 KMI-visible type。
+- pinned `abi.stg.allowed_breaks` 没有对这两个类型的批准条目。当前实现应保持上述两个结构和两个导出函数签名不变，除非后续正式批准 KMI break。
+- **新找到的 ABI-safe 存储候选：** pinned `struct ufs_hba` 原本就有尾部 `ANDROID_OEM_DATA(1)`，ABI 图记录总大小 5,552 bytes，`android_oem_data1` 是尾部 u64 at byte offset 5,544。它不是新加字段。
+- pinned `include/linux/android_vendor.h` 定义 OEM slot 为 u64；`drivers/android/Kconfig` 中 `CONFIG_ANDROID_VENDOR_OEM_DATA` 依赖 64-bit 且 default y。AOSP 官方 GKI 指引要求 OEM 自己使用 `ANDROID_OEM_DATA()`，不占用厂商保留的 `ANDROID_VENDOR_DATA()`。
+- 因此供 2号 AI 评估的方案是：早期 parser 在 `ufshcd_parse_regulator_info(hba)` 中分配 devm sidecar，仅当 DBY/QCOM VCC property 存在时，把 sidecar 指针放进现有 `hba->android_oem_data1`，保存 min/max、voltage vote、各 rail DRMS vote 与 pending-cleanup 状态；private static UFS core helpers 通过 hba 访问。这样无需扩大 `ufs_hba_variant_ops` 或 `ufs_vreg`。
+- **采用前仍有硬性检查：** 实际最终 `.config` 必须确认 `CONFIG_ANDROID_VENDOR_OEM_DATA=y`；本地完整源码树与 OEM integration branch 必须确认 UFS HBA 的 `android_oem_data1` 未被已有代码占用；还需运行 pinned Kleaf ABI diff。GitHub code-search 未提供可靠的 repo-wide use result，因此不能提前声称槽位已确认空闲。
+- 该方案是 OEM-specific sidecar，不应转成通用 vendor 数据渠道；ROUND95 没有修改任何代码或分支，也没有运行 ABI checker/build/schema/device test。
+
+**对 2号 AI 的明确建议：** 不要在 `ufs_hba_variant_ops` 或 `ufs_vreg` 中直接追加成员。先审查并验证现有 `ufs_hba::android_oem_data1` 的使用与配置，再决定是否用它承载 DBY-W09 VCC request sidecar。ROUND84–ROUND94 的早期解析、enable/disable、DRMS、失败清理、OFF range 语义和电压 API 状态要求仍全部有效。ROUND27 schema 仍 NOT CLEAN。

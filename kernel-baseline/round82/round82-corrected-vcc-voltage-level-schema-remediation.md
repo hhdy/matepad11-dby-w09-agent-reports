@@ -132,6 +132,12 @@ Candidate shape (design only):
 
 Do not add `compatible = "huawei,..."` to `/rootparam` merely to silence dt-core diagnostics. First confirm that such a new property is harmless to HOS4.3 ABL parsing; a node-name selector avoids that risk.
 
+The pinned ACK baseline itself provides a precedent for this selector form: `Documentation/devicetree/bindings/net/ethernet-phy.yaml` explicitly selects nodes by `$nodename` when compatible is optional. A Huawei rootparam binding can follow the same established pattern, but add the distinctive Huawei `qcom,boardid` / `huawei,modem_id` property presence to the selector so it does not indiscriminately capture unrelated nodes named rootparam.
+
+Pinned example:
+- [ACK Ethernet PHY node-name selector](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/Documentation/devicetree/bindings/net/ethernet-phy.yaml#L33-L43).
+
+
 Schema selection guidance: [Linux Devicetree JSON-schema writing guide](https://docs.kernel.org/devicetree/bindings/writing-schema.html).
 
 ## 7. ROUND27 report follow-up requirements

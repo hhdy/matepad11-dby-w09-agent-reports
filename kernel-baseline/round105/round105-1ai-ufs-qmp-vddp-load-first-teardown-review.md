@@ -162,7 +162,7 @@ The taskbook `AI2-ROUND30` is currently an implementation task for 2号 AI. The 
 
 - Pinned source semantics for `regulator_set_load()`, `_regulator_disable()`, RPMh write modes and devres ordering: CONFIRMED.
 - L6 HOS4.3 static ACK/coupling/parent property audit: COMPLETED in ROUND103.
-- L5 HOS4.3 static ACK/coupling/parent property audit: NOT YET COMPLETED at the same evidence standard; see the separate ROUND106 Agent taskbook.
+- L5 HOS4.3 static ACK/coupling/parent property audit: NOT YET COMPLETED at the same evidence standard; see the [ROUND106 read-only Agent taskbook](TEST_AGENT_TASKBOOK.md).
 - QMP/VDDP corrected implementation: NOT YET PRESENT in the reviewed branch snapshot.
 - Runtime regulator transitions, failure injection, device boot and rail measurement: NOT RUN.
 

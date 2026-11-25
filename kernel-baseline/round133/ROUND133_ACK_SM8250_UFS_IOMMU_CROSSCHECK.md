@@ -59,15 +59,22 @@ Sources:
 - [Pinned ACK ARM SMMU OF translation](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/iommu/arm/arm-smmu/arm-smmu.c#L1587-L1600)
 - [Pinned ACK ARM SMMU multi-stream allocation](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/iommu/arm/arm-smmu/arm-smmu.c#L1085-L1115)
 
-## 5. HOS4.3 boundary — still needs one narrow offline confirmation
+## 5. HOS4.3 boundary — resolved at the static FDT/DTBO level by ROUND133
 
-ROUND21's report confirms the stock UFS Host node is `/soc/ufshc@1d84000` and that its nine UFS overlay fragments do not add clocks, resets, pinctrl, power-domains, required-opps or regulator rails except the documented supply set. However, the report does not provide an explicit property census for `iommus` on the UFS Host, nor the resolved SMMU provider path and two stream cells.
+The narrow Agent audit is complete. See:
+- [ROUND133 Agent report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round133/TEST_AGENT_ROUND133_UFS_SMMU_FDT_REPORT.txt)
+- [ROUND133 1AI review](./ROUND133_1AI_REVIEW.md)
 
-Accordingly:
-- Do **not** claim that HOS4.3 has or lacks the same `iommus` property based solely on ROUND21.
-- Do **not** infer the runtime-selected DTBO entry.
-- A narrow Agent read-only parse of the already-existing ROUND3 base FDT candidates and nine DTBOs is the next appropriate check.
-- The fixed ACK board DTSI mapping above is already confirmed and need not be recopied into the custom board file.
+The report parsed the three existing ROUND3 base FDT candidates and all nine existing DTBO entries. Across all three base candidates:
+- `/soc/ufshc@1d84000` exists, has `compatible = "qcom,ufshc"`, and is initially `status = "disabled"`.
+- `iommus`, `iommu-map`, `iommu-map-mask`, `stream-match-mask`, and `iommu-parent` are absent.
+- The separately inspected UFS PHY `/soc/ufsphy_mem@1d87000` also has no IOMMU properties.
+- `/soc/apps-smmu@15000000` exists with compatible `qcom,qsmmu-v500` and `#iommu-cells = <2>`, but the absence of a Host `iommus` property means UFS is not statically bound to that provider in these base trees.
+
+Across all nine DTBOs, fragment@63 targets UFS PHY and fragment@64 targets UFS Host. Their overlay contents set node status and power/regulator consumers, but add/override no IOMMU properties and do not target the SMMU provider. All 1299 fragment targets were reported resolved, with no unresolved/ambiguous target.
+
+This resolves the previous static property question: **the examined HOS4.3 FDT/DTBO set does not describe a UFS Host→apps SMMU mapping.** It does not determine ABL's selected FDT/DTBO or runtime SMMU/bypass state.
+
 
 ## 6. Limits and disposition
 
@@ -75,3 +82,17 @@ Accordingly:
 - No build, schema validation, firmware extraction, live FDT read or device operation was performed.
 - No assertion is made about the actual SMMU stream table, context banks, translation regime, bootloader-programmed bypass state, or selected runtime overlay on the user's device.
 - The two IDs are confirmed in the fixed ACK SM8250 SoC DTSI and are already inherited by the draft; HOS4.3-specific FDT comparison remains open.
+
+
+## 7. Additional pinned-ACK driver compatible cross-check
+
+The HOS4.3 provider compatible `qcom,qsmmu-v500` must not be copied into the ACK-derived board DT. In the pinned ACK:
+- `arm_smmu_of_match[]` in `drivers/iommu/arm/arm-smmu/arm-smmu.c` matches `arm,mmu-500` (alongside other generic entries), not a standalone `qcom,qsmmu-v500` entry.
+- `drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c` contains the SM8250-specific `qcom,sm8250-smmu-500` implementation entry.
+- The upstream `sm8250.dtsi` provider node carries `qcom,sm8250-smmu-500`, `qcom,smmu-500`, and `arm,mmu-500`; this is the compatible chain intended for the fixed ACK tree.
+
+Pinned-source links:
+- [arm-smmu.c OF match table](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/iommu/arm/arm-smmu/arm-smmu.c#L1954-L1962)
+- [arm-smmu-qcom.c SM8250 implementation table](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c#L716-L727)
+
+The board DTS draft includes `sm8250.dtsi` and does not redeclare UFS `iommus`, so the two upstream SID entries remain inherited. Keep them unchanged pending further source/runtime evidence; do not duplicate them in the board file and do not remove them solely because HOS4.3's scanned static tree omits the property.

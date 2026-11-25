@@ -9,3 +9,5 @@
 不做：源码/DTS/DTBO修改、Kleaf/Bazel、内核编译、dtbs_check、schema、mkdtimg、Boot/AVB打包、设备连接或写入。工具不存在就标 BLOCKED，不安装。
 
 只上传一个脱敏报告到 firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt，成功后停止。
+ 
+DTBO 编译时另做一份带 dtc -a 4 的临时输出，用于符合 AOSP mkdtimg 对 blob 4 字节对齐的要求。注意 -a 4 与 DT table header page_size=4096 是两个不同参数，不要把 -a 4096 当成 page_size。只输出临时 .dtbo，不生成 dtbo.img。

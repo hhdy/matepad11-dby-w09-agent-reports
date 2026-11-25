@@ -1470,3 +1470,31 @@ ROUND27 scope after the gate is satisfied:
 5. Remove temporary source/BUILD files and verify pre-existing tracked source/config/Image outputs are unchanged. Upload one sanitized report only to `firmware-audit-v1/firmware-analysis/round27/`.
 
 Hard limits: no ACK tracked source/config/patch edit, no main DTS candidate edit, no boot.img or dtbo.img packaging, no table id/rev selection, no AVB/signature operation, no device/ADB/fastboot/recovery/flash. Final memory/reserved-memory, PMIC physical input rails, DTBO ABL selection and AVB acceptance remain independent gates. A Kleaf DTB/DTBO composite PASS is not a device boot milestone.
+
+
+## 2026-11-25 — ROUND25/ROUND26 primary review complete; ROUND27 released to local Agent
+
+Primary-AI review record:
+- [ROUND25/ROUND26 review and ROUND27 release decision](./firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md)
+- Review commit: `2c0add6dd6f6bd719cf5ba9037ca6eb3f2f0eb99`
+
+Both required reports were fetched from `firmware-audit-v1` and reviewed against their task files:
+- ROUND25 `firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt`, blob `8bcfd37d290fdb2ed41879d4ebca69aa7c9a6df1`.
+- ROUND26 `firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt`, blob `e55ecacaf0b345971062142765fd36e46551484e`.
+
+**Decision: ACCEPTED FOR ROUND27 ONLY. ROUND27 is AUTHORIZED for the responsible local WorkBuddy Agent.** The reports satisfy the prerequisite evidence review for a build-only DTS validation; their PARTIAL/UNKNOWN sub-findings are retained as separate unresolved hardware/runtime gates, not misreported as PASS.
+
+Important unresolved items:
+- ROUND25: HOS MMCX→MX ALL/AO parent edges are phandle-confirmed, but UFS ACTIVE/SLEEP participation, literal set-bit mapping, AUX corner names and dropout sentinel/translation semantics remain UNKNOWN or NOT_CAPTURED. Do not add a bare MMCX→MX descriptor or claim HOS equivalence.
+- ROUND26: 17 of 18 ACK fixed reserved intervals exactly match HOS4.3 fixed intervals; `cdsp_secure_heap` remains ACK_ONLY (fixed ACK interval versus dynamic HOS node). The report does not publish a separate aggregate intersection result for HOS dynamic alloc-ranges pools, so do not infer their non-overlap. The different zero-size memory placeholders and actual post-ABL RAM remain unresolved.
+- Final RAM/ABL/reserved-memory handoff, HOS ARC power-corner equivalence, DTBO runtime selection, AVB acceptance and device boot remain BLOCKED/UNKNOWN.
+
+The local Agent may now execute the existing `firmware-analysis/round27/AGENT_TASK.md` and `START_PROMPT.md` exactly as written:
+1. Inspect only the exact existing ROUND18 Kleaf/Bzlmod/rules_devicetree/toolchain pins.
+2. Work in a disposable copy of the existing workspace.
+3. Build only the three device-tree targets: base board DTB, raw rootparam DTBO and composite-check DTB.
+4. Inspect composite properties and run pinned schema validation; report all diagnostics and exit codes.
+5. Clean up temporary files and verify pre-existing tracked sources/config/Image outputs are unchanged.
+6. Upload one sanitized report to `firmware-audit-v1/firmware-analysis/round27/round27_kleaf_dtb_dtbo_composite_schema_validation.txt`, then stop.
+
+This authorization is **not** permission to build `kernel_build`/Image, create `dtbo_image`, package/sign boot images, modify tracked sources or protected branches, access the device, or write partitions. A ROUND27 PASS is only a Kleaf DTB/DTBO/composite/schema validation milestone and does not close any hardware/runtime gate.

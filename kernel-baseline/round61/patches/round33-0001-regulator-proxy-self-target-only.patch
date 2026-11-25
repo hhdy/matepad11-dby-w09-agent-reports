@@ -14,8 +14,8 @@ the ROUND32 L5/L9 self-target mapping without adding reverse tracking.
 
 Signed-off-by: OpenAI 2号 AI <2nd-ai@users.noreply.github.com>
 ---
- drivers/regulator/proxy-consumer.c | 36 ++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ drivers/regulator/proxy-consumer.c | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
 
 diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
 index 380884892539..a6f0d0f9a8b1 100644

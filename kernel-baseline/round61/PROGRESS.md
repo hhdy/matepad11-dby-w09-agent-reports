@@ -537,3 +537,17 @@ Key results:
 **Decision:** do not edit or override memory nodes from this comparison alone. Phase E remains BLOCKED until the final post-ABL memory handoff is evidenced; do not claim the generic reservation set is fully safe merely because 17 intervals match. ROUND26 is read-only and no source or device state changed.
 
 ROUND27 is now unblocked for review/execution prerequisites: ROUND25 and ROUND26 reports are both present on `firmware-audit-v1`. Its scope is isolated Kleaf/Bazel DTB + rootparam DTBO + composite target/schema validation only; it explicitly forbids kernel/Image builds, DTBO table packaging, boot packaging and device actions. Execute only under its existing cleanup and no-source-modification boundaries.
+
+
+### AI2-ROUND27 task ownership clarified (2026-11-25)
+
+The 2号 AI has issued a replacement, explicitly owned taskbook for the local Agent:
+[`AI2_ROUND27_TASKBOOK.md`](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md) on branch `firmware-audit-v1`.
+
+- Task ID: `AI2-ROUND27`; issuing AI: **2号 AI**; executor: local Agent.
+- The older generic `START_PROMPT.md` / `AGENT_TASK.md` are background only and must not be treated as a shared 1号/2号 AI instruction.
+- Scope: disposable-workspace, pinned Kleaf/Bazel build of the base DTB, rootparam DTBO and composite DTB, followed by targeted schema/property checks and cleanup.
+- Hard exclusions remain: no kernel/Image build, no `dtbo_image`, no boot packaging/AVB, and no device/ADB/fastboot action.
+- Required output is only `firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` on `firmware-audit-v1`.
+
+This task assignment does not change the phase gates: Phase A-D remain PASS; Phase E/F remain BLOCKED; Phase G remains NOT RUN. Await the Agent's report before claiming the ROUND27 DTB/schema checks passed.

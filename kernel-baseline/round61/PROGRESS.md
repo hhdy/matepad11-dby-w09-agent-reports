@@ -590,3 +590,16 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - No DTS, binding, driver, kernel source, build output, boot package, AVB metadata, or device state was changed by issuing this task.
 - This is an independently authorized next task after ROUND27 acceptance, not an automatic ROUND28 launch. Agent must stop after the single report and must not start ROUND29.
 - Current phase gates unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. No claim is made that ROUND27 schema diagnostics are resolved.
+
+## 2026-11-25 — AI2 ROUND28 report reviewed (source audit PASS; Huawei schema PARTIAL)
+
+- Deliverable: `firmware-analysis/round28/AI2_ROUND28_PINNED_UFS_AND_HUAWEI_SCHEMA_REPORT.txt` on `firmware-audit-v1`; blob `9d8f33bf650a7e8a323b9fe21b73bd70ebd3ffa6`.
+- Task identity is correct: AI2-ROUND28 was issued by 2号 AI and executed by the local Agent; no 1号 AI task was merged; Agent stopped after the single report.
+- Exact fixed-source proof is credible and internally consistent: checkout HEAD and `android17-6.18.33_r00` both resolve to `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`. The report correctly notes the Linux 6.18 canonical driver path is `drivers/ufs/host/ufshcd-pltfrm.c`, not the older taskbook path `drivers/scsi/ufs/ufshcd-pltfrm.c`.
+- Pinned driver finding: no `vcc-voltage-level` occurrence in the fixed tree; generic UFS vreg tracks `max_uA), and the reviewed path uses regulator load/enable operations rather than setting voltage. PMIC/regulator-node voltage constraints remain UNKNOWN and must not be inferred.
+- ROUND27 diagnostics are fully itemized: UFS `vcc-voltage-level` rejection (narrow + full duplicate), root compatible `oneOf` diagnostic, dt-core type diagnostics for the five `/rootparam` vendor properties. No global schema PASS is claimed.
+- Huawei `/rootparam` isolated draft: positive validation has zero diagnostics; negative cell-count and type fixtures each produce one diagnostic. This is useful partial evidence.
+- **Schema limitation retained:** the final v3 draft uses top-level `additionalProperties: true`; the taskbook explicitly prohibited broad `additionalProperties: true` / `unevaluatedProperties: true` as a way to swallow diagnostics. The report explains the intended scope and closes `/rootparam` itself, but does not provide sufficient evidence that this top-level allowance is a compliant board-binding architecture. In addition, the draft does not resolve the root compatible `oneOf` diagnostic F1. Therefore the Huawei schema work is **PARTIAL / NOT ACCEPTED AS A CLEAN BOARD BINDING**; it must not be merged into the kernel tree.
+- The Agent reports the disposable trial was removed and no new tracked files were modified; pre-existing modified files in the ROUND18 workspace were disclosed. No device/build/AVB action was performed.
+- Review disposition: **AI2-ROUND28 deliverable accepted as task-complete; pinned-source audit PASS; rootparam isolated validation PASS; overall Huawei board-schema result PARTIAL; UFS voltage ownership remains OPEN.**
+- Phase gates unchanged: Phase A–D PASS; Phase E/F BLOCKED; Phase G NOT RUN. No DTS or formal binding was changed by this review.

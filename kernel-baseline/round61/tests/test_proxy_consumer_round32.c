@@ -324,10 +324,12 @@ int main(void)
 	      "legacy group-level consumer registered");
 	CHECK(mock.last_get_id_is_proxy == 1,
 	      "legacy lookup used regulator_get(\"proxy\")");
-	CHECK(mock_count(NULL, MOCK_ENABLE) == 1 && mock_count(NULL, MOCK_LOAD) == 1,
-	      "legacy votes applied through the group-level handle");
+	CHECK(mock_count(&l5_node, MOCK_ENABLE) == 1 &&
+	      mock_count(&l5_node, MOCK_LOAD) == 1,
+	      "legacy votes applied through the group-level self-target handle");
 	regulator_proxy_consumer_unregister(&rdev5);
-	CHECK(mock_count(NULL, MOCK_DISABLE) == 1, "legacy unregister disables once");
+	CHECK(mock_count(&l5_node, MOCK_DISABLE) == 1,
+	      "legacy unregister disables its self-target once");
 
 	/* 12. parse errors are still rejected before any regulator lookup */
 	clear_nodes();

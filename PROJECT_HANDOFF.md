@@ -2309,3 +2309,13 @@ For every future local Agent task, if a test or evidence step may require connec
 - Independent review: [ROUND133_1AI_REVIEW.md](./kernel-baseline/round133/ROUND133_1AI_REVIEW.md). The ACK/HOS comparison note and six-repository reference file were updated.
 - **Limits:** no claim about ABL-selected base FDT/DTBO, runtime SMMU translation or bypass, bootloader/secure-firmware setup, stream-table/context-bank state, or live device FDT. No device connection, firmware re-extraction, source/DTS/config change, build, boot or flash occurred.
 - Phase E/F remain BLOCKED by their existing memory handoff / PMIC topology / boot-chain evidence gaps; Phase G remains NOT RUN. ROUND132 remains an independent pending 2号 AI seam-v2 implementation delivery; ROUND133 completion does not unblock it.
+
+
+## 2026-11-26 — ROUND132 KUnit seam-v2 source accepted; exact Agent validation resumed
+
+- 2号 AI completed the requested source delivery on `ai2/round132-kunit-option-bool`: `firmware-analysis/round132/round132-kunit-seam-v2.patch` and `firmware-analysis/round132/AI2_ROUND132_SOURCE_NOTE.md` are present.
+- Exact seam-v2 patch: Git blob `890b584b6015293c145c221219591f4d98129671`, 16,797 bytes, SHA-256 `1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f`. Source-note blob `f1f45eed1a808a8296460d6c7c9ea1c542565c74`.
+- 1号 AI compared ROUND35R, ROUND35S, and seam-v2. ROUND35S is the accepted ROUND35R follow-up whose only functional delta is the Kconfig `tristate`→`bool` correction plus help text; seam-v2 preserves those test/observer/helper sources and further clarifies help text only. Seven paths are touched; no additional production implementation delta was found.
+- Current source review: [ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md](./kernel-baseline/round132/ROUND132_SEAM_V2_1AI_SOURCE_REVIEW.md). **Source delivery PASS only; exact v2 KUnit/host/checkpatch validation remains NOT_RUN.**
+- Agent's prior BLOCKED report remains preserved as historical. New test-only resume task is [AGENT_ROUND132_RESUME_VALIDATION_TASK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round132/AGENT_ROUND132_RESUME_VALIDATION_TASK.md). Agent must validate the exact SHA above using fresh worktrees against fixed ACK + 17-patch manifest and upload a separate final report.
+- No production patches, DTS, product config, AI1 branch, frozen 17-patch series, firmware, or tablet state were changed/accessed. No product Image build, boot or flash. Phase E/F remain BLOCKED; Phase G NOT RUN.

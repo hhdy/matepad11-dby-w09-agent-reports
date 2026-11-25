@@ -14,7 +14,7 @@ The current draft also intentionally does not reconstruct `/memory` or `/reserve
 
 ## 2. Final Linux memory handoff is not established
 
-The local HOS4.3 ROUND7/ROUND19 inventory reports that the inspected stock base boot FDT has no root `/memory` node and no `device_type = "memory"` property. It has 34 `/reserved-memory` child nodes covering several classes, including firmware/secure/DSP/reusable/crash records. The public inventory redacts the physical addresses.
+The ROUND64 local-Agent recheck corrects earlier wording that described the root `/memory` node as absent: the inspected stock/pre-ABL base FDT contains a `/memory` `reg` placeholder whose tuple is all zero. This is a template placeholder, not an enabled, usable RAM map. The sanitized Agent report does not publish a complete property dump, so this update does not infer the exact `device_type`, cell counts or any real RAM range from that placeholder. The stock base FDT also has 34 `/reserved-memory` children covering firmware/secure/DSP/reusable/crash records; their existence does not establish the physical RAM ranges. The public inventory redacts physical addresses.
 
 The same-device public Linux 7.0 DTS is only a structural comparison and is based on HOS4.2; it has no explicit `/memory` node and a different four-child reserved-memory description. It is not a valid source for HOS4.3 RAM or carveout addresses.
 
@@ -72,6 +72,21 @@ When the authorized local Agent can collect the relevant HOS4.3 information, req
 
 Do not request device unlock, reboot, partition writes, flashing, or changes to bootloader policy for this evidence collection. If an approved read-only method cannot acquire those facts, leave the phase blocked.
 
-## 7. Current verdict
+## 7. ROUND64 local-Agent evidence update (2026-11-25)
+
+The local Agent completed the read-only Phase E taskbook. Full sanitized report (on `firmware-audit-v1`):
+[ROUND64 Phase E — HOS4.3 final memory handoff and PM8150 input-parent evidence](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md).
+
+The result confirms, rather than closes, both primary blockers:
+
+- **Final ABL-to-Linux memory handoff: BLOCKED.** The only candidate `/sys/firmware/fdt` capture was attempted in ROUND2 and failed with `Permission denied`; its sidecar says the live FDT is unavailable. No other already-authorized local artifact is a final post-ABL capture. The stock FDT's all-zero `/memory/reg` placeholder cannot be used as RAM size/range evidence. The actual entry path (classic FDT versus EFI stub), final RAM tuples, chosen EFI metadata and final reserved-memory ranges remain unknown.
+- **PM8150 physical input-parent topology: BLOCKED.** Six UFS-consumer outputs are identifiable (PM8150 L5/L6/L9/L17/S4 and PM8150L S8), but the authorized corpus contains no board-specific schematic/power tree and no explicit `vdd-s1..s10-supply`, `vin-supply` or `vph-pwr-supply` parent mapping. Vendor ARC level relationships and proxy-supply edges are not accepted as physical VRM input edges. No voltage, parent rail or fixed regulator was invented.
+
+No new device access or privilege escalation occurred. The Agent identifies the narrow evidence needed to resume: an already-authorized sanitized final post-ABL FDT/EFI handoff capture, and an authoritative DBY-W09 PMIC power-tree/schematic mapping for those outputs.
+
+### Supplemental pinned-ACK UFS HBA supply contract
+
+The separate ROUND64 pinned-source audit [round64-ufs-hba-gdsc-regulator-source-review.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round64/round64-ufs-hba-gdsc-regulator-source-review.md) finds that ACK's `vdd-hba-supply` is a real regulator consumer, while the referenced Qualcomm GDSC node is registered as a generic power domain, not as an output regulator. With the HOS-style phandle pointed at that GDSC, regulator lookup may defer; with the optional HBA supply property absent, ACK treats it as already enabled and retains the inherited `UFS_PHY_GDSC` power-domain relationship. Keep `vdd-hba-supply` and `vdd-hba-fixed-regulator` out of the ACK board draft unless a real regulator provider is independently established. This source-level finding does not close the memory or PMIC electrical gates and does not make the draft build-ready.
+## 8. Current verdict
 
 **PHASE E: BLOCKED.** The draft remains a review artifact. The unresolved facts are real boot-critical inputs, not documentation polish. Keep Phase E open until actual HOS4.3 memory handoff and physical PM8150 supply topology are evidenced and the resulting board source passes the real pinned-kernel DT compilation/schema checks.

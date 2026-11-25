@@ -125,3 +125,13 @@ At the exact common source commit, a GitHub tree check found 516 entries under a
 The illustrative cfg_create snippet above using id=0x206a is withdrawn as a specific recommendation. The public same-device Linux reference (earlier HOS generation) has base board-id 0/0, overlay-root board-id 0x206a/0, but its pack_dtbo.py writes a one-entry Android DT table with id=0/rev=0/page_size=4096. Its README describes ABL acceptance as dependent on the rootparam payload.
 
 This proves table metadata and overlay root identity are separate. It does not prove HOS4.3 accepts the same single-entry id=0 package. The replacement table id/rev policy for current HOS4.3 remains UNKNOWN. Do not package or prescribe table metadata; see ROUND70.
+
+## 2026-11-25 — ROUND72 exact Kleaf DTS include dependency design
+
+At the pinned ACK root BUILD.bazel lines 1874–1897, public //common:dtc_includes_aarch64 covers arm64 include-prefixes and depends on the private dt-bindings header library. It does not contain arch/arm64/boot/dts/qcom/sm8250.dtsi.
+
+The exact qcom source directory currently has no BUILD.bazel. When creating a disposable qcom Bazel package, the simplest rule is to list both the new board dts and same-directory sm8250.dtsi in dtb(srcs=[...]), and add //common:dtc_includes_aarch64 in deps for dt-bindings headers. The rootparam dtso is built separately with dtbo(); dtb_composite() applies it to the symbol-generating base DTB. A distinct dtbo_image() target must wait for HOS4.3 DT table ID/rev selection policy.
+
+The rules_devicetree docs explicitly permit same-directory dtsi files in dtb srcs; different-directory includes instead require devicetree_library(). Exact ruleset module version in local Bzlmod still needs checking before implementing BUILD.bazel.
+
+Detailed note: kernel-baseline/round72/round72-kleaf-qcom-dts-include-dependency-design.md.

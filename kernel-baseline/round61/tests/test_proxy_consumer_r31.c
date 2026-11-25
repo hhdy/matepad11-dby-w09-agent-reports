@@ -28,6 +28,7 @@ static int checks;
 static void reset_mock(void)
 {
 	memset(&mock, 0, sizeof(mock));
+	mock_unregister_all_targets();
 }
 
 static void add_flag(struct device_node *np, const char *name)
@@ -104,6 +105,7 @@ int main(void)
 	/* 2. enable + current: exactly one get, one load vote, one enable */
 	reset_mock();
 	add_supply(&group5_node, "proxy-supply", &l5);
+	mock_register_target(&l5, &rdev5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group, &l5, &rdev5);
@@ -171,6 +173,7 @@ int main(void)
 	reset_mock();
 	del_props(&l5);
 	add_supply(&group5_node, "proxy-supply", &l5);
+	mock_register_target(&l5, &rdev5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	mock.fail_set_load = -5;
@@ -184,6 +187,7 @@ int main(void)
 	/* 10. enable failure unwinds the load vote */
 	reset_mock();
 	add_supply(&group5_node, "proxy-supply", &l5);
+	mock_register_target(&l5, &rdev5);
 	mock.fail_enable = -6;
 	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -6, "enable failure propagates");
@@ -195,6 +199,8 @@ int main(void)
 	del_props(&l5);
 	add_supply(&group9_node, "proxy-supply", &l9);
 	add_supply(&group5_node, "proxy-supply", &l5);
+	mock_register_target(&l9, &rdev9);
+	mock_register_target(&l5, &rdev5);
 	add_flag(&l9, "qcom,proxy-consumer-enable");
 	add_u32(&l9, "qcom,proxy-consumer-current", 100000);
 	add_flag(&l5, "qcom,proxy-consumer-enable");

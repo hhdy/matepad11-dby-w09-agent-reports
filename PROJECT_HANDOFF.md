@@ -1375,3 +1375,32 @@ Since the stock HOS4.3 system does boot, the extracted base DTB's all-zero /memo
 Stage A should therefore prioritize preserving the stock normal arm64 Image entry + x0 FDT contract. Keep gzip as compatibility-first because the stock loader demonstrably decompresses gzip. Treat the new Image's EFI Stub as a conditional alternate path only; do not assume ABL invokes it, and remember that an EFI stub without DEVICE_TREE_GUID can generate an empty DTB and lose the Huawei DT fstab.
 
 Detailed reasoning: kernel-baseline/round75/round75-stock-hos43-entry-and-live-fdt-inference.md.
+
+
+## 2026-11-25 — ROUND24 completed: HOS4.3 reserved-memory map and first-stage implications
+
+Final sanitized report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt
+Blob: a0167df755521fa583b4ce3f73b1b2260306b426
+
+ROUND24 reused the ROUND19 decompiled base DTS and nine DTBOs. No raw physical address appears in the report.
+
+Major correction:
+- Actual /reserved-memory immediate child count is 37, not the historical 34. 35 children have /aliases entries; kerneldump and linux,cma do not. Both main DTS source candidates have been corrected to 37.
+
+Findings:
+- Base tree has 37 reserve children; all nine DTBOs have zero /reserved-memory nodes and zero memory-region references. They only populate rootparam identity.
+- 31 true reserved-node phandle consumer references were mapped in the base. Firmware and hardware consumers include SMEM, SPSS, IPA, ADSP, CDSP, video, CVP, NPU, camera, WLAN, QSEE, secure display, DFPS, mailbox and diagnostics.
+- UFS Host/PHY do NOT reference any reserved-memory or memory-region node. The first-stage UFS path itself has no direct carveout dependency in the candidate.
+- The minimal rev2 candidate does not define /memory or /reserved-memory itself. It inherits generic SM8250 reserved-memory nodes from sm8250.dtsi, but those ranges are from upstream SoC DTSI and are NOT proven to match HOS4.3.
+- HOS4.3 early firmware-owned ranges include hyp, XBL/AOP, CMD_DB, SMEM, removed and UEFI-log regions. Omitting or mismatching these could let Linux allocate over memory already owned by firmware.
+- Deferred subsystem carveouts include PIL firmware (camera/WLAN/IPA/GPU/NPU/video/CVP/CDSP/SLPI/ADSP/SPSS), DSP shared pools, QSEE, secure display, WLAN, CMA and mailbox. Rev2 does not enable these corresponding subsystems, but omission is not proven safe for future feature enablement.
+- Public same-device HOS4.2-based Linux DTS only proves four predeclared reserved nodes; it does not demonstrate ABL creates them dynamically and supplies no HOS4.3 coordinates.
+
+Verdict:
+- 37-node inventory and consumer map: PASS.
+- Rev2 / memory layout: PARTIAL.
+- Whether a storage-only boot can safely use current inherited generic SM8250 reservations: BLOCKED pending an actual final ABL FDT / authoritative memory handoff.
+- No addresses should be invented, copied from HOS4.2 or assumed from upstream SM8250.
+
+A targeted follow-up ROUND26 is dispatched to compare the inherited sm8250.dtsi reserved ranges with HOS4.3 ranges locally using address-equality/overlap results only; no coordinates are to be uploaded.

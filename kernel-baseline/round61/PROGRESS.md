@@ -748,3 +748,5 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - Host harness additions: mock OF phandle parsing and provider `regulator_get()` target lookup; nine new assertions cover child cross-target rejection, legacy group cross-target rejection, and legacy self-target cleanup. Existing suites remain in place.
 - Files updated: `round32-stagea-series.txt`, `round32-child-scoped-proxy-implementation.md`, `tests/mock/mock_core.h`, `tests/test_proxy_consumer_round32.c`, and new patch 16.
 - **Not yet verified:** no claim of patch apply, checkpatch, schema gate, host test execution, or full Kleaf build for this new patch. Those local-environment checks are the remaining Agent task. Phase E/F remain BLOCKED; Phase G NOT RUN; no device or partition operation.
+
+- ROUND33 taskbook was narrowed after the direct code commit: Agent is validation-only and must not edit source/patches/tests. Updated taskbook commit on `firmware-audit-v1`: `4a6f169e99b71e4a8dc824020529dab36e384616`.

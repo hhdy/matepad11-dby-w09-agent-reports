@@ -398,9 +398,9 @@ The workflow change is path-filtered away from its own trigger: it listens only 
 Workflow correction note: the first refactor commit (`a9f3088f206dc5d2712aae1a3e8be4ac65ab653a`) placed `runner.temp` expressions in job-level `env`, which GitHub rejected before creating any job (run `45462793435`, zero jobs; no build was started). Corrected in `aff63c21a84267301c7d2eafce88db99134cfcd7`: runner-derived paths are now initialized in step 1 and exported through `GITHUB_ENV`. The manifest-build workflow is path-filtered to the explicit trigger marker, so this correction did not start a full build. The corrected workflow now awaits its next intentional marker-triggered validation; do not claim the nine-step workflow has executed successfully until that validation completes.
 
 
-### Nine-stage workflow validation run (in progress)
+### Nine-stage workflow validation run — completed at toolchain discovery
 
-The explicit marker update `68ed4de9454a2fcc012264a9c634629dd18465e2` started hosted run `45463060672` against the corrected nine-stage workflow. Job `138690570665` passed runner setup, checkout and stage 1 (preflight/dependencies/repo launcher). Stage 2 (repo init and immutable manifest sync) is currently `in_progress`, with its own `started_at=2026-11-24T18:46:28Z`; stages 3–9 are pending. This is the one deliberate full build to validate the refactored workflow and exact pinned-toolchain resolution. Do not infer failure from a frozen run-level `updated_at` or an unavailable live log. Await stage transitions and the terminal result before updating Phase C/D or claiming the new toolchain paths passed.
+The explicit marker update `68ed4de9454a2fcc012264a9c634629dd18465e2` started hosted run `45463060672`. It completed with failure at stage 4/9: stages 1–3 passed, toolchain discovery failed on the incorrect constants-file path, and stages 5–9 were skipped. The exact error and correction are recorded in the following subsection. This was a script path error, not a runner-stall event or a compiler-not-found result.
 
 
 ### Nine-stage workflow retry — toolchain constants path corrected (2026-11-25)
@@ -418,3 +418,12 @@ The workflow stage 4 is corrected to read `$WORK/common/build.config.constants`,
 - `prebuilts/rust-toolchain/linux-x86/1.91.1.p3/bin/rustc`
 
 This removes the invalid `build/kernel` constants search and avoids non-deterministic compiler selection. A new explicit marker trigger is queued below to validate the corrected stage and complete the remaining stages. No active run was cancelled.
+
+
+### Corrected nine-stage retry — active status snapshot (2026-11-25)
+
+Trigger commit `eb37d21224a0878059b0ed5eef72a29cdbd69af9` started run `45529395645`, job `138920645396`. At this snapshot:
+- Runner setup, checkout and stage 1/9 (preflight/dependencies/repo launcher) passed.
+- Stage 2/9 (repo init and immutable manifest sync) is `in_progress`, started at `2026-11-25T01:57:03Z`.
+- Stages 3–9 are pending; no failed step is reported.
+- No run has been cancelled. Wait for actual stage transitions; do not infer a dead runner from run-level `updated_at` or an unavailable in-progress log.

@@ -110,6 +110,11 @@ No Android DT table was generated: the overlay's root `qcom,board-id=<0x206a 0>`
 ## 9. ROUND24 first-boot memory dependency update
 
 The [ROUND24 reserved-memory report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt) identifies 37 HOS4.3 base reserved-memory children (correcting the previous 34-node count) and no memory-region references in any of the nine stock DTBOs. The current rev2 UFS Host/PHY have no reserved-memory consumer, but firmware-owned early reservations remain a safety gate until the actual post-ABL memory handoff is known. No `dtbo.img` or boot artifact may be built from this evidence alone.
+## 10. ROUND75 entry-route inference — not an ABL observation
+
+The [ROUND75 source/artifact inference](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round75/round75-stock-hos43-entry-and-live-fdt-inference.md) finds the stock HOS4.3 kernel is not a PE/COFF EFI application; it is a gzip-compressed normal ARM64 Image. Since normal arm64 entry gets the FDT pointer in x0 and cannot infer usable RAM from an all-zero `/memory/reg`, the successful stock boot implies a pre-entry ABL/boot-chain fixup or alternate valid FDT. The final FDT actor/contents are not observed. For the new ACK Image, normal arm64 + final FDT should remain the primary compatibility assumption; EFI Stub remains conditional, not proven by the PE header alone.
+
+This inference does not close the ABL-selected DTBO/table id/rev, `vbmeta_cust`, actual ramdisk consumption or temporary-boot acceptance gates. It does not authorize a boot package.
 ## ROUND62 same-device boot-chain cross-reference (not HOS4.3 proof)
 
 The primary report `kernel-baseline/round62/round62_same_device_abl_bootv2_ramdisk_dtbo_reference.md` reviews public DBY-W09 Linux source pinned at `116cb1fe06110543ce03217e8bd8f35c12ca89c3`. It reports Huawei ABL consuming a header-v2 `boot` image plus a separate `ramdisk` partition, and that `fastboot boot` was refused on that project's tested setup. It also documents a required ABL-selected DTBO fragment that populates `/rootparam`.

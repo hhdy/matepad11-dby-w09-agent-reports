@@ -68,13 +68,22 @@ Full sanitized local-Agent report:
 ### HOS4.3 ABL decision remains unknown
 
 No direct evidence establishes the selected one of nine DTBO entries, classic-FDT versus EFI-stub handoff, or temporary/RAM-boot acceptance for the exact HOS4.3 build. HOS4.2 same-device references and board-id candidates are not accepted as proof. A direct ABL image/boot log or an already-authorized live handoff capture is still required.
-## 4. Packaging decision
+
+## 4. DTBO table matching — table id/rev is distinct from overlay board-id
+
+ROUND70's same-device public-source cross-check is recorded at [round70-dby-w09-dtbo-table-id-selection-ambiguity.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round70/round70-dby-w09-dtbo-table-id-selection-ambiguity.md). It withdraws an earlier overly-specific example that set a replacement Android DT-table entry id to `0x206a` merely because the HOS4.3 stock entry 8 / VG overlay root uses `qcom,board-id = <0x206a 0>`.
+
+The public same-device Linux 7.0 / HOS4.2-based reference has a base board-id `<0 0>`, a rootparam overlay board-id `<0x206a 0>`, but a one-entry Android DT table with `dt_table_entry.id=0` and `rev=0`. AOSP's DTBO partition specification treats table id/rev/custom as optional metadata and describes a sample loader that may inspect the overlay root when table fields are insufficient. Neither reference establishes how the user's HOS4.3 Huawei ABL matches entries.
+
+Therefore the HOS4.3 replacement table entry id/rev are **UNKNOWN**: do not set id=`0x206a` by copying the stock table, and do not set id=`0` by copying the older public project. Root-level VG identity and DT-table entry metadata are distinct. No `dtbo.img` table configuration or package is authorized until a HOS4.3 matching contract is established.
+
+## 5. Packaging decision
 
 The ROUND58 Kleaf target is intentionally Image-first. It does not produce a DTB, DTBO, boot image, vendor_boot, init_boot or flash package. This is appropriate while the board DTS/memory gate and stock packaging metadata remain unresolved.
 
 Do not run `mkbootimg` with guessed arguments, append or strip AVB footers, or modify stock vbmeta/chained vbmeta images. Do not assume a modern `vendor_boot`/`init_boot` layout applies to this header-v2 image.
 
-## 5. Remaining gates before packaging
+## 6. Remaining gates before packaging
 
 The ROUND64 read-only Agent report has now completed much of this inventory. Remaining gates are:
 
@@ -87,7 +96,7 @@ The ROUND64 read-only Agent report has now completed much of this inventory. Rem
 
 Do not assume a RAM-only boot works, alter AVB, install tools, or bypass the evidence/tool gate.
 
-## 6. Phase F verdict
+## 7. Phase F verdict
 
 **BLOCKED FOR PACKAGING / NOT PACKAGED.** The ROUND64 read-only metadata inventory is complete, but no boot image, ramdisk, DTBO or vbmeta file has been generated or modified. Phase F is not a boot-package PASS; the ABL-selected DTBO, vbmeta_cust anomaly, actual HOS4.3 boot method and Phase E memory/board evidence remain open.
 

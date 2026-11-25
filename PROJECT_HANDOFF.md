@@ -2014,3 +2014,15 @@ Report: [ROUND116 — child proxy lookup and lifetime](./kernel-baseline/round11
 - ACK regulator_unregister() warns on nonzero rdev->open_count but continues device_unregister; regulator_put() warns if the consumer handle still has enable_count. A devres cleanup action added after devm_regulator_register runs earlier under reverse devres order, but its return cannot veto the following unregister action.
 - AI2 must solve late-init/individual unregister concurrency, proxy state object lifetime, load-zero/disable failure and no outstanding handle/ref at provider teardown. If impossible under the fixed ACK void-unregister/devres contract, report the blocker instead of claiming complete cleanup.
 - Round116 is source review only; no source/DTS/AI2 branch or device was modified.
+
+
+### ROUND117 — UFS/QMP L5/L9 enable occurs before late-init proxy handoff on successful default probe path
+
+Report: [ROUND117 — UFS QMP proxy handoff order](./kernel-baseline/round117/round117-1ai-ufs-qmp-proxy-handoff-order.md).
+
+- ROUND114 was correct that QMP bulk-get init_load alone is not an active ACK DRMS vote. New full call-graph review shows the successful normal path advances further synchronously: ufshcd_hba_init() enables generic UFS VCC/VCCQ; ufshcd_hba_enable() invokes the Qualcomm HCE PRE_CHANGE callback; ufs_qcom_power_up_sequence() calls phy_power_on(); qmp_ufs_power_on() calls regulator_bulk_enable() for vdda-phy L5 and vdda-pll L9.
+- This happens inside ufshcd_init() before async_schedule(ufshcd_async_scan,hba). SCSI LUN scan is later and async; it does not delay QMP regulator enable on successful host initialization.
+- SM8250 QMP UFS vreg init_loads are L5/vdda-phy 89900uA and L9/vdda-pll 18800uA. The QMP loads count in ACK DRMS aggregate after successful regulator_bulk_enable; other consumers may also vote.
+- Built-in UFS/QMP platform drivers have no PROBE_PREFER_ASYNCHRONOUS setting. Under default driver-core policy probes are synchronous; late deferred-probe initcall flush occurs at late_initcall level 7 before KONA-style late_initcall_sync level 7s. This conclusion is conditional on no explicit driver_async_probe cmdline override and successful UFS host probe.
+- Thus the Round31 proxy removal at late_initcall_sync can hand L5/L9 mode votes to already-enabled QMP consumers on the normal successful probe path; no need to wait for asynchronous SCSI scan merely for these PHY rail consumer refs. ROUND108 async join still remains necessary for remove lifetime safety.
+- This is only software call-order proof; no actual rail voltage, RPMh completion, selected runtime DTBO, or successful device boot is claimed.

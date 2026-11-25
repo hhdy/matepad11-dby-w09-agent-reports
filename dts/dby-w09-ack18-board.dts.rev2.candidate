@@ -338,7 +338,14 @@
 };
 
 /*
- * Memory / reserved-memory is deliberately not reconstructed here yet.
+ * Memory / HOS reserved-memory is deliberately not reconstructed here yet.
+ *
+ * IMPORTANT: the included pinned sm8250.dtsi itself defines one
+ * device_type = "memory" node with a bootloader-filled zero-size reg
+ * placeholder. Therefore the compiled DTB does inherit a memory node even
+ * though this board file does not define one explicitly. Do not add a
+ * duplicate memory node until the HOS4.3 ABL fixup contract is verified.
+ * The final ABL-provided RAM tuple and reservation map remain UNKNOWN.
  *
  * ROUND19/20 corrected the stock HOS4.3 base-FDT fact:
  * /memory exists with device_type = "memory", but reg = <0 0 0 0>

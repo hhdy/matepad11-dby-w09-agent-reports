@@ -1,0 +1,642 @@
+ROUND21 - FIRST-STAGE /dev POPULATION AND UFS PINCTRL / DTBO
+DEPENDENCY AUDIT - DBY-W09 (Honor Pad 9 / KONA / SM8250), HOS 4.3
+======================================================================
+
+Read-only, offline audit of already-existing ROUND18 and ROUND19 work
+copies. No device, no ADB/fastboot, no rebuild, no config/DTS/DTBO edit.
+All conclusions are bounded by the tool and evidence limits stated below.
+
+----------------------------------------------------------------------
+0. STATUS AND HEADLINES
+----------------------------------------------------------------------
+
+  A  first-stage /init static ELF / string / xref analysis ..... PASS
+  B  base DTB + nine DTBO UFS-targeted mapping ................ PASS
+  C  ACK Kconfig dependency + compatible cross-check ........... PASS
+  D  decision matrix and next-build recommendation ............ PASS
+
+Headlines:
+
+  H1. The HOS4.3 standalone /init does NOT depend on kernel devtmpfs.
+      FirstStageMain itself calls mount("tmpfs", "/dev", "tmpfs",
+      MS_NOSUID, "mode=0755") (code reference at 0x2E5854), then creates
+      five character nodes with mknod() and builds the rest of /dev from
+      netlink uevents + sysfs regeneration. There is no "devtmpfs"
+      string anywhere in 11,592 extracted strings and no symbol.
+      ROUND20's "CONFIG_DEVTMPFS is not set" is therefore NOT a proven
+      boot blocker for this exact userspace.
+
+  H2. DEVTMPFS_MOUNT is also not needed. The pinned Kconfig help text at
+      drivers/base/Kconfig:54-60 explicitly says initramfs-based booting
+      must mount devtmpfs manually; this init is exactly that case and
+      mounts tmpfs on /dev itself.
+
+  H3. The base DTB enables neither UFS node by itself: both
+      /soc/ufshc@1d84000 and /soc/ufsphy_mem@1d87000 carry
+      status = "disabled". The nine DTBOs all carry two UFS fragments:
+      fragment@63 enables the PHY and fragment@64 enables the host and
+      supplies them from PMIC/RPMh/GDSC regulators.
+
+  H4. Those two UFS fragments and all nine UFS-related __fixups__ are
+      byte-identical across all nine board-id variants. Only the
+      board-id root property differs. The 0x206a ("VG") entry remains a
+      candidate only; runtime selection is UNKNOWN and no overlay was
+      ever applied or merged in this round.
+
+  H5. UFS rails do NOT require the Qualcomm TLMM pinctrl driver: every
+      supply resolves to an RPMh regulator or the ufs_phy_gdsc GDSC.
+      The base DTB does declare two UFS pinctrl states
+      ("dev-reset-assert" / "dev-reset-deassert", pin "ufs_reset")
+      under the TLMM node, but the pinned ACK 6.18.33 UFS driver does
+      not look those names up; it uses reset_control() for core reset
+      and an OPTIONAL device_reset GPIO that the base DTB does not
+      provide. So TLMM is not proven necessary for UFS probe either.
+
+  H6. A separate, more serious DT/driver mismatch was found: the HOS
+      base DTB TLMM node is compatible = "qcom,kona-pinctrl", while the
+      pinned ACK source contains only "qcom,sm8250-pinctrl" in
+      drivers/pinctrl/qcom/pinctrl-sm8250.c:1357. Simply enabling
+      CONFIG_PINCTRL_MSM (and even PINCTRL_SM8250) would NOT bind the
+      HOS pinctrl node. This is reported as UNKNOWN U-4; no DTS was
+      touched.
+
+  H7. Next-build delta supported by evidence: DO NOT enable DEVTMPFS or
+      DEVTMPFS_MOUNT merely because ROUND20 flagged them. If TLMM is
+      wanted for other board consumers, it requires PINCTRL_MSM=y plus
+      PINCTRL_SM8250=y plus a compatible-string decision that this
+      round is not permitted to make. See section 5.
+
+----------------------------------------------------------------------
+1. INPUTS, TOOLS AND LIMITATIONS
+----------------------------------------------------------------------
+
+1.1 Inputs (all pre-existing, all read-only)
+  - ROUND19 standalone ramdisk extraction: /init, 2,880,584 bytes,
+    sha256 abfd04980ae445b... , already in the round19 work copy.
+  - ROUND19 base DTB text: base_2.dts, 705,663 bytes.
+  - ROUND19 nine DTBO texts: dtbo_entry_0.dts .. dtbo_entry_8.dts,
+    ~530 KB each, already decompiled by ROUND19.
+  - ROUND18 pinned ACK tree (android17-6.18.33_r00, common 8ad08f75),
+    final .config, and output-tree System.map.
+  - ROUND19 ramdisk inventory and AVB/DTBO audit JSON logs.
+
+  Sensitive local directory names are deliberately omitted; the above
+  are work-copy-relative names already used in ROUND19/ROUND20 reports.
+
+1.2 Tools used (installed beforehand; nothing installed this round)
+  file 5.45, readelf / objdump / nm / strings (GNU binutils 2.42),
+  dtc / fdtget / fdtdump 1.7.0, gzip 1.12, lz4 1.9.4, xz 5.4.5,
+  python3 3.12.3 (standard library only), sha256sum.
+  WSL distribution Ubuntu-24.04 was used exactly as in ROUND19/20.
+
+1.3 Tool limitation and how it was handled
+  The installed binutils targets are x86_64 only (objdump --info lists
+  elf64-x86-64 / i386 and no aarch64 backend). No llvm-objdump,
+  aarch64 cross-objdump, gdb, radare2, capstone, pyelftools or keystone
+  is installed, and installing any of them is forbidden.
+
+  Therefore two small standard-library-only Python tools were written
+  for this round:
+   - tools/init_xref.py : partial fixed-width AArch64 decoder for
+     ADRP / ADD(imm) / ADR / BL / B / CBz / TBz / MOVZ/MOVK x8 / SVC;
+     recovers code-to-string cross-references and direct call edges.
+   - tools/init_window.py : partial instruction-window printer for the
+     same instruction forms.
+  These decode only the forms needed to reconstruct argument setup and
+  call targets. They are NOT a full disassembler and are never used to
+  claim that an undecoded instruction has a particular effect.
+
+  A major evidence upgrade was obtained without installing anything:
+  the stripped /init carries a .gnu_debugdata section (XZ-compressed
+  mini debug info). Python's built-in lzma decompressed it into a
+  temporary copy; readelf then recovered 4,523 function symbols,
+  including all android::init::FirstStage* C++ symbols. This converts
+  the analysis from "strings might be dead" to "this exact function
+  references this exact string".
+
+1.4 Absolute boundaries observed
+  /init was NEVER executed, emulated, or run on a device. No source,
+  .config, fragment, DTS, DTBO, firmware input or prior report was
+  modified. No olddefconfig/menuconfig/Kleaf/Bazel/build/pack/sign
+  step was run. No patch, DTB, DTBO, boot.img, AVB footer or signature
+  was created. No device connection, ADB, fastboot, reboot, unlock,
+  root, flash or partition write occurred. No tool was downloaded or
+  installed. main, ack18-dby-w09-dts-draft, ai-parallel/* and PR #1
+  were left untouched.
+
+----------------------------------------------------------------------
+2. WORK PACKAGE A - /init, /dev AND DEVTMPFS
+----------------------------------------------------------------------
+
+2.1 ELF identity (file 5.45 / readelf 2.42)
+  Format          : ELF64 little-endian, ET_EXEC, AArch64
+  Size            : 2,880,584 bytes
+  Entry point     : 0x2DE000
+  Linkage         : statically linked; no dynamic section; no .dynsym
+  Symbols         : stripped in the file; .gnu_debugdata recovers
+                    4,523 FUNC symbols (4,528 symbol-table lines)
+  Note            : .note.android.ident = "Android" / 31
+  Sections        : .rodata @0x2002C0 (0xB17F8), .text @0x2DE000
+                    (0x1C6F00), .bss 0x215BC8, plus .eh_frame*,
+                    .data.rel.ro, .got, .gnu_debugdata
+  FirstStageMain  : _ZN7android4init14FirstStageMainEiPPc
+                    @0x2E5734, size 8,720 bytes (0x2E5734..0x2E7944)
+
+2.2 Evidence hierarchy (strongest first)
+  E1 (instruction-level, strongest)
+     Partial decoded window at FirstStageMain:
+
+       0x2E5834  adrp x0, 0x20D000
+       0x2E5838  adrp x1, 0x20D000
+       0x2E583C  add  x0, x0, #0x75C      -> "tmpfs"   (0x20D75C)
+       0x2E5840  adrp x4, 0x202000
+       0x2E5844  add  x1, x1, #0x762      -> "/dev"    (0x20D762)
+       0x2E5848  add  x4, x4, #0x94C      -> "mode=0755" (0x20294C)
+       0x2E584C  mov  x3, #0x2            -> MS_NOSUID
+       0x2E5854  bl   0x45E5B0            -> bionic mount()
+
+     Two cross-references to the fatal message
+     'mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755") failed'
+     at 0x2E5878 and 0x2E58D0 sit immediately after the call and its
+     cbz failure branch (0x2E5858). This is a code path, not a stray
+     string.
+
+  E2 (direct call edges inside FirstStageMain)
+     mount  x11 : 0x2E5854, 0x2E5AAC, 0x2E5B58, 0x2E5DDC, 0x2E5E7C,
+                  0x2E6234, 0x2E640C, 0x2E64C4, 0x2E6EA4
+     mkdir  x6 : 0x2E58EC, 0x2E597C, 0x2E5A0C, 0x2E62D8, 0x2E6368,
+                  0x2E6E8C
+     mknod  x5 : 0x2E5F18, 0x2E5FB4, 0x2E6050, 0x2E60EC, 0x2E6188
+     opendir   : 0x2E6674
+
+  E3 (string cross-references, resolved to functions)
+     The five mknod sites are each preceded by string references to
+     their target and error text, all in FirstStageMain:
+       /dev/kmsg    (1,11) mode 0600   - 0x2E5F0C / 0x2E5F3C
+       /dev/random  (1,8)  mode 0666   - 0x2E5FA8 / 0x2E5FD8
+       /dev/urandom (1,9)  mode 0666   - 0x2E6044 / 0x2E6074
+       /dev/ptmx    (5,2)  mode 0666   - 0x2E60E0 / 0x2E6110
+       /dev/null    (1,3)  mode 0666   - 0x2E617C / 0x2E61AC
+     /dev/pts is created with mkdir() and mounted with
+     mount("devpts", "/dev/pts", "devpts", 0, NULL) (0x2E58E4 /
+     0x2E5AD0 / 0x2E5B28).
+
+  E4 (device discovery, resolved to functions)
+     - android::init::BlockDevInitializer::InitDevices(set<string>*)
+       references ': partition(s) not found in /sys, waiting for their
+       uevent(s): ' at 0x2DECF4.
+     - BlockDevInitializer::HandleUevent(...) at 0x2DEAB4,
+       BlockDevInitializer::InitMiscDevice(...) at 0x2DE73C.
+     - UeventListener::UeventListener calls uevent_open_socket at
+       0x2F3D34; UeventListener::ReadUevent calls
+       uevent_kernel_multicast_recv at 0x2F3E44;
+       RegenerateUeventsForPath / RegenerateUevents use opendir and the
+       literal "uevent" at 0x2F4274.
+     This is the conventional Android userspace device-node path:
+     open a netlink uevent socket, scan /sys for "uevent" files,
+     regenerate coldboot events, and create block nodes in the tmpfs
+     mounted on /dev. It does not require kernel devtmpfs.
+
+  E5 (first-stage fstab discovery, resolved to functions)
+     - fs_mgr::ReadFstabFromDt(...) uses opendir at 0x30D168 and
+       references '/proc/device-tree/firmware/android/' and
+       '/fstab/compatible' / 'fstab_suffix'.
+     - '/first_stage_ramdisk/fstab.', '/vendor/etc/fstab.',
+       'ReadFstabFromDt', 'ReadDefaultFstab' and
+       'First stage mount skipped (missing/incompatible/empty fstab in
+       device tree)' all have code cross-references in first-stage
+       functions.
+     This independently agrees with ROUND19, which found the HOS fstab
+     in the base DTB /firmware/android/fstab and no fstab in the ramdisk.
+
+  E6 (absence evidence)
+     - 0 occurrences of the string "devtmpfs" in 11,592 extracted
+       strings (case-insensitive).
+     - 0 symbols containing "devtmpfs" in the recovered 4,523 FUNC
+       symbols.
+     - 0 direct calls from FirstStageMain to any devtmpfs-specific
+       helper (none exists in the symbol table).
+     Absence of a literal is weaker than a positive xref, but here it
+     is backed by a positive xref to mount("tmpfs",...) and by existing
+     mknod/uevent code. A dynamically assembled "devtmpfs" string is
+     possible in principle but was not observed and would be unusual
+     in this AOSP-derived code.
+
+2.3 Fallback behaviour
+  After the tmpfs mount call, `cbz x0, 0x2E58E0` branches to a fatal
+  log path (message at 0x209FF5, LogMessage construction at 0x41D044).
+  No alternative mount source (notably no devtmpfs) exists in the
+  decoded window or in the string/symbol set. Therefore:
+    - mount(tmpfs,/dev) failure is FATAL, not silently tolerated;
+    - there is no devtmpfs fallback to fall back to.
+
+2.4 Answer to work-package question
+  This exact /init REQUIRES kernel tmpfs (CONFIG_TMPFS=y in ROUND18) and
+  a working mknod()/netlink-uevent/sysfs path. It does NOT require
+  kernel devtmpfs. It cannot be decided from this binary whether the
+  vendor's own kernel would still expose devtmpfs for other reasons;
+  that is outside the pinned ACK tree and no device evidence exists.
+
+2.5 Package A limitations
+  - The decoder is partial: only the instruction forms in 1.3 are
+    decoded. Branches through function pointers, tail calls through
+    registers, and instruction forms outside the decoder are not
+    claimed to be understood.
+  - No source for this exact HOS /init is available, and the private
+    same-device DerpFest implementation is out of scope by standing
+    instruction; no search was attempted.
+  - Dynamic execution, emulation and device execution are forbidden;
+    therefore runtime ordering of uevent arrival vs. first mount is
+    not observed, only the static call structure.
+
+----------------------------------------------------------------------
+3. WORK PACKAGE B - BASE DTB AND NINE DTBO UFS MAPPING
+----------------------------------------------------------------------
+
+3.1 Method and non-merging guarantee
+  The already-decompiled DTS texts from ROUND19 were parsed with a
+  small read-only Python brace/property parser (tools/ufs_dts_audit.py).
+  Phandles in the base were resolved to node paths by matching
+  `phandle = <0x..>`; overlay external fixups were read from each
+  overlay's __fixups__ block. Each of the nine overlays was inspected
+  INDEPENDENTLY. No overlay was applied to the base, no two overlays
+  were combined, and no board-id was treated as selected.
+
+3.2 Base DTB UFS nodes
+  /soc/ufsphy_mem@1d87000 (line 4089)
+    status            = "disabled"
+    phandle           = 0x77
+    #phy-cells        = 0
+    lanes-per-direction = 2
+    clock-names       = "ref_clk_src", "ref_aux_clk"
+    clocks            = <0x16 0x00>, <0x17 0xad>
+    no UFS supply properties at all in the base node.
+
+  /soc/ufshc@1d84000 (line 4100)
+    compatible        = "qcom,ufshc"
+    status            = "disabled"
+    phandle           = 0x3B6
+    phys/phy-names    = <0x77> / "ufsphy"
+    lanes-per-direction = 2
+    clocks (9)        = 0x17:a7, 0x17:06, 0x17:a6, 0x17:b3, 0x17:aa,
+                        0x16:00, 0x17:b2, 0x17:b0, 0x17:b1
+    resets            = <0x17 0x21>, reset-names = "core_reset"
+    pinctrl-names     = "dev-reset-assert", "dev-reset-deassert"
+    pinctrl-0         = <0x78>
+    pinctrl-1         = <0x79>
+    NO power-domains, NO required-opps, NO reset-gpios,
+    NO vcc/vccq/vccq2/vdda supply in the base node.
+
+  Resolved phandle providers:
+    0x77 -> /soc/ufsphy_mem@1d87000
+    0x78 -> /soc/pinctrl@f000000/ufs_dev_reset_assert
+    0x79 -> /soc/pinctrl@f000000/ufs_dev_reset_deassert
+    0x17 -> /soc/qcom,gcc@100000       (clock + reset provider)
+    0x16 -> /soc/rsc@18200000/qcom,rpmhclk (RPMh clock provider)
+
+  TLMM provider and UFS states:
+    /soc/pinctrl@f000000 (line 10327)
+      compatible = "qcom,kona-pinctrl", phandle = 0x66
+    /soc/pinctrl@f000000/ufs_dev_reset_assert (line 10861)
+      config: pins = "ufs_reset", drive-strength = <8>
+    /soc/pinctrl@f000000/ufs_dev_reset_deassert (line 10872)
+      config: pins = "ufs_reset", drive-strength = <8>
+  These are real, named states; the overlay set never adds, removes or
+  modifies them.
+
+3.3 UFS changes made by every one of the nine overlays
+  fragment@63 (target fixed up to label `ufsphy_mem`) - exact body:
+
+      compatible                = "qcom,ufs-phy-qmp-v4"
+      vdda-phy-supply           = <external: pm8150_l5>
+      vdda-phy-always-on        (boolean)
+      vdda-pll-supply           = <external: pm8150_l9>
+      vdda-phy-max-microamp     = <0x15F2C>
+      vdda-pll-max-microamp     = <0x4970>
+      status                    = "ok"
+
+  fragment@64 (target fixed up to label `ufshc_mem`) - exact body:
+
+      vdd-hba-supply            = <external: ufs_phy_gdsc>
+      vdd-hba-fixed-regulator   (boolean)
+      vcc-supply                = <external: pm8150_l17>
+      vcc-voltage-level         = <0x263540 0x2D0370>
+      vcc-low-voltage-sup       (boolean)
+      vccq-supply               = <external: pm8150_l6>
+      vccq2-supply              = <external: pm8150_s4>
+      vcc-max-microamp          = "\0\f5"   (byte string)
+      vccq-max-microamp         = "\0\f5"
+      vccq2-max-microamp        = "\0\f5"
+      qcom,vddp-ref-clk-supply  = <external: pm8150_l6>
+      qcom,vddp-ref-clk-max-microamp = <0x64>
+      qcom,vccq-parent-supply   = <external: pm8150a_s8>
+      qcom,vccq-parent-max-microamp = <0x33450>
+      status                    = "ok"
+
+  No pinctrl property, no clock, no reset, no power-domain and no
+  required-opps is added or changed by either UFS fragment. The only
+  structural change is: both disabled base nodes become status="ok",
+  and the PHY gains its vendor compatible plus rails.
+
+3.4 Resolved supply providers (all nine variants identical)
+  external label   -> base node                                      compatible / kind
+  ----------------  ------------------------------------------------  ----------------------
+  ufsphy_mem       -> /soc/ufsphy_mem@1d87000                         UFS PHY (base)
+  pm8150_l5        -> .../rpmh-regulator-ldoa5/regulator-pm8150-l5    RPMh LDO
+  pm8150_l9        -> .../rpmh-regulator-ldoa9/regulator-pm8150-l9    RPMh LDO
+  ufshc_mem        -> /soc/ufshc@1d84000                              "qcom,ufshc"
+  ufs_phy_gdsc     -> /soc/qcom,gdsc@177004                           "qcom,gdsc"
+  pm8150_l17       -> .../rpmh-regulator-ldoa17/regulator-pm8150-l17  RPMh LDO
+  pm8150_l6        -> .../rpmh-regulator-ldoa6/regulator-pm8150-l6    RPMh LDO
+  pm8150_s4        -> .../rpmh-regulator-smpa4/regulator-pm8150-s4    RPMh SPMI
+  pm8150a_s8       -> .../rpmh-regulator-smpc8/regulator-pm8150a-s8   RPMh SPMI
+
+  pm8150_l6 supplies BOTH vccq-supply and qcom,vddp-ref-clk-supply in
+  fragment@64 (one label, two fixup sites). pm8150a_s8 also appears in
+  fragment@71 for a Bluetooth node; that second site is unrelated to
+  UFS and is not implied by the UFS matrix.
+
+  The base regulator nodes listed above do NOT carry an explicit
+  `parent-supply`. The only explicit parent chain in the UFS area is
+  the overlay-added qcom,vccq-parent-supply -> pm8150a_s8. This is a
+  vendor-specific property; it must be preserved in any board DTS that
+  replaces these fragments, otherwise vccq parent control is lost.
+
+3.5 Per-overlay matrix (no overlays applied)
+  entry  board-id       frag@63 body   frag@64 body   UFS fixups   identical to entry 0
+  -----  -------------  -------------  -------------  -----------  --------------------
+    0    0x2008 / 0x00  81222e7d...    21230d45...    9            reference
+    1    0x2068 / 0x00  81222e7d...    21230d45...    9            YES
+    2    0x200e / 0x00  81222e7d...    21230d45...    9            YES
+    3    0x2010 / 0x00  81222e7d...    21230d45...    9            YES
+    4    0x200a / 0x00  81222e7d...    21230d45...    9            YES
+    5    0x202e / 0x00  81222e7d...    21230d45...    9            YES
+    6    0x206e / 0x00  81222e7d...    21230d45...    9            YES
+    7    0x2030 / 0x00  81222e7d...    21230d45...    9            YES
+    8    0x206a / 0x00  81222e7d...    21230d45...    9            YES
+
+  "identical" means byte-identical fragment bodies and byte-identical
+  UFS-subset __fixups__, verified by SHA-256 in tools/ufs_dts_audit.py.
+  The root `qcom,board-id` is the only UFS-relevant difference found
+  between the nine files. Entry 8 (0x206a) is the ROUND19 board-id
+  candidate often called "VG", but there is NO same-boot evidence that
+  it is selected at runtime. Treat all nine as alternatives.
+
+3.6 Does the resulting tree need Qualcomm TLMM for UFS probe or rails?
+  - Rails: NO. Every UFS rail resolves to an RPMh regulator or a GDSC;
+    none resolves to a pinctrl/GPIO provider.
+  - UFS host probe in the pinned ACK source: NOT PROVEN. The host
+    driver (drivers/ufs/host/ufs-qcom.c) uses reset_control_assert/
+    deassert on `core_reset` (lines 440-470, 512-513) and an OPTIONAL
+    device_reset GPIO via gpiod_set_value_cansleep (lines 726-734).
+    The base UFS node has no reset-gpios, so that GPIO is absent.
+    A full-tree search found ZERO occurrences of the state names
+    "dev-reset-assert" / "dev-reset-deassert" in the ACK source. The
+    generic pinctrl core looks up PINCTRL_STATE_DEFAULT ("default",
+    drivers/pinctrl/core.c:2174), which is not one of these names.
+  - The two state nodes nevertheless exist in the DT and are referenced
+    by pinctrl-0/pinctrl-1. Any consumer that tries to apply them
+    needs a working provider for "qcom,kona-pinctrl". See U-4.
+  - No UFS crypto-specific DT node was found. "ufs_ice" occurs only as
+    a reg-names entry in the host and PHY nodes; the separate
+    /soc/qcrypto@1de0000 node is "qcom,qcrypto" and is not part of
+    the UFS fragment set.
+
+3.7 Package B limitations
+  Only the already-decompiled DTS texts were used. dtc's decompilation
+  can normalise label names and byte-string escapes; the exact original
+  source formatting is not recoverable. The audit is deliberately
+  scoped to UFS host/PHY/rails/pinctrl/phandles, not a full-tree
+  inventory (ROUND19 already did that and is not repeated).
+----------------------------------------------------------------------
+4. WORK PACKAGE C - EXACT ACK KCONFIG DEPENDENCIES AND COMPATIBLES
+----------------------------------------------------------------------
+
+All line numbers below refer to the pinned ROUND18 ACK tree and its
+final built .config. No Kconfig file, config file or fragment was run
+or edited.
+
+4.1 DEVTMPFS and DEVTMPFS_MOUNT
+  drivers/base/Kconfig:31-45
+      config DEVTMPFS
+        bool "Maintain a devtmpfs filesystem to mount at /dev"
+        help: kernel driver core maintains device nodes; "in very
+              limited environments, it may provide a sufficient
+              functional /dev without any further help".
+    In this pinned tree the symbol has no `depends on` line; it is a
+    plain bool. TMPFS, SHMEM and BLOCK are all =y in the built .config:
+      CONFIG_TMPFS=y, CONFIG_SHMEM=y, CONFIG_BLOCK=y
+    so no additional dependency would have to be enabled.
+
+  drivers/base/Kconfig:50-60
+      config DEVTMPFS_MOUNT
+        bool "Automount devtmpfs at /dev, after the kernel mounted the rootfs"
+        depends on DEVTMPFS
+        help: "This option does not affect initramfs based booting,
+               here the devtmpfs filesystem always needs to be mounted
+               manually after the rootfs is mounted."
+    Built value: "CONFIG_DEVTMPFS is not set"; DEVTMPFS_MOUNT is absent
+    entirely (not even a "# ... is not set" line, which is consistent
+    with its parent being disabled).
+
+  Cross-check with package A: this /init is exactly an initramfs-style
+  first stage, and it DOES mount /dev itself with tmpfs. Enabling
+  DEVTMPFS_MOUNT would add an automatic mount that this userspace does
+  not rely on and could only change ordering, not fix a missing
+  dependency.
+
+4.2 PINCTRL_MSM and platform pinctrl
+  drivers/pinctrl/qcom/Kconfig:4-17
+      config PINCTRL_MSM
+        tristate "Qualcomm core pin controller driver"
+        depends on GPIOLIB
+        depends on OF
+        select QCOM_SCM, PINMUX, GENERIC_PINMUX_FUNCTIONS, PINCONF,
+               GENERIC_PINCONF, GPIOLIB_IRQCHIP, IRQ_DOMAIN_HIERARCHY,
+               IRQ_FASTEOI_HIERARCHY_HANDLERS
+    drivers/pinctrl/qcom/Kconfig:18 sources Kconfig.msm.
+    drivers/pinctrl/qcom/Kconfig.msm:400-407
+      config PINCTRL_SM8250
+        tristate "Qualcomm Technologies Inc SM8250 pin controller driver"
+        depends on ARM64 || COMPILE_TEST
+    drivers/pinctrl/qcom/Makefile:3
+      obj-$(CONFIG_PINCTRL_MSM) += pinctrl-msm.o
+
+  All select/dependency symbols are already =y in ROUND18:
+      CONFIG_GPIOLIB=y, CONFIG_OF=y, CONFIG_QCOM_SCM=y,
+      CONFIG_PINMUX=y, CONFIG_GENERIC_PINMUX_FUNCTIONS=y,
+      CONFIG_PINCONF=y, CONFIG_GENERIC_PINCONF=y,
+      CONFIG_GPIOLIB_IRQCHIP=y, CONFIG_IRQ_DOMAIN_HIERARCHY=y
+  So enabling PINCTRL_MSM alone is Kconfig-satisfiable. But it is not
+  sufficient to bind a specific SoC TLMM block:
+      CONFIG_PINCTRL_MSM            is not set
+      CONFIG_PINCTRL_SM8250         absent from the .config entirely
+      CONFIG_PINCTRL_SINGLE         =y
+
+4.3 The compatible-string mismatch (new in ROUND21)
+  The HOS base DTB TLMM node (package B) declares exactly:
+      compatible = "qcom,kona-pinctrl"
+  A full-tree search of the pinned ACK source found "qcom,kona-pinctrl"
+  ZERO times in .c/.h/.dts/.dtsi/.yaml. The only SM8250-related pinctrl
+  compatible in the driver is:
+      drivers/pinctrl/qcom/pinctrl-sm8250.c:1356-1359
+        static const struct of_device_id sm8250_pinctrl_of_match[] = {
+            { .compatible = "qcom,sm8250-pinctrl", },
+            { },
+        };
+  and the in-tree DTS uses the same string at
+      arch/arm64/boot/dts/qcom/sm8250.dtsi:5111
+      Documentation/devicetree/bindings/pinctrl/qcom,sm8250-pinctrl.yaml:17
+
+  The "older DeviceTree compatibility" comment in pinctrl-msm.c:1453
+  concerns gpio-ranges handling, NOT compatible-string fallback; there
+  is no alternative match entry that would accept "qcom,kona-pinctrl".
+  drivers/pinctrl/pinctrl-single.c:1983 matches "pinctrl-single", which
+  is also not present on the HOS TLMM node.
+
+  Consequence: even after enabling PINCTRL_MSM and PINCTRL_SM8250, a
+  stock HOS DTB with only "qcom,kona-pinctrl" would not be claimed by
+  the ACK driver. Resolving this requires a DT-side or driver-side
+  compatible decision, which this round is forbidden to make.
+
+4.4 UFS driver's actual pinctrl/reset dependency
+  drivers/ufs/host/ufs-qcom.c:
+    - lines 440-470: ufs_qcom_host_reset() calls
+      reset_control_assert/deassert on host->core_reset. This maps to
+      the base UFS node's resets = <0x17 0x21> / "core_reset", i.e.
+      the GCC reset provider, not TLMM.
+    - lines 512-513: host reset is part of the normal host path.
+    - lines 726-734: ufs_qcom_device_reset_ctrl() treats the device
+      reset GPIO as OPTIONAL ("reset gpio is optional") and returns if
+      host->device_reset is NULL. The base UFS node has no reset-gpios,
+      so this path is inactive in this DTB.
+    - ZERO references to pinctrl_get_select / pinctrl_lookup_state or
+      to the two state names in drivers/ufs/*.
+  drivers/pinctrl/core.c:2174 looks up PINCTRL_STATE_DEFAULT ("default")
+  for generic pin binding; the UFS node's states are named
+  "dev-reset-assert" and "dev-reset-deassert", so generic default-state
+  binding does not apply to them either.
+
+  Therefore, on the evidence available, the missing TLMM driver is NOT
+  proven to block UFS probe or UFS rail control. It remains a real
+  platform-level gap for other board consumers and a compatibility
+  mismatch (U-4), not a demonstrated first-stage UFS blocker.
+
+4.5 Package C status
+  PASS for the requested Kconfig/dependency/compatible review. The
+  conclusion "enabling only the Kconfig symbol is not enough" is
+  positively demonstrated by 4.3, not inferred.
+
+----------------------------------------------------------------------
+5. WORK PACKAGE D - DECISION MATRIX AND NEXT-BUILD RECOMMENDATION
+----------------------------------------------------------------------
+
+5.1 Matrix
+
+  Option / item     | Evidence status                 | Verdict for this exact init and DTB
+  ------------------+---------------------------------+--------------------------------------
+  CONFIG_DEVTMPFS   | REQUIRED-by-init: disproved.    | NOT REQUIRED. Do not enable as a
+                    | Direct call mount(tmpfs,/dev)   | ROUND20-derived "fix".
+                    | + 5 mknod + uevent path in      |
+                    | FirstStageMain; zero devtmpfs   |
+                    | strings/symbols (WP A).         |
+  CONFIG_DEVTMPFS_  | Kernel Kconfig help explicitly  | NOT REQUIRED / not applicable to
+  MOUNT             | excludes initramfs-style boot;   | an initramfs first stage. Do not
+                    | this /init mounts /dev itself.  | enable automatically.
+  CONFIG_PINCTRL_   | Not needed for UFS rails; not   | UNRESOLVED for UFS; NOT PROVEN
+  MSM               | proven needed for UFS probe on  | required. Needed only if TLMM
+                    | ACK 6.18.33 (WP B/C).           | consumers are in scope.
+  PINCTRL_SM8250    | Absent from .config, and even   | Only together with PINCTRL_MSM,
+                    | then would not bind kona DT     | and still blocked by U-4.
+  UFS pinctrl       | Two states in base DTB:         | Preserve names/properties in any
+  states            | dev-reset-assert,               | board DTS replacement; no overlay
+                    | dev-reset-deassert; pins        | changes them.
+                    | "ufs_reset", drive-strength 8.  |
+  UFS supply parent | vccq -> qcom,vccq-parent-supply | MUST be preserved (vendor-specific
+  chains            | -> pm8150a_s8; vccq and vddp-   | parent property).
+                    | ref-clk both -> pm8150_l6.      |
+  Overlay variants  | All nine UFS fragments/fixups   | Runtime selection UNKNOWN; 0x206a
+                    | byte-identical; only board-id   | is a candidate, not a fact.
+                    | differs.                        |
+
+5.2 Next-build recommendation (NOT applied)
+  Supported by evidence, "must-enable":
+    - NONE of the three ROUND20-flagged symbols is proven necessary for
+      the first-stage UFS mount path. In particular, do not add
+      DEVTMPFS or DEVTMPFS_MOUNT solely on the basis of ROUND20's
+      config observation. CONFIG_TMPFS=y and the userspace mknod/uevent
+      path are what this /init actually uses.
+
+  Prudent but unverified (requires separate authorisation and work):
+    - If the next build is expected to support the full board (GPIO
+      keys, TLMM-driven resets, or vendor patches that do consume the
+      two UFS pinctrl states), plan PINCTRL_MSM=y together with
+      PINCTRL_SM8250=y. Enabling only PINCTRL_MSM is Kconfig-valid but
+      will not bind "qcom,kona-pinctrl" (section 4.3).
+    - Resolve the compatible mismatch explicitly in a separately
+      authorised DTS/driver change. This round made no such change and
+      recommends no specific edit because the correct vendor intent
+      cannot be established from the pinned ACK source alone.
+    - Keep all nine UFS supply fixup targets intact in any board DTS
+      replacement, especially qcom,vccq-parent-supply -> pm8150a_s8.
+
+  Explicitly NOT recommended:
+    - DEVTMPFS_MOUNT as a workaround for a first stage that already
+      mounts /dev itself.
+    - Treating board-id 0x206a as "the selected overlay" and tailoring
+      the config to it.
+    - Any config change justified solely by the presence of a string
+      in /init; every recommendation above is tied to a code xref or
+      an exact DT property.
+
+----------------------------------------------------------------------
+6. UNKNOWNS AND THE EVIDENCE THAT WOULD SETTLE THEM
+----------------------------------------------------------------------
+
+  U-1  Runtime ordering of uevent arrival versus first-stage mount.
+       Static call structure is known, timing is not. Needs a boot log
+       from the device; out of scope here.
+
+  U-2  Whether the vendor HOS kernel's own UFS driver consumes the
+       "dev-reset-assert"/"dev-reset-deassert" pinctrl states. The
+       pinned ACK driver does not (zero string hits), but the vendor
+       driver source is not available. Needs the vendor driver source
+       or a disassembly of its kernel module.
+
+  U-3  Whether a dynamically constructed "devtmpfs" string exists in
+       /init outside the decoded instruction forms. No literal and no
+       symbol exists; needs a complete AArch64 disassembler plus a
+       full control-flow analysis, which cannot be installed here.
+
+  U-4  Which compatible the TLMM node should present to ACK 6.18.33.
+       HOS DTB says "qcom,kona-pinctrl"; ACK only matches
+       "qcom,sm8250-pinctrl". Needs an authorised DT/driver decision or
+       a vendor binding document. This is the highest-value open item
+       for any future TLMM work.
+
+  U-5  Which of the nine DTBOs is selected in a given boot. ROUND19
+       established board IDs and candidate 0x206a; no same-boot
+       evidence exists. Needs a device-side dump of the applied DTB.
+
+  U-6  Whether DEVTMPFS is enabled for unrelated consumers in the
+       vendor kernel (not in the pinned ACK build). Does not affect
+       this /init conclusion but would change a full-system picture.
+
+----------------------------------------------------------------------
+7. CLOSING DECLARATION
+----------------------------------------------------------------------
+
+  No source file, .config, config fragment, DTS, DTBO, firmware input,
+  existing report, branch or pull request was modified. No kernel
+  configuration tool, build system, packaging or signing step was run.
+  No patch, DTB, DTBO, boot image, AVB footer or signature was created.
+  No device was contacted; no ADB/fastboot/recovery/reboot/unlock/root/
+  flash or partition write was performed. Nothing was downloaded or
+  installed. /init was never executed or emulated. Nine DTBOs were
+  inspected individually and were never applied or combined.
+
+  The only new files created are this report, analysis logs and two
+  read-only analysis scripts in the ROUND21 work directory. No binary,
+  key, salt, signature, serial number, MAC, IMEI or personal directory
+  path is included in this report.
+

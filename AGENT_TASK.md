@@ -944,3 +944,12 @@ Verdict:
 - No addresses should be invented, copied from HOS4.2 or assumed from upstream SM8250.
 
 A targeted follow-up ROUND26 is dispatched to compare the inherited sm8250.dtsi reserved ranges with HOS4.3 ranges locally using address-equality/overlap results only; no coordinates are to be uploaded.
+
+
+## 2026-11-25 — ROUND76 correction: rev2 inherits an SM8250 bootloader-fill memory node
+
+Although the DBY-W09 board DTS source itself does not explicitly write /memory, it includes the pinned ACK sm8250.dtsi. That SoC DTSI defines one top-level device_type="memory" node with a four-cell reg tuple, a generic base placeholder and zero size; its source comment explicitly expects the bootloader to fill the size. Thus the actual compiled rev2 DTB inherits a memory node, and must not be described as having none.
+
+This is structurally aligned with the HOS4.3 template's bootloader-fill zero-size memory node, but the initial base cells differ. The final HOS4.3 ABL fixup behavior and actual runtime RAM tuple remain UNKNOWN. Do not add a duplicate manual /memory node or hardcode RAM.
+
+Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.

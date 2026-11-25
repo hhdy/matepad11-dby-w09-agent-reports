@@ -84,3 +84,8 @@ No candidate was created in this round because the runtime variant is unknown.
 - dtc/DTBO compile of the project rootparam overlay: NOT RUN.
 - ABL acceptance on current HOS4.3 build: NOT RUN.
 - No source/DTS/DTBO/firmware/device changes.
+
+
+## Addendum — candidate overlay restored after report publication
+
+After this evidence note was written, the main branch received a source-only VG candidate at `dts/dby-w09-ack18-rootparam.dtso.draft` (commit `9737dd9f469b2bd7b13dc5167e181f71f0173cd2`). It writes the HOS4.3 ROUND19 entry-8 five-property /rootparam payload using one fragment and preserves root `qcom,sm8250` compatibility. This does not alter the report's key caveat: VG / 0x206a is a candidate, not proven ABL runtime selection. The new file is still uncompiled/unpacked/unvalidated; a later local or source-tree dtc -@ check must confirm label resolution and overlay fixups before it is treated as usable input.

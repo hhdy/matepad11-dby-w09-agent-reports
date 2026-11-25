@@ -1776,3 +1776,16 @@ ROUND88 的首次 enable 时序要求仍成立；ROUND91 收窄了建议接入�
 ROUND93 是 1号 AI 只读源码审查，仅供 2号 AI 实现评估。测试 Agent 只有在单独 `AGENT_TEST_TASK.md` 下执行；本轮未修改代码/DTS/binding/补丁/分支，也未运行 build/schema/device tests。
 
 ROUND84–ROUND93 现已形成完整 UFS VCC/VCCQ 设计审查约束：首次 enable 前解析/设置；VCC ON/OFF voltage interval 语义；DRMS load 独立投票；HPM→LPM disable 错误排序；未成功 enable 的 vote cleanup；binding/compatible/rootparam schema 独立修复。
+
+
+## 2026-11-25 — ROUND94：1号 AI 核对 regulator_set_voltage 的 consumer vote 回滚语义
+
+报告：[ROUND94 — 1号 AI source review: regulator_set_voltage request-state semantics for UFS VCC](./kernel-baseline/round94/round94-1ai-regulator-set-voltage-vote-state-semantics.md)。
+
+- 固定 ACK `regulator_set_voltage_unlocked()` 在可调压路径会先保存旧 consumer min/max，再安装新区间并调用 regulator_balance_voltage()；若 balance/programming 返回负数，会恢复该 consumer 原有 min/max。
+- 当前 DBY-W09 候选 L17/L6 未设置 `regulator-max-step-microvolt`，所以 max_uV_step 为 0，不会进入之后的 step retry loop。对当前 L17/L6 的普通设置失败，可把 negative return 视为新 consumer range 未安装，UFS software range state 保持旧状态。
+- 固定 ACK 还有一个有意的 non-adjustable regulator 路径：若 regulator 不允许调压，但实际当前输出已落在请求的 min/max 区间，core 会记录 consumer request 并返回成功；若当前输出不在区间，才会在缺少可调压 ops 时返回错误。
+- 因此新 UFS driver 不应仅凭 `regulator_count_voltages() <= 0` 就拒绝属性；应调用 `regulator_set_voltage()` 并处理实际返回值。DBY-W09 L17 已由 ROUND86 证明是可调压 PMIC5 PLDO，这一 fixed-regulator 路径不是当前板级兼容性的前提，但能避免通用实现过度限制其他平台。
+- ON/OFF voltage-request state 只能在 API 返回成功后更新；OFF 请求为 ROUND89 定义的 `[0,max_uV]`，失败时保留此前状态并记录 pending cleanup。未来如果增加 max_uV_step、真实上游 regulator parent 或 coupling，需要重新审核可能的二级错误路径。
+
+ROUND94 为 1号 AI 只读 regulator-core 审查，供 2号 AI 实现评估；测试 Agent 只在单独 `AGENT_TEST_TASK.md` 下执行。本轮未修改 source/DTS/binding/patch/branch，未运行 build/schema/electrical/device tests。

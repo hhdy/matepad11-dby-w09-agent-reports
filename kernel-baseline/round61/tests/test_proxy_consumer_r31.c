@@ -49,6 +49,14 @@ static void add_u32(struct device_node *np, const char *name, u32 v)
 	np->nprops++;
 }
 
+static void add_supply(struct device_node *np, const char *name, void *target)
+{
+	np->props[np->nprops].name = name;
+	np->props[np->nprops].length = sizeof(void *);
+	np->props[np->nprops].value = target;
+	np->nprops++;
+}
+
 static void add_u32_pair(struct device_node *np, const char *name, u32 a, u32 b)
 {
 	u32 *cells = malloc(8);
@@ -76,7 +84,10 @@ int main(void)
 {
 	struct device_node l5 = { .full_name = "/pm8150-rpmh-regulators/ldo5" };
 	struct device_node l9 = { .full_name = "/pm8150-rpmh-regulators/ldo9" };
-	struct device group = { .name = "pm8150-rpmh-regulators" };
+	struct device_node group5_node = { .full_name = "/pm8150-rpmh-regulators-l5" };
+	struct device_node group9_node = { .full_name = "/pm8150-rpmh-regulators-l9" };
+	struct device group5 = { .name = "pm8150-rpmh-regulators-l5", .of_node = &group5_node };
+	struct device group9 = { .name = "pm8150-rpmh-regulators-l9", .of_node = &group9_node };
 	struct regulator_dev rdev5 = { 0 };
 	struct regulator_dev rdev9 = { 0 };
 	struct proxy_consumer *c;
@@ -85,13 +96,14 @@ int main(void)
 
 	/* 1. no properties: nothing happens at all */
 	reset_mock();
-	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
+	c = regulator_proxy_consumer_register(&group5, &l5, &rdev5);
 	CHECK(c == NULL, "no proxy properties -> NULL consumer");
 	CHECK(mock.get_calls == 0, "no proxy properties -> no regulator_get");
 	CHECK(rdev5.proxy_consumer == NULL, "no proxy properties -> rdev untouched");
 
 	/* 2. enable + current: exactly one get, one load vote, one enable */
 	reset_mock();
+	add_supply(&group5_node, "proxy-supply", &l5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group, &l5, &rdev5);
@@ -158,6 +170,7 @@ int main(void)
 	/* 9. set_load failure rolls back without enabling */
 	reset_mock();
 	del_props(&l5);
+	add_supply(&group5_node, "proxy-supply", &l5);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	mock.fail_set_load = -5;
@@ -170,6 +183,7 @@ int main(void)
 
 	/* 10. enable failure unwinds the load vote */
 	reset_mock();
+	add_supply(&group5_node, "proxy-supply", &l5);
 	mock.fail_enable = -6;
 	c = regulator_proxy_consumer_register(&group, &l5, &rdev5);
 	CHECK(IS_ERR(c) && PTR_ERR(c) == -6, "enable failure propagates");
@@ -179,12 +193,14 @@ int main(void)
 	/* 11. two rails, bulk late_initcall_sync removal */
 	reset_mock();
 	del_props(&l5);
+	add_supply(&group9_node, "proxy-supply", &l9);
+	add_supply(&group5_node, "proxy-supply", &l5);
 	add_flag(&l9, "qcom,proxy-consumer-enable");
 	add_u32(&l9, "qcom,proxy-consumer-current", 100000);
 	add_flag(&l5, "qcom,proxy-consumer-enable");
 	add_u32(&l5, "qcom,proxy-consumer-current", 100000);
 	rdev5.proxy_consumer = regulator_proxy_consumer_register(&group, &l5, &rdev5);
-	rdev9.proxy_consumer = regulator_proxy_consumer_register(&group, &l9, &rdev9);
+	rdev9.proxy_consumer = regulator_proxy_consumer_register(&group9, &l9, &rdev9);
 	CHECK(!IS_ERR_OR_NULL(rdev5.proxy_consumer) &&
 	      !IS_ERR_OR_NULL(rdev9.proxy_consumer), "two rails registered");
 	CHECK(mock.enable_balance == 2, "two rails -> enable balance 2");

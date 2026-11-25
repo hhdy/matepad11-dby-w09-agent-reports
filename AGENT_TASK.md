@@ -1025,3 +1025,11 @@ ROUND78 输入身份核验补充：当前 main base DTS blob 是 `f5449bac669ea7
 - Phase D Image build 现标记为 **PASS（1号 AI 已核验 job steps/log）**，但 1号 AI 未下载 artifact ZIP，也未重复检查 ZIP 成员哈希。
 - 这不关闭 Phase E/F/G，不代表板级 DTB、boot image 或设备启动通过。
 - ROUND27 仍等待 2号 AI 修正 base DTS blob SHA；测试 Agent 不得在身份未匹配时继续。
+
+
+## 1号 AI ROUND80 架构研究记录
+
+- 报告：kernel-baseline/round80/round80-ack-rpmhpd-indexed-opp-parent-translation-architecture.md。
+- 固定 ACK Generic GenPD + OPP 框架支持通过 indexed RPMhPD OPP table 和 required-opps 将 MMCX 子域 pstate 映射到 MX 父域 pstate；已有 MMCX→CX / AO→CX_AO descriptor 模式可供结构参考。
+- 当前 SM8250 provider 仍使用单一 shared table，HOS ROUND25 所需 AUX corner/dropout 规则和 UFS ARC consumer 关系未知。未授权任何 MMCX→MX 代码或 DTS 变更；不得把“架构可实现”写成“硬件语义已证实”。
+- 当前只作 1号 AI 源码研究记录，不派发给测试 Agent 执行。

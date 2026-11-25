@@ -7,14 +7,14 @@
 
 ## Current overall state
 
-**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS.** The manifest-pinned ACK-derived 
+**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS (archived .config independently rechecked 33/33).** The latest nine-stage workflow retry exposed and isolated a toolchain-discovery path bug; it did not invalidate the earlier successful Image build.
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
-| A — real Git patch application | PASS | Latest hosted validation run 45457083961: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and updated 11-test config-helper suite passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
+| A — real Git patch application | PASS | Hosted validation run 45457083961: exact ACK commit verified; ordered UFS + ROUND63 binding/driver + ROUND58 Kleaf patches applied with real git apply; diff-check, strict checkpatch, buildifier and 11-test config-helper suite passed. Only CAMELCASE is ignored for the existing `init_load_uA` API field. |
 | B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
-| C — Kleaf target validation | PASS | Run 45453412267 completed official manifest sync, exact ACK pin, Bazel query/cquery and the manifest-pinned `//common:dby_w09` target. The target resolved the expected four outputs: `.config`, `Image`, `System.map`, `vmlinux`. |
-| D — final Kconfig + Image build | PASS (build-time gate 31/31; updated 33-symbol recheck pending) | Run 45453412267 built Image successfully (44,820,992 B); final `.config` passed all 31 symbols required by the checker at that run and is byte-identical to independent ROUND18 local output (238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`). The later hardened 33-symbol checker has not yet been applied to this archived config. |
+| C — Kleaf target validation | PASS | Original successful run 45453412267 completed official manifest sync, exact ACK pin, Bazel query/cquery and the manifest-pinned `//common:dby_w09` target. It resolved `.config`, `Image`, `System.map`, and `vmlinux`. Run 45463060672 additionally passed manifest sync and ACK pin; its later toolchain-discovery step failed on a bad constants-file path, not on Kleaf target analysis. |
+| D — final Kconfig + Image build | PASS (33/33 archived config recheck) | Original run 45453412267 built Image successfully (44,820,992 B). Its archived `.config` was independently checked against the current 33-symbol validator: 33/33 =y, no missing symbols, no non-y values, no duplicates; 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`. The new nine-stage retry is to validate exact toolchain discovery in a transparent workflow; its stage-4 fix is now committed. |
 | E — board DTS + memory/power handoff | BLOCKED | No trusted final HOS4.3 post-ABL FDT/EFI memory handoff or PM8150 physical supply-parent map. Do not guess. |
 | F — boot image / ramdisk / AVB | BLOCKED | ROUND62 same-device cross-reference warns fastboot RAM boot may be refused, but exact HOS4.3 AVB/footer/partition metadata and ABL behavior remain unverified. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
@@ -401,3 +401,20 @@ Workflow correction note: the first refactor commit (`a9f3088f206dc5d2712aae1a3e
 ### Nine-stage workflow validation run (in progress)
 
 The explicit marker update `68ed4de9454a2fcc012264a9c634629dd18465e2` started hosted run `45463060672` against the corrected nine-stage workflow. Job `138690570665` passed runner setup, checkout and stage 1 (preflight/dependencies/repo launcher). Stage 2 (repo init and immutable manifest sync) is currently `in_progress`, with its own `started_at=2026-11-24T18:46:28Z`; stages 3–9 are pending. This is the one deliberate full build to validate the refactored workflow and exact pinned-toolchain resolution. Do not infer failure from a frozen run-level `updated_at` or an unavailable live log. Await stage transitions and the terminal result before updating Phase C/D or claiming the new toolchain paths passed.
+
+
+### Nine-stage workflow retry — toolchain constants path corrected (2026-11-25)
+
+Run `45463060672` completed with failure at stage 4/9. Stages 1–3 passed: runner preflight, immutable manifest sync, and exact ACK tag pin. The stage-4 log shows JDK 11 and Bazel 8.7.0 started successfully, then the script attempted to read `build/kernel/build.config.constants`; that path was not present, and its fallback search was incorrectly limited to `build/kernel`. The subsequent `grep: : No such file or directory` exited 2. Clang/Rust discovery never ran; this is **not** evidence that either compiler is missing. Stages 5–9 were skipped. Failure artifact: `14953212288`.
+
+Second AI verified the correct constants file directly in the exact pinned ACK repository/commit:
+- File: `aosp-mirror/kernel_common@8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a:build.config.constants`
+- Blob: `cc08dcbb5cbb543fc508dca51d14ad00d2b665b8`
+- Values: `CLANG_VERSION=r584948c`, `RUSTC_VERSION=1.91.1.p3`
+- Therefore the file's workspace path is `$WORK/common/build.config.constants`; the synchronized manifest separately confirms the Clang and rust-toolchain prebuilt project roots.
+
+The workflow stage 4 is corrected to read `$WORK/common/build.config.constants`, hash the file, assert the two pinned versions expected under this immutable ACK commit, and test the exact manifest prebuilt paths:
+- `prebuilts/clang/host/linux-x86/clang-r584948c/bin/clang`
+- `prebuilts/rust-toolchain/linux-x86/1.91.1.p3/bin/rustc`
+
+This removes the invalid `build/kernel` constants search and avoids non-deterministic compiler selection. A new explicit marker trigger is queued below to validate the corrected stage and complete the remaining stages. No active run was cancelled.

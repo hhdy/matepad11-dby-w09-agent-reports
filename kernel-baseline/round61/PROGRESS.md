@@ -506,3 +506,17 @@ The next existing task is [ROUND25 HOS4.3 MMCX/MX ARC request and dropout semant
 ### ROUND65 Agent report received (2026-11-25)
 
 The local Agent completed the read-only audit and uploaded [ROUND65 first-stage fstab / vbmeta_cust / boot-tool report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md). It records 21 base-FDT fstab children, first-stage AVB/logical mount semantics, the actual absence of rc/module files in the standalone ramdisk, the current Image's monolithic build evidence, and the pinned-workspace prebuilt mkbootimg header-v2 capability. It reconciles two different vbmeta_cust structures without guessing and leaves the file provenance unresolved. The selected HOS4.3 DTBO, classic-FDT/EFI entry path, and RAM-boot acceptance remain UNKNOWN. No image/package/device operation occurred.
+
+
+### ROUND25 HOS4.3 MMCX/MX ARC request/dropout audit received (2026-11-25)
+
+The local Agent's [ROUND25 report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt) is now available. This supersedes the earlier progress note that ROUND25 was still pending.
+
+Key evidence and limits:
+- HOS4.3 MMCX provider is `mmcx.lvl`; MX provider is `mx.lvl`. Two phandle-confirmed MMCX→MX ARC parent edges exist for the ALL and AO children. These are ARC voltage-level relationships, **not PMIC physical input supplies**.
+- MMCX ALL/AO child `qcom,set` values are 3/1, labelled ALL/AO by ROUND14; bit0/bit1 literal ACTIVE/SLEEP mapping remains NOT_CAPTURED. MMCX ALL/AO init corner is `0x40`; MX parent target children use `0x10`. MMCX ALL/AO dropout is stored as `0xffffffff`, but its sentinel meaning and the parent-state derivation rule remain UNKNOWN. AUX logical corner names are also NOT_CAPTURED.
+- The base HOS4.3 UFS host and UFS bus nodes do not explicitly consume MMCX/MX ARC rails. Runtime ACTIVE/SLEEP participation remains UNKNOWN; absence of a DT-visible consumer is not proof of no runtime dependency.
+- Against pinned ACK 6.18.33, adding only an MMCX→MX GenPD parent would forward the same pstate absent an explicit required-opps translation. That is not equivalent to the observed HOS MMCX `0x40` / MX `0x10` corner relationship. A translation and documented dropout encoding would be required, but neither is evidenced. **Do not add a bare MMCX→MX parent descriptor or invent corner mappings.**
+- Classification: ROUND25 is a useful design constraint, not a Phase E closure. It strengthens the classification of MMCX/MX as an unresolved hardware-equivalence/voltage-margin risk, not a proven UFS probe blocker.
+
+No source, DTS, config, firmware or device state was changed; no build or device operation was performed. Phase E remains BLOCKED on final ABL memory handoff and authoritative PM8150 physical input-parent topology. Phase F remains BLOCKED for packaging; Phase G remains NOT RUN.

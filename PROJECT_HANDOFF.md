@@ -990,3 +990,39 @@ ROUND21 is a local, offline, read-only inspection of the existing ROUND19 ramdis
 No re-extraction, WSL deployment, repo sync, network download, package install, Image rebuild, source/config/DTS edits, boot packaging, signing, ADB/fastboot/device connection or flash. Upload one sanitized text report to firmware-audit-v1/firmware-analysis/round21/ and stop. Do not modify main source, protected DTS draft, second-AI branch or PR #1.
 
 The project remains at Stage A build-ready, not device-boot accepted. ROUND18 Image is the stable baseline; do not rebuild until ROUND21 determines whether the two configuration gaps should be corrected.
+
+## 2026-11-25 — ROUND21 completed: first-stage /dev and UFS pinctrl/overlay audit
+
+Final sanitized report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round21/round21_first_stage_devtmpfs_and_ufs_pinctrl_overlay_audit.txt
+Blob: 3b38e822f0a00e2f3209b9aebb5da1b0f9463d07
+
+ROUND21 reused the already-existing ROUND18/ROUND19 local work copies. It did not execute /init, modify source/config/DTS/DTBO/firmware, rebuild, package, or access the device.
+
+Verified findings:
+- HOS4.3 /init (AArch64 static ELF) explicitly mounts tmpfs on /dev in FirstStageMain, creates /dev/kmsg, random, urandom, ptmx and null with mknod(), and uses netlink uevents plus sysfs coldboot/regeneration to discover/create block nodes. Static code cross-references support this path. No devtmpfs references were found. Therefore CONFIG_DEVTMPFS is NOT required by this exact first stage; CONFIG_TMPFS=y is already present.
+- DEVTMPFS_MOUNT is not needed either. Pinned ACK Kconfig explicitly excludes initramfs boot from the automount option's use case; this /init mounts /dev itself.
+- Base UFS host / PHY nodes are disabled; all nine stock DTBO variants independently contain UFS PHY/host fragments that enable them and add the RPMh/GDSC rails. The UFS fragments and their UFS fixups are byte-identical across all nine variants. Board-id 0x206a remains a candidate only; no runtime variant selection is proven.
+- UFS rails resolve to PM8150 RPMh LDO/SPMI providers and UFS PHY GDSC, not TLMM. The UFS node declares custom dev-reset-assert/deassert pinctrl states on qcom,kona-pinctrl, but pinned ACK 6.18.33 UFS source does not look up these states; host reset uses GCC reset_control and the optional device-reset GPIO is absent in the base node. Thus PINCTRL_MSM is not proven necessary for UFS first-stage probe.
+- A new platform compatibility gap is real: HOS TLMM compatible is qcom,kona-pinctrl; pinned ACK SM8250 driver matches only qcom,sm8250-pinctrl. Enabling PINCTRL_MSM/PINCTRL_SM8250 alone will not bind the HOS node. Do not make an unreviewed DTS or driver compatible edit.
+- Preserve the overlay's qcom,vccq-parent-supply link from UFS to PM8150A S8, and the shared PM8150 L6 use for both vccq and qcom,vddp-ref-clk. The PMIC regulators' own physical input-parent network remains unresolved.
+- Next-build Kconfig recommendation: no symbol from the ROUND20 two-gap list is proven mandatory for the current first-stage UFS mount path. Do not enable DEVTMPFS or DEVTMPFS_MOUNT as a speculative fix. PINCTRL_MSM + PINCTRL_SM8250 may be prudent for other board consumers, but only after the qcom,kona-pinctrl compatible mismatch is deliberately resolved.
+
+New documentation consistency issue found while reviewing the existing main-branch board DTS draft:
+- The draft comment says the HOS4.3 base FDT has no /memory node.
+- ROUND19 and ROUND20 reports say a /memory node exists with an all-zero reg placeholder.
+- ROUND22 must verify this against the existing decompiled DTS and recommend correcting the comment. Do not invent RAM addresses or reserved-memory carveouts.
+
+## 2026-11-25 — ROUND22 dispatched: board-DTS compile readiness and UFS regulator/driver contract audit
+
+Task files:
+- firmware-analysis/round22/AGENT_TASK.md
+- firmware-analysis/round22/START_PROMPT.md
+
+ROUND22 is a local offline read-only audit to decide whether the existing main-branch DBY-W09 storage-first board DTS draft is structurally ready for a DTB build and whether its UFS regulator properties actually match the exact patched ACK 6.18.33 driver/bindings. It must also reconcile the stale /memory comment and examine whether the missing PM8150 VRM input-parent references are a real software binding requirement or an unresolved electrical/runtime assumption.
+
+The agent may compile a temporary DTB/DTBO from unmodified drafts into the ROUND22 temp directory only, if the existing tools and source include paths permit it. This is a syntax/label test, not a deliverable image and not permission to edit/replace project DTS or package a boot image.
+
+No source/config/DTS/DTBO/firmware edit, no Kconfig run, no kernel rebuild, no AVB/sign/boot packaging, no device/ADB/fastboot/recovery/flash. Use the existing ROUND18/ROUND19 work copies only; do not re-extract firmware or redeploy WSL. Upload one sanitized text report to firmware-audit-v1/firmware-analysis/round22/ and stop.
+
+ROUND18 Image remains the frozen successful build baseline. ROUND21 does not justify adding DEVTMPFS or DEVTMPFS_MOUNT. Do not enable PINCTRL_MSM/PINCTRL_SM8250 until a deliberate compatible strategy is reviewed. Stage A is still not device-boot accepted.

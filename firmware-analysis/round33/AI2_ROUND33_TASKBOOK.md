@@ -160,11 +160,11 @@ Agent 唯一交付仍为 `firmware-analysis/round33/AI2_ROUND33_TARGET_UNREGISTE
 ### 当前候选输入（Stage A branch: ai-parallel/stagea-port-until-boot）
 
 - patch 16：`kernel-baseline/round61/patches/round33-0001-regulator-proxy-self-target-only.patch`
-  - blob `8b7869b42c64fc808c6b2e2e328be793bbe50f91`
-  - SHA-256 `a43b87447255469f87c4219e7d2fe8d88786cadea6ac9c9394ea8e1133ef56d8`
+  - blob `3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe`
+  - SHA-256 `7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4`
 - patch 17：`kernel-baseline/round61/patches/round33-0002-regulator-proxy-self-target-binding.patch`
-  - blob `9dd73d2dce8892c58c5a2b502029d671a9e055dc`
-  - SHA-256 `3b4f7a5a4b517beecca663b70bde7a444e0df98fcebae0a7c3722fda81784d5b`
+  - blob `d2e818296118672bd708db34ed08d817fcd3895b`
+  - SHA-256 `d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05`
 - Ordered series is now 17 patches: `kernel-baseline/round61/round32-stagea-series.txt`.
 - 2号 AI has checked all five hunk header counts against actual hunk bodies (driver 6/30, 6/7, 6/25; binding 7/9, 11/11). This is only a static text check, not an apply result.
 

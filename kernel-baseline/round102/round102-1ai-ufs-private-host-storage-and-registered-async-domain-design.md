@@ -204,6 +204,33 @@ The checkpoint must be `cookie + 1`, not `cookie`, because the API waits for fun
 
 ---
 
+### 5.3 PM8150 L6 provider path — narrow failure interpretation
+
+Further exact-source tracing:
+- `drivers/regulator/qcom-rpmh-regulator.c` SHA `109f0aae09b1df431d2e14d45a64d115e87cdec4`;
+- `drivers/soc/qcom/rpmh.c` SHA `8903ed956312d0a2ac7f673d86ef504947e9b119`;
+- `drivers/soc/qcom/rpmh-rsc.c` SHA `c6f7d5c9c493d9e06c048930b8a14a38660df4b1`;
+- `drivers/regulator/dummy.c` SHA `e5197ec7234d01518b26844c555f3900a4ee5750`.
+
+Pinned provider facts:
+- PM8150 LDO6 is `pmic5_nldo`, `rpmh_regulator_vrm_drms_ops`, 30,000-uA HPM threshold, and provider supply name `vdd-l6-l9`.
+- `rpmh_regulator_disable()` calls `rpmh_regulator_set_enable_state(rdev, false)`.
+- Without `qcom,always-wait-for-ack`, this path calls `rpmh_write_async()`. It returns the immediate result from `__rpmh_write()`, which calls `rpmh_rsc_send_data()`.
+- `rpmh_rsc_send_data()` documents that it waits indefinitely for a free TCS, programs the request and triggers it, returns 0 after the trigger, and does not wait for command completion. Its error return arises before the trigger path completes (e.g. failure to resolve a suitable TCS).
+- With `qcom,always-wait-for-ack`, the provider calls `rpmh_write()`; this can return `-ETIMEDOUT` after the request was triggered but not acknowledged. The provider's `vreg->enabled` software flag is updated only when the helper returns 0.
+
+Therefore, for this exact L6 provider:
+- a negative provider `.disable()` result reaches regulator core before its consumer enable count is decremented;
+- with ACK enabled, an operation may nevertheless have been triggered before timeout, so the physical outcome can be unknown while the consumer reference is still held in regulator core;
+- a repeated disable request is the same idempotent enable-register target, but must not be retried without bounded policy, timeout handling, and exact board configuration confirmation;
+- after successful load-zero, the generic post-decrement DRMS path is removed. Remaining post-decrement possibilities are regulator coupling and parent-supply disable.
+
+Existing sanitized HOS4.3 ROUND13 evidence identifies the L6 node as:
+`/soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6`,
+with `qcom,regulator-type = "pmic5-ldo"`, supported modes `<2 4>`, threshold currents `<0 30000>`, no proxy-supply, fixed 1.2V, init-mode 2, `qcom,set = 3`, and no upstream supply property found in the inspected scope. However, `qcom,always-wait-for-ack` and `regulator-coupled-with` were not positively captured as present/absent by that report. The PMIC provider's declared `vdd-l6-l9` supply name does not prove an actual physical input: with full DT constraints and no matching supply provider, regulator core may attach its always-on dummy regulator. The dummy provider has no regulator operations.
+
+**Required next local evidence:** read the already-extracted HOS4.3 base FDT and all nine existing DTBOs to confirm the exact L6 node's `qcom,always-wait-for-ack`, `regulator-coupled-with` and any matching supply phandles/overlays. This is a sanitized, read-only local firmware-file task; no tablet connection or device action is needed. Do not invent a missing property or infer electrical topology from the provider's supply-name string.
+
 ## 6. Private wrapper lifetime
 
 The private state is embedded in `ufs_hba_priv`, which shares the `Scsi_Host` private allocation with the HBA:

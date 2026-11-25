@@ -2080,3 +2080,17 @@ Report: [ROUND121 — child proxy handle device-link review](./kernel-baseline/r
 - This does not relax rdev lifetime cleanup. Each proxy handle still must be released before its target provider unregisters. Device refcount does not guarantee devm provider data survives after parent teardown.
 - ROUND118 load-zero-before-disable and failed-cleanup retention constraints remain mandatory.
 - Review only; no AI2 source, DTS, binding or device was modified.
+
+
+## 2026-11-25 — ROUND122: generic UFS VCC/VCCQ load-first shutdown candidate
+
+Candidate: [ROUND122 AI1 branch](https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ai1/round122-ufs-vreg-load-order/kernel-baseline/round122).
+
+- 1号 AI prepared a source-pinned patch against ACK `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, changing only `drivers/ufs/core/ufshcd.c`.
+- `ufshcd_disable_vreg()` now attempts `ufshcd_config_vreg(..., false)` while its regulator enable reference is still held; on load-zero failure it stops before `regulator_disable()`. The enabled flag is cleared only after successful disable.
+- `ufshcd_enable_vreg()` reapplies the active configured load before skipping `regulator_enable()` for a handle whose existing enable reference was retained by a prior disable failure. This restores the active load without incrementing the same handle's enable count again.
+- The one hunk was replayed against the exact pinned `ufshcd.c` blob `2cf7aa8e0a9472f9024d4251ac2f9d7da830e219`: all 46 removed/context source lines matched exactly; resulting source has 15 additional lines; load-zero precedes regulator_disable. This deterministic source replay is not a substitute for Agent's real `git apply --check`.
+- Test taskbook: [ROUND122 TEST_AGENT_TASKBOOK.md](./kernel-baseline/round122/TEST_AGENT_TASKBOOK.md). Agent is test/build executor only; no coding.
+- **Not yet accepted:** real apply/checkpatch/object compile/full Image build are pending Agent validation.
+- **Known remaining limitation:** if the provider's actual `regulator_disable()` fails before the consumer enable count is decremented, the UFS vreg remains marked enabled with zero load. The later devm regulator release still reaches `regulator_put()`, which warns on nonzero enable_count; an earlier cleanup action cannot veto devres release. ROUND122 fixes the known post-decrement DRMS hazard and reloads on reuse, but it does not claim this true provider-disable/unbind failure path is solved. No force-disable shortcut is allowed on shared L6.
+- No AI2 branch, DTS, config, firmware or device was modified. Phase E/F remain BLOCKED; Phase G NOT RUN.

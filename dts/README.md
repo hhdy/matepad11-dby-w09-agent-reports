@@ -197,3 +197,9 @@ The public DTS uses fixed 3.7V vph_pwr for PM8150 S1..S10 inputs, but this is no
 ## ROUND74 — MMCX-to-MX ARC equivalence is still open
 
 ROUND33 + ROUND37 routes UFS required-opps to ACK SM8250 MMCX, but exact ACK rpmhpd.c selects plain MMCX without an MX parent. HOS4.3 ROUND30 reports an MMCX-to-MX ARC parent-supply edge. A simple ACK parent descriptor would only propagate the same pstate without an explicit dropout/corner translation. ROUND25 has been dispatched to read the exact existing HOS4.3 qcom,set, resource-name, init-voltage and min-dropout semantics. Until then, rev2 is only an MMCX OPP route candidate, not a complete ARC-equivalent design.
+
+## ROUND23 — rev2 + rootparam composite validation
+
+ROUND23 compiled the rev2 board DTS in a temporary copy (cpp/dtc exit 0, DTB 145,849 B) and compiled the rootparam-only VG overlay (dtc -@ -a 4 exit 0, DTBO 536 B). fdtoverlay successfully produced a temporary composite DTB (146,045 B). The five rootparam values match HOS4.3 ROUND19 entry 8; UFS Host power domains are MMCX index 0 then GCC UFS_PHY_GDSC index 1; UFS PHY keeps GCC GDSC; vdd-hba-supply is absent.
+
+Warning set remains 32 inherited upstream sm8250.dtsi warnings, no new warnings in board source. This is syntax/fixup/composite validation, not dt_binding_check/dtbs_check, Kleaf build, DTBO table packaging or ABL acceptance. Root composite board-id stays 0/0 while overlay-root identity remains 0x206a/0. Runtime variant / DT table ID-rev policy unknown. See [ROUND23 report](../firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt).

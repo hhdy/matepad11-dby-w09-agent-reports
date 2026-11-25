@@ -885,3 +885,8 @@ Exact source anchors:
 - drivers/pmdomain/core.c:L400-L410,L434-L500: parent pstate translation/propagation only when a GenPD parent-child link exists.
 
 Do not downgrade the HOS ARC gate to PASS. Keep it as an open hardware-equivalence risk, not a proven probe blocker.
+## ROUND74 supplemental conclusion — MMCX without MX parent can still issue local RPMh votes
+
+Exact ACK source review shows that plain SM8250 MMCX has a complete local GenPD implementation: probe validates its CMD_DB address, ARC slave ID and AUX mapping; power_on sends the local enable corner to RPMh; set_performance_state maps and stores/updates the local corner; and aggregate_corner emits the MMCX/mmcx_AO peer ACTIVE_ONLY, WAKE_ONLY and SLEEP votes on mmcx.lvl. The descriptor's absent .parent only means no GenPD parent link is registered; it does not disable local MMCX voting or itself return a probe error.
+
+Therefore the ROUND33 + ROUND37 route to MMCX remains a credible minimal UFS OPP route. The HOS4.3 MMCX->MX ARC edge is still a hardware-equivalence/voltage-margin risk, but no longer classified as a proven ACK probe blocker. Whether the UFS link needs the additional HOS parent/dropout behavior remains UNKNOWN pending ROUND25's local property values and ultimately runtime evidence.

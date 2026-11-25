@@ -1,0 +1,118 @@
+# AI1 ROUND116 — candidate source patch against pinned ACK 6.18.33
+# Base: aosp-mirror/kernel_common@8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+#
+# Apply with: git apply --check 0001-ufs-core-per-hba-async-domain.patch
+# Then:       git apply 0001-ufs-core-per-hba-async-domain.patch
+
+diff --git a/drivers/ufs/core/ufshcd-priv.h b/drivers/ufs/core/ufshcd-priv.h
+--- a/drivers/ufs/core/ufshcd-priv.h
++++ b/drivers/ufs/core/ufshcd-priv.h
+@@ -3,13 +3,17 @@
+ #ifndef _UFSHCD_PRIV_H_
+ #define _UFSHCD_PRIV_H_
+ 
+-#include <linux/pm_runtime.h>
+-#include <ufs/ufshcd.h>
+-
+-struct ufs_hba_priv {
+-	struct ufs_hba hba;
+-	bool zwor_sup;
+-};
++#include <linux/async.h>
++#include <linux/pm_runtime.h>
++#include <ufs/ufshcd.h>
++
++struct ufs_hba_priv {
++	struct ufs_hba hba;
++	bool zwor_sup;
++	struct async_domain async_domain;
++	async_cookie_t async_scan_cookie;
++	bool async_scan_scheduled;
++};
+ 
+ static inline struct ufs_hba_priv *to_hba_priv(struct ufs_hba *hba)
+ {
+
+diff --git a/drivers/ufs/core/ufshcd.c b/drivers/ufs/core/ufshcd.c
+--- a/drivers/ufs/core/ufshcd.c
++++ b/drivers/ufs/core/ufshcd.c
+@@ -10713,9 +10713,18 @@
+  *		data structure memory
+  * @hba: per adapter instance
+  */
+-void ufshcd_remove(struct ufs_hba *hba)
+-{
+-	if (hba->ufs_device_wlun)
++void ufshcd_remove(struct ufs_hba *hba)
++{
++	struct ufs_hba_priv *priv = to_hba_priv(hba);
++
++	/* Join the UFS-owned scan before tearing down any HBA state. */
++	if (priv->async_scan_scheduled) {
++		async_synchronize_cookie_domain(priv->async_scan_cookie + 1,
++						&priv->async_domain);
++		priv->async_scan_scheduled = false;
++	}
++
++	if (hba->ufs_device_wlun)
+ 		ufshcd_rpm_get_sync(hba);
+ 	ufs_hwmon_remove(hba);
+ 	ufs_bsg_remove(hba);
+@@ -10821,9 +10830,10 @@
+  */
+ int ufshcd_alloc_host(struct device *dev, struct ufs_hba **hba_handle)
+ {
+-	struct Scsi_Host *host;
+-	struct ufs_hba *hba;
+-	int err = 0;
++	struct Scsi_Host *host;
++	struct ufs_hba *hba;
++	struct ufs_hba_priv *priv;
++	int err = 0;
+ 
+ 	if (!dev) {
+ 		dev_err(dev,
+@@ -10846,8 +10856,12 @@
+ 		return err;
+ 
+ 	host->nr_maps = HCTX_TYPE_POLL + 1;
+-	hba = shost_priv(host);
+-	hba->host = host;
++	hba = shost_priv(host);
++	priv = to_hba_priv(hba);
++	INIT_LIST_HEAD(&priv->async_domain.pending);
++	priv->async_domain.registered = 1;
++	priv->async_scan_scheduled = false;
++	hba->host = host;
+ 	hba->dev = dev;
+ 	hba->dev_ref_clk_freq = REF_CLK_FREQ_INVAL;
+ 	hba->nop_out_timeout = NOP_OUT_TIMEOUT;
+@@ -10949,10 +10963,11 @@
+  *
+  * Return: 0 on success; < 0 on failure.
+  */
+-int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
+-{
+-	int err;
+-	struct Scsi_Host *host = hba->host;
++int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
++{
++	int err;
++	struct ufs_hba_priv *priv;
++	struct Scsi_Host *host = hba->host;
+ 	struct device *dev = hba->dev;
+ 
+ 	/*
+@@ -11187,7 +11202,11 @@
+ 	ufs_sysfs_add_nodes(hba->dev);
+ 	hba->dme_qos_sysfs_handle = sysfs_get_dirent(hba->dev->kobj.sd,
+ 						     "dme_qos_notification");
+-	async_schedule(ufshcd_async_scan, hba);
++	priv = to_hba_priv(hba);
++	priv->async_scan_cookie =
++		async_schedule_domain(ufshcd_async_scan, hba,
++				     &priv->async_domain);
++	priv->async_scan_scheduled = true;
+ 
+ 	trace_android_vh_ufs_update_sysfs(hba);
+ 

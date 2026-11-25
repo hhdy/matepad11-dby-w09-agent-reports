@@ -1,0 +1,264 @@
+================================================================================
+TEST-AGENT ROUND122 — UFS VREG LOAD-ORDER CANDIDATE PATCH VERIFICATION REPORT
+(1号 AI / TEST-AGENT, executor: local test Agent)
+================================================================================
+date            : 2026-11-25
+taskbook        : kernel-baseline/round122/TEST_AGENT_TASKBOOK.md
+                  @ branch ai1/round122-ufs-vreg-load-order
+task type       : read-only verification / build execution. This agent is NOT a
+                  kernel patch author: the candidate patch was fetched, applied,
+                  inspected, compiled and built AS-IS. It was never edited.
+candidate       : kernel-baseline/round122/0001-ufs-core-vreg-load-first.patch
+pinned source   : aosp-mirror/kernel_common @ 8ad08f75ddf056e1ee600e1339e0463c5f
+                  cbdc9a ("Merge android17-6.18 into android17-6.18-lts",
+                  android17-6.18.33_r00)
+other AI        : 2号 AI's ROUND32 work is independent; no AI2 branch was
+                  touched.
+
+--------------------------------------------------------------------------------
+0. VERDICT SUMMARY
+--------------------------------------------------------------------------------
+ALL eight required checks PASS. No check is FAIL or BLOCKED.
+
+  C1 apply zero offset/fuzz                PASS
+  C2 only drivers/ufs/core/ufshcd.c        PASS
+  C3 disable: config_vreg(false) checked
+     BEFORE regulator_disable              PASS
+  C4 enabled cleared only after
+     successful regulator_disable          PASS
+  C5 enable: active load reapplied
+     before skip-if-enabled                PASS
+  C6 no public struct/Kconfig/DTS/
+     regulator-core/AVB/boot changes       PASS
+  C7 object compile and full Image build
+     reported separately                   PASS (both green)
+  C8 managed-put limitation on true
+     regulator_disable failure RETAINED    PASS (stated explicitly, §5)
+
+Compile results: ufshcd.o builds clean with the pinned Kleaf clang, patched
+object differs from pristine (+144 B). Full build: tools/bazel build
+//common:dby_w09 --jobs=8 --local_ram_resources=6144 BUILD_RC=0 (538 s); the
+resulting Image hash differs from the Stage-A-only build with a byte-identical
+.config, proving the candidate is in the artifact. Build workspace was reverted
+to its pre-overlay state afterwards (verified).
+
+--------------------------------------------------------------------------------
+1. CANDIDATE AND SOURCE IDENTITY
+--------------------------------------------------------------------------------
+patch file  : kernel-baseline/round122/0001-ufs-core-vreg-load-first.patch
+              (branch ai1/round122-ufs-vreg-load-order, fetched via GitHub
+              Contents API with Accept: application/vnd.github.raw)
+patch bytes : 2339
+patch sha256: 2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66
+patch blob  : 64dd2ad9022251e2411a1a745aeb920a0badfa85  (git hash-object,
+              re-computed inside the worktree — identical)
+
+pinned commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+trees used:
+  * r122-apply    : disposable detached worktree at the pinned commit
+                    (created from /home/kerneldev/work/matepad11/ack-6.18.33-
+                    a30/common), clean before apply (status 0), candidate
+                    applied here for inspection + object compile.
+  * r122-pristine : disposable detached worktree at the same pinned commit,
+                    kept clean, for the pristine object.
+  * ack-6.18.33-a30 : manifest-pinned Kleaf build workspace (Stage A source
+                    tree: pinned HEAD + the 15-patch Stage A series applied as
+                    an UNCOMMITTED working tree, 16 dirty lines). The Stage A
+                    series does NOT touch drivers/ufs/core/ufshcd.c (it only
+                    touches drivers/ufs/host/*), so the candidate overlay
+                    applies with zero offset there too. No branch was created,
+                    modified or checked out on any shared branch.
+
+--------------------------------------------------------------------------------
+2. APPLY VERIFICATION (C1, C2)
+--------------------------------------------------------------------------------
+Commands (in r122-apply at the pinned commit):
+  git apply --check --verbose <patch>       CHECK_RC=0
+  git apply --verbose <patch>               APPLY_RC=0 ("Applied ... cleanly")
+  git diff --check                          DIFF_CHECK_RC=0
+
+No "offset" or "fuzz" words appear anywhere in the apply output — the patch
+applies with ZERO offset and ZERO fuzz (check output: "Checking patch
+drivers/ufs/core/ufshcd.c..." only).
+
+post-apply status: exactly ONE modified file
+  M drivers/ufs/core/ufshcd.c
+post-apply diff stat:
+  drivers/ufs/core/ufshcd.c | 31 ++++++++++++-------
+  1 file changed, 23 insertions(+), 8 deletions(-)
+=> C2 PASS: no other file is touched.
+
+The same patch also applies --check cleanly (RC=0, zero offset) on top of the
+Stage A build copy before the full build (§4).
+
+--------------------------------------------------------------------------------
+3. SOURCE-LEVEL CALL-PATH INSPECTION (C3, C4, C5, C6)
+--------------------------------------------------------------------------------
+All quotes taken from the PINNED tree (pre) and the r122-apply tree (post).
+Post-patch line numbers from drivers/ufs/core/ufshcd.c.
+
+3.1 ufshcd_disable_vreg (C3, C4) — PASS
+  pre (pinned) : regulator_disable() FIRST at :9526; ufshcd_config_vreg(
+                 dev, vreg, false) is called AFTER a successful disable and
+                 its return value is IGNORED ("ignore errors on applying
+                 disable config"), enabled=false inside the same success
+                 branch (:9530-9531).
+  post (patch) : 
+                 :9540  ret = ufshcd_config_vreg(dev, vreg, false);
+                 :9541  if (ret)
+                 :9542      goto out;
+                 :9544  ret = regulator_disable(vreg->reg);
+                 :9546  if (!ret)
+                 :9547      vreg->enabled = false;
+                 So: (a) the disable-load config runs BEFORE
+                 regulator_disable and its return value IS checked (any
+                 error aborts before the disable) — C3 PASS;
+                 (b) vreg->enabled is cleared ONLY inside the if(!ret)
+                 branch of regulator_disable — C4 PASS.
+
+3.2 ufshcd_enable_vreg (C5) — PASS
+  pre (pinned) : `if (!vreg || vreg->enabled) goto out;` — an already-enabled
+                 reference skipped ufshcd_config_vreg(dev, vreg, true)
+                 entirely, so a previously cleared load was never restored.
+  post (patch) :
+                 :9510  ret = ufshcd_config_vreg(dev, vreg, true);
+                 :9511  if (ret)
+                 :9512      goto out;
+                 :9515  if (vreg->enabled)
+                 :9516      goto out;
+                 :9517  ret = regulator_enable(vreg->reg);
+                 :9520      vreg->enabled = true;
+                 The configured active load (vreg->max_uA via
+                 regulator_set_load) is REAPPLIED BEFORE the skip for an
+                 already-enabled reference — C5 PASS. (For regulators without
+                 voltage control or without max_uA, ufshcd_config_vreg /
+                 ufshcd_config_vreg_load (:9490 / :9449) return 0
+                 trivially, so the reordering is a no-op there.)
+
+3.3 Blast radius (C6) — PASS
+  * Changed files: exactly drivers/ufs/core/ufshcd.c (§2).
+  * struct ufs_vreg (include/ufs/ufs.h:604) is UNCHANGED — no public struct
+    layout change.
+  * No Kconfig change; the full-build .config is byte-identical to the
+    Stage-A-only build (sha256 0850213d..., §4) — no config change.
+  * No DTS, no regulator core, no AVB, no boot packaging, no firmware change.
+  * Callers untouched: the only call sites remain the ufshcd_toggle_vreg
+    macro (ufshcd.c:162-170, enable at :166 / disable at :168).
+
+3.4 checkpatch --strict — recorded, NOT fixed (prohibited)
+  scripts/checkpatch.pl --strict --no-signoff <patch>
+  total: 0 errors, 0 warnings, 2 checks, 101 lines checked   (RC=1)
+  CHECK #72 (ufshcd.c:9523) and #99 (:9550): "Alignment should match open
+  parenthesis" on the two dev_err continuation lines. Both are carried over
+  verbatim from the PRE-patch code style; the taskbook prohibits editing the
+  candidate, so they are recorded as-is. No ERROR, no WARNING.
+
+--------------------------------------------------------------------------------
+4. OBJECT COMPILE AND FULL IMAGE BUILD (C7) — reported separately
+--------------------------------------------------------------------------------
+4.1 Object compile — drivers/ufs/core/ufshcd.o, pinned Kleaf toolchain
+  toolchain: Android clang 22.0.1 based on r584948c
+             (prebuilts/clang/host/linux-x86/clang-r584948c, PATH + LLVM=1
+             LLVM_IAS=1)
+  config   : the Kleaf dby_w09 built .config
+             (bazel-bin/common/dby_w09_config/out_dir/.config), with
+             GENDWARFKSYMS disabled only to keep the host-side object build
+             independent of the bazel hermetic environment;
+             commands: make ARCH=arm64 LLVM=1 O=<objdir> olddefconfig ;
+                       make ARCH=arm64 LLVM=1 O=<objdir> -j8
+                             drivers/ufs/core/ufshcd.o
+  results (same config, two source trees):
+    pristine (pinned HEAD) : OBJ_RC=0  953,056 B  sha256
+      e96226b40e3e932d03280afa7922bb6b8cf15c6bcd79b994965ca0efaad151e6
+      (231 ufshcd_* symtab entries)
+    patched  (candidate)   : OBJ_RC=0  953,200 B  sha256
+      4a31b63a1c84d31e7f741400e5a734870ec287b8df37568073555d0b3c79e1f6
+      (232 ufshcd_* symtab entries)
+    delta: +144 bytes, object hashes differ — the candidate is in the object.
+
+4.2 Full Image build — overlay + Kleaf, then revert
+  overlay on ack-6.18.33-a30/common (Stage A tree): git apply --check RC=0
+  (zero offset/fuzz), apply RC=0; dirty lines 16 -> 17.
+  command (from workspace root $B):
+    tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  BUILD_RC=0   ELAPSED=538 s (bazel-reported 534.040 s; 2 incremental actions)
+  artifacts:
+    Image      44,820,992 B  sha256 453a46a241ce86bc8445f2a886c38942a2fb36aa9
+                             ee4573bf17c5ad6454936a7
+    System.map  7,611,680 B  sha256 d1d03a16eb5e4d1fb4bca94c10b0b329f05307e2
+                             bc15cdc87e562afb82e41392
+    vmlinux   230,260,120 B  sha256 0d1f6442f8dbc5e456463c5d05a92366374ad0da
+                             0335e4fc269e00c87968bfcb
+    .config      238,410 B   sha256 0850213dc3e2c8ed412e950ffb8e10c758bc2efed
+                             18a2d30d8271c282f2c6b15
+  attribution: the Stage-A-only build of the same workspace (2号 AI ROUND32,
+  2026-11-25) produced Image b6efb347... / System.map 568b577d... with the
+  SAME .config (0850213d...). The Image/System.map/vmlinux hashes all changed
+  while .config stayed byte-identical — the delta is this candidate patch and
+  nothing else.
+  revert: git checkout -- drivers/ufs/core/ufshcd.c  rc=0;
+          dirty lines back to 16 (exactly the pre-overlay Stage A state),
+          ufshcd.c clean (git diff on it empty). Build workspace restored; no
+          branch was modified.
+
+--------------------------------------------------------------------------------
+5. KNOWN LIMITATION RETAINED (C8) — stated explicitly, NOT solved by this patch
+--------------------------------------------------------------------------------
+If regulator_disable() genuinely FAILS after this patch:
+  * ufshcd_config_vreg(dev, vreg, false) has ALREADY succeeded, i.e. the load
+    was cleared while the consumer enable reference is still held at the
+    driver level (vreg->enabled stays true, ret != 0, dev_err logged).
+  * Per the patch's own comment, the ACK regulator core may decrement the
+    consumer enable_count inside regulator_disable() BEFORE running a
+    fallible DRMS update — so a failed disable leaves ambiguous reference
+    accounting: the driver cannot safely retry regulator_disable() (risk of
+    over-decrement) and cannot detect whether the reference was actually
+    dropped. regulator_put()/managed-put semantics cannot repair that state.
+  * What the patch DOES add for this path: the next ufshcd_enable_vreg()
+    restores the active load even when vreg->enabled is still true (C5), so
+    the load ordering is repaired; the ENABLE-REFERENCE bookkeeping problem
+    is NOT repaired. This limitation pre-exists (the old code had the same
+    ambiguity, plus a lost-load window); this patch narrows it but does not
+    claim to solve it. No error-path regression was introduced: the disable
+    failure path returns the regulator_disable() error unchanged and performs
+    no additional put.
+
+--------------------------------------------------------------------------------
+6. PROHIBITED-ACTION COMPLIANCE
+--------------------------------------------------------------------------------
+  * Candidate patch: fetched and used byte-for-byte (sha256/blob verified in
+    §1); NEVER edited, rewritten or "fixed" (the 2 checkpatch CHECKs were
+    recorded, not repaired).
+  * No kernel code, bindings, DTS, fixtures or config authored.
+  * Branches untouched: main, ack18-dby-w09-dts-draft, PR #1,
+    ai-parallel/stagea-port-until-boot (only referenced for its build
+    workspace state, which was restored), and all AI2 branches. All apply and
+    build activity happened in disposable detached worktrees / the pinned
+    build copy, both reverted after use.
+  * No device connection, ADB, fastboot, root, reboot, boot, flash, partition
+    access, DTBO/AVB/vbmeta operation, or firmware upload.
+  * ROUND123 NOT started; this is the final action before stop.
+
+--------------------------------------------------------------------------------
+7. ENVIRONMENT NOTES (honest recording)
+--------------------------------------------------------------------------------
+  * The Windows WSL default distro registration currently points to a missing
+    vhdx (a stale "Ubuntu" entry); all commands were run with explicit
+    `wsl -d Ubuntu-24.04`. No WSL configuration was changed by this agent.
+  * First object-compile attempt used the host gcc (failed: unrecognized
+    '-mlittle-endian'); corrected to the pinned prebuilts clang with LLVM=1
+    LLVM_IAS=1 (§4.1). Both attempts' logs are retained locally.
+
+--------------------------------------------------------------------------------
+8. REPORT IDENTITY
+--------------------------------------------------------------------------------
+this file: firmware-analysis/round122/
+           TEST_AGENT_ROUND122_UFS_VREG_LOAD_ORDER_REPORT.txt
+           @ firmware-audit-v1 (single upload, read-back verified byte-for-
+           byte; commit/blob sha256 recorded in the upload verification log).
+
+STOP: per taskbook Completion, ROUND123 is not started. Execution ends here.
+
+================================================================================
+END OF REPORT
+================================================================================

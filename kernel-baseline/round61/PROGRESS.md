@@ -21,6 +21,8 @@
 
 Phase E blocker report: `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (committed 2026-11-25). It records the exact missing HOS4.3 final ABL memory handoff and physical PM8150 input-parent evidence, and keeps the DTS draft review-only.
 
+Phase F blocker report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (existing; reviewed 2026-11-25). It records the missing trusted AVB footer/vbmeta descriptor inspection and exact HOS4.3 header-v2 / separate-ramdisk packaging metadata.
+
 ## 2026-11-24 execution evidence
 
 ### Real source patch and driver style checks

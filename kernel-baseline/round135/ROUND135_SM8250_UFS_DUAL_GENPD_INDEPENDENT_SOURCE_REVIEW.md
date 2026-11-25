@@ -146,3 +146,19 @@ Run dt-schema / `dt_binding_check`, DTS preprocessing / dtc, `dtbs_check`, then 
 - Rebase the board dual-domain delta onto the current AI1 board DTS candidate and create a real kernel DTS source path before Agent validation.
 - Only after that exact series is packaged with fixed hashes should a local test Agent task be written for full disposable-tree apply, schema/DTB checks and target object/full build.
 - No source code, DTS, config, protected branch, firmware or device was modified or accessed by this source review.
+
+## 9. Follow-up integration candidate prepared (2026-11-26)
+
+The old ROUND37 patch remains stale and must not be used. A new isolated 1号 AI candidate now rebases the current reviewed board draft onto the actual fixed-ACK kernel DTS path:
+
+- Candidate branch: `ai1/round130-stagea-ufs-lifecycle-integration`.
+- New DTS path: `arch/arm64/boot/dts/qcom/huawei-dby-w09.dts`.
+- New DTS Git blob: `f51c5691d2955909149ba8f76d0b99dcf671e36f`.
+- Source draft used: `dts/dby-w09-ack18-board.dts.draft`, blob `dd9035083458ea6ccdb5fdd852b7a1860509fbaf`.
+- The new file adds only `qcom,gcc-sm8250.h` and `qcom,rpmhpd.h` binding includes plus the ordered Host domain property `<&rpmhpd RPMHPD_MMCX>, <&gcc UFS_PHY_GDSC>`. Existing board supplies/status are retained; `ufs_mem_phy` is unchanged.
+- A patch also adds `huawei-dby-w09.dtb` to the exact ACK qcom DTS Makefile. The patch Git blob is `d303439a9fde864ea765f59ef0888ada3f20468c`.
+- The byte-identical ROUND45 driver patch is included after the DTS patch as series item 23, Git blob `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`.
+- The ordered candidate series (immutable base 17 + accepted ROUND130 items 18–21 + DTS 22 + driver 23) is recorded in [ROUND135_23_PATCH_SERIES_MANIFEST.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round135/ROUND135_23_PATCH_SERIES_MANIFEST.md).
+- Test-only validation taskbook: [TEST_AGENT_ROUND135_TASKBOOK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round135/TEST_AGENT_ROUND135_TASKBOOK.md).
+
+**Current disposition:** integration candidate prepared, NOT YET VALIDATED. No real DTB build, schema check, full 23-patch Kleaf build, or device test is claimed. The known `huawei,dby-w09` root compatible binding gap must be reported rather than hidden or fixed through unrelated schema relaxation. ABL memory handoff, PM8150 physical inputs and MMCX-to-MX ARC equivalence remain separate blockers. Stage B and device validation remain deferred.

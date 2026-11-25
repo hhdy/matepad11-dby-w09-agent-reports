@@ -756,7 +756,7 @@ Public source references used for triage: historical Qualcomm UFS property docum
 
 - Agent's first verification report `firmware-analysis/round33/AI2_ROUND33_TARGET_UNREGISTER_LIFECYCLE_REPORT.txt` correctly found the original combined patch 16 corrupt: 4/5 hunk counts mismatched; `git apply --check` failed at line 64. Patches 1-15 passed. All downstream checks were BLOCKED, not PASS.
 - 2号 AI did not change runtime semantics. It split the intended change into:
-  - patch 16 driver guard, blob `8b7869b42c64fc808c6b2e2e328be793bbe50f91`, SHA-256 `a43b87447255469f87c4219e7d2fe8d88786cadea6ac9c9394ea8e1133ef56d8`;
-  - patch 17 binding documentation, blob `9dd73d2dce8892c58c5a2b502029d671a9e055dc`, SHA-256 `3b4f7a5a4b517beecca663b70bde7a444e0df98fcebae0a7c3722fda81784d5b`.
+  - patch 16 driver guard, blob `3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe`, SHA-256 `7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4`;
+  - patch 17 binding documentation, blob `d2e818296118672bd708db34ed08d817fcd3895b`, SHA-256 `d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05`.
 - Updated the ordered series to 17 patches. Static hunk-body counts now match all five hunk headers. This does not establish patch applicability, compilation, test success, or runtime correctness.
 - A fresh validation-only Agent run is required. Until it reports success, ROUND33 remains unverified. Phase E/F BLOCKED; Phase G NOT RUN; no device/partition/boot/DTBO/AVB operations.

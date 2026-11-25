@@ -120,3 +120,14 @@ Exact source anchors:
 - drivers/pmdomain/core.c:L400-L410,L434-L500: parent pstate translation/propagation only when a GenPD parent-child link exists.
 
 Do not downgrade the HOS ARC gate to PASS. Keep it as an open hardware-equivalence risk, not a proven probe blocker.
+## Additional refinement — actual ACK local MMCX vote path and its implications
+
+Exact pinned source excerpts from drivers/pmdomain/qcom/rpmhpd.c:
+- rpmhpd_send_corner() lines 806–821 sends a TCS command to the local RPMh resource address, synchronously for a raising active corner and asynchronously otherwise.
+- to_active_sleep() lines 824–833 computes active/sleep vote values for an ordinary vs active-only peer.
+- rpmhpd_aggregate_corner() lines 844–890 aggregates the MMCX/mmcx_ao peer pair and sends ACTIVE_ONLY, WAKE_ONLY and SLEEP requests for the same local mmcx.lvl resource. It does not call any parent provider.
+- rpmhpd_power_on() lines 893–908 aggregates max(current corner, enable corner), then marks the local domain enabled only after the RPMh vote succeeds.
+- rpmhpd_set_performance_state() lines 927–958 maps the requested performance level to the local AUX level table. If the domain is already enabled it updates that local vote; otherwise it stores the selected corner for the later power-on path.
+- rpmhpd_probe() lines 1001–1067 validates the resource address / ARC slave ID / AUX level map, initializes each GenPD, and adds a parent subdomain link only when the selected descriptor has a non-NULL .parent.
+
+Implication: plain SM8250 MMCX is fully capable of issuing its own RPMh request and handling its own power-domain on/off and OPP performance state without an MX parent descriptor. Missing parent does not itself cause rpmhpd probe or genpd performance-state API failure. The unresolved concern is whether HOS4.3's separate MMCX->MX ARC dependency and min-dropout rule are electrically required for a stable UFS link or for certain operating corners. That cannot be inferred from the generic ACK API.

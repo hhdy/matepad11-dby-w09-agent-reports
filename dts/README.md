@@ -136,3 +136,10 @@ The source/Image build milestone remains complete; board DTB and boot-package ga
 ## VG rootparam overlay candidate restored (2026-11-25)
 
 The main branch now contains `dby-w09-ack18-rootparam.dtso.draft`. It is a **VG / 0x206a candidate only**, restored from the exact HOS4.3 ROUND19 entry-8 rootparam values and cross-checked against the public same-device rootparam-only source. It is not proof that the user's actual ABL selects VG. It has not been compiled with `dtc -@`, inserted into a DTBO table or accepted by HOS4.3 ABL. Keep the other eight variants available as evidence; do not silently mark VG as the selected runtime overlay.
+
+
+## Board DTS rev2 integration candidate
+
+A separate file, `dby-w09-ack18-board.dts.rev2.candidate`, now contains the ROUND37 two-domain UFS Host property (MMCX index 0, GCC UFS_PHY_GDSC index 1), the two power/clock binding headers, and corrected zeroed /memory-placeholder documentation. The original `.draft` remains unchanged for comparison.
+
+The rev2 candidate is not compiled or schema-validated and is not an input to the current Image build. Do not promote it until ROUND22's source/contract report and full pinned-ACK dtc/schema checks pass. Final ABL memory/reserved-memory and physical PM8150 input-parent gates remain BLOCKED.

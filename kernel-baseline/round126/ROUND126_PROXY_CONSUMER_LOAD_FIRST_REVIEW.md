@@ -77,3 +77,10 @@ HOS4.3 evidence:
 - AI1 independently reconstructed the actual proxy-consumer.c contents by applying the AI2 ROUND31 add-file patch, ROUND32 delta and ROUND33 self-target-only delta; the ROUND126 hunk matched and applied to that reconstructed 17-patch source. This is an author-side source/context check, not a substitute for Agent git apply/build validation.
 
 The candidate remains isolated on the AI1 branch. It does not modify AI2's branch or test harness. Full validation is queued for the combined AI1 ROUND125/ROUND126 Agent task after ROUND33 has released its build slot.
+
+
+## Active validation task
+
+ROUND126 is included in the combined AI1 Agent task:
+firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_TASKBOOK.md
+The standalone patch review remains authoritative for ROUND126's source reasoning; no separate taskbook should be run concurrently.

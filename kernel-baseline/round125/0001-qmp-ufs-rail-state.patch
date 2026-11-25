@@ -1,4 +1,3 @@
-From: 1号 AI (ChatGPT)
 Subject: [PATCH DRAFT] phy: qcom-qmp-ufs: track retained rail references
 
 Track the load vote and enable reference independently for both QMP UFS
@@ -16,7 +15,8 @@ This is an isolated AI1 candidate layered after the AI2 ROUND63 patch.
 It does not change the AI2 branch. Source/build validation is pending.
 
 ---
- drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | candidate
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | 235 +++++++++++++++++--------------
+ 1 file changed, 100 insertions(+), 135 deletions(-)
 diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 --- a/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
 +++ b/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c

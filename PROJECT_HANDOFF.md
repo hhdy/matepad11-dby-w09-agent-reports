@@ -1706,3 +1706,25 @@ ROUND87 是 1号 AI 只读审查，供 2号 AI 实现评估；测试 Agent 仅�
 **职责：** ROUND89 是 1号 AI 只读纠正说明；2号 AI 负责实现决策和补丁；测试 Agent 仅在收到独立 `AGENT_TEST_TASK.md` 后执行。本轮未修改任何源代码、DTS、binding、补丁、分支或设备。
 
 该结论细化 ROUND84/87 的“释放”用词，不改变 ROUND86 L17 电压档位可满足 UFS consumer interval 的结论。ROUND27 schema 仍 NOT CLEAN。
+
+
+## 2026-11-25 — ROUND90：1号 AI 核对 regulator_disable 后置 DRMS 错误及 UFS 关闭顺序
+
+报告：[ROUND90 — 1号 AI source review: avoid post-decrement DRMS failures during UFS regulator disable](./kernel-baseline/round90/round90-1ai-regulator-disable-drms-failure-ordering-review.md)。
+
+**新发现：固定 ACK `regulator_disable()` 可能在调用 consumer 的 enable_count 已经递减后，才因 DRMS mode 更新失败而返回负数。** 因此，不能总把负数理解为该 consumer 的 regulator enable reference 仍然存在；UFS 当前“ret<0 则保留 enabled=true”的简单状态处理在这个场景可能失真，后续再 disable 会导致 unbalanced disable。
+
+DBY-W09 候选存在实际触发条件：
+- PM8150 L17 / UFS VCC：PMIC5 PLDO 的 HPM 阈值 10mA；UFS VCC 负载请求 800mA。关闭时聚合负载可能从 HPM 区降到门槛以下，需 HPM→LPM。
+- PM8150 L6 / UFS VCCQ：PMIC5 NLDO 的 HPM 阈值 30mA；UFS VCCQ 请求 800mA，而同一 L6 还被 VDDP/REF_CLK 的独立消费者以 100uA 负载并保持 enable reference。关闭 VCCQ 后，L6 聚合负载可能降到 100uA，从 HPM→LPM。若 RPMh set-mode 失败，disable API 可能在 VCCQ consumer reference 已释放后返回负数。
+- PM8150 S4 / VCCQ2 使用 HFSMPS510 非 DRMS ops，不具有 L17/L6 相同的 optimum-mode 错误触发路径，不能把三条 rail 混为一类。
+
+**供 2号 AI 评估的较稳妥关闭顺序候选：** 在 consumer enable reference 仍持有时先 `regulator_set_load(reg, 0)`。若失败，regulator core 会恢复旧 load，调用方可中止关闭且 reference 仍持有；成功后再 `regulator_disable()`，避免 core 在 decrement 后因同一 DRMS vote 再做一次 mode 更新。若真实 hardware disable 本身失败，则需恢复 on-state load，并明确跟踪恢复失败。VCC 在成功 disable 后再将 voltage request 放宽到 `[0, max_uV]`（ROUND89），并独立跟踪 voltage/load/reference 三种状态。
+
+该顺序不同于历史代码常见的 disable 后再清 load；这是基于固定 ACK core 的 error-ordering 发现提出的设计候选，必须由 2号 AI 审查和测试，不是已实现结论。若未来加入物理 upstream supply 或 regulator coupling，还需重新审核这些在 reference decrement 后发生的错误路径。
+
+**启用顺序仍然成立：** disabled 时 `regulator_set_load(max_uA)` 只保存该 consumer 的 load；之后 `regulator_enable()` 在 provider 硬件 enable 前调用 DRMS 更新。因此 ON load vote 仍应在第一次 enable 前设置，同时 ROUND88 要求 UFS VCC voltage interval 也必须在第一次 enable 前准备好。
+
+**职责与边界：** ROUND90 是 1号 AI 只读源码分析；2号 AI 负责实现；测试 Agent 只有收到单独 `AGENT_TEST_TASK.md` 后执行。无源代码/DTS/binding/补丁/分支改动，无构建/schema/设备测试。
+
+ROUND27 schema 仍 NOT CLEAN。ROUND84–ROUND90 结论共同构成 2号 AI 处理 UFS VCC/VCCQ 电压、DRMS、首次 enable 时序和 disable 错误状态时的审查清单。

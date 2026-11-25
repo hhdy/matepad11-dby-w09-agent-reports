@@ -164,3 +164,6 @@ ROUND22 also clarified:
 - PM8150 physical input parents remain unknown despite schema optionality and dummy regulator fallback.
 
 ROUND23 now checks the current board rev2 candidate plus the restored VG-only rootparam overlay with temporary cpp/dtc compilation and fdtoverlay composite application. It is not a Kleaf target, DTBO partition package or ABL selection test.
+
+
+ROUND68 package-layout detail: at the pinned ACK common commit, arch/arm64/boot/dts/qcom has no BUILD.bazel (516 entries); arch/arm64/boot/dts also has no BUILD.bazel. A future Kleaf target therefore requires a new BUILD package and explicit dtc include dependency; no qcom Bazel target currently exists.

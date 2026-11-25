@@ -11,8 +11,9 @@ The correction document cannot contain its own blob hash, and a hash register
 that cites a commit hash it is itself part of is unstable across any rebase or
 amend. This manifest therefore records:
 
-  1. the two commits that make up this correction round,
-  2. the git blob SHA-1 and SHA-256 of each of the three files they add,
+  1. the commits that make up this correction round, and which of them the
+     branch tip was after the evidence push,
+  2. the git blob SHA-1 and SHA-256 of each of the three evidence files,
   3. the result of reading each file back through the read-only GitHub
      contents API and byte-comparing it to the local copy.
 
@@ -20,13 +21,13 @@ Every value below comes from the API readback or from `git rev-parse`, not from
 local computation alone.
 
 
-1. Remote state after the push
-------------------------------
-Remote branch tip (git/ref/heads/firmware-audit-v1) :
+1. Remote state
+---------------
+The evidence push of this round moved the branch from dfbf842 to:
 
   2af6b0a96c479ad55ac28731964c9bda4c566078
 
-Local HEAD at push time :
+Local HEAD at that push was the same value:
 
   2af6b0a96c479ad55ac28731964c9bda4c566078
 
@@ -34,24 +35,43 @@ TIP_MATCH = YES
 
 Push range: dfbf842..2af6b0a  (fast-forward, no force, no rewrite)
 
+The branch tip after the evidence push was 2af6b0a. This manifest was added on
+top of it, and any further commit on this branch since then touches only this
+manifest file, so every identity recorded here -- the two evidence commits, the
+three file blobs, the readback results -- holds at any later tip as well.
+
+This file deliberately does not name the commit that carries it: a register
+that cites the hash of the commit containing it goes stale on the next amend or
+rebase, and the previous round already lost time to exactly that. For the same
+reason the previous version of this commit was not amended away -- correcting a
+claim by deleting the record of it is the failure mode this round exists to
+fix. Instead the wording above is written so that it stays true no matter how
+many commits later land here.
+
 
 2. Commits in this round
 ------------------------
+Three commits, in order:
+
 6848d12  firmware-analysis/round132: evidence logs for the offset-correction round
 2af6b0a  firmware-analysis/round132: correct the zero-offset verdict to FAIL
+         (the branch tip after the evidence push)
++1       this manifest, which adds only this file
 
 Parent of the round: dfbf842  ROUND132: correct frozen manifest branch URL
 
-git diff --stat dfbf842..2af6b0a :
+git diff --stat dfbf842..2af6b0a (the two evidence commits):
 
   round132-v2-offset-correction.md                | 277 +++++++++++++++++++
   round132-v2-retained-evidence-consistency.log   |  85 ++++++
   round132-v2-series-path-refetch.log             |  65 +++++
   3 files changed, 427 insertions(+)
 
-No existing file in firmware-analysis/round132/ was modified or deleted by
-these two commits. The ten files that were already present are byte-identical
-to their state at dfbf842.
+The manifest commit adds one file on top of that.
+
+No existing file in firmware-analysis/round132/ was modified or deleted by any
+commit of this round. The ten files that were already present at dfbf842 are
+byte-identical at the branch tip.
 
 
 3. Delivered files

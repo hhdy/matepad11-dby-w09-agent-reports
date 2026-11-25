@@ -87,6 +87,24 @@ No new device access or privilege escalation occurred. The Agent identifies the 
 ### Supplemental pinned-ACK UFS HBA supply contract
 
 The separate ROUND64 pinned-source audit [round64-ufs-hba-gdsc-regulator-source-review.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round64/round64-ufs-hba-gdsc-regulator-source-review.md) finds that ACK's `vdd-hba-supply` is a real regulator consumer, while the referenced Qualcomm GDSC node is registered as a generic power domain, not as an output regulator. With the HOS-style phandle pointed at that GDSC, regulator lookup may defer; with the optional HBA supply property absent, ACK treats it as already enabled and retains the inherited `UFS_PHY_GDSC` power-domain relationship. Keep `vdd-hba-supply` and `vdd-hba-fixed-regulator` out of the ACK board draft unless a real regulator provider is independently established. This source-level finding does not close the memory or PMIC electrical gates and does not make the draft build-ready.
-## 8. Current verdict
+## 8. ROUND22 prior-draft DTS syntax and UFS supply-contract audit (2026-11-25)
+
+The local Agent's sanitized ROUND22 report is available at:
+[ROUND22 — board-DTS compile readiness and UFS/regulator contract audit](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round22/round22_board_dts_compile_and_ufs_regulator_contract_audit.txt).
+
+**Syntax evidence is limited to the exact older input revision named in that report.** The Agent copied a 14,588-byte pre-rev2 board draft byte-identically into a temporary directory, ran the kernel-style `cpp` preprocessing flow and preinstalled dtc 1.7.0, and obtained a 145,841-byte temporary DTB with exit 0. It recorded 32 warnings, all inherited from pinned `sm8250.dtsi`, and zero warnings attributable to that draft copy. No temporary binary was uploaded. This is syntax/label evidence only; it is not dt-schema, dtbs_check, runtime or boot evidence. It does **not** validate the current Stage-A branch draft blob or the newer main-branch rev2 candidate. ROUND23 was separately tasked to test that rev2 candidate and the rootparam overlay.
+
+**UFS contract findings against the actual ROUND18 compiled ACK source:**
+- The inherited `qcom,sm8250-ufshc` + `qcom,ufshc` compatible path binds the QCOM UFS driver; no board compatible override is needed.
+- UFS `vcc/vccq/vccq2`, `qcom,vddp-ref-clk-supply`, QMP PHY `vdda-phy/vdda-pll`, and the `vdda-phy-always-on` path have real consumers in the patched ACK source reviewed by ROUND22.
+- `qcom,vccq-parent-supply` is declared by schema but has no runtime consumer in the reviewed ACK UFS driver. Treat it as topology metadata only; do not assume a runtime regulator vote or enable.
+- The dual-GenPD OPP-to-MMCX mapping is present in the patched source but only activates in the two-domain path. The older draft compiled by ROUND22 had one UFS Host domain, so that OPP mapping was dormant there. The newer rev2 candidate adds MMCX index 0 followed by GCC UFS_PHY_GDSC index 1; ROUND23 must verify those specifiers and order.
+
+**PM8150 input-supply software behavior:**
+- The pinned regulator binding makes PM8150/PM8150L input-parent properties optional for schema validity. The RPMh regulator driver provides a supply name to regulator core; on a populated arm64 DT, regulator core can substitute a dummy parent if the supply is unresolved.
+- That can allow regulator registration, but it means software assumes an input is externally present/enabled. It does not identify the physical source, prove voltage headroom or establish safe sequencing. Therefore the physical PM8150 topology gate remains BLOCKED exactly as Phase E states.
+
+ROUND22 did not edit the board source, change Kconfig/configuration, run dt-schema/dtbs_check, package a DTBO, or contact the device. Keep the board DTS review-only until the final memory handoff and physical PMIC parent evidence are available.
+## 9. Current verdict
 
 **PHASE E: BLOCKED.** The draft remains a review artifact. The unresolved facts are real boot-critical inputs, not documentation polish. Keep Phase E open until actual HOS4.3 memory handoff and physical PM8150 supply topology are evidenced and the resulting board source passes the real pinned-kernel DT compilation/schema checks.

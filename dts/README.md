@@ -192,3 +192,8 @@ ROUND24 inventories the HOS4.3 34-node reserved-memory tree and all memory-regio
 The public same-device Linux 7.0/HOS4.2 DTS uses vcc/vccq/vccq2 and PHY L5/L9, without VDDP ref-clock, VCCQ parent or dual MMCX/GCC Host domains. The current ACK 6.18.33 Image has additional patched consumers; keep the ACK-specific VDDP, PHY-always-on and dual-domain contracts.
 
 The public DTS uses fixed 3.7V vph_pwr for PM8150 S1..S10 inputs, but this is not authoritative HOS4.3 hardware evidence. Do not copy it to the current candidate. See [ROUND73](../kernel-baseline/round73/round73-public-linux-ufs-pmic-model-comparison.md).
+
+
+## ROUND74 — MMCX-to-MX ARC equivalence is still open
+
+ROUND33 + ROUND37 routes UFS required-opps to ACK SM8250 MMCX, but exact ACK rpmhpd.c selects plain MMCX without an MX parent. HOS4.3 ROUND30 reports an MMCX-to-MX ARC parent-supply edge. A simple ACK parent descriptor would only propagate the same pstate without an explicit dropout/corner translation. ROUND25 has been dispatched to read the exact existing HOS4.3 qcom,set, resource-name, init-voltage and min-dropout semantics. Until then, rev2 is only an MMCX OPP route candidate, not a complete ARC-equivalent design.

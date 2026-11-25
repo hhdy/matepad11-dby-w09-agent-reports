@@ -2120,3 +2120,8 @@ Test-only taskbook: [TEST_AGENT_ROUND124_TASKBOOK.md](https://github.com/hhdy/ma
 - ROUND124 acceptance remains PENDING until its one required report is uploaded and reviewed. Even if combined build passes, it remains an isolated AI1 candidate; do not merge it into AI2 automatically.
 - ROUND123 limitations remain binding: ROUND122 does not solve every regulator post-decrement error or managed teardown hazard.
 - No device/ADB/fastboot/flash/DTBO/AVB operation. Phase E/F remain BLOCKED; Phase G NOT RUN.
+
+
+## Explicit user instruction — tablet connection approval gate (2026-11-25)
+
+For every future local Agent task, if a test or evidence step may require connecting the Huawei MatePad DBY-W09 by USB, ADB, fastboot, serial or any other device interface, stop before connecting or issuing device commands. Notify the user what connection/access is needed and why, then obtain explicit approval and issue a separate device taskbook. A general instruction to continue the kernel port or testing is not permission to connect the tablet; this applies even to read-only device access. Offline source review, local compilation and build validation remain allowed within each taskbook's stated scope.

@@ -1,0 +1,13 @@
+﻿RelativePath,SizeBytes,SizeMiB,SHA256,Reason
+DBY_W09_HarmonyOS_4.3_GMS_By_WQSQW-dc2605192e6e.zip,7229903744,6894.974,190518AA733A94B45A0B212D8069F6373F03C2B6C9FAD0E4CCB861FD9E304856,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/boot.img,100663296,96.0,027F88FD6F318523925CA27A4D681D17A9BBCA904B0C471CCC05E651D3DA19B8,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/cache.img,109051904,104.0,8A4818CAEA227625C29855C13411B73D35D639054B0CF8EE98DF7D832BA65FA0,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/dsp.img,67108864,64.0,D1C54E38BF972FA502C097F9D67BF36710E816F214DCB9B2C0F8D261969DF286,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/erecovery.img,100663296,96.0,956417584D2DEB409761316F262732859E356A15CB5FE85436DF3D5F141C5548,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/modem.img,197132288,188.0,6F13F4CFA50AA5DEC4D65CF504DED5659C9DA22F6E27EE62793346A592E3AE25,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/patch.img,268435456,256.0,FF6813AE3FF689AB8F25D34D70166BEF029C2F0715F2C3849A1B8A59A9A969D1,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/preas.img,310378496,296.0,C7EF003A5CE5CF8E864CF5B04152C61F47A04D9ABAFA9C87E9C90A9ABD7C7D88,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/preload.img,1468006400,1400.0,36F9E88F4629C9958ED5460FC0170E7DE0905B74B02776548F731DBA467B100A,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/recovery.img,100663296,96.0,956417584D2DEB409761316F262732859E356A15CB5FE85436DF3D5F141C5548,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/super.img,7114729004,6785.134,D6EF478D5BBACBF95281D8CC7E4FEEA9AF46DA278A5EA256F778F2DF87A5226B,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked
+images/version.img,603979776,576.0,09F4F1A315748E926C581BB8FA5031F3221773C2FF89CB60BC79D9DDDE06616E,Exceeds conservative GitHub Contents API raw threshold (40 MiB); not split/repacked

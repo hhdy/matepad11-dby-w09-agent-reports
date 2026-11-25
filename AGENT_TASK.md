@@ -601,3 +601,34 @@ Key facts:
 ROUND21 is read-only and must use existing ROUND19 local extraction plus ROUND18 pinned ACK/config work copies. Inspect static /init behavior for /dev/devtmpfs/tmpfs/mknod/ueventd; inspect base DTB and nine DTBOs for UFS host/PHY pinctrl, supply, clocks, resets and power-domain properties; resolve referenced pinctrl providers and regulator parents; inspect exact ACK Kconfig dependencies for DEVTMPFS and PINCTRL_MSM. Do not assume entry 8/VG is selected at runtime. No re-extraction, rebuild, source/config/DTS edits, package/AVB work, device/ADB/fastboot or flash. Upload one sanitized text report, then stop.
 
 Do not repeat ROUND18/19/20. Do not touch ack18-dby-w09-dts-draft, ai-parallel/stagea-port-until-boot, PR #1 or the protected branches. The current Stage A status is Image build pass / Stage A build-ready, not device boot accepted.
+
+
+## 2026-11-25 ROUND21 complete — current local task is ROUND22
+
+ROUND21 final report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round21/round21_first_stage_devtmpfs_and_ufs_pinctrl_overlay_audit.txt
+Blob: 3b38e822f0a00e2f3209b9aebb5da1b0f9463d07
+
+Key conclusions:
+- Exact HOS4.3 /init mounts tmpfs at /dev, creates five character nodes with mknod(), then handles device discovery through netlink uevents/sysfs coldboot. No devtmpfs needed. DEVTMPFS and DEVTMPFS_MOUNT are not justified for the current first-stage path.
+- All nine stock DTBOs carry byte-identical UFS PHY/host fragments and identical UFS fixups. They enable UFS host/PHY and supply RPMh/GDSC rails. Runtime board variant remains UNKNOWN.
+- UFS host reset is via GCC reset_control; optional device-reset GPIO is absent; the custom UFS pinctrl states are not consumed by pinned ACK UFS driver. PINCTRL_MSM is therefore not proven necessary for UFS probe.
+- HOS TLMM uses qcom,kona-pinctrl but ACK's SM8250 TLMM driver only matches qcom,sm8250-pinctrl. Enabling Kconfig alone will not bind it. Do not patch this without a deliberate compatible review.
+- Preserve qcom,vccq-parent-supply -> PM8150A S8, and PM8150 L6 shared between VCCQ and VDDP ref-clock. PMIC regulator physical parent path remains unresolved.
+- Existing board-DTS draft says the base HOS4.3 FDT lacks /memory, while ROUND19/20 say /memory exists with zero reg. ROUND22 must reconcile this stale comment. Do not guess memory or reserved-memory addresses.
+
+**Current Agent task: ROUND22**
+- firmware-analysis/round22/AGENT_TASK.md
+- firmware-analysis/round22/START_PROMPT.md
+- report destination: firmware-audit-v1/firmware-analysis/round22/round22_board_dts_compile_and_ufs_regulator_contract_audit.txt
+
+Scope:
+1. Review the existing main-branch board DTS draft against the exact pinned ACK SM8250 DTSI and its references/labels; use dtc only on an unmodified temporary copy if possible.
+2. Verify UFS host/PHY compatible, power-domain/required-opps, vdd-hba, vcc/vccq/vccq2, qcom,vddp-ref-clk and qcom,vccq-parent-supply properties against the exact patches actually present in the ROUND18 source copy and the pinned schemas/drivers.
+3. Determine whether the PM8150 regulator input parent-supply omission is a schema/software requirement, optional dummy-supply fallback, or unresolved hardware assumption. Do not invent vph_pwr or other parent rails.
+4. Reconcile the incorrect /memory comment against the existing ROUND19 decompiled source/report. No guessed memory regions.
+5. Report buildable vs blocked DTB pieces and next required evidence.
+
+No source/config/DTS/DTBO change, no Kconfig, kernel rebuild, package/sign/AVB, no ADB/fastboot/device. Temporary derived DTB only for syntax checking; no candidate boot image. Upload one sanitized report and stop.
+
+Do not repeat ROUND18-ROUND21. Do not touch ack18-dby-w09-dts-draft, ai-parallel/stagea-port-until-boot, PR #1 or protected branches.

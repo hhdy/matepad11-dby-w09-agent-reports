@@ -16,12 +16,12 @@
 | C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
 | D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
 | E — board DTS + memory/power handoff | BLOCKED | ROUND64 Agent confirms no authorized final post-ABL FDT/EFI handoff and no board-specific PM8150 input-parent evidence. Stock `/memory/reg` is an all-zero placeholder, not usable RAM. Keep the draft review-only. |
-| F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64 Agent used pinned-source AOSP avbtool 1.4.0 to inspect footer/descriptor metadata and confirmed header-v2 / separate ramdisk / 9-entry DTBO inventory. ABL-selected DTBO remains unknown and `vbmeta_cust` is anomalous; no candidate package. |
+| F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64 confirms header v2 / page 4096, separate ramdisk v0 / page 2048, nine-entry DTBO and AVB footer/descriptor coverage. `vbmeta_cust` is anomalous and ABL's selected DTBO / boot method remain unknown; no candidate package. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
 Phase E blocker report: `kernel-baseline/round61/phase-e-board-dts-and-memory-handoff.md` (committed 2026-11-25). It records the exact missing HOS4.3 final ABL memory handoff and physical PM8150 input-parent evidence, and keeps the DTS draft review-only.
 
-Phase F report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (updated 2026-11-25). ROUND64 completed the trusted read-only footer/descriptor inventory and header-v2 / ramdisk / DTBO inspection; packaging remains blocked by unknown ABL selection/acceptance, the `vbmeta_cust` anomaly and Phase E dependencies.
+Phase F report: `kernel-baseline/round61/phase-f-boot-packaging-avb.md` (updated 2026-11-25). ROUND64 completed trusted read-only footer/descriptor inspection and recorded stock header-v2 payload layout; packaging remains blocked by unknown ABL selection/acceptance, the `vbmeta_cust` anomaly and Phase E dependencies. The exact fstab flags/root layout and local mkbootimg tool contract remain to be audited from existing local evidence.
 
 ## 2026-11-24 execution evidence
 
@@ -117,7 +117,6 @@ The workflow now compiles the fixtures with `dtc`, validates the first two with 
 Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report update commit: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
-
 ### ROUND63 regulator-list cross-check (2026-11-25)
 
 Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.
@@ -238,7 +237,6 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - Corrected the preflight to invoke the Bazel version subcommand (tools/bazel version) in workflow commit 6594582ddd6758ba59ba0ec8ed85869cf73a517f.
 - Triggered a fresh manifest-pinned build in commit 17fc9603ce29f0dbaa270fd1c0cfe8922fd4e5e7. Await its actual result; no Bazel query, cquery, Kconfig resolution or Image build is claimed yet.
 ### Current gate summary
-
 - Phase A: PASS (hosted exact-source patch apply, diff-check and strict style gates).
 - Phase B: BLOCKED on schema composition / dtschema compatibility; new controlled-version run pending.
 - Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.
@@ -358,7 +356,6 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - The current hosted UFS/PHY validation runs were triggered by these checker/test changes. Their terminal results are pending. These edits do not trigger a full Kleaf/Image build.
 
 ### Hosted validation after block-layer checker correction
-
 - Run `45456839358` reached and completed the `Validate Kleaf BUILD syntax and config helper tests` step successfully. This run includes the `CONFIG_BLOCK` required-symbol assertion and its regression test (10-test suite at that revision).
 - The run then advanced to `Run authoritative UFS dt_binding_check`; its final result is still pending.
 - The subsequent Qualcomm-SMMU validator/test edits are newer than this completed unit-test step. Runs `45457024349`, `45457059231`, and `45457083961` were triggered by those edits; at last inspection they were still fetching the pinned ACK source. Do not claim the new 11-test suite passed until one of those newer runs completes its unit-test step.
@@ -477,7 +474,6 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_E_READONLY_SEC
 ### Phase F — precise local Agent handoff prepared
 Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md` (commit `9c18289442fadb83434bfab62614e99adc824872`). It limits the task to local, read-only inspection of existing HOS4.3 boot-v2, separate ramdisk, DTBO and AVB footer/vbmeta metadata, using only an already-installed trusted tool. It prohibits tool installation, raw image upload, AVB metadata disclosure, repacking and all device operations. No AVB/boot-package gate is claimed closed.
 
-
 ### Phase C/D final report links updated
 
 - `phase-c-kleaf-target-validation.md`: end-to-end nine-stage build and target validation PASS.
@@ -498,4 +494,8 @@ Phase E remains BLOCKED: the live final FDT was not available through the alread
 
 Phase F read-only metadata inventory is complete, including trusted AOSP avbtool inspection, but package creation remains BLOCKED: ABL-selected DTBO and temporary-boot behavior are unknown, and `vbmeta_cust` has an unexplained out-of-file footer pointer / empty descriptor object. The Phase F blocker document has been updated to distinguish inventory completion from package readiness.
 
-No source, DTS, DTBO, boot image, ramdisk, AVB metadata or device state was changed. Phase G remains NOT RUN. The Phase E Agent report itself identifies the only two missing inputs: an already-authorized final HOS4.3 ABL-to-Linux FDT/EFI handoff capture and an authoritative DBY-W09 PMIC power-tree/schematic for the UFS rails.
+No source, DTS, DTBO, boot image, ramdisk, AVB metadata or device state was changed. Phase G remains NOT RUN. The Phase E Agent report itself identifies the two missing boot-critical inputs: an already-authorized final HOS4.3 ABL-to-Linux FDT/EFI handoff capture and an authoritative DBY-W09 PMIC power-tree/schematic for the UFS rails.
+
+### ROUND65 Phase F read-only follow-up issued (2026-11-25)
+
+Second AI added `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_FOLLOWUP_READONLY_SECOND_AI.md` (commit `3155193eb4b1399cd72448b3ffdae2616e2ea76a`). It requests only reuse of already-existing local evidence to inspect the base-DTB first-stage fstab semantics, alternate module-loading evidence, the `vbmeta_cust` file/partition-size provenance, the already-present mkbootimg source/tool contract, and any direct HOS4.3 ABL DTBO/boot-path evidence. It prohibits device access, tool installation, build, image generation, signing, or modification. Target report: `firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md` on `firmware-audit-v1`. Until that report arrives, no boot packaging or device operation is authorized.

@@ -286,6 +286,10 @@
 	 * index 0 is RPMhPD MMCX and supplies the one required-opps slot;
 	 * index 1 retains the SoC GCC UFS_PHY_GDSC domain.
 	 * Keep this order in sync with ufs_qcom_attach_sm8250_domains().
+	 * OPEN POWER GATE: pinned ACK SM8250 selects plain MMCX without an MX
+	 * GenPD parent; HOS4.3 ARC reports an MMCX->MX logical parent edge.
+	 * Exact HOS request/dropout semantics are not yet captured. This
+	 * routes the OPP but does NOT claim full HOS ARC equivalence.
 	 */
 	power-domains = <&rpmhpd RPMHPD_MMCX>,
 			<&gcc UFS_PHY_GDSC>;

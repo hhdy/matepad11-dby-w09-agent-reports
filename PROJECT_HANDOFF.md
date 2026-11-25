@@ -1728,3 +1728,19 @@ DBY-W09 候选存在实际触发条件：
 **职责与边界：** ROUND90 是 1号 AI 只读源码分析；2号 AI 负责实现；测试 Agent 只有收到单独 `AGENT_TEST_TASK.md` 后执行。无源代码/DTS/binding/补丁/分支改动，无构建/schema/设备测试。
 
 ROUND27 schema 仍 NOT CLEAN。ROUND84–ROUND90 结论共同构成 2号 AI 处理 UFS VCC/VCCQ 电压、DRMS、首次 enable 时序和 disable 错误状态时的审查清单。
+
+
+## 2026-11-25 — ROUND91：1号 AI 复核早期 VCC parser hook 与 UFS variant-ops ABI
+
+报告：[ROUND91 — 1号 AI review: choose an early UFS VCC parse location without casually extending variant-ops ABI](./kernel-baseline/round91/round91-1ai-early-vcc-parser-hook-kabi-review.md)。
+
+- `ufshcd_pltfrm_init()` 已有正确的早期解析阶段：设置 `hba->vops` 后先调用 generic `ufshcd_parse_regulator_info()`，再进入 `ufshcd_init()`。其中 `ufshcd_parse_regulator_info()` 已先创建普通 `vcc` descriptor；此时首次 regulator handle acquire/enable 尚未发生。
+- 固定 ACK `struct ufs_hba_variant_ops` 末尾没有 `ANDROID_KABI_RESERVE()` 槽位，且 `ufshcd_pltfrm_init()` 是接收平台 variant-ops 指针的导出 API。贸然追加回调字段会改变跨驱动结构布局；需要单独 KMI/外部消费者审查，不应当作无 ABI 成本的内部改动。
+- **优先实现位置建议：** 在现有 `ufshcd_parse_regulator_info()` 内，在 `info->vcc` 创建后解析可选 `vcc-voltage-level`，不修改共享导出的 `ufshcd_populate_vreg()`。若属性缺失保持旧行为；若存在必须恰好 2 个 u32、min>0、min<=max，且必须有 VCC supply descriptor，否则提前报错。
+- 这个位置不需要新增 variant-ops 字段，也不会把属性逻辑放到太晚的 `ufs_qcom_init()`。绑定 scope 仍应限制在确实允许该 property 的 Qualcomm UFS host。
+- 若需要在 `struct ufs_vreg` 存储 min/max/request state，该结构同样经导出 helper 暴露；新增字段前也应检查相关 GKI KMI policy。in-tree 调用者目前通过 helper 获得对象，但不能仅凭这一点证明不存在 out-of-tree consumer。
+- 其他方案：variant parser callback 抽象更漂亮但有 ABI 审查成本；按 vops name 硬编码 qcom 到通用 glue 有耦合；修改 exported helper 会影响 MediaTek 动态 VCC 名称调用；只在 `ufs_qcom_init()` 解析则首次 enable 已经发生。
+
+**职责：** ROUND91 是 1号 AI 只读接口/设计审查，仅供 2号 AI 决策；测试 Agent 只有在独立 `AGENT_TEST_TASK.md` 下执行。本轮未修改源码、DTS、binding、补丁、分支，未运行 KMI、构建、schema 或设备测试。
+
+ROUND88 的首次 enable 时序要求仍成立；ROUND91 收窄了建议接入位置。ROUND27 schema 继续 NOT CLEAN。

@@ -1,0 +1,271 @@
+ROUND25 — HOS4.3 MMCX/MX ARC request and dropout semantics audit
+======================================================================
+Device      : Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250
+Scope       : read-only offline extraction from existing ROUND19 decompiled
+              HOS4.3 base DTS work copy and already-published ROUND11/ROUND14
+              reports. No firmware re-extraction, no tool install, no compile,
+              no device access, no source/DTS/config/report modification.
+Report type : sanitized UTF-8. No physical address, no AUX binary, no key,
+              no signature, no digest, no device-unique identifier.
+Date        : 2026-11-25
+
+----------------------------------------------------------------------
+0. EVIDENCE BASE AND LIMITS
+----------------------------------------------------------------------
+Primary local work copy (existing, reused unchanged):
+  ROUND19 decompiled HOS4.3 base DTS (base_2.dts, 26546 lines;
+  local work-copy path omitted)
+  Relevant line windows reused (read only):
+    mxlvl provider + children        : lines 4193-4224
+    cxlvl provider (edge context)    : lines 4226-4263
+    mmcxlvl provider + children      : lines 4668-4704
+    UFS host node                    : lines 4100-4127
+    mmcx-supply consumer nodes       : lines 8189, 8293, 8609, 19396
+    vdd_mx-supply consumer nodes     : lines 3555, 3568, 3594, 5649
+    UFS slv-qhs nodes                : lines 8561-8579
+    alias map (VDD_*_LEVEL)          : lines 25042-25102
+
+Already-published reports reused (read only, not re-parsed):
+  ROUND14  round14_arc_mmcx_mx_power_properties.txt
+           (337 lines; ARC provider/child/edge/corner census; already
+            sanitized, node paths published)
+  ROUND11  round11_pmic_parent_supply_findings.txt
+           (113 lines; authoritative 4-edge parent-supply list; proxy vs
+            parent distinction)
+
+Not available / not inspected by rule:
+  ROUND30 report — absent on firmware-audit-v1 (verified via API: the branch
+           carries rounds 1-24, 61, 64, 65; no round30 directory). Any item
+           that would depend on it is marked NOT_CAPTURED.
+  AUX binary corner tables — excluded by this round's rules.
+  Live/runtime regulator state — out of scope.
+
+Redaction convention: all MMIO/unit-address suffixes are written as @[redacted].
+Corner index values (e.g. 0x40, 0x10, 0xffffffff, 0xffff) are LOGICAL ARC corner
+indices stored in DT, NOT physical addresses or microvolts; they are retained
+because ROUND14 already published them and they carry no location information.
+
+----------------------------------------------------------------------
+1. WORK PACKAGE A — exact HOS4.3 ARC providers and UFS-related consumers
+----------------------------------------------------------------------
+Status: PARTIAL (provider/child/edge facts COMPLETE; qcom,set->ACTIVE/SLEEP
+bit-name mapping NOT_CAPTURED; these are ARC topology edges, NOT PMIC physical
+input supplies.)
+
+A.1 MMCX provider (base_2.dts 4668-4704; ROUND14 sec 2.1)
+  node path            : /soc/rsc@[redacted]/rpmh-regulator-mmcxlvl
+  compatible           : "qcom,rpmh-arc-regulator"
+  qcom,resource-name   : "mmcx.lvl"
+  qcom,send-defaults   : NOT_CAPTURED (NOT_FOUND in ROUND14 scope)
+  qcom,always-wait-for-ack : NOT_CAPTURED (NOT_FOUND in ROUND14 scope)
+  qcom,use-awake-state : NOT_CAPTURED (NOT_FOUND in ROUND14 scope)
+  provider-node parent edges (ARC topology, not PMIC input):
+    pm8150a_s4_level-parent-supply
+                         = <phandle 0x7f> -> mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+    pm8150a_s4_level_ao-parent-supply
+                         = <phandle 0x7b> -> mxlvl/regulator-pm8150a-s3-level-ao
+  proxy-supply          = <phandle 0x69> -> its OWN ALL child
+                          (rpmh-regulator-mmcxlvl/regulator-pm8150a-s4-level;
+                           identity confirmed by phandle owner in ROUND11/14;
+                           proxy is SEMANTICALLY DISTINCT from an input parent)
+  direct children (unit-address-free names):
+    (a) regulator-pm8150a-s4-level     label "mmcx ALL child"
+        qcom,set                       = 3 (0x3)  -> ROUND14 name: ALL
+        qcom,init-voltage-level        = 0x40 (64)  logical corner
+        qcom,min-dropout-voltage-level = 0xffffffff (stored max-u32)
+        regulator-min/max-microvolt    = 0x40 / 0xffff  logical corners
+        qcom,proxy-consumer-enable; qcom,proxy-consumer-voltage = <0x180 0xffff>
+        phandle = 0x69 (105)
+    (b) regulator-pm8150a-s4-level-ao  label "mmcx AO child"
+        qcom,set                       = 1 (0x1)  -> ROUND14 name: AO
+        qcom,init-voltage-level        = 0x40 (64)  logical corner
+        qcom,min-dropout-voltage-level = 0xffffffff (stored max-u32)
+        phandle = 0x3c1 (961)
+    (c) regulator-pm8150a-s4-level-so  label "mmcx SO sibling"
+        qcom,set                       = 2 (0x2)  -> ROUND14 name: SO
+        qcom,init-voltage-level        = 0x40 (64)  logical corner
+        qcom,min-dropout-voltage-level : NOT_CAPTURED (NOT_FOUND in ROUND14)
+        phandle : NOT_CAPTURED (absent in ROUND14)
+
+A.2 MX provider (base_2.dts 4193-4224; ROUND14 sec 2.2)
+  node path            : /soc/rsc@[redacted]/rpmh-regulator-mxlvl
+  compatible           : "qcom,rpmh-arc-regulator"
+  qcom,resource-name   : "mx.lvl"
+  qcom,proxy-supply on provider : NOT_CAPTURED (NOT_FOUND in ROUND14 scope)
+  provider-node parent edge:
+    pm8150a_s3_mmcx_sup_level-parent-supply
+                         = <phandle 0x7a> -> cxlvl/regulator-pm8150-s3-mmcx-sup-level
+                         (ROUND14 sec 2.3 records this as a 5th raw property
+                          NOT in ROUND11's authoritative 4-edge list; kept as
+                          observed topology, not promoted to a confirmed MX->CX
+                          performance-power edge.)
+  direct children:
+    (d) regulator-pm8150a-s3-level      qcom,set = 3 (ALL name),
+        qcom,init-voltage-level = 0x10 (16) logical corner, phandle 0x6a (106)
+    (e) regulator-pm8150a-s3-level-ao   qcom,set = 1 (AO name),
+        qcom,init-voltage-level = 0x10, phandle 0x7b (123)
+    (f) regulator-pm8150a-s3-mmcx-sup-level  qcom,set = 3 (ALL name),
+        qcom,init-voltage-level = 0x10, phandle 0x7f (127)
+        -> this is the TARGET of the MMCX ALL parent edge (see A.3).
+        qcom,min-dropout-voltage-level on (d)(e)(f): NOT_CAPTURED
+        (NOT_FOUND in ROUND14 scope on MX children)
+
+A.3 MMCX -> MX parent edge, target node name + phandle confirmation
+  EDGE 1 (ALL): source rpmh-regulator-mmcxlvl.pm8150a_s4_level-parent-supply
+                = <0x7f>; phandle 0x7f owner = mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+                (ROUND11 edge 3; ROUND14 EDGE 1). CONFIRMED by phandle owner.
+  EDGE 2 (AO):  source rpmh-regulator-mmcxlvl.pm8150a_s4_level_ao-parent-supply
+                = <0x7b>; phandle 0x7b owner = mxlvl/regulator-pm8150a-s3-level-ao
+                (ROUND11 edge 4; ROUND14 EDGE 2). CONFIRMED by phandle owner.
+  CX side (context only, out of UFS scope): cxlvl carries
+    pm8150_s3_level-parent-supply = <0x6a> and
+    pm8150_s3_level_ao-parent-supply = <0x7b>,
+    proxy-supply = <0x7a> (ROUND11 edges 1-2).
+
+A.4 qcom,set semantics as documented in existing safe reports
+  ROUND14 labels set=3 as ALL, set=1 as AO, set=2 as SO for the MMCX children.
+  Numerically 3 = 1|2, so set=3 includes both flags carried by the 1 and 2
+  children; however the mapping of bit0/bit1 to the literal names ACTIVE and
+  SLEEP is NOT documented in any available report. Per the task rule, the
+  ACTIVE/SLEEP bit-name mapping is NOT_CAPTURED and is not inferred.
+
+A.5 "Do not treat these as PMIC physical input supplies"
+  All edges in A.1-A.3 are RPMh-internal ARC level-parent relations. ROUND11
+  explicitly states these must NOT be converted into vdd-s*-supply in a
+  downstream DTS. No PMIC input-supply claim is made here.
+
+----------------------------------------------------------------------
+2. WORK PACKAGE B — UFS request participation (active / sleep / both)
+----------------------------------------------------------------------
+Status: UNKNOWN (cannot be proven from the local base FDT and prior logs.)
+
+Checked in base_2.dts (existing work copy):
+  UFS host node /soc/ufshc@[redacted] (lines 4100-4127):
+    compatible = "qcom,ufshc"; status = "disabled";
+    power is expressed via ufs_phy_gdsc + clocks + bus vectors;
+    there is NO vdd-*/vcc*-supply phandle, NO mmcx-supply, NO MX parent-supply
+    property on this node. (reg/phandle/clock cell values omitted as they are
+    either addresses or not ARC-topology evidence.)
+  UFS BIMC/AHB slv nodes:
+    slv-qhs-ufs-card-cfg (8561-8569), slv-qhs-ufs-mem-cfg (8571-8579):
+    these carry cell-id/qcom,buswidth/qcom,bus-dev/qcom,bcms and phandles,
+    but NO mmcx-supply and NO ARC parent-supply.
+  Nodes that DO carry mmcx-supply = <0x69> (MMCX ALL child):
+    slv-qhs-camera-cfg (8189), slv-qhs-display-cfg (8293),
+    slv-qhs-venus-cfg (8609), qcom,mdss_mdp (19396),
+    plus vdd_mm-supply = <0x69> on videocc/camcc (3555/3568).
+    -> all camera/display/video-class consumers; NONE is UFS.
+  Nodes that DO carry vdd_mx-supply = <0x6a> (MX s3-level child):
+    videocc (3555), camcc (3568), gpucc (3594), spss (5649).
+    -> NONE is UFS.
+
+Conclusion: In the HOS4.3 base FDT, the UFS host is NOT an explicit consumer of
+the MMCX/MX ARC level rails. Whether UFS participates in active and/or sleep
+state via some other, non-DT-visible mechanism is not proven by the existing
+evidence, so participation is UNKNOWN. This does not assert UFS is excluded
+from those states at runtime; it only reports what the safe files show.
+
+----------------------------------------------------------------------
+3. WORK PACKAGE C — corner translation (AUX names, dropout sentinel, rule)
+----------------------------------------------------------------------
+Status: PARTIAL / BLOCKED-by-scope.
+
+C.1 AUX logical corner names and hardware-level indexes
+  NOT_CAPTURED. ROUND14 lists this under UNKNOWN ("symbolic meaning of logical
+  corner indices"); ROUND30 report is absent; AUX binary is excluded by rule.
+  No corner-name table is asserted.
+
+C.2 qcom,min-dropout-voltage-level value semantics
+  MMCX ALL child (a) and MMCX AO child (b): value = 0xffffffff.
+    ROUND14 records it verbatim as "stored max-u32 value (4294967295)" and
+    explicitly lists its symbolic meaning under UNKNOWN.
+  Is it zero, one, a negative-one sentinel, or another value?
+    The stored value is neither 0 nor 1. Whether 0xffffffff encodes a signed
+    -1 sentinel is NOT documented in any available report, so per the task
+    rule it is NOT interpreted as a signed value: reported as "stored max-u32,
+    meaning UNKNOWN". MMCX SO child (c) and all MX children (d)(e)(f):
+    NOT_CAPTURED (NOT_FOUND in ROUND14 scope).
+
+C.3 Actual HOS ARC parent-provider state-derivation rule
+  NOT_CAPTURED. No existing safe report documents a rule by which the HOS ARC
+  parent provider derives a parent state (e.g. from the child corner plus the
+  dropout value). No rule is invented here.
+
+----------------------------------------------------------------------
+4. WORK PACKAGE D — compare with exact ACK 6.18.33 facts
+----------------------------------------------------------------------
+Status: PASS (classification only; no ACK source re-read, no build.)
+
+ACK facts compared (exactly the four supplied by the task):
+  ACK-1: SM8250 RPMHPD selects plain MMCX with NO MX parent.
+  ACK-2: CX uses CX-with-MX-parent.
+  ACK-3: other SoC tables select MMCX-with-CX-parent, not MX.
+  ACK-4: generic GenPD parent propagation passes the same pstate absent a
+         required-opps translation table (ROUND22 also confirmed rev2 carries
+         only 1 power-domain on the UFS host pre-rev2; not re-measured here).
+
+Observation: HOS4.3's MMCX provider DOES carry explicit MMCX->MX parent edges
+(EDGE 1 ALL and EDGE 2 AO, A.3), and the MX provider additionally carries a raw
+->CX parent-supply property (A.2). The HOS MMCX ALL child init corner is 0x40
+while its MX parent-target children use 0x10, with a stored max-u32 dropout
+value on the MMCX side. So the HOS parent state is NOT a same-value copy of the
+child corner; the two providers use different corner spaces.
+
+Classification of "a simple MMCX->MX parent descriptor" in ACK:
+  - As same-state propagation: ACK-4 means adding only a parent phandle, with
+    no required-opps translation, would pass the SAME pstate to MX. That is
+    structurally different from the HOS MMCX(0x40)/MX(0x10) corner relationship
+    observed above -> NOT equivalent to HOS semantics.
+  - As requiring explicit corner translation: YES. Reproducing HOS dropout
+    delta would need an explicit corner translation table (required-opps or
+    equivalent) plus a documented encoding for 0xffffffff dropout. That
+    encoding/rule is NOT_CAPTURED (C.2/C.3), so the translation cannot be
+    derived from available evidence.
+  - Overall: UNRESOLVED for implementation. A bare parent descriptor is
+    insufficient; an explicit, evidence-backed translation rule does not yet
+    exist locally. This is design evidence only — no descriptor was written.
+
+----------------------------------------------------------------------
+5. STATUS SUMMARY AND MEANING FOR INITIAL UFS BRING-UP
+----------------------------------------------------------------------
+  Work package A : PARTIAL — provider identity, all MMCX/MX children, raw
+                   corner/set/init/dropout values, and both MMCX->MX parent
+                   edges are COMPLETE and phandle-confirmed; ACTIVE/SLEEP
+                   bit-name mapping NOT_CAPTURED.
+  Work package B : UNKNOWN — UFS host is not an explicit MMCX/MX ARC consumer
+                   in the base FDT; active/sleep participation unproven.
+  Work package C : PARTIAL/BLOCKED-by-scope — dropout stored value captured
+                   (0xffffffff, meaning UNKNOWN); AUX corner names and the
+                   parent-state derivation rule NOT_CAPTURED.
+  Work package D : PASS — a bare ACK MMCX->MX parent descriptor would be
+                   same-state propagation, not HOS-equivalent; explicit corner
+                   translation is required but its rule is unresolved.
+
+Meaning for initial UFS bring-up:
+  - The ROUND33/ROUND37 UFS dual-domain candidate should NOT be treated as a
+    proven HOS-equivalent performance-power route. HOS's MMCX->MX edge exists,
+    but its corner translation semantics are not captured locally.
+  - UFS is not visibly tied to ARC level rails in the base FDT, so there is no
+    positive evidence that a MMCX->MX parent descriptor would change UFS
+    behavior at first boot. Adding one would be speculative.
+  - Blocking items before any such change: capture a documented AUX corner
+    table and dropout encoding, and obtain a post-ABL FDT / runtime evidence
+    showing which DTBO and which power state UFS actually uses. Neither is
+    available now; no implementation is authorized by this report.
+
+----------------------------------------------------------------------
+6. BOUNDARY AND REDACTION STATEMENT
+----------------------------------------------------------------------
+  - No firmware re-extraction, WSL redeploy, tool install/download, Kconfig,
+    Kleaf/Bazel, kernel/DT compile, AVB, packaging or signing was performed.
+  - No ADB/fastboot/recovery, reboot, unlock, root, flash or partition write.
+  - No source, DTS, config, patch, firmware, AUX binary or prior report was
+    modified. No report other than this one was uploaded this round.
+  - All MMIO/unit-address coordinates are redacted as @[redacted]; no physical
+    start/end/base/reg value is published. Corner indices retained are logical
+    DT values already published in ROUND14, not physical addresses.
+  - No key, signature, salt, digest, rollback value, token, serial, MAC, IMEI
+    or other device-unique identity is present.
+  - Findings are static DT metadata plus previously published report facts;
+    nothing here proves any rail is enabled, loaded, or at a given state on a
+    running device.

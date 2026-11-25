@@ -21,7 +21,7 @@ diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consum
 index 380884892539..a6f0d0f9a8b1 100644
 --- a/drivers/regulator/proxy-consumer.c
 +++ b/drivers/regulator/proxy-consumer.c
-@@ -212,0 +212,0 @@ static struct regulator *proxy_consumer_get(struct proxy_consumer *consumer)
+@@ -212,6 +212,30 @@ static struct regulator *proxy_consumer_get(struct proxy_consumer *consumer)
  	return regulator_get(consumer->reg_dev, "proxy");
  }
  
@@ -52,7 +52,7 @@ index 380884892539..a6f0d0f9a8b1 100644
  /**
   * regulator_proxy_consumer_register() - conditionally register a proxy consumer
   *		 for the specified regulator and set its boot time parameters
-@@ -225,0 +246,0 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+@@ -225,6 +246,7 @@ regulator_proxy_consumer_register(struct device *reg_dev,
  				  struct regulator_dev *rdev)
  {
  	struct proxy_consumer *consumer;
@@ -60,7 +60,7 @@ index 380884892539..a6f0d0f9a8b1 100644
  	struct device_node *group_node;
  	const char *reg_name = "";
  	bool child_scoped;
-@@ -250,0 +272,0 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+@@ -250,6 +272,25 @@ regulator_proxy_consumer_register(struct device *reg_dev,
  		goto unlock;
  	}
  

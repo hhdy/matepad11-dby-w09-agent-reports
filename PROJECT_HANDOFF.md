@@ -1142,3 +1142,16 @@ Commit: `9737dd9f469b2bd7b13dc5167e181f71f0173cd2`.
 It contains one fragment targeting `&rootparam` and the HOS4.3 ROUND19 entry-8 / VG values: qcom board-id 0x206a, qcom,boardid 08:02:09:08, DBY_W09_VG, product DBY-W09, hardware SH1DBSLM and the stock huawei,modem_id sentinel. It also preserves root compatible `huawei,dby-w09, qcom,sm8250`, matching the public same-device minimal overlay reference.
 
 This is explicitly a **VG candidate only**. The exact HOS4.3 ABL-selected variant on the user's unit remains UNKNOWN. The file is not dtc-compiled, not validated against the current board base, not packed into a DTBO image and not confirmed accepted by ABL. Do not package it until the board variant and the full DTBO header/table contract are evidenced. No protected branch was changed.
+
+
+## 2026-11-25 — Board DTS rev2 candidate created (not compiled)
+
+A separate source candidate has been added:
+`dts/dby-w09-ack18-board.dts.rev2.candidate`
+Commit: `770329d2819d8f15e8e983535b5f4e7d6414caf5`.
+
+It is derived from the existing review draft and makes only two evidence-based changes:
+1. Adds the exact ROUND37 UFS Host domain order: RPMhPD MMCX index 0, GCC UFS_PHY_GDSC index 1, with the corresponding dt-binding headers. This activates the ROUND33 helper's required-opps-to-MMCX route.
+2. Corrects the HOS4.3 memory comment: /memory is present, device_type is memory, and reg is the all-zero placeholder.
+
+The original review draft is untouched. This rev2 candidate has not been dtc-compiled, schema-validated, included in a Kleaf DTB target, or built into any DTB. It does not close the final memory handoff or PM8150 electrical parent gates. Rootparam VG remains candidate-only. Do not promote the rev2 file or create a boot package until the ROUND22 report and subsequent dtc/schema checks are reviewed.

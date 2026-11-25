@@ -1053,3 +1053,11 @@ ROUND78 输入身份核验已由 ROUND27 报告解决：测试 Agent 从历史 c
 - 因此不能仅为 schema 通过而从 DTS 删除这个属性。2号 AI 应评估在 ACK 中恢复 VCC consumer voltage range parsing + regulator_set_voltage 及匹配 binding，或证明 regulator/provider 约束等效地满足原要求。
 - Huawei `/rootparam` 可以评估按 node-name + 特征属性 select 的 binding；固定 ACK 的 `ethernet-phy.yaml` 已有 nodename selector 先例，避免在 ABL-owned 节点新增未知 compatible。
 - 本轮是 1号 AI 的只读源码研究，不派发测试 Agent；如 2号 AI 后续实现，再由其签发独立的 AGENT_TEST_TASK。
+
+
+## ROUND83 — 1号 AI PM8150 supply-name contract research
+
+- 报告：`kernel-baseline/round83/round83-pm8150-driver-supply-name-contract.md`。
+- 固定 ACK PM8150 driver 的 lookup keys：L5 -> vdd-l3-l4-l5-l18；L6/L9 -> vdd-l6-l9；L17 -> vdd-l13-l16-l17；S4 -> vdd-s4；PM8150L S8 -> vdd-s8。
+- 这些是 driver 的 regulator-core supply name，不证明 DBY-W09 真实物理父源。HOS4.3 base FDT 未发现匹配 properties；不允许凭名称补父级或创造 VPH 电源。
+- 等待 board schematic / power tree / authoritative final post-ABL FDT，再决定是否添加输入 phandle。当前仅作 1号 AI 源码核验，不派发测试 Agent。

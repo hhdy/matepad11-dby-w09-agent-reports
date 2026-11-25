@@ -61,3 +61,10 @@ Correct interpretation:
 - HOS4.3 ABL will update the inherited memory node: UNKNOWN.
 - Actual RAM base/size and reserved-memory final map: BLOCKED.
 - No source, DTS, DTB, config, branch-protected artifact or device changed.
+
+
+## Same-device public Linux cross-check
+
+The public same-device Linux 7.0 board DTS (svesnav/linux-dby-w09/sm8250-huawei-dby-w09.dts) includes the same SM8250 SoC DTSI and does not explicitly define its own /memory node. It therefore inherits the same generic memory placeholder from sm8250.dtsi. The project README describes a working boot path on an earlier HOS generation.
+
+This is useful evidence that the generic SM8250 bootloader-fill memory node shape can work on the same device with an earlier ABL/HOS generation. It is not proof that the user's current HOS4.3 ABL performs the same fixup, nor that it writes the exact same RAM range. Keep current HOS4.3 final FDT unknown.

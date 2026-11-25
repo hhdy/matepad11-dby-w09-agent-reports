@@ -769,3 +769,34 @@ The exact pinned ACK headers and SoC DTSI confirm the board rev2 values:
 This validates the literal binding labels and IDs in dts/dby-w09-ack18-board.dts.rev2.candidate against the pinned source. It does not replace dtc/schema/build validation or close the distinct MMCX-to-MX ARC equivalence issue.
 
 Detailed note: kernel-baseline/round69/round69-sm8250-ufs-dual-genpd-provider-identity.md.
+
+
+## 2026-11-25 ROUND22 complete — current local task is ROUND23
+
+ROUND22 final report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round22/round22_board_dts_compile_and_ufs_regulator_contract_audit.txt
+Blob: 3fbae8d4a2cd75458adead3c3b768426c29e9628
+
+Key findings:
+- The original board DTS draft preprocesses and compiles using pre-installed cpp + dtc 1.7.0. Temporary DTB: 145841 bytes; cpp exit 0, dtc exit 0. 32 warnings are inherited from upstream sm8250.dtsi; zero are from the board draft. This tested the original one-domain draft only, not rev2.
+- Host vcc/vccq/vccq2, VDDP ref-clock and QMP PHY vdda rails have actual consumers in the patched ACK Image.
+- qcom,vccq-parent-supply is schema-only metadata; the compiled ACK source has no runtime consumer for this property. Do not claim S8 is enabled or voted.
+- HOS vdd-hba to GDSC must not be copied to ACK regulator supply; GDSC is a GenPD and current board draft's absence is correct.
+- One-domain original draft leaves ROUND33's MMCX OPP required-device route dormant; rev2 adds MMCX index 0 / GCC GDSC index 1 and is the candidate to validate next.
+- PM8150 input parent properties optional at schema/software level, dummy-parent behavior possible, but physical input wiring remains unknown.
+- The old /memory comment was wrong; original draft comment was corrected. Comments for VCCQ-parent versus VDDP runtime behavior were also corrected in original draft and rev2 candidate.
+
+**Current local task: ROUND23**
+- firmware-analysis/round23/AGENT_TASK.md
+- firmware-analysis/round23/START_PROMPT.md
+- report destination: firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt
+
+ROUND23 must compile temporary copies of current main board rev2 candidate and VG rootparam overlay against exact ROUND18 pinned ACK source:
+1. cpp + dtc base DTB; include symbol table.
+2. dtc compile rootparam-only overlay with symbols/fixups.
+3. fdtoverlay apply overlay to base if the tool exists.
+4. Inspect merged DTB and verify five /rootparam properties, root identity, MMCX/GCC Host power-domain order, PHY GCC GDSC, expected UFS supply rails, absence of vdd-hba-supply.
+5. If tools absent, mark BLOCKED; do not install.
+No source/config/DTS/DTBO edit, no Kleaf/Bazel, no kernel build, no dtbs_check, no packaging, no mkdtimg, no AVB, no device/ADB/fastboot. One sanitized report only, then stop.
+
+Do not touch the protected DTS branch, second-AI branch, PR #1, or existing candidate source files.

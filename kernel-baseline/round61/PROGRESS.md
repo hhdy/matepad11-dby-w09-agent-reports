@@ -520,3 +520,20 @@ Key evidence and limits:
 - Classification: ROUND25 is a useful design constraint, not a Phase E closure. It strengthens the classification of MMCX/MX as an unresolved hardware-equivalence/voltage-margin risk, not a proven UFS probe blocker.
 
 No source, DTS, config, firmware or device state was changed; no build or device operation was performed. Phase E remains BLOCKED on final ABL memory handoff and authoritative PM8150 physical input-parent topology. Phase F remains BLOCKED for packaging; Phase G remains NOT RUN.
+
+
+### ROUND26 HOS4.3 vs inherited ACK memory/reserved-memory interval audit received (2026-11-25)
+
+The local Agent's [ROUND26 report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt) is now available and reviewed. It compared all physical tuples locally; no coordinates were uploaded.
+
+Key results:
+- Pinned ACK `sm8250.dtsi` has 18 immediate fixed `no-map` reserved-memory children. HOS4.3 has 37 children: 24 fixed-reg and 13 dynamic/no-fixed-reg.
+- 17 of 18 ACK fixed intervals are exact matches to HOS4.3 fixed intervals. The remaining `cdsp_secure_heap` is ACK fixed-reg versus HOS dynamic/no-reg and is NOT proven equivalent. No ACK-vs-HOS fixed interval overlap or same-base/different-size case was found.
+- HOS has seven fixed nodes without exact ACK counterparts; its dynamic pools include CMA/shared pools absent from the generic ACK DTSI.
+- rev2 includes `sm8250.dtsi`, so it inherits all 18 ACK fixed carveouts, six SoC memory-region consumers, and the ACK top-level memory placeholder. Presence of a consumer node does not prove its driver probes.
+- The ACK and HOS top-level memory placeholders are both zero-size single tuples, but are not structurally identical: ACK has a nonzero base and unit-address suffix; HOS has a zero base and no unit address. The rev2 include graph therefore inherits the ACK placeholder, not the HOS placeholder.
+- Because neither placeholder gives usable RAM and the final post-ABL FDT remains unavailable, overlap with actual RAM / ABL / secure-firmware allocations is UNKNOWN. The report recommends retaining the 17 exact-match reservations as the more defensible baseline than omitting all HOS reservations, while keeping `cdsp_secure_heap` and all final RAM overlap decisions unresolved.
+
+**Decision:** do not edit or override memory nodes from this comparison alone. Phase E remains BLOCKED until the final post-ABL memory handoff is evidenced; do not claim the generic reservation set is fully safe merely because 17 intervals match. ROUND26 is read-only and no source or device state changed.
+
+ROUND27 is now unblocked for review/execution prerequisites: ROUND25 and ROUND26 reports are both present on `firmware-audit-v1`. Its scope is isolated Kleaf/Bazel DTB + rootparam DTBO + composite target/schema validation only; it explicitly forbids kernel/Image builds, DTBO table packaging, boot packaging and device actions. Execute only under its existing cleanup and no-source-modification boundaries.

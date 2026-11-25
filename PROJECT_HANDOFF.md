@@ -1186,3 +1186,51 @@ The exact pinned ACK headers and SoC DTSI confirm the board rev2 values:
 This validates the literal binding labels and IDs in dts/dby-w09-ack18-board.dts.rev2.candidate against the pinned source. It does not replace dtc/schema/build validation or close the distinct MMCX-to-MX ARC equivalence issue.
 
 Detailed note: kernel-baseline/round69/round69-sm8250-ufs-dual-genpd-provider-identity.md.
+
+
+## 2026-11-25 — ROUND22 completed: base DTS syntax compiles; UFS contracts audited
+
+Final report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round22/round22_board_dts_compile_and_ufs_regulator_contract_audit.txt
+Blob: 3fbae8d4a2cd75458adead3c3b768426c29e9628
+
+Results from a byte-identical temporary copy of the original main board DTS draft:
+- cpp preprocessing exit 0.
+- dtc 1.7.0 exit 0, output DTB 145,841 bytes.
+- 32 warnings came exclusively from the pinned upstream sm8250.dtsi (2 avoid_unnecessary_addr_size; 30 unique_unit_address). No warning originated in the DBY-W09 draft itself.
+- labels apps_rsc, ufs_mem_hc, ufs_mem_phy and all required include files/macros resolve.
+- This proves syntax and label resolution for the original one-domain draft only. It does NOT compile the newer rev2 candidate, validate schema, or prove hardware.
+
+UFS property/consumer findings:
+- vcc/vccq/vccq2 rails are consumed by generic UFS regulator setup.
+- qcom,vddp-ref-clk-supply is consumed by the patched UFS Host driver (ufs-qcom.c:1525-1572), including regulator load and enable lifecycle.
+- vdda-phy-supply, vdda-pll-supply and vdda-phy-always-on are consumed by the patched QMP UFS PHY driver (phy-qcom-qmp-ufs.c); ROUND63 schema+driver patches are present in ROUND18 build tree.
+- qcom,vccq-parent-supply has schema support but no runtime consumer in the compiled ACK Image (zero source hits). It is topology metadata only; do not claim ACK enables/votes PM8150L S8 through it.
+- vdd-hba-supply is correctly absent: ACK treats the absent optional HBA regulator as already enabled, and the actual GDSC is managed via the inherited power-domains property. Do not copy the HOS GDSC phandle into the normal regulator supply property.
+- The original one-domain draft is schema-permitted and does not block probe, but ROUND33's MMCX required-opps routing remains dormant until the Host gets two ordered power domains. The separate main rev2 candidate now adds MMCX index 0 + GCC UFS_PHY_GDSC index 1 to activate that route. ROUND22 did not test rev2.
+
+PM8150 parent supply:
+- input supply properties are optional in the pinned ACK qcom,rpmh-regulator.yaml.
+- With a populated DT, regulator core may provide a dummy parent when lookup returns ENODEV. This is software behavior only: it assumes the physical input is already present and enabled. It does not establish board wiring or safe power sequencing.
+- Physical PM8150 input map remains UNKNOWN/BLOCKED. No guessed vph_pwr/vdd-s*/fixed regulator.
+
+Build-readiness:
+- original board DTS: syntax PASS; full dtbs_check/schema and runtime hardware still NOT_RUN.
+- rootparam DTBO: ROUND22 local copy did not contain the newly restored main-branch candidate; Round23 now validates that candidate.
+- memory handoff and PM8150 electrical parents remain unresolved. No boot package or device operation.
+
+After ROUND22, documentation was corrected:
+- original dts/dby-w09-ack18-board.dts.draft now describes /memory as present with device_type memory and all-zero reg.
+- original draft and rev2 candidate comments now accurately state that qcom,vccq-parent-supply has no runtime consumer in this ACK Image; qcom,vddp-ref-clk-supply is the property with the runtime UFS Host consumer.
+
+## 2026-11-25 — ROUND23 dispatched: rev2 board DTB and rootparam composite verification
+
+Task files:
+- firmware-analysis/round23/AGENT_TASK.md
+- firmware-analysis/round23/START_PROMPT.md
+
+ROUND23 uses the current main files: dby-w09-ack18-board.dts.rev2.candidate and dby-w09-ack18-rootparam.dtso.draft. It must compile temporary copies against the exact pinned ROUND18 ACK tree, using cpp + dtc for the base and overlay, then apply the overlay with fdtoverlay if available. Verify the resulting composite tree: rootparam five values, root identity, Host power-domains MMCX index 0 / GCC UFS_PHY_GDSC index 1, PHY GCC GDSC unchanged, correct UFS supply properties, no vdd-hba-supply. Confirm the overlay fixup/symbol path resolves.
+
+The task is local/read-only: no changes to either main DTS source candidate, no source/config edits, no schema or kernel build, no Kleaf/Bazel, no boot image/DTBO table package/AVB, no device. It uploads one report to firmware-audit-v1/firmware-analysis/round23/ and stops.
+
+Round23 is a temporary syntax/composite validation only. It does not establish that VG is the actual selected hardware variant or that ABL accepts a one-entry DTBO image. Final memory handoff and PM8150 physical input-parent topology remain blocked.

@@ -1,0 +1,61 @@
+AI1 ROUND130 — FOUR-PATCH UFS LIFECYCLE INTEGRATION SERIES
+=========================================================
+Owner: 1号 AI (ChatGPT)
+Status: PREPARED; full combined Agent validation REQUIRED.
+This is an isolated candidate branch. Do not merge to the AI2 Stage A branch.
+
+Immutable source:
+  aosp-mirror/kernel_common
+  android17-6.18.33_r00
+  ACK commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+
+Stage A base:
+  ai-parallel/stagea-port-until-boot@2f21233148a04afdd61e44b1be7688399967d9d0
+  kernel-baseline/round61/round32-stagea-series.txt
+  Apply the 17 Stage A patches exactly as recorded there first.
+
+Then apply these four AI1 candidates in order:
+
+18. kernel-baseline/round130/0001-r120.patch
+    Origin blob: f604c8672fcbc98f3e9645f5e8888c8a34b1c11e
+    SHA-256: 12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7
+    Origin: ROUND120 per-HBA async scan join
+    Paths: drivers/ufs/core/ufshcd-priv.h, drivers/ufs/core/ufshcd.c
+
+19. kernel-baseline/round130/0002-r122.patch
+    Origin blob: 64dd2ad9022251e2411a1a745aeb920a0badfa85
+    SHA-256: 2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66
+    Origin: ROUND122 UFS regulator load-first teardown
+    Path: drivers/ufs/core/ufshcd.c
+    Must follow #18. Source review confirms separate ufshcd.c regions; actual
+    zero-fuzz sequential apply is required.
+
+20. kernel-baseline/round130/0003-r128-v2.patch
+    Origin blob: 22ccec1cabf2d78e61442d19219985135f8341e7
+    SHA-256: 53ef42bb997a46e776f65c256039b13285047f784fed506ab8b22ab7f76e3bfb
+    Origin: ROUND128 V2 QMP UFS two-rail state candidate
+    Path: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+    Do not use the rejected original ROUND125 patch.
+
+21. kernel-baseline/round130/0004-r126.patch
+    Origin blob: c180dbf458403d68b2c32c1d54776a7559e7e5db
+    SHA-256: eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80
+    Origin: ROUND126 proxy-consumer load-first teardown
+    Path: drivers/regulator/proxy-consumer.c
+
+Prior group validation:
+  ROUND124 report: firmware-analysis/round124/TEST_AGENT_ROUND124_COMBINED_UFS_CORE_REPORT.txt
+  ROUND129 report: firmware-analysis/round129/TEST_AGENT_ROUND129_COMBINED_REPORT.txt
+These are separate group tests, not a substitute for this four-patch joint test.
+
+Expected candidate overlay files relative to the 17-patch baseline:
+  drivers/ufs/core/ufshcd-priv.h
+  drivers/ufs/core/ufshcd.c
+  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+  drivers/regulator/proxy-consumer.c
+
+The ROUND130 Agent taskbook is on firmware-audit-v1:
+  firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_TASKBOOK.md
+
+No source files, DTS, tests, configs, firmware or AI2 branches are changed by
+this patch-only candidate package.

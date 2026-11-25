@@ -1279,3 +1279,15 @@ The exact qcom source directory currently has no BUILD.bazel. When creating a di
 The rules_devicetree docs explicitly permit same-directory dtsi files in dtb srcs; different-directory includes instead require devicetree_library(). Exact ruleset module version in local Bzlmod still needs checking before implementing BUILD.bazel.
 
 Detailed note: kernel-baseline/round72/round72-kleaf-qcom-dts-include-dependency-design.md.
+ 
+## 2026-11-25 — ROUND24 dispatched: HOS4.3 reserved-memory inventory and consumer map
+
+Task files:
+- firmware-analysis/round24/AGENT_TASK.md
+- firmware-analysis/round24/START_PROMPT.md
+
+ROUND24 inspects the already-decompiled 34-node HOS4.3 reserved-memory tree and all memory-region / remoteproc / DMA / ramoops consumers across base DTS and the nine DTBOs, without exposing physical addresses in the uploaded report. It compares these with the current rev2 minimal board DTS and exact pinned ACK SM8250 tree, and distinguishes first-stage UFS boot requirements from later display/GPU/DSP/camera consumers and firmware-owned carveouts.
+
+The public same-device Linux 7.0 DTS has four HOS4.2-era reserved-memory entries, including splash_region and crash/DFPS regions. This is a semantic cross-reference only; do not copy addresses to HOS4.3 or assume it proves ABL creates memory/reservation nodes dynamically.
+
+ROUND24 is read-only. It does not change DTS, rebuild, package, sign, or access the device. Physical ranges must be redacted from the final report.

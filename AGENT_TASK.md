@@ -890,3 +890,18 @@ Do not downgrade the HOS ARC gate to PASS. Keep it as an open hardware-equivalen
 Exact ACK source review shows that plain SM8250 MMCX has a complete local GenPD implementation: probe validates its CMD_DB address, ARC slave ID and AUX mapping; power_on sends the local enable corner to RPMh; set_performance_state maps and stores/updates the local corner; and aggregate_corner emits the MMCX/mmcx_AO peer ACTIVE_ONLY, WAKE_ONLY and SLEEP votes on mmcx.lvl. The descriptor's absent .parent only means no GenPD parent link is registered; it does not disable local MMCX voting or itself return a probe error.
 
 Therefore the ROUND33 + ROUND37 route to MMCX remains a credible minimal UFS OPP route. The HOS4.3 MMCX->MX ARC edge is still a hardware-equivalence/voltage-margin risk, but no longer classified as a proven ACK probe blocker. Whether the UFS link needs the additional HOS parent/dropout behavior remains UNKNOWN pending ROUND25's local property values and ultimately runtime evidence.
+## 2026-11-25 ROUND23 complete — temporary rev2 DTB / rootparam composite validation PASS
+
+Report: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt
+Blob: 8a676ce1a8a92b6fa3417de05843515e3b8d7b42
+
+Verified in byte-identical temporary copies:
+- board rev2 cpp exit 0, dtc 1.7.0 -@ exit 0, DTB 145849 B; same 32 inherited upstream sm8250.dtsi warnings as ROUND22, no new board warnings.
+- rootparam overlay dtc -@ -a 4 exit 0, raw DTBO 536 B; __fixups__ rootparam target present.
+- fdtoverlay exit 0, composite 146045 B.
+- all five /rootparam values match HOS4.3 entry8/VG candidate.
+- UFS Host power-domains = RPMHPD MMCX index0 (arg6) then GCC UFS_PHY_GDSC index1 (arg4); PHY retains GCC GDSC only.
+- Expected UFS supply/PHY properties present; no vdd-hba-supply.
+- composite root qcom,board-id stays 0/0; overlay root qcom,board-id 0x206a is not propagated by the fragment. Table id/rev is a separate layer.
+
+Not done: dt_binding_check/dtbs_check, Bazel/Kleaf build, DTBO table packaging, ABL selection, AVB sign/verify, device boot. Final FDT memory/reserved-memory and PMIC physical inputs remain blocked.

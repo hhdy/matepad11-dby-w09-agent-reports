@@ -1534,21 +1534,19 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 - 记录了 regulator disable 失败时的少数 cleanup/error-path 健壮性注意事项，交 2号 AI 评估；未修改 2号 AI 分支补丁。
 - 本审查为 source-only：没有执行真实 git apply、编译、Kleaf、dt-schema、功率测量或设备测试。
 
-**角色纠正：** 1号 AI 与 2号 AI 是两套独立开发 AI；测试 Agent 是第三个独立测试执行者。当前 ROUND27 由 **2号 AI 下发/负责，测试 Agent 执行，1号 AI复核报告**。测试 Agent 的 ROUND27 报告尚未出现在其唯一交付路径，因此 DTB/DTBO/composite/schema 仍不得标记 PASS。详见 `firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`（位于 `firmware-audit-v1`）。
+**角色纠正：** 1号 AI 与 2号 AI 是两套独立开发 AI；测试 Agent 是第三个独立测试执行者。当前 ROUND27 由 **2号 AI 下发/负责，测试 Agent 执行，1号 AI复核报告**。测试 Agent 已上传唯一报告；ROUND81 已完成 1号 AI 主审，详见 `kernel-baseline/round81/round81-1ai-primary-review-of-ai2-round27-report.md`。三目标构建和 composite 属性检查通过，但 schema 有真实错误诊断，不能标记 schema PASS。
 
 
-## 2026-11-25 — ROUND78：ROUND27 base DTS 输入 SHA 不匹配，等待 2号 AI 修订任务书
+## 2026-11-25 — ROUND78：ROUND27 base DTS 输入 SHA 差异已由 ROUND27 精确恢复解决
 
 报告：[ROUND78 — rev2 DTS / rootparam preflight and ROUND27 input identity check](./kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md)。
 
-- 2号 AI 当前权威任务书记录 base DTS blob 为 `9918efe3f253a3e4821689ffeb899d5a0f237e8f`。
-- 当前 `main:dts/dby-w09-ack18-board.dts.rev2.candidate` 实际 blob 为 `f5449bac669ea71d7149ffb1fc858e39eb128572`；在提交 `70e075e29fafa5dccd1f4564766a28d809867e8e` 已可见该文件对 inherited /memory placeholder 说明作过注释更新。
-- rootparam overlay blob 与任务书一致：`c7e5b145d4308e0675ff648b4e046033c5560083`。
-- 这是输入身份不匹配，不允许静默跳过。由 **2号 AI** 修订 `AI2_ROUND27_TASKBOOK.md`：要么将 base DTS pin 更新为当前 main blob `f5449bac...`，要么明确指定要测试的旧 commit/blob。
-- **测试 Agent** 若本机 SHA 检查不通过，应停止并报告 `BLOCKED_INPUT_IDENTITY_MISMATCH`，不得改写输入或把旧文件结果冒充当前 main 候选验证。
-- 当前唯一 ROUND27 报告 `firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` 尚未上传；报告上传后，1号 AI 还要核对报告中实际使用的输入 SHA。
+- 预检时发现 2号 AI 任务书 pin 为 `9918efe3f253a3e4821689ffeb899d5a0f237e8f`，当前 main 为 `f5449bac669ea71d7149ffb1fc858e39eb128572`。
+- ROUND27 测试 Agent 后续报告证明其从 main 历史 commit `e06062cac9e319bbb4156226469a1e295338fe95` 精确恢复了旧 blob `9918efe3...`，哈希匹配，无静默换版。
+- 1号 AI 独立 fetch 了相同历史 commit，并将旧版与当前 main 版去掉 block/line comments 和 whitespace 后比较；非注释 DTS 内容完全相同。差异仅为注释，rootparam overlay SHA 亦匹配。
+- **输入身份结论：PASS。** 任务书要求的确切输入已使用；与当前 main 版之间没有非注释内容差异。ROUND78 当时的 INPUT IDENTITY BLOCKED 状态已关闭。
 
-**ROUND27 当前状态：授权范围不变，但因 base DTS 输入 SHA 不匹配，进入 INPUT IDENTITY BLOCKED；等待 2号 AI 修订任务书后由测试 Agent 继续。**
+详见 ROUND81 主审报告。当前真正未关闭的是 schema diagnostics，而非输入 SHA。
 
 
 ## 2026-11-25 — ROUND79：1号 AI 独立核验 Phase D Image 构建
@@ -1557,7 +1555,7 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 
 1号 AI 直接读取 GitHub Actions job `138920645396`（run `45529395645`）的 job steps 和原始日志，14/14 步骤均 completed/success；原始日志确认 `//common:dby_w09` 构建成功（775 actions）、33/33 必需配置符号为 `=y`、Image 和配套文件成功上传。Image SHA256 为 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`，大小 44,820,992 bytes。
 
-**Phase D = PASS（1号 AI 已独立核验 job 状态与日志）。** 这不是板级 DTB/DTBO 或 boot package 验收。Phase E/F 仍 BLOCKED，Phase G NOT RUN。ROUND27 仍因 base DTS 输入 SHA 与任务书不一致而处于 INPUT IDENTITY BLOCKED，等待 2号 AI 修订任务书后由测试 Agent 执行。
+**Phase D = PASS（1号 AI 已独立核验 job 状态与日志）。** ROUND27 后续也已上传报告：三目标 DTB/DTBO/composite 构建和属性检查 PASS；schema NOT CLEAN，见 ROUND81。Phase E/F 仍 BLOCKED，Phase G NOT RUN。
 
 
 ## 2026-11-25 — ROUND80：ACK RPMhPD indexed-OPP parent-state translation architecture
@@ -1570,4 +1568,18 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 - 但 ROUND25 仍未获取 CMD_DB AUX level mapping、0xffffffff dropout 真实语义、ARC parent-state 规则，也未证明 UFS 是 HOS4.3 MMCX/MX 明确消费者。因此这只是 ACK 架构可行性，不是 DBY-W09 实施授权，不得凭 0x40→0x10 单点值造表。
 - **当前决策：不改 rpmhpd.c、不改 DTS、不加 MMCX→MX 父域。** 等待 HOS AUX/dropout/运行时证据，或在其他可验证来源中获得完整 corner translation。
 
-Stage A 状态维持：Phase D Image build PASS；ROUND27 仍 INPUT IDENTITY BLOCKED，等待 2号 AI 修正 base DTS blob pin 后由测试 Agent 执行；Phase E memory/PMIC/ARC gates 未关闭，Phase F boot/AVB 未关闭，Phase G 设备验证 NOT RUN。
+Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性检查 PASS、schema NOT CLEAN（ROUND81）；Phase E memory/PMIC/ARC gates 未关闭，Phase F boot/AVB 未关闭，Phase G 设备验证 NOT RUN。
+
+
+## 2026-11-25 — ROUND81：1号 AI 主审 ROUND27 测试 Agent 报告
+
+报告：[ROUND81 — 1号 AI primary review of AI2-ROUND27 DT build and schema report](./kernel-baseline/round81/round81-1ai-primary-review-of-ai2-round27-report.md)。
+
+- **输入身份 PASS：** 测试 Agent 使用任务书精确锁定的历史 blob `9918efe3...`；1号 AI 从历史 commit 独立取回确认。旧版与当前 main 版差异仅为注释，非注释 DTS 内容一致。
+- **三目标构建 PASS（按报告）：** Base DTB、rootparam DTBO、composite-check DTB 的 query/cquery/build 退出码均为 0；未构建 kernel/Image 或 dtbo_image。
+- **Composite 属性 PASS（按报告）：** 五项 VG rootparam 值正确；UFS Host 的 MMCX → GCC UFS_PHY_GDSC 顺序正确；QMP PHY domain/supply 检查符合任务书。
+- **Schema NOT CLEAN / FAIL：** narrow run 有 1 条 UFS `vcc-voltage-level` unexpected-property error；full run 有 8 条 error-level diagnostics（另有 root compatible 未列入 qcom.yaml、5 项 Huawei rootparam vendor properties 无 binding 类型声明）。
+- 1号 AI 确认 pinned ACK 6.18.33 UFS binding 不接受 `vcc-voltage-level`，且 UFS 驱动没有读取该属性；不应添加一个只为压掉诊断的空 schema。建议由 2号 AI 将其作为未消费元数据从 ACK-facing 节点移除/注释保留，并补齐 DBY-W09 root compatible 及 rootparam 的真实 binding 后复验。
+- 报告可接受为验证完成并诚实暴露 schema 失败；但它没有打印 narrow `-l` 的完整 schema ID 列表，也没有说明是否检查过 targeted `dtbs_check` 可用性。这两项为可复现性缺口，不影响已观察到的失败诊断。
+
+**ROUND27 状态：报告完成；三目标构建和 composite 属性 PASS；schema remediation required。** 这不是 boot-ready/ABL selection/device boot 验收。

@@ -15,7 +15,7 @@ diff --git a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yam
 index aea395fd6cfc..b7d2f7a48c11 100644
 --- a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
 +++ b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-@@ -118,0 +118,0 @@ properties:
+@@ -118,7 +118,9 @@ properties:
  
          This provider-level declaration is the legacy group mapping: it
 -        resolves one proxy target shared by every proxy request made on
@@ -29,7 +29,7 @@ index aea395fd6cfc..b7d2f7a48c11 100644
 +        provider-level mapping.  A provider-level proxy-supply and a
 +        child-level proxy-supply must not be mixed on one provider.
  
-@@ -148,0 +151,0 @@ patternProperties:
+@@ -148,12 +151,11 @@ patternProperties:
        proxy-supply:
          description: |
              Phandle to the regulator that receives this child's temporary
@@ -47,7 +47,5 @@ index aea395fd6cfc..b7d2f7a48c11 100644
 +            late_initcall_sync.  Must not be combined with a
 +            provider-level proxy-supply on the same provider.
  
--- 
-2.43.0
 -- 
 2.43.0

@@ -207,3 +207,8 @@ Warning set remains 32 inherited upstream sm8250.dtsi warnings, no new warnings 
 ## ROUND75 — stock entry and final FDT inference
 
 The decompressed stock HOS4.3 kernel has no PE/COFF EFI header. Because the normal arm64 path obtains RAM from the FDT and skips a zero-sized /memory reg, the stock system's successful run implies that ABL patched the extracted template or selected another final FDT with usable RAM before kernel entry. The actual final FDT/actor/ranges remain UNKNOWN. Prioritize normal arm64 + x0 FDT compatibility, treat EFI Stub as conditional, and keep gzip as first compatibility candidate. See [ROUND75](../kernel-baseline/round75/round75-stock-hos43-entry-and-live-fdt-inference.md).
+
+
+## ROUND24 correction — HOS4.3 reserved-memory count is 37, not 34
+
+A direct child enumeration of the existing ROUND19 decompiled HOS4.3 base_2.dts finds 37 immediate /reserved-memory child nodes. 35 have aliases; kerneldump and linux,cma do not. The historical count of 34 from ROUND7/18 is superseded. Both board DTS review files now state 37. No physical addresses are included.

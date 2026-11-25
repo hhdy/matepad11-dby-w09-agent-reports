@@ -149,3 +149,13 @@ board entry), asserted explicitly in the fixture gate instead of being
 - Binding descriptions now state the same runtime self-target rule. L5 and L9 review DTS already uses separate self-targets and remains unchanged.
 - Host harness now mocks OF phandle parsing and provider-level regulator lookup against the named target. ROUND32 suite adds nine assertions: child cross-target rejection, legacy cross-target rejection, and legacy self-target register/teardown. Existing 38-check ROUND31 suite and all prior ROUND32 coverage are retained.
 - **Verification status:** code and tests committed to the Stage A branch; patch application against the pinned ACK, strict checkpatch, dtschema/dt_binding_check, full Kleaf Image rebuild, ROUND58 config and helper regressions still require the local Agent execution. Do not mark this follow-up PASS until those checks complete.
+
+
+### ROUND33 patch-format repair after Agent failure (2号 AI)
+
+- The first Agent verification correctly found malformed hunk counts in the original combined patch 16; no dependent checks were run.
+- Corrected the patch by splitting the driver runtime guard and binding documentation into two independently reviewable patches:
+  - Patch 16 driver: blob `8b7869b42c64fc808c6b2e2e328be793bbe50f91`, SHA-256 `a43b87447255469f87c4219e7d2fe8d88786cadea6ac9c9394ea8e1133ef56d8`.
+  - Patch 17 binding: blob `9dd73d2dce8892c58c5a2b502029d671a9e055dc`, SHA-256 `3b4f7a5a4b517beecca663b70bde7a444e0df98fcebae0a7c3722fda81784d5b`.
+- A local structural pass now confirms all five hunk headers exactly match their body line counts: driver 6/30, 6/7, 6/25; binding 7/9, 11/11. This is only text-structure verification, **not** proof of git apply or source-context applicability.
+- The series record now has 17 patches. All runtime tests, checkpatch, schema checks, and full Image rebuild remain pending a fresh local Agent run.

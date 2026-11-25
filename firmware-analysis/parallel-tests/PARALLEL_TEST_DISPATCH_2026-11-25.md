@@ -63,3 +63,11 @@ firmware-analysis/round33/AI2_ROUND33_REVALIDATION_REPORT.txt
 禁止解锁、root、reboot、临时启动、刷写、分区读写、boot/DTBO/AVB/vbmeta 打包或验证状态修改；禁止上传原始 HOS4.3 固件、FDT、DTBO 或设备身份信息。
 
 两项报告均完成后，Agent 停止，不自动开始下一轮。
+
+## 状态更新 — ROUND124 完成并释放完整构建时段（2026-11-25）
+
+ROUND124 Agent 报告已上传并读回：`firmware-analysis/round124/TEST_AGENT_ROUND124_COMBINED_UFS_CORE_REPORT.txt`。两个补丁的身份、顺序 apply、源码门槛、7 个 UFS core 对象编译、完整 Image build 和工作区 hash 还原均报告 PASS。完整构建的 `BUILD_RC=0`，Image SHA-256 为 `903164d7f1c78dc80435e569e6037abe7c38ab582fbb21263f0211d79c35d6bc`。
+
+**ROUND124 BUILD SLOT RELEASED。** ROUND33 窗口现在可以继续其完整 manifest-pinned Image build，无需再等待 ROUND124。
+
+审查提醒：ROUND124 报告未列出任务书要求的 manifest commit、manifest XML SHA-256、Rust 和 Bazel 版本，因此这些可复现性元数据仍标记 PARTIAL，之后应从同一 build workspace/logs 补齐。checkpatch 也不是 RC=0：patch 0001 为 0E/4W/1C，patch 0002 为 0E/0W/2C；不得描述成完全无风格问题。

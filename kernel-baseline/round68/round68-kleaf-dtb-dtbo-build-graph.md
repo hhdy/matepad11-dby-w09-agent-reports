@@ -118,3 +118,10 @@ No BUILD.bazel target, source, DTS, DTBO, config, image, branch-protected artifa
 ## Addendum — actual pinned ACK DTS package layout
 
 At the exact common source commit, a GitHub tree check found 516 entries under arch/arm64/boot/dts/qcom and no BUILD/BUILD.bazel file; arch/arm64/boot/dts has 40 entries and no BUILD file either. There is no existing qcom Bazel package to extend. A later Kleaf integration must create a new BUILD.bazel package at the selected DTS source path or a dedicated build package, load rules_devicetree and Kleaf dtbo_image, and depend on //common:dtc_includes_aarch64. The exact source tree itself remains untouched.
+
+
+## Correction from ROUND70 — no dt_table_entry id is selected yet
+
+The illustrative cfg_create snippet above using id=0x206a is withdrawn as a specific recommendation. The public same-device Linux reference (earlier HOS generation) has base board-id 0/0, overlay-root board-id 0x206a/0, but its pack_dtbo.py writes a one-entry Android DT table with id=0/rev=0/page_size=4096. Its README describes ABL acceptance as dependent on the rootparam payload.
+
+This proves table metadata and overlay root identity are separate. It does not prove HOS4.3 accepts the same single-entry id=0 package. The replacement table id/rev policy for current HOS4.3 remains UNKNOWN. Do not package or prescribe table metadata; see ROUND70.

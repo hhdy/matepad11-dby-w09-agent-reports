@@ -809,3 +809,13 @@ A same-device public Linux 7.0 reference (earlier HOS generation) uses a one-ent
 The specific ROUND68 example id=0x206a is withdrawn as a packaging recommendation. For HOS4.3, replacement dt_table_entry id/rev selection remains UNKNOWN. Do not package until an HOS4.3 ABL / known-good package / authorized boot evidence closes this contract.
 
 Detailed note: kernel-baseline/round70/round70-dby-w09-dtbo-table-id-selection-ambiguity.md.
+
+## 2026-11-25 — ROUND71 same-device packaging reference and HOS4.3 size mismatch
+
+Reviewed the public same-device Linux project packaging scripts as structural reference only. It uses Android header v2 boot, gzip Image, a separate header-v0 ramdisk partition and one rootparam-only DTBO; README says ABL RAM boot is refused and the project tests via partition writes.
+
+Do not copy its hard-coded boot payload size 24,412,160 B: the actual HOS4.3 ROUND19/20/64 footer/payload value is 24,457,216 B, a 45,056 B difference. Its packer also retains the old AVB footer after replacing payload bytes and does not re-sign or recompute descriptors. That cannot be treated as valid AVB for this user's HOS4.3 chain, which ROUND64 shows has boot/ramdisk/dtbo hash coverage in root vbmeta.
+
+This reference also confirms a separate ramdisk partition and rootparam-only overlay, but not the current HOS4.3 table-ID/AVB/ABL policy. Do not use the public privileged install_images.py or copy its flash process.
+
+Detailed note: kernel-baseline/round71/round71-same-device-boot-packaging-structure-cross-reference.md.

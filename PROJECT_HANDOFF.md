@@ -1808,3 +1808,16 @@ ROUND94 为 1号 AI 只读 regulator-core 审查，供 2号 AI 实现评估；�
 - 该方案是 OEM-specific sidecar，不应转成通用 vendor 数据渠道；ROUND95 没有修改任何代码或分支，也没有运行 ABI checker/build/schema/device test。
 
 **对 2号 AI 的明确建议：** 不要在 `ufs_hba_variant_ops` 或 `ufs_vreg` 中直接追加成员。先审查并验证现有 `ufs_hba::android_oem_data1` 的使用与配置，再决定是否用它承载 DBY-W09 VCC request sidecar。ROUND84–ROUND94 的早期解析、enable/disable、DRMS、失败清理、OFF range 语义和电压 API 状态要求仍全部有效。ROUND27 schema 仍 NOT CLEAN。
+
+### ROUND95 后续补充 — UFS OEM sidecar devres 生命周期核验
+
+ROUND95 报告已补入 1号 AI 对固定 ACK devres 顺序的继续核验（同一报告文件，不另立实现任务）：
+
+- `ufshcd_pltfrm_init()` 先调用 `ufshcd_alloc_host()`，后调用 `ufshcd_parse_regulator_info()`。
+- `ufshcd_alloc_host()` 先通过 `scsi_host_alloc(..., sizeof(struct ufs_hba_priv))` 分配 HBA 私有区；`scsi_host_alloc()` 使用 `kzalloc()`，而 `struct ufs_hba_priv` 的第一个成员就是 `struct ufs_hba hba`。因此 `android_oem_data1` 初始为零。
+- `ufshcd_alloc_host()` 在 parser 之前先注册 `devm_add_action_or_reset(..., ufshcd_devres_release, host)`；parser 后续分配的 `devm_kzalloc()` sidecar 会较晚注册。
+- 正常卸载时 `ufshcd_pltfrm_remove()` 先执行 `ufshcd_remove(hba)`；其 `ufshcd_hba_exit()` 在 devres 清理前调用 `ufshcd_setup_vreg(hba,false)`，所以 sidecar 在 final regulator cleanup 期间仍有效。
+- 最终 devres 按逆序释放：后注册的 sidecar 先释放，先注册的 host-release action 后释放 HBA 私有区。probe 在 parser 后失败时同样适用。
+- parser 运行在 `ufshcd_init()` 的 `dev_set_drvdata(dev,hba)` 之前；早期 parser 已经拿到 `hba` 参数，应直接通过 HBA OEM slot 读写 sidecar，不可依赖 `dev_get_drvdata()`。
+
+这一核验支持 sidecar 的 devres 生命周期设计候选，但没有证明 OEM slot 无其他下游消费者，也没有确认实际最终 `.config` 中 `CONFIG_ANDROID_VENDOR_OEM_DATA=y`，更没有执行 Kleaf ABI diff。以上仍是 2号 AI 采用该方案前的硬性检查。详见更新后的 [ROUND95 报告](./kernel-baseline/round95/round95-1ai-ufs-kmi-safe-sidecar-state-storage-review.md)。

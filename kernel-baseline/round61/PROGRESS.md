@@ -7,7 +7,7 @@
 
 ## Current overall state
 
-**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS — latest nine-stage manifest-pinned build completed end-to-end (run 45529395645).** Final .config passes 33/33 required symbols; Image/System.map/vmlinux hashes were independently verified. ROUND64/65 plus ROUND23/24 local-Agent evidence is now received: Phase A–D pass, including the Image build; rev2 DTB/rootparam temporary compile+composite checks pass, and the HOS4.3 reserved-memory inventory is corrected to 37 nodes. Phase E remains BLOCKED on final ABL memory handoff, PM8150 physical input topology and MMCX/MX ARC semantics; Phase F packaging remains BLOCKED by vbmeta_cust provenance and HOS4.3 ABL selection/boot-path decisions; Phase G remains NOT RUN.
+**PHASE A + PHASE B PASS; PHASE C PASS; PHASE D IMAGE BUILD PASS — latest nine-stage manifest-pinned build completed end-to-end (run 45529395645).** Final .config passes 33/33 required symbols; Image/System.map/vmlinux hashes were independently verified. ROUND64/65 plus ROUND23/24 local-Agent evidence is now received: Phase A–D pass, including the Image build; rev2 DTB/rootparam temporary compile+composite checks pass, and the HOS4.3 reserved-memory inventory is corrected to 37 nodes. Phase E remains BLOCKED on final ABL memory handoff and PM8150 physical input topology; MMCX/MX is classified as an unresolved hardware-equivalence/voltage-margin risk, not a proven probe blocker. ROUND75 infers the stock normal ARM64 + FDT entry but the actual final ABL handoff remains unobserved. Phase F packaging remains BLOCKED by vbmeta_cust provenance and HOS4.3 ABL selection/boot-path decisions; Phase G remains NOT RUN.
 
 | Phase | Current state | Evidence / exit gate |
 |---|---|---|
@@ -15,7 +15,7 @@
 | B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
 | C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
 | D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
-| E — board DTS + memory/power handoff | BLOCKED | ROUND23 temporary rev2 DTB/rootparam overlay composite PASS (dtc/fdtoverlay only); ROUND24 corrects reserved-memory count to 37 and finds no UFS memory-region consumer. Final ABL memory handoff, firmware-owned reservations, PM8150 physical inputs and MMCX/MX ARC equivalence remain unresolved; no schema/runtime proof. |
+| E — board DTS + memory/power handoff | BLOCKED | ROUND23 temporary rev2 DTB/rootparam composite PASS; ROUND24 confirms 37 reserved nodes and no UFS memory-region consumer. Final ABL FDT/RAM+firmware reservation and PM8150 physical inputs remain blockers. ROUND74 says parentless MMCX still votes locally; MMCX→MX is a hardware-equivalence risk, not proven probe blocker. No schema/runtime proof. |
 | F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND23 rootparam overlay composes in a temp DTB, but no Android DT table is built. ROUND64/65/70 establish stock layout/AVB/fstab/tool facts and keep HOS4.3 DT table `id/rev`, ABL selection, boot path and `vbmeta_cust` unresolved; no package. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
@@ -118,7 +118,6 @@ Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report up
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
 ### ROUND63 regulator-list cross-check (2026-11-25)Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.Report update commit: `ff816f9665876200a5df63f14aa42f10385b1c77`.
-
 The first outstanding gate remains the actual hosted Actions result for the updated workflow; the local container cannot run dtc/dtschema or the manifest-pinned Bazel toolchain.
 
 
@@ -237,7 +236,6 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.- Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
 - Phase F/G: NOT RUN; no boot image or device write/boot operation performed.
 ### dtschema 2023.9 comparison and fixture correction
-
 Run 45446071024 used the ACK Makefile's declared minimum dtschema version 2023.9. Under that version, the SM8250 one-domain positive fixture (including VDDP/VCCQ-parent metadata) validates with an empty diagnostic log, so the prior latest-dtschema unevaluatedProperties failure is not reproduced on the ACK-minimum tool version. The two-domain positive fixture exposed a fixture-generation error: its power-domain providers declare #power-domain-cells = <0> but the generated references incorrectly appended a zero argument, causing the two-domain list to be decoded as four entries. Corrected the generator to emit <&pdN> with no argument in commit 3f7284355b881bbba59b5d6092ae384b324e574b. The same run still shows diagnostics on the upstream qcom,ufs.example.dtb; investigate whether the example's provider-less phandle encoding or a schema condition is responsible, and do not suppress it.
 
 
@@ -357,7 +355,6 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 Hosted run `45457083961` at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` completed the source fetch, immutable identity checks, ordered patch application, strict checkpatch, buildifier and config-helper test steps successfully. The updated **11-test** suite includes:
 - rejection when `CONFIG_BLOCK` is unset;- rejection when `CONFIG_ARM_SMMU_QCOM` is absent;
 - rejection when `CONFIG_ARM_SMMU_QCOM=m`.
-
 At last poll, the run had advanced to installing device-tree schema prerequisites; schema validation remained pending. This is source/validator CI only, not a Kleaf .config or Image build.
 
 
@@ -477,7 +474,6 @@ The Phase E and Phase F read-only taskbooks have both been completed and their s
 Phase E remains BLOCKED: the live final FDT was not available through the already-authorized read-only workflow, and no board-specific PM8150 physical input map exists in the authorized corpus. The corrected stock-FDT statement is **all-zero `/memory/reg` placeholder**, not “no `/memory` node.”
 
 Phase F read-only metadata inventory is complete, including trusted AOSP avbtool inspection, but package creation remains BLOCKED: ABL-selected DTBO and temporary-boot behavior are unknown, and `vbmeta_cust` has an unexplained out-of-file footer pointer / empty descriptor object. The Phase F blocker document has been updated to distinguish inventory completion from package readiness.
-
 No source, DTS, DTBO, boot image, ramdisk, AVB metadata or device state was changed. Phase G remains NOT RUN. The Phase E Agent report itself identifies the two missing boot-critical inputs: an already-authorized final HOS4.3 ABL-to-Linux FDT/EFI handoff capture and an authoritative DBY-W09 PMIC power-tree/schematic for the UFS rails.
 
 ### ROUND65 Phase F read-only follow-up issued (2026-11-25)
@@ -502,6 +498,11 @@ ROUND23 and ROUND24 were read-only/offline and did not connect to or change the 
 ### ROUND25 next local Agent task
 
 The next existing task is [ROUND25 HOS4.3 MMCX/MX ARC request and dropout semantics audit](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round25/AGENT_TASK.md). It inspects the already-extracted UFS-related MMCX/MX ARC consumer `qcom,set`, ACTIVE/SLEEP participation, voltage/dropout fields and compares them with pinned ACK's parentless MMCX behavior. It is read-only and does not require tablet connection. Its result is needed before deciding whether the rev2 UFS dual-domain mapping represents the intended hardware power hierarchy or only forwards the same performance state.
+### ROUND74/75 source reviews and ROUND25 next task
+
+- [ROUND74 pinned ACK MMCX semantics](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round74/round74-ack-sm8250-mmcx-parent-and-hos-arc-equivalence.md): parentless SM8250 MMCX still performs local RPMh votes and does not itself block GenPD probe; HOS4.3 MMCX→MX dropout equivalence remains a hardware risk, not a demonstrated probe blocker.
+- [ROUND75 stock kernel entry inference](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round75/round75-stock-hos43-entry-and-live-fdt-inference.md): stock HOS4.3 kernel lacks PE/COFF EFI header and is gzip-compressed; normal ARM64 FDT entry is the compatibility-first assumption. ABL's actual final FDT modification/selection remains inferred, not observed.
+- [ROUND25 Agent task](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round25/AGENT_TASK.md) is the next read-only local audit to capture UFS-related HOS4.3 MMCX/MX ACTIVE/SLEEP requests, init level and minimum-dropout semantics. It does not require tablet connection and no report has yet been found in `firmware-audit-v1`.
 ### ROUND65 Agent report received (2026-11-25)
 
 The local Agent completed the read-only audit and uploaded [ROUND65 first-stage fstab / vbmeta_cust / boot-tool report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md). It records 21 base-FDT fstab children, first-stage AVB/logical mount semantics, the actual absence of rc/module files in the standalone ramdisk, the current Image's monolithic build evidence, and the pinned-workspace prebuilt mkbootimg header-v2 capability. It reconciles two different vbmeta_cust structures without guessing and leaves the file provenance unresolved. The selected HOS4.3 DTBO, classic-FDT/EFI entry path, and RAM-boot acceptance remain UNKNOWN. No image/package/device operation occurred.

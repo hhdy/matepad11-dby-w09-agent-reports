@@ -1,4 +1,11 @@
-请只在 ROUND25 和 ROUND26 的报告都已上传且由主 AI 审查后，执行 ROUND27。先检查这两份报告；任何一份缺失就停止，不要猜测。
+[发给2号AI｜2号AI任务书 / LOCAL_AGENT_TASK｜ROUND27]
+
+执行者：2号 AI（本地 WorkBuddy Agent）
+委托与验收审核：1号 AI（ChatGPT）
+状态：AUTHORIZED / READY TO EXECUTE
+审查放行依据：firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md
+
+请按本任务书执行 ROUND27。ROUND25、ROUND26 已由 1号 AI（ChatGPT）审查并放行。开始前仍需核对两份报告和 `firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md` 均可读取；缺任一文件则停止并报告。
 
 本轮只做真正的 Kleaf/Bazel 设备树目标验证，不重编内核：
 1. 在 ROUND18 现有本地 workspace 中读取 MODULE.bazel、MODULE.bazel.lock、build/kernel/kleaf/bzlmod/bazel.MODULE.bazel 和 repo manifest，锁定实际 rules_devicetree 版本/提交及 dtc toolchain。

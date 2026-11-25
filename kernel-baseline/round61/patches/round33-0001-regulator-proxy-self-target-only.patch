@@ -1,36 +1,27 @@
 From 2a9d6c43b10b3e9b88a2c9f7d3f6b4a8c1e2d501 Mon Sep 17 00:00:00 2001
 From: OpenAI 2号 AI <2nd-ai@users.noreply.github.com>
 Date: Wed, 25 Nov 2026 22:30:00 +0800
-Subject: [PATCH 16/16] regulator: require proxy consumers to target their owner
+Subject: [PATCH 16/17] regulator: require proxy consumers to target their owner
 
 The proxy consumer is stored on its owner regulator_dev and is withdrawn
-from that regulator's regulator_unregister() hook.  A proxy-supply phandle
-to a different regulator would therefore outlive the target if the target
-unregistered first: regulator core warns about open_count but continues
-unregistration.
+from that regulator's regulator_unregister() hook. A proxy-supply phandle
+to a different regulator would outlive the target if it unregistered first.
 
-Keep the lifetime model deliberately small and safe: require child-scoped
-proxy-supply to point to the regulator child that owns the request.  Apply
-the same restriction to the legacy provider-level mapping: only the child
-named by the provider proxy-supply may carry proxy-consumer request
-properties.  Reject cross-regulator phandles before acquiring a handle or
-making any vote.  This preserves the ROUND32 L5/L9 self-target mapping and
-the single-owner legacy case without introducing a second regulator-core
-reverse-reference registry.
-
-Document the runtime restriction in the binding.
+Require child-scoped and legacy provider-scoped proxy-supply mappings to
+identify the regulator child that owns the request. Reject cross-regulator
+phandles before acquiring a handle or applying any vote. This preserves
+the ROUND32 L5/L9 self-target mapping without adding reverse tracking.
 
 Signed-off-by: OpenAI 2号 AI <2nd-ai@users.noreply.github.com>
 ---
- drivers/regulator/proxy-consumer.c                 | 36 ++++++++++++++++++++++
- Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml | 15 ++++++---
- 2 files changed, 46 insertions(+), 5 deletions(-)
+ drivers/regulator/proxy-consumer.c | 36 ++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
 
 diff --git a/drivers/regulator/proxy-consumer.c b/drivers/regulator/proxy-consumer.c
 index 380884892539..a6f0d0f9a8b1 100644
 --- a/drivers/regulator/proxy-consumer.c
 +++ b/drivers/regulator/proxy-consumer.c
-@@ -212,6 +212,27 @@ static struct regulator *proxy_consumer_get(struct proxy_consumer *consumer)
+@@ -212,0 +212,0 @@ static struct regulator *proxy_consumer_get(struct proxy_consumer *consumer)
  	return regulator_get(consumer->reg_dev, "proxy");
  }
  
@@ -61,7 +52,7 @@ index 380884892539..a6f0d0f9a8b1 100644
  /**
   * regulator_proxy_consumer_register() - conditionally register a proxy consumer
   *		 for the specified regulator and set its boot time parameters
-@@ -225,6 +246,7 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+@@ -225,0 +246,0 @@ regulator_proxy_consumer_register(struct device *reg_dev,
  				  struct regulator_dev *rdev)
  {
  	struct proxy_consumer *consumer;
@@ -69,7 +60,7 @@ index 380884892539..a6f0d0f9a8b1 100644
  	struct device_node *group_node;
  	const char *reg_name = "";
  	bool child_scoped;
-@@ -250,6 +272,21 @@ regulator_proxy_consumer_register(struct device *reg_dev,
+@@ -250,0 +272,0 @@ regulator_proxy_consumer_register(struct device *reg_dev,
  		goto unlock;
  	}
  
@@ -94,42 +85,6 @@ index 380884892539..a6f0d0f9a8b1 100644
 +
  	if (dev_name(reg_dev))
  		reg_name = dev_name(reg_dev);
- 
-diff --git a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-index aea395fd6cfc..b7d2f7a48c11 100644
---- a/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-+++ b/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
-@@ -118,9 +118,12 @@ properties:
- 
-         This provider-level declaration is the legacy group mapping: it
--        resolves one proxy target shared by every proxy request made on
--        this provider.  A provider-level proxy-supply and a child-level
--        proxy-supply must not be mixed on one provider; the kernel
--        rejects that combination instead of silently picking one.
-+        resolves one proxy target for the provider.  Runtime validation
-+        requires this phandle to identify the same regulator child that
-+        owns each proxy request; consequently only that one child may
-+        carry qcom,proxy-consumer-* properties when using the legacy
-+        provider-level mapping.  A provider-level proxy-supply and a
-+        child-level proxy-supply must not be mixed on one provider.
- 
-@@ -148,11 +151,11 @@ patternProperties:
-       proxy-supply:
-         description: |
-             Phandle to the regulator that receives this child's temporary
-             boot time proxy consumer requests described by the
--            qcom,proxy-consumer-* properties of this child.  For a
--            self-targeting mapping this is a phandle to this child node
--            itself, which lets two children of one flattened provider
--            node vote on two different regulators.  The requests are
--            withdrawn again at late_initcall_sync.  Must not be combined
--            with a provider-level proxy-supply on the same provider.
-+            qcom,proxy-consumer-* properties of this child.  This phandle
-+            must point to this child node itself.  This lets two children
-+            of one flattened provider node vote independently on their
-+            own regulators.  The requests are withdrawn again at
-+            late_initcall_sync.  Must not be combined with a
-+            provider-level proxy-supply on the same provider.
  
 -- 
 2.43.0

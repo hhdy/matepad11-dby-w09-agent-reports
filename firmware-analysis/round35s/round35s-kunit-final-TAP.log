@@ -1,0 +1,78 @@
+=== ROUND35S KUnit run command ===
+source_tree=/home/kerneldev/work/matepad11/round35s-agent/tree-b
+build_dir=/home/kerneldev/work/matepad11/round35s-agent/kunit-build-final
+kunitconfig=/home/kerneldev/work/matepad11/round35s-agent/.kunitconfig
+kunitconfig_sha256=0824b86ee48cd2f8055bc24acc4cf08621feee0a12275048ba344a241e485980
+source_HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+seam_patch_sha256=3a52d9586be37c5a6b2ac79c02a5de60be3d21ab60715ae43f7850a5198c028a
+source_diff_sha256_before=cfb5691b34d8a65db715794fd00616de33516b9400b231cf7159503fc505ac6c
+KUnit option selection: y (bool; m is not selectable)
+CMD: python3 tools/testing/kunit/kunit.py run --build_dir /home/kerneldev/work/matepad11/round35s-agent/kunit-build-final --kunitconfig /home/kerneldev/work/matepad11/round35s-agent/.kunitconfig --jobs 8 --timeout 120
+
+stty: 'standard input': Inappropriate ioctl for device
+[00:26:02] Configuring KUnit Kernel ...
+Generating .config ...
+Populating config with:
+$ make ARCH=um O=/home/kerneldev/work/matepad11/round35s-agent/kunit-build-final olddefconfig
+[00:26:05] Building KUnit Kernel ...
+Populating config with:
+$ make ARCH=um O=/home/kerneldev/work/matepad11/round35s-agent/kunit-build-final olddefconfig
+Building with:
+$ make all compile_commands.json scripts_gdb ARCH=um O=/home/kerneldev/work/matepad11/round35s-agent/kunit-build-final --jobs=8
+[00:26:45] Starting KUnit Kernel (1/1)...
+[00:26:45] ============================================================
+Running tests with:
+$ /home/kerneldev/work/matepad11/round35s-agent/kunit-build-final/linux kunit.enable=1 mem=1G console=tty kunit_shutdown=halt
+[00:26:45] ====== regulator-proxy-consumer-lifecycle (1 subtest) ======
+[00:26:45] [PASSED] proxy_kunit_lifecycle
+[00:26:45] ======= [PASSED] regulator-proxy-consumer-lifecycle ========
+[00:26:45] ============================================================
+[00:26:45] Testing complete. Ran 1 tests: passed: 1
+[00:26:45] Elapsed time: 43.105s total, 3.075s configuring, 39.914s building, 0.067s running
+
+
+RUN_RC=0
+source_diff_sha256_after=cfb5691b34d8a65db715794fd00616de33516b9400b231cf7159503fc505ac6c
+source_HEAD_after=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+seam_patch_sha256_after=3a52d9586be37c5a6b2ac79c02a5de60be3d21ab60715ae43f7850a5198c028a
+source_status_after:
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/kunit-proxy-consumer.dtso
+?? drivers/regulator/proxy-consumer-kunit.c
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+kunit_config_sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+--- relevant .config symbols ---
+CONFIG_KUNIT=y
+CONFIG_KUNIT_AUTORUN_ENABLED=y
+CONFIG_KUNIT_DEFAULT_ENABLED=y
+CONFIG_KUNIT_DEFAULT_TIMEOUT=300
+CONFIG_KUNIT_UML_PCI=y
+CONFIG_OF=y
+CONFIG_OF_ADDRESS=y
+CONFIG_OF_DYNAMIC=y
+CONFIG_OF_EARLY_FLATTREE=y
+CONFIG_OF_FLATTREE=y
+CONFIG_OF_IRQ=y
+CONFIG_OF_KOBJ=y
+CONFIG_OF_OVERLAY=y
+CONFIG_OF_RESERVED_MEM=y
+CONFIG_OF_RESOLVE=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_PROXY_CONSUMER=y
+CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+KUNIT_OPTION_BUILTIN_Y=YES
+KUNIT_OPTION_MODULE_M=NO

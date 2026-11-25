@@ -1,0 +1,107 @@
+=== ROUND35S Kconfig option audit ===
+--- Kconfig block in seam-applied tree ---
+config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
+	depends on !KUNIT_ALL_TESTS
+	default n
+	help
+		KUnit coverage for proxy-consumer bulk revoke and the owner
+		unregister ordering seam. Off by default and excluded from
+		KUNIT_ALL_TESTS so it can never be enabled by a product config
+		or defconfig; use it only in an isolated KUnit test configuration.
+		This option is bool because all seam guards use CONFIG_* ifdefs.
+
+
+--- option type and isolation lines ---
+74:config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+75:	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+76:	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
+77:	depends on !KUNIT_ALL_TESTS
+78:	default n
+87:	bool "Enable support for receiving regulator events via netlink"
+
+--- explicit tri-state guard ---
+TRISTATE_COUNT=0
+BOOL_COUNT=1
+M_SELECTABLE=NO
+KCONFIG_TYPE_RESULT=PASS
+
+--- Kconfig block in seam patch ---
++config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
++	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
++	depends on !KUNIT_ALL_TESTS
++	default n
++	help
++		KUnit coverage for proxy-consumer bulk revoke and the owner
++		unregister ordering seam. Off by default and excluded from
++		KUNIT_ALL_TESTS so it can never be enabled by a product config
++		or defconfig; use it only in an isolated KUnit test configuration.
++		This option is bool because all seam guards use CONFIG_* ifdefs.
++
+
+=== KUnit seam symbol audit (tree-a, seam applied) ===
+--- REGULATOR_PROXY_CONSUMER_KUNIT_TEST ---
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:511:#ifndef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:519:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/core.c:6058:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/Makefile:15:obj-$(CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST) += proxy-consumer-kunit-test.o
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer-kunit.c:16: * core.c, compiled out unless CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y.
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/Kconfig:74:config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/include/linux/regulator/proxy-consumer.h:24:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+--- regulator_proxy_consumer_kunit_revoke_all ---
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:520:int regulator_proxy_consumer_kunit_revoke_all(void)
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:524:EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_revoke_all);
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer-kunit.c:296:	KUNIT_EXPECT_EQ(test, regulator_proxy_consumer_kunit_revoke_all(), 0);
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/include/linux/regulator/proxy-consumer.h:25:int regulator_proxy_consumer_kunit_revoke_all(void);
+--- regulator_proxy_consumer_kunit_removed ---
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:526:bool regulator_proxy_consumer_kunit_removed(void)
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:530:EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_removed);
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer-kunit.c:226:	KUNIT_EXPECT_FALSE(test, regulator_proxy_consumer_kunit_removed());
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/include/linux/regulator/proxy-consumer.h:26:bool regulator_proxy_consumer_kunit_removed(void);
+--- regulator_proxy_consumer_kunit_observe_unregister ---
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/core.c:6064:	regulator_proxy_consumer_kunit_observe_unregister(rdev);
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer-kunit.c:150:void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev)
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer-kunit.c:158:EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_observe_unregister);
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/include/linux/regulator/proxy-consumer.h:27:void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev);
+--- regulator_proxy_consumer_revoke_all ---
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:492:static int regulator_proxy_consumer_revoke_all(void)
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:514:	return regulator_proxy_consumer_revoke_all();
+/home/kerneldev/work/matepad11/round35s-agent/tree-a/drivers/regulator/proxy-consumer.c:522:	return regulator_proxy_consumer_revoke_all();
+
+=== KUnit seam symbol audit (patch file) ===
+--- REGULATOR_PROXY_CONSUMER_KUNIT_TEST ---
+9:+config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+32:+obj-$(CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST) += proxy-consumer-kunit-test.o
+46:+#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+112:+ * core.c, compiled out unless CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y.
+435:+#ifndef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+443:+#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+464:+#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+--- regulator_proxy_consumer_kunit_revoke_all ---
+392:+	KUNIT_EXPECT_EQ(test, regulator_proxy_consumer_kunit_revoke_all(), 0);
+444:+int regulator_proxy_consumer_kunit_revoke_all(void)
+448:+EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_revoke_all);
+465:+int regulator_proxy_consumer_kunit_revoke_all(void);
+--- regulator_proxy_consumer_kunit_removed ---
+322:+	KUNIT_EXPECT_FALSE(test, regulator_proxy_consumer_kunit_removed());
+450:+bool regulator_proxy_consumer_kunit_removed(void)
+454:+EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_removed);
+466:+bool regulator_proxy_consumer_kunit_removed(void);
+--- regulator_proxy_consumer_kunit_observe_unregister ---
+52:+	regulator_proxy_consumer_kunit_observe_unregister(rdev);
+246:+void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev)
+254:+EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_observe_unregister);
+467:+void regulator_proxy_consumer_kunit_observe_unregister(struct regulator_dev *rdev);
+--- regulator_proxy_consumer_revoke_all ---
+426:+static int regulator_proxy_consumer_revoke_all(void)
+438:+	return regulator_proxy_consumer_revoke_all();
+446:+	return regulator_proxy_consumer_revoke_all();
+
+=== generated KUnit .config option check (ROUND35S) ===
+file=/home/kerneldev/work/matepad11/round35s-agent/kunit-build-final/.config
+sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+CONFIGURED_AS_Y=YES
+CONFIGURED_AS_M=NO

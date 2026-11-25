@@ -1535,3 +1535,17 @@ This authorization is **not** permission to build `kernel_build`/Image, create `
 - 本审查为 source-only：没有执行真实 git apply、编译、Kleaf、dt-schema、功率测量或设备测试。
 
 **角色纠正：** 1号 AI 与 2号 AI 是两套独立开发 AI；测试 Agent 是第三个独立测试执行者。当前 ROUND27 由 **2号 AI 下发/负责，测试 Agent 执行，1号 AI复核报告**。测试 Agent 的 ROUND27 报告尚未出现在其唯一交付路径，因此 DTB/DTBO/composite/schema 仍不得标记 PASS。详见 `firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md`（位于 `firmware-audit-v1`）。
+
+
+## 2026-11-25 — ROUND78：ROUND27 base DTS 输入 SHA 不匹配，等待 2号 AI 修订任务书
+
+报告：[ROUND78 — rev2 DTS / rootparam preflight and ROUND27 input identity check](./kernel-baseline/round78/round78-rev2-dts-preflight-and-round27-input-identity.md)。
+
+- 2号 AI 当前权威任务书记录 base DTS blob 为 `9918efe3f253a3e4821689ffeb899d5a0f237e8f`。
+- 当前 `main:dts/dby-w09-ack18-board.dts.rev2.candidate` 实际 blob 为 `f5449bac669ea71d7149ffb1fc858e39eb128572`；在提交 `70e075e29fafa5dccd1f4564766a28d809867e8e` 已可见该文件对 inherited /memory placeholder 说明作过注释更新。
+- rootparam overlay blob 与任务书一致：`c7e5b145d4308e0675ff648b4e046033c5560083`。
+- 这是输入身份不匹配，不允许静默跳过。由 **2号 AI** 修订 `AI2_ROUND27_TASKBOOK.md`：要么将 base DTS pin 更新为当前 main blob `f5449bac...`，要么明确指定要测试的旧 commit/blob。
+- **测试 Agent** 若本机 SHA 检查不通过，应停止并报告 `BLOCKED_INPUT_IDENTITY_MISMATCH`，不得改写输入或把旧文件结果冒充当前 main 候选验证。
+- 当前唯一 ROUND27 报告 `firmware-analysis/round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt` 尚未上传；报告上传后，1号 AI 还要核对报告中实际使用的输入 SHA。
+
+**ROUND27 当前状态：授权范围不变，但因 base DTS 输入 SHA 不匹配，进入 INPUT IDENTITY BLOCKED；等待 2号 AI 修订任务书后由测试 Agent 继续。**

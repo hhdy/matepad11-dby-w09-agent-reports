@@ -1,0 +1,284 @@
+================================================================================
+TEST-AGENT-AI1-ROUND127  COMBINED VERIFICATION REPORT
+ROUND125 QMP UFS dual-rail state + ROUND126 proxy-consumer load-first teardown
+================================================================================
+Task ID: TEST-AGENT-AI1-ROUND127
+Issuer / owner / reviewer: AI1 (ChatGPT)
+Executor: local WorkBuddy test agent (read-only verification; no code edits)
+Report branch: firmware-audit-v1
+Report file: firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_REPORT.txt
+Generated: 2026-11-25
+
+OVERALL RESULT: **FAILED AT OBJECT COMPILE (§6.4 stop clause).**
+  - ROUND126 proxy-consumer candidate: all gates PASS.
+  - ROUND125 QMP candidate: apply clean + source gates PASS as written, but
+    DOES NOT COMPILE -- duplicate definition of qmp_ufs_power_off.
+  - Full Image build, artifact hashes and ROUND58 config regression:
+    **NOT RUN / BLOCKED** by the §6.4 stop rule. No patch/code/test was fixed.
+  - Workspace restored byte-identically to the 17-patch baseline.
+
+================================================================================
+0. SCOPE COMPLIANCE
+================================================================================
+  - Read-only verification + apply/build only. No writing, editing, fixing or
+    regenerating any patch, source, test, fixture, binding, DTS, config or series.
+  - Did NOT touch AI2 Stage A branch, main, PR #1, ACK DTS draft, ROUND124,
+    ROUND125 / ROUND126 source branches.
+  - Did NOT merge the two candidates into the AI2 branch.
+  - Did NOT connect, boot, flash, fastboot, root, unlock or partition the tablet.
+    No USB / ADB / fastboot / recovery / serial / any device command was issued.
+    Task is fully offline; no device-access approval was requested.
+  - No binaries (Image / vmlinux / System.map / firmware / FDT / DTBO) uploaded.
+  - Independent staging used: /home/kerneldev/work/matepad11/round127-agent/a30
+    (fresh common clone at exact ACK, fresh out/ => own Bazel output base).
+    ROUND33 / ROUND124 / a30 workspaces were not reused for apply or build.
+    The original a30 build workspace was read-only (config hash source only)
+    and remains HEAD=8ad08f75..., dirty=16 (unchanged).
+
+================================================================================
+1. FIXED BASELINE AND CANDIDATE IDENTITIES (all MATCH)
+================================================================================
+  Pinned ACK (immutable):
+    8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a  (android17-6.18.33_r00)
+  Stage A fixed commit:
+    2f21233148a04afdd61e44b1be7688399967d9d0  (ai-parallel/stagea-port-until-boot)
+  ROUND33 baseline report: firmware-analysis/round33/
+    AI2_ROUND33_FINAL_REVALIDATION_REPORT.txt, blob
+    f7452f9259e7ed25027758fc39af4c047867b9e7
+
+  17-patch series: kernel-baseline/round61/round32-stagea-series.txt
+    - all 17 patch files re-hashed against the series table (blob + sha256):
+      MATCH=17, MISMATCH=0.
+    - #16 blob 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe /
+      sha256 7b4858f5bf8f80e83092275afc1ad586676b45ebc4f343fa9d2fcb218ec2de4
+    - #17 blob d2e818296118672bd708db34ed08d817fcd3895b /
+      sha256 d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05
+    - patch #1 lives at round36/0001-...dual-power-domains.patch.draft.
+
+  ROUND125 candidate 0001-qmp-ufs-rail-state.patch
+    size=11,511 B
+    blob   b2a9a1e6c8f75e858f75e93a5b4ed35ec6bed05d      MATCH
+    sha256 71b8a64d20ca0fad1037099cbc864a6aceebacebce057eceb7d4a745cabde330 MATCH
+    scope: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c only (1 diff --git)
+
+  ROUND126 candidate 0001-proxy-consumer-load-first.patch
+    size=2,252 B
+    blob   c180dbf458403d68b2c32c1d54776a7559e7e5db      MATCH
+    sha256 eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80 MATCH
+    scope: drivers/regulator/proxy-consumer.c only (1 diff --git)
+
+================================================================================
+2. APPLY / CHECK / DIFF-CHECK (§3) -- all PASS
+================================================================================
+  Tree: round127-agent/a30/common, HEAD=8ad08f75..., dirty_before=0.
+  Protocol per patch: git apply --check --verbose -> git apply -> git diff --check.
+
+  Patches 1-15: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0, zero offset, zero fuzz.
+  Patch 16 (self-target driver):
+    Hunk #1 succeeded at 187 (offset -25 lines)
+    Hunk #2 succeeded at 244 (offset -2 lines)
+    Hunk #3 succeeded at 274 (offset 2 lines)
+    CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0, fuzz=0.
+  Patch 17 (self-target binding):
+    Hunk #1 succeeded at 119 (offset 1 line)
+    Hunk #2 succeeded at 149 (offset -2 lines)
+    CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0, fuzz=0.
+  NOTE: non-zero offsets on 16/17 are the known ROUND33 condition; patches
+  were NOT regenerated and identity is unchanged -- not an identity mismatch.
+
+  After 17 patches: dirty=16, tracked diff sha256 =
+    3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+    (matches the ROUND33 third-validation overlay identity).
+
+  ROUND125 QMP: CHECK_RC=0 / APPLY_RC=0 / DIFFCHECK_RC=0,
+    ZERO offset, ZERO fuzz (no offset/fuzz/warning/error line in verbose output).
+  ROUND126 proxy: CHECK_RC=0 / APPLY_RC=0 / DIFFCHECK_RC=0,
+    ZERO offset, ZERO fuzz.
+  After both: tracked diff sha256 =
+    0f65abfe2c60328a3b6eefff2943a4aacbb7b5ef4a6d1c37072a3e9bf1feac49.
+  Overlay paths vs 17-patch baseline: exactly
+    M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c  (candidate 1)
+    ? drivers/regulator/proxy-consumer.c       (candidate 2; was untracked
+      in baseline, content changed in place -- no other path touched)
+  Each candidate patch contains exactly one "diff --git", for its own path.
+
+================================================================================
+3. ROUND125 -- QMP DUAL-RAIL STATE MACHINE SOURCE GATES (§4)
+================================================================================
+  All line numbers below are from the ACTUAL patched tree.
+  Logical/state gates are PASS AS WRITTEN; compilation is separately FAILED (§6).
+
+  A. STATE                                                       PASS
+    - struct qmp_ufs: bool vreg_enabled[2] (:1138),
+      bool vreg_load_active[2] (:1139); old single vdda_phy_enabled removed.
+    - vdda-phy-always-on == false retains bulk enable/disable path:
+      :1923 (vreg_enable), :1943 (vreg_disable), :1982 (power_on error path).
+    - Fail-closed layout check qmp_ufs_vreg_layout_valid() (:1836-1841):
+      num_vregs == 2 && supply[0]=="vdda-phy" && supply[1]=="vdda-pll";
+      returns -EINVAL at :1946 and :1985.
+
+  B. INIT                                                        PASS
+    - devm_regulator_bulk_get_const() at :2318 installs init_load_uA.
+    - vreg_load_active[0]/[1] initialized from vregs[0]/[1].init_load_uA > 0
+      at :2345/:2346; vreg_enabled[] left false (no assumption that a
+      pre-set load vote means an enable reference is held).
+
+  C. TRANSITIONS                                                 PASS
+    - qmp_ufs_vreg_set_load() (:1846-1866): skips if state unchanged (:1852),
+      calls regulator_set_load(:1855), updates vreg_load_active only on
+      success (:1863); failure leaves state untouched.
+    - qmp_ufs_vreg_enable() (:1869-1888): restore load FIRST (:1873),
+      if vreg_enabled true return without a second regulator_enable (:1876-1877),
+      regulator_enable(:1879), set enabled=true only after success (:1886).
+    - qmp_ufs_vreg_disable() (:1898-1916): load-zero FIRST (:1902),
+      if !enabled return 0 (:1904), regulator_disable(:1907),
+      clear enabled only after success (:1914); failure keeps state bits.
+
+  D. POWER-OFF / UNBIND                                          PASS (logic)
+    - qmp_ufs_power_off() (:2028): PCS power-down bit cleared, clocks off,
+      then qmp_ufs_regulators_disable(); logs the error but returns 0 so the
+      PHY core power_count cannot diverge from hardware state.
+    - qmp_ufs_regulators_disable(): index1 (vdda-pll/L9) fully disabled
+      (:1988), index0 (vdda-phy/L5) load-zeroed but enable reference retained
+      (:1991-1994); L9 failure does not prevent the L5 load-zero.
+    - final devm action qmp_ufs_vdda_phy_cleanup() (:1918-1932):
+      disable index 1 (L9) FIRST, then index 0 (L5); each rail load-zeroed
+      before disable via qmp_ufs_vreg_disable(); registered at :2349 (runs
+      before managed regulator bulk put due to devm LIFO).
+    - Known limitation restated by candidate: the void devm action cannot
+      stop the later managed regulator_put; repeated failures may still
+      surface a nonzero enable_count warning. Not claimed as solved.
+
+  STRUCTURAL DEFECT (NOT a §4 logic gate; caught at object compile):
+    The candidate ADDS a second "static int qmp_ufs_power_off" at :2028 while
+    the ROUND63 patch (#8 in the Stage A series) had already relocated its own
+    copy to :2084 (ROUND63 diff: -static.../+static... qmp_ufs_power_off).
+    The candidate patch contains zero deletions of qmp_ufs_power_off
+    (grep '^-static int qmp_ufs_power_off' = 0) and one addition (=1).
+    No #if/#else guard exists between :2028 and :2084 -> duplicate definition.
+
+================================================================================
+4. ROUND126 -- PROXY LOAD-FIRST TEARDOWN SOURCE GATES (§5)
+================================================================================
+  A. remove() ordering                                           PASS
+    - int regulator_proxy_consumer_remove() at :360.
+    - parked consumer with !consumer->reg early-returns at :368 (no NULL /
+      ERR_PTR dereference) -- unchanged.
+    - current_uA > 0 guard at :384; regulator_set_load(reg, 0) at :385
+      occurs BEFORE regulator_disable(reg) at :393 (load-first).
+    - enable==false still cleans load/voltage/handle (no early skip).
+    - voltage vote cleanup at :401 uses the original path.
+    - called from both per-rdev unregister (:437) and late_initcall_sync
+      bulk revoke (:508) -- both paths intact.
+
+  B. FAILURE BOUNDARY                                            PASS
+    - load-zero failure is logged with real rc and recorded (rc = ret);
+      best-effort cleanup under void regulator_unregister() preserved;
+      no claim of vetoing unregister.
+    - regulator_force_disable: 0 occurrences.
+    - No fabricated enable state; no claim that persistent provider-disable
+      failure or managed-put warnings are solved.
+
+  C. ROUND33 SELF-TARGET-ONLY PRESERVED                          PASS
+    - proxy_consumer_validate_self_target() at :197-208 present;
+      -EINVAL checks at :73/:88/:103/:116/:205/:208/:273/:280/:287;
+      "proxy-supply must target the regulator child owning this proxy
+      request" rejection at :290 still present in the registration path.
+    - ROUND126 touches only the remove() body; no registration-path change.
+
+================================================================================
+5. HOST TESTS AND CHECKPATCH (§6.1 / §6.2) -- PASS (tests)
+================================================================================
+  Command: bash tests/run_tests.sh <17+2 actual tree>   (unmodified harness)
+    checks=38 failures=0 / RESULT: PASS                 (legacy suite)
+    checks=83 failures=0 / RESULT: PASS                 (ROUND32/33 suite)
+    TESTS_RC=0, HARNESS_RESULT: PASS
+    Includes runtime coverage of self-target-only cross-target -EINVAL before
+    lookup, deferred self-target unregister cleanup, retry vote failure,
+    set_load/enable failure propagation and handle put accounting.
+
+  checkpatch.pl --strict --no-signoff (ACK scripts):
+    0001-qmp-ufs-rail-state.patch:
+      RC=0, errors=0, warnings=0, CHECKs=0
+    0001-proxy-consumer-load-first.patch:
+      RC=1, errors=0, warnings=0, CHECKs=1
+      (RC=1 is reported as-is; NOT described as clean. Style CHECK only;
+       patch not modified per task rule.)
+
+================================================================================
+6. OBJECT COMPILE (§6.3) -- FAILED -> STOP
+================================================================================
+  Toolchain: pinned Kleaf clang r584948c
+    "Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+     clang version 22.0.1 ..."
+  Config: original a30 stage-A .config copied as compile input;
+    sha256 = 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+    (expected baseline value, byte-identical). CONFIG_MOD_RC=0, OLDDEFCONFIG_RC=0.
+
+  drivers/phy/qualcomm/phy-qcom-qmp-ufs.o:
+    make ARCH=arm64 LLVM=1 LLVM_IAS=1 O=<out> -j8 \
+      drivers/phy/qualcomm/phy-qcom-qmp-ufs.o
+    QMP_OBJ_RC=2 -- COMPILE FAILED. Exact diagnostics:
+      phy-qcom-qmp-ufs.c:2084:12: error: redefinition of 'qmp_ufs_power_off'
+      phy-qcom-qmp-ufs.c:2028:12: note: previous definition is here
+      make[6]: *** Makefile.build:291: .../phy-qcom-qmp-ufs.o] Error 1
+      (subsequent make[5..1] Error 2 cascade)
+    No object size/hash (not produced). Code was NOT patched or retried.
+
+  drivers/regulator/proxy-consumer.o:
+    PROXY_OBJ_RC=0 -- PASS
+    size=176,344 B
+    sha256=f543ac9fc6c0a55d7558f50dd1ce7dec6927724ed5c203fd9c59b34f45461182
+
+  §6.4 stop clause invoked: "若 object compile 有错误，停止并报告；Agent 不得
+  修补代码." Compilation error is real, reproducible with the pinned toolchain,
+  and is NOT a toolchain/config problem (same toolchain compiles proxy.o).
+
+================================================================================
+7. FULL IMAGE BUILD / ARTIFACTS / CONFIG REGRESSION (§7) -- NOT RUN / BLOCKED
+================================================================================
+  BLOCKED by the §6.4 stop above. No `tools/bazel build //common:dby_w09` was
+  executed in this task; therefore there are NO new Image / System.map /
+  vmlinux / .config size or hash values to report, and no config 33/33 +
+  helper 11/11 result. These are deliberately NOT marked PASS.
+  (The kernel would hit the same duplicate-definition error in the real build;
+   running it would add no information and would violate the stop rule.)
+  Independent Bazel output base at round127-agent/a30/out was left unused for
+  a full build; no build binaries were produced or uploaded.
+
+================================================================================
+8. RESTORE / CLEANUP (§8) -- PASS
+================================================================================
+  Reverse-applied the two candidates in reverse order in the independent tree:
+    REVERT_PROXY_RC=0, REVERT_QMP_RC=0.
+  post_tracked_diff_sha =
+    3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+    = pre-candidate 17-patch baseline; RESTORE_MATCHES_PRE_CANDIDATE=YES.
+  dirty_lines=16 (same as pre-overlay); untracked file set unchanged.
+  qmp_ufs_power_off definitions back to 1; vreg_enabled[2] count back to 0.
+  Removed this task's object output, copied patch dir and /tmp logs;
+  kept the independent staging tree (own output base) without build outputs.
+  Original a30 workspace: HEAD=8ad08f75..., dirty=16 -- untouched.
+  No other agent's worktree or staging was cleaned or modified.
+
+================================================================================
+9. CONCLUSION AND HANDOFF
+================================================================================
+  ROUND126 (proxy load-first teardown) is fully verified: apply, source gates,
+  host tests, checkpatch and object compile all pass.
+
+  ROUND125 (QMP dual-rail state) is NOT acceptable as submitted:
+    - Its state-machine logic matches §4 on inspection.
+    - It FAILS to compile against the mandated 17-patch Stage A baseline
+      because it leaves a duplicate qmp_ufs_power_off() (ROUND63 already
+      owns one). This is a patch-stacking defect, not a harness/toolchain issue.
+    - Suggested owner-side fix (NOT performed by this agent): remove the old
+      qmp_ufs_power_off definition that ROUND63 relocated, or rebase/regenerate
+      the ROUND125 candidate against the exact 17-patch tree, then resubmit for
+      a fresh full verification including the full Image build.
+  Full build / artifact hashes / config regression remain BLOCKED until then.
+
+  No device was connected. No forbidden operation was performed. No patch,
+  source, test, fixture, binding, DTS, config, series or branch was modified.
+  Per §10: single report delivered; stop here, no ROUND128 started.
+================================================================================

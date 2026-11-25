@@ -14,7 +14,7 @@ The current draft also intentionally does not reconstruct `/memory` or `/reserve
 
 ## 2. Final Linux memory handoff is not established
 
-The ROUND64 local-Agent recheck corrects earlier wording that described the root `/memory` node as absent: the inspected stock/pre-ABL base FDT contains a `/memory` `reg` placeholder whose tuple is all zero. This is a template placeholder, not an enabled, usable RAM map. The sanitized Agent report does not publish a complete property dump, so this update does not infer the exact `device_type`, cell counts or any real RAM range from that placeholder. The stock base FDT also has 34 `/reserved-memory` children covering firmware/secure/DSP/reusable/crash records; their existence does not establish the physical RAM ranges. The public inventory redacts physical addresses.
+The ROUND64 local-Agent recheck corrects earlier wording that described the root `/memory` node as absent: the inspected stock/pre-ABL base FDT contains a `/memory` `reg` placeholder whose tuple is all zero. This is a template placeholder, not an enabled, usable RAM map. The sanitized Agent report does not publish a complete property dump, so this update does not infer the exact `device_type`, cell counts or any real RAM range from that placeholder. The ROUND24 direct enumeration revises the old count: the stock base FDT has **37** `/reserved-memory` direct children (not 34). Their existence does not establish the physical RAM ranges. The public inventory redacts physical addresses.
 
 The same-device public Linux 7.0 DTS is only a structural comparison and is based on HOS4.2; it has no explicit `/memory` node and a different four-child reserved-memory description. It is not a valid source for HOS4.3 RAM or carveout addresses.
 
@@ -105,6 +105,28 @@ The local Agent's sanitized ROUND22 report is available at:
 - That can allow regulator registration, but it means software assumes an input is externally present/enabled. It does not identify the physical source, prove voltage headroom or establish safe sequencing. Therefore the physical PM8150 topology gate remains BLOCKED exactly as Phase E states.
 
 ROUND22 did not edit the board source, change Kconfig/configuration, run dt-schema/dtbs_check, package a DTBO, or contact the device. Keep the board DTS review-only until the final memory handoff and physical PMIC parent evidence are available.
-## 9. Current verdict
+## 9. ROUND23 — rev2 board DTB and rootparam overlay temporary composite validation
+
+Local-Agent report:
+[ROUND23 — rev2 DTS and rootparam overlay composite validation](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round23/round23_rev2_dts_and_rootparam_overlay_composite_validation.txt).
+
+**Temporary syntax/overlay checks: PASS.** Using byte-identical copies of the main-branch rev2 candidate and rootparam overlay, preinstalled cpp/dtc 1.7.0 compiled the base DTB (145,849 bytes) with the same 32 inherited `sm8250.dtsi` warnings as ROUND22 and no new candidate-local warnings. The 536-byte overlay compiled with `dtc -@ -a 4`; its `__fixups__` correctly targets `rootparam`. `fdtoverlay` applied it to the temporary base DTB and produced a 146,045-byte composite.
+
+Composite checks confirmed the five VG rootparam payload values, UFS Host dual-domain order `RPMhPD MMCX(6)` then `GCC UFS_PHY_GDSC(4)`, the UFS PHY retaining only `GCC UFS_PHY_GDSC(4)`, the expected UFS regulator properties, and no `vdd-hba-supply` phandle to GDSC. The overlay's root `qcom,board-id=<0x206a 0>` remains overlay-root metadata; fragment application only merges its `/rootparam` payload into the base. It does not modify base root `qcom,board-id=<0 0>` or define Android DT-table `id/rev`.
+
+**Scope limitation:** this was temporary compile/fixup/composite validation of candidate files on `main`, not a source change or build target on the Stage-A branch. No `dtbs_check`, `dt_binding_check`, Kleaf/Bazel target, DTBO table package, boot image or device action ran. It proves syntax and overlay mechanics, not HOS4.3 ABL selection or boot acceptance.
+## 10. ROUND24 — HOS4.3 reserved-memory inventory and consumer map
+
+Local-Agent report:
+[ROUND24 — HOS4.3 reserved-memory and consumer map](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt).
+
+**Count correction:** the inspected HOS4.3 base FDT has **37** direct `/reserved-memory` children, not the historical 34. 35 have alias entries; `kerneldump` and `linux,cma` do not. The nine DTBO overlays contain no `/reserved-memory` node and no scanned memory-region references.
+
+**Consumer map:** exact phandle-cell matching identifies 31 true reserved-memory references (45 scan hits including firmware-name / SMEM-state strings); 23 reserved nodes are actually consumed by base-tree memory-reference properties. Major classes include firmware/AOP/SMEM handoff, PIL remoteproc carveouts, DSP shared pools, QSEE/secure pools, display/splash, WLAN, crash logging and CMA. The report keeps all physical addresses redacted.
+
+**UFS-specific finding:** the current rev2 candidate's UFS Host/PHY nodes have no `memory-region` or reserved-memory phandle, and the HOS4.3 base/overlays show no UFS reserved-memory consumer. Thus no direct UFS carveout dependency is evidenced for a storage-only path. This does **not** make it safe to drop the firmware-owned early reservations: hyp/XBL-AOP/cmd-db/SMEM/removed-region/XBL log reservations may cover RAM already occupied before Linux. The minimal rev2 candidate is not acceptable for first boot until the final ABL handoff confirms the usable RAM and reserved-memory ownership.
+
+ROUND24 also establishes that the current rev2 candidate inherits generic upstream SM8250 reserved-memory declarations from `sm8250.dtsi`; those are not verified against HOS4.3 physical coordinates. The nine overlays introduce no reservation changes. No addresses were copied, no nodes added, and no build or device action occurred.
+## 11. Current verdict
 
 **PHASE E: BLOCKED.** The draft remains a review artifact. The unresolved facts are real boot-critical inputs, not documentation polish. Keep Phase E open until actual HOS4.3 memory handoff and physical PM8150 supply topology are evidenced and the resulting board source passes the real pinned-kernel DT compilation/schema checks.

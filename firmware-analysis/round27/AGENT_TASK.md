@@ -1,5 +1,8 @@
 # ROUND27 — real Kleaf/Bazel DTB + DTBO + composite build and schema validation
 
+> **SUPERSEDED / ARCHIVAL ONLY — DO NOT EXECUTE.** This legacy task file incorrectly conflated 2号 AI with the local Agent. The corrected project roles are: 1号 AI = ChatGPT; 2号 AI = independent development AI; Agent = test-only local executor. The current ROUND27 test instruction is issued by 2号 AI and executed by the test Agent: [AI2_ROUND27_TASKBOOK.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round27/AI2_ROUND27_TASKBOOK.md). The old body below is retained for historical traceability only. Do not follow its obsolete ownership lines.
+
+
 **[2号AI任务书 / LOCAL_AGENT_TASK]**
 
 - 任务编号：ROUND27

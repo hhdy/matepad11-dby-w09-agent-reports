@@ -206,8 +206,8 @@ ROUND100 itself:
 
 ## 8. Related reports
 
-- [ROUND95 — KMI-safe UFS sidecar review](../round95/)
-- [ROUND97 — UFS async scan teardown review](round97-1ai-ufs-async-scan-teardown-review.md)
+- [ROUND95 — KMI-safe UFS sidecar state-storage review](../round95/round95-1ai-ufs-kmi-safe-sidecar-state-storage-review.md)
+- [ROUND97 — UFS async scan teardown review](../round97/round97-1ai-ufs-async-scan-teardown-review.md)
 - [ROUND98 — UFS versus SCSI async lifetime review](../round98/round98-1ai-ufs-versus-scsi-async-lifetime-review.md)
 - [ROUND99 — VDDP DRMS and devres cleanup review](../round99/round99-1ai-vddp-regulator-disable-and-devres-cleanup-review.md)
 - [ROUND61 Phase D — actual Image build report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai-parallel/stagea-port-until-boot/kernel-baseline/round61/phase-d-kconfig-and-image-build.md)

@@ -964,7 +964,7 @@ This is structurally aligned with the HOS4.3 template's bootloader-fill zero-siz
 Detailed note: kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md.
 
 
-## ROUND27 queued after ROUND25 and ROUND26 — actual Kleaf device-tree target validation
+## ROUND27 pre-release queue snapshot (historical; superseded by authorization below)
 
 Do not start ROUND27 until both of these reports exist on firmware-audit-v1 and have been reviewed:
 - firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt
@@ -984,3 +984,19 @@ ROUND27 is an isolated-copy Kleaf/Bzlmod device-tree validation only:
 - upload one sanitized report.
 
 No kernel_build/Image, no dtbo_image or table metadata, no boot packaging/AVB/signing, no device or partition access. Do not modify main candidates, protected DTS branch, second-AI branch or PR #1.
+
+
+## 2026-11-25 — 当前派发：ROUND27（[2号AI任务书]）
+
+**本节是当前最新且具执行效力的本地 Agent 指令；覆盖本文件中较早的“队列为空”“ROUND23 当前任务”或“ROUND27 queued”等历史快照。**
+
+- 任务接收方：**2号 AI（本地 WorkBuddy Agent）**
+- 主 AI / 任务书编写者 / 结果审核者：**1号 AI（ChatGPT）**
+- 状态：**AUTHORIZED / READY TO EXECUTE**
+- 执行任务书：`firmware-analysis/round27/AGENT_TASK.md`
+- 启动提示：`firmware-analysis/round27/START_PROMPT.md`
+- 放行记录：`firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md`
+
+ROUND25、ROUND26 两份报告已上传至 `firmware-audit-v1` 并由 1号 AI 完成审查。2号 AI 现在可以按 ROUND27 任务书执行三个 Kleaf/Bazel DT 目标（base DTB、raw rootparam DTBO、composite-check DTB）及指定 schema 验证。执行范围、一次性工作区副本、清理要求、禁止 kernel Image/dtbo_image/设备操作等边界，以 ROUND27 任务书全文为准。
+
+**2号 AI 完成后只上传 ROUND27 一份脱敏报告，然后停止，等待 1号 AI 审查。不要自行开始下一轮。**

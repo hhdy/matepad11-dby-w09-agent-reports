@@ -800,3 +800,12 @@ ROUND23 must compile temporary copies of current main board rev2 candidate and V
 No source/config/DTS/DTBO edit, no Kleaf/Bazel, no kernel build, no dtbs_check, no packaging, no mkdtimg, no AVB, no device/ADB/fastboot. One sanitized report only, then stop.
 
 Do not touch the protected DTS branch, second-AI branch, PR #1, or existing candidate source files.
+
+
+## ROUND70 — DTBO table metadata selection is still UNKNOWN
+
+A same-device public Linux 7.0 reference (earlier HOS generation) uses a one-entry DTBO image with table id=0/rev=0 and page_size=4096, while the overlay root carries qcom,board-id=<0x206a 0> and base DTS keeps qcom,board-id=<0 0>. Its README describes ABL acceptance depending on /rootparam content. This proves root board identity and dt_table_entry ID are separate layers, but not that current HOS4.3 ABL accepts the same table.
+
+The specific ROUND68 example id=0x206a is withdrawn as a packaging recommendation. For HOS4.3, replacement dt_table_entry id/rev selection remains UNKNOWN. Do not package until an HOS4.3 ABL / known-good package / authorized boot evidence closes this contract.
+
+Detailed note: kernel-baseline/round70/round70-dby-w09-dtbo-table-id-selection-ambiguity.md.

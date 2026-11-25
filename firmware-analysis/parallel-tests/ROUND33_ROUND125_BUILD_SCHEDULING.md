@@ -46,3 +46,21 @@ ROUND125 目标是 AI1 ROUND63 后的 QMP UFS L5/L9 双 rail state accounting，
 ROUND124 Agent report has been reviewed in full by 1号 AI and accepted as an isolated, buildable candidate series. Full Image build and workspace restore passed. Checkpatch recorded zero errors but RC=1 with warnings/CHECKs, all disclosed in the acceptance note. This does not change AI2 Stage A branch.
 
 ROUND125 remains pending and may not run a competing full Image build until ROUND33's current revalidation/build slot is released.
+
+
+## ROUND33 third validation — ALL GATES PASS / build slot released
+
+- Final Agent report: firmware-analysis/round33/AI2_ROUND33_FINAL_REVALIDATION_REPORT.txt
+- Report blob: f7452f9259e7ed25027758fc39af4c047867b9e7
+- Tested Stage A branch snapshot: ai-parallel/stagea-port-until-boot@2f21233148a04afdd61e44b1be7688399967d9d0
+- Result: 17/17 patches applied; patch16/17 checkpatch 0E/0W/0C; host suites 38/38 and 83/83; schema 14/14 on dtschema 2023.9 and 2026.9; full tools/bazel build //common:dby_w09 BUILD_RC=0 in 337s; config 33/33 and helpers 11/11; workspace restore hash matched exactly; no device access.
+- Build artifact Image SHA-256: a59c22f7f5f124c1f125edaa53c9125d3e56f8bf6c21fd8fe0fe85bbf0a3d50e
+- **ROUND33 FULL BUILD SLOT RELEASED.** The earlier failed run is historical and must not be reported as the final result; the final third validation supersedes the earlier failed host test run.
+
+## Active AI1 combined validation task — ROUND127
+
+- ROUND125 QMP UFS dual-rail state candidate and ROUND126 proxy-consumer load-first teardown candidate have been placed into one independent Agent run.
+- Active taskbook: firmware-analysis/round127/TEST_AGENT_ROUND127_COMBINED_TASKBOOK.md
+- It uses Stage A's verified 17-patch baseline (including the successful ROUND33 patch16/17), applies both AI1 candidates, runs host tests, source gates, checkpatch, both object builds and one full Image build.
+- The older standalone ROUND125 taskbook is marked SUPERSEDED; do not execute it.
+- ROUND127 must use an independent disposable workspace and may not alter AI2 branch or any AI2 files. Device connection remains prohibited without explicit user approval.

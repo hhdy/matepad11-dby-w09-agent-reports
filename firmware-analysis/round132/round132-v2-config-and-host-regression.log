@@ -1,0 +1,654 @@
+
+################################################################################
+# PART 1/4 — product .config invariance + host regression 38/38 and 83/83
+################################################################################
+
+=== 1. product .config before any test ===
+path=/home/kerneldev/work/matepad11/ack-6.18.33-a30/bazel-bin/common/dby_w09/.config
+sha256_before=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+bytes_before=238410
+lines_before=8688
+expected_sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+REFERENCE_MATCH=YES
+--- KUnit test symbol in the product config ---
+KUNIT_SYMBOL_IN_PRODUCT_CONFIG=ABSENT
+
+=== 2. host regression entry point identity ===
+runner=/home/kerneldev/work/matepad11/round132-agent/host-work/run_tests.sh
+kernel_tree=/home/kerneldev/work/matepad11/round132-agent/tree-b
+workdir=/home/kerneldev/work/matepad11/round132-agent/host-work
+kernel_tree_HEAD=f7a5839e95661ef9864df150bf6ecf103cd12450
+kernel_tree_content_tree=482e1dfbb6945ff5bce3c95279d65ebfbfebf23e
+run_tests.sh git_blob_sha1=e29f8a237e1836420dfcd85b7d970cf8d9a956d8 sha256=145bf8d3b65b4445339724129fe2ba67f9f37e3afd745eab41dc0e2ebc3be624
+test_proxy_consumer_r31.c git_blob_sha1=14515c62c48d95e86bfc6dca9c2070c81e031489 sha256=58b0ca477b964a1cf28a8f81a170e8d686266b8bec025539b7f5073adceb8d5c
+test_proxy_consumer_round32.c git_blob_sha1=aff9ec3c5bc65c880726431b5f23750b19339c1f sha256=138213990ce269707a66c1bcca3101aa0445a1f90169293e3606fad618089250
+mock/mock_core.h git_blob_sha1=98820fc6c6439237563dad52c4129db022fb1260 sha256=d0dc8deb82d6dcb4a6fb62afb3c8e32514b01786444bbeb2ad67e786ae56d33c
+mock/linux/errno.h git_blob_sha1=8a8e39690876ebe9ffd3b56c553c2c773c2e333f sha256=39e6adaf501606be13f5f5a5e47d539995354a158e4866d9dfb3475a37d4b69c
+source_under_test=/home/kerneldev/work/matepad11/round132-agent/tree-b/drivers/regulator/proxy-consumer.c
+source_sha256=bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+header_sha256=93b5c5f9905bcd2fccd0c9b5d2c0168072d85317ea72bba21386b44b7ac488a6
+
+=== 3. suite 1 + suite 2, verbatim harness output ===
+CMD: bash /home/kerneldev/work/matepad11/round132-agent/host-work/run_tests.sh /home/kerneldev/work/matepad11/round132-agent/tree-b /home/kerneldev/work/matepad11/round132-agent/host-work
+--- test_proxy_consumer_r31 ---
+source sha256: bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+COMPILE_RC=0
+== ROUND31 proxy-consumer lifecycle test ==
+ok   no proxy properties -> NULL consumer
+ok   no proxy properties -> no regulator_get
+ok   no proxy properties -> rdev untouched
+ok   enable+current -> consumer registered
+ok   exactly one regulator_get
+ok   supply id is "proxy"
+ok   single 100000 uA load vote
+ok   single enable, balance 1
+ok   unregister clears rdev->proxy_consumer
+ok   unregister disables once, balance 0
+ok   unregister drops load vote to 0
+ok   unregister puts the regulator once
+ok   second unregister is a no-op
+[dev_err] 0x7ffd10a4efe0OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before regulator_get
+ok   rejected -> rdev untouched
+[dev_err] 0x7ffd10a4efe0OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable -> -EINVAL
+ok   type error rejected before regulator_get
+[dev_err] 0x7ffd10a4efe0OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   min > max voltage -> -EINVAL
+[dev_err] 0x7ffd10a4efe0OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never touches a regulator
+[pr_err] regulator_set_load pm8150-rpmh-regulators-l5 failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> regulator_put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-rpmh-regulators-l5 failed, rc=-6
+ok   enable failure propagates
+ok   enable failure restores load to 0
+ok   enable failure -> regulator_put once
+ok   two rails registered
+ok   two rails -> enable balance 2
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   late_initcall_sync drops both enables
+ok   late_initcall_sync drops both load votes
+ok   late_initcall_sync puts both regulators
+ok   late_initcall_sync clears both back-pointers
+ok   second late_initcall_sync is a no-op
+ok   registration after removal -> -EPERM
+ok   refused registration does not vote
+
+checks=38 failures=0
+RESULT: PASS
+TEST_RC=0
+--- test_proxy_consumer_round32 ---
+source sha256: bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+COMPILE_RC=0
+== ROUND32 child-scoped proxy consumer lifecycle test ==
+ok   plain child without proxy props -> NULL
+ok   plain child -> no regulator lookup
+ok   plain child -> rdev untouched
+ok   l5 child-scoped consumer registered
+ok   l9 child-scoped consumer registered
+ok   exactly one lookup per child
+ok   l5 resolved via its own node phandle
+ok   l9 resolved via its own node phandle
+ok   l5 target carries exactly one 100000 uA load vote
+ok   l9 target carries exactly one 100000 uA load vote
+ok   each target enabled exactly once
+ok   no cross-disable before teardown
+ok   l5 unregister clears back-pointer
+ok   l5 disable happened exactly once
+ok   l5 handle put once
+ok   l5 load vote withdrawn
+ok   l9 not disabled by l5 unregister
+ok   l9 handle untouched
+ok   global enable balance drops by exactly one
+ok   double unregister: no second disable
+ok   double unregister: no second put
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke disables l9 once
+ok   bulk revoke puts l9 once
+ok   bulk revoke balance 0
+ok   bulk revoke clears back-pointer
+ok   repeat bulk revoke is a no-op
+ok   child-scoped after revoke -> -EPERM
+ok   refused registration does not look up
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   deferred target -> consumer parked, not an error
+ok   consumer marked deferred
+ok   deferred consumer made no votes
+ok   lookup returned -EPROBE_DEFER
+ok   deferred consumer holds no enable
+ok   late_initcall retry hook captured
+ok   retry with target still absent keeps no votes
+ok   retry leaves the consumer parked
+ok   retry clears deferred flag
+ok   retry enables exactly once
+ok   retry applies the 100000 uA load vote
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke withdraws the retried consumer once
+ok   bulk revoke clears retried back-pointer
+[dev_err] 0x5c615e717160OF: proxy-supply must target the regulator child owning this proxy request
+ok   non-self ghost target -> -EINVAL
+ok   non-self ghost rejected before regulator lookup
+ok   non-self ghost leaves owner back-pointer empty
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   self-target without registered regulator is parked
+ok   self-target consumer is deferred
+[pr_info] dropping deferred proxy consumer for 0x5c615e717160OF without voting
+ok   unregistering a deferred self-target does not touch regulators
+ok   deferred self-target consumer freed
+[dev_err] 0x5c615e717200OF: child-scoped and group-level proxy-supply are mutually exclusive
+ok   group+child proxy-supply mix -> -EINVAL
+ok   ambiguity rejected before any lookup
+ok   ambiguity leaves rdev untouched
+ok   legacy group-level consumer registered
+ok   legacy lookup used regulator_get("proxy")
+ok   legacy votes applied through the group-level self-target handle
+ok   legacy unregister disables its self-target once
+[dev_err] 0x5c615e717200OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before lookup (child-scoped)
+[dev_err] 0x5c615e717200OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable flag -> -EINVAL
+[dev_err] 0x5c615e717200OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   inverted voltage range -> -EINVAL
+[dev_err] 0x5c615e717200OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never looked up
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> handle put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-regulators failed, rc=-6
+ok   enable failure propagates
+ok   enable failure withdrew the load vote
+ok   enable failure -> handle put once
+ok   enable failure leaves rdev clean
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   parked consumer waiting for target
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-7
+[pr_err] deferred proxy consumer for 0x5c615e717200OF failed to apply votes, rc=-7
+ok   retry vote failure does not enable
+ok   failed retry frees the consumer (back-pointer cleared)
+ok   legacy after revoke -> -EPERM
+[dev_err] 0x5c615e717200OF: proxy-supply must target the regulator child owning this proxy request
+ok   child-scoped cross-target rejected with -EINVAL
+ok   child-scoped cross-target rejected before regulator lookup
+ok   child-scoped cross-target leaves owner back-pointer empty
+[dev_err] 0x5c615e717200OF: proxy-supply must target the regulator child owning this proxy request
+ok   legacy group cross-target rejected with -EINVAL
+ok   legacy group cross-target rejected before regulator lookup
+ok   legacy group cross-target leaves owner back-pointer empty
+ok   legacy group self-target still registers
+ok   legacy group self-target resolves the owner node
+ok   legacy self-target owner teardown withdraws once
+
+checks=83 failures=0
+RESULT: PASS
+TEST_RC=0
+HARNESS_RESULT: PASS
+HOST_RC=0
+
+=== 4. per-suite tallies (from the captured harness output) ===
+suite1_pass_lines=1
+suite2_pass_lines=1
+SUITE_1_38_OF_38=PASS
+SUITE_2_83_OF_83=PASS
+
+=== 5. product .config after the tests ===
+sha256_after=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+bytes_after=238410
+lines_after=8688
+KUNIT_SYMBOL_AFTER=ABSENT
+BEFORE_AFTER_IDENTICAL=YES
+--- mtime/ctime (for the record) ---
+mtime=2026-11-25 22:44:51.214172848 +0800 ctime=2026-11-26 00:00:00.132486526 +0800 size=238410
+
+--- the UML test config is a different file, shown for separation ---
+uml_config=/home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+uml_config_sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+uml_config_line=868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+
+=== 6. verdict ===
+CONFIG_AND_HOST_RESULT=PASS
+
+################################################################################
+# PART 2/4 — raw harness stdout (unmodified)
+################################################################################
+
+--- test_proxy_consumer_r31 ---
+source sha256: bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+COMPILE_RC=0
+== ROUND31 proxy-consumer lifecycle test ==
+ok   no proxy properties -> NULL consumer
+ok   no proxy properties -> no regulator_get
+ok   no proxy properties -> rdev untouched
+ok   enable+current -> consumer registered
+ok   exactly one regulator_get
+ok   supply id is "proxy"
+ok   single 100000 uA load vote
+ok   single enable, balance 1
+ok   unregister clears rdev->proxy_consumer
+ok   unregister disables once, balance 0
+ok   unregister drops load vote to 0
+ok   unregister puts the regulator once
+ok   second unregister is a no-op
+[dev_err] 0x7ffd10a4efe0OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before regulator_get
+ok   rejected -> rdev untouched
+[dev_err] 0x7ffd10a4efe0OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable -> -EINVAL
+ok   type error rejected before regulator_get
+[dev_err] 0x7ffd10a4efe0OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   min > max voltage -> -EINVAL
+[dev_err] 0x7ffd10a4efe0OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never touches a regulator
+[pr_err] regulator_set_load pm8150-rpmh-regulators-l5 failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> regulator_put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-rpmh-regulators-l5 failed, rc=-6
+ok   enable failure propagates
+ok   enable failure restores load to 0
+ok   enable failure -> regulator_put once
+ok   two rails registered
+ok   two rails -> enable balance 2
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   late_initcall_sync drops both enables
+ok   late_initcall_sync drops both load votes
+ok   late_initcall_sync puts both regulators
+ok   late_initcall_sync clears both back-pointers
+ok   second late_initcall_sync is a no-op
+ok   registration after removal -> -EPERM
+ok   refused registration does not vote
+
+checks=38 failures=0
+RESULT: PASS
+TEST_RC=0
+--- test_proxy_consumer_round32 ---
+source sha256: bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+COMPILE_RC=0
+== ROUND32 child-scoped proxy consumer lifecycle test ==
+ok   plain child without proxy props -> NULL
+ok   plain child -> no regulator lookup
+ok   plain child -> rdev untouched
+ok   l5 child-scoped consumer registered
+ok   l9 child-scoped consumer registered
+ok   exactly one lookup per child
+ok   l5 resolved via its own node phandle
+ok   l9 resolved via its own node phandle
+ok   l5 target carries exactly one 100000 uA load vote
+ok   l9 target carries exactly one 100000 uA load vote
+ok   each target enabled exactly once
+ok   no cross-disable before teardown
+ok   l5 unregister clears back-pointer
+ok   l5 disable happened exactly once
+ok   l5 handle put once
+ok   l5 load vote withdrawn
+ok   l9 not disabled by l5 unregister
+ok   l9 handle untouched
+ok   global enable balance drops by exactly one
+ok   double unregister: no second disable
+ok   double unregister: no second put
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke disables l9 once
+ok   bulk revoke puts l9 once
+ok   bulk revoke balance 0
+ok   bulk revoke clears back-pointer
+ok   repeat bulk revoke is a no-op
+ok   child-scoped after revoke -> -EPERM
+ok   refused registration does not look up
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   deferred target -> consumer parked, not an error
+ok   consumer marked deferred
+ok   deferred consumer made no votes
+ok   lookup returned -EPROBE_DEFER
+ok   deferred consumer holds no enable
+ok   late_initcall retry hook captured
+ok   retry with target still absent keeps no votes
+ok   retry leaves the consumer parked
+ok   retry clears deferred flag
+ok   retry enables exactly once
+ok   retry applies the 100000 uA load vote
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke withdraws the retried consumer once
+ok   bulk revoke clears retried back-pointer
+[dev_err] 0x5c615e717160OF: proxy-supply must target the regulator child owning this proxy request
+ok   non-self ghost target -> -EINVAL
+ok   non-self ghost rejected before regulator lookup
+ok   non-self ghost leaves owner back-pointer empty
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   self-target without registered regulator is parked
+ok   self-target consumer is deferred
+[pr_info] dropping deferred proxy consumer for 0x5c615e717160OF without voting
+ok   unregistering a deferred self-target does not touch regulators
+ok   deferred self-target consumer freed
+[dev_err] 0x5c615e717200OF: child-scoped and group-level proxy-supply are mutually exclusive
+ok   group+child proxy-supply mix -> -EINVAL
+ok   ambiguity rejected before any lookup
+ok   ambiguity leaves rdev untouched
+ok   legacy group-level consumer registered
+ok   legacy lookup used regulator_get("proxy")
+ok   legacy votes applied through the group-level self-target handle
+ok   legacy unregister disables its self-target once
+[dev_err] 0x5c615e717200OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before lookup (child-scoped)
+[dev_err] 0x5c615e717200OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable flag -> -EINVAL
+[dev_err] 0x5c615e717200OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   inverted voltage range -> -EINVAL
+[dev_err] 0x5c615e717200OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never looked up
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> handle put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-regulators failed, rc=-6
+ok   enable failure propagates
+ok   enable failure withdrew the load vote
+ok   enable failure -> handle put once
+ok   enable failure leaves rdev clean
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   parked consumer waiting for target
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-7
+[pr_err] deferred proxy consumer for 0x5c615e717200OF failed to apply votes, rc=-7
+ok   retry vote failure does not enable
+ok   failed retry frees the consumer (back-pointer cleared)
+ok   legacy after revoke -> -EPERM
+[dev_err] 0x5c615e717200OF: proxy-supply must target the regulator child owning this proxy request
+ok   child-scoped cross-target rejected with -EINVAL
+ok   child-scoped cross-target rejected before regulator lookup
+ok   child-scoped cross-target leaves owner back-pointer empty
+[dev_err] 0x5c615e717200OF: proxy-supply must target the regulator child owning this proxy request
+ok   legacy group cross-target rejected with -EINVAL
+ok   legacy group cross-target rejected before regulator lookup
+ok   legacy group cross-target leaves owner back-pointer empty
+ok   legacy group self-target still registers
+ok   legacy group self-target resolves the owner node
+ok   legacy self-target owner teardown withdraws once
+
+checks=83 failures=0
+RESULT: PASS
+TEST_RC=0
+HARNESS_RESULT: PASS
+
+################################################################################
+# PART 3/4 — Kconfig type / dependency audit and built-in compilation proof
+################################################################################
+
+=== 1. Kconfig declaration (tree-b after seam-v2) ===
+file=/home/kerneldev/work/matepad11/round132-agent/tree-b/drivers/regulator/Kconfig
+74:config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+block_start_line=74
+--- block, verbatim with line numbers ---
+74: config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+75: 	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+76: 	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
+77: 	depends on !KUNIT_ALL_TESTS
+78: 	default n
+79: 	help
+80: 		KUnit coverage for proxy-consumer bulk revoke and the owner
+81: 		unregister ordering seam. Off by default and excluded from
+82: 		KUNIT_ALL_TESTS; use it only in an isolated KUnit test
+83: 		configuration. This option is bool because the observer is in the
+84: 		built-in regulator core and the test helpers must be built-in too.
+85: 
+
+--- type token ---
+2:	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+BOOL_DECLARATIONS=1
+TRISTATE_DECLARATIONS=0
+KCONFIG_TYPE_IS_BOOL=YES
+
+--- prompt / dependencies / default ---
+2:	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+3:	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
+4:	depends on !KUNIT_ALL_TESTS
+5:	default n
+8:		unregister ordering seam. Off by default and excluded from
+10:		configuration. This option is bool because the observer is in the
+DEP_ON_KUNIT=2
+DEP_ON_REGULATOR_PROXY_CONSUMER=1
+DEP_ON_OF=1
+DEP_ON_OF_OVERLAY=1
+DEP_ON_NOT_KUNIT_ALL_TESTS=1
+DEFAULT_N_PRESENT=1
+DEPENDENCIES_AND_DEFAULT_PRESERVED=YES
+
+=== 2. Kconfig block in the seam-v2 patch (added lines) ===
++config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
++	bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
++	depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
++	depends on !KUNIT_ALL_TESTS
++	default n
++	help
++		KUnit coverage for proxy-consumer bulk revoke and the owner
++		unregister ordering seam. Off by default and excluded from
++		KUNIT_ALL_TESTS; use it only in an isolated KUnit test
++		configuration. This option is bool because the observer is in the
++		built-in regulator core and the test helpers must be built-in too.
++
+
+=== 3. Makefile wiring ===
+15:obj-$(CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST) += proxy-consumer-kunit-test.o
+16:proxy-consumer-kunit-test-y := proxy-consumer-kunit.o kunit-proxy-consumer.dtbo.o
+OBJ_LINE_USES_CONFIG_SYMBOL=1
+note: obj-$(CONFIG_X) is built-in (obj-y) when CONFIG_X=y and a loadable module (obj-m) only when CONFIG_X=m.
+
+=== 4. #ifdef guards that require the plain (non-_MODULE) macro ===
+--- drivers/regulator/core.c ---
+6058:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+--- drivers/regulator/proxy-consumer.c ---
+511:#ifndef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+519:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+--- include/linux/regulator/proxy-consumer.h ---
+24:#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+--- drivers/regulator/proxy-consumer-kunit.c ---
+16: * core.c, compiled out unless CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y.
+
+CORE_IFDEF_GUARDS=1
+PROXY_CONSUMER_IFNDEF_GUARDS=1
+--- core.c observer call site with guard (verbatim) ---
+6058-#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+6059-	/*
+6060-	 * KUnit-only ordering seam: proxy teardown has run, but the core
+6061-	 * open-count warning, coupling and list teardown below have not.
+6062-	 * Compiled out entirely unless the isolated test option is enabled.
+6063-	 */
+6064:	regulator_proxy_consumer_kunit_observe_unregister(rdev);
+6065-#endif
+6066-	mutex_lock(&regulator_list_mutex);
+6067-
+--- proxy-consumer.c wrapper/helper region (verbatim) ---
+488-/*
+489- * Remove all proxy requests at late_initcall_sync.  The assumption is that all
+490- * devices have probed at this point and made their own regulator requests.
+491- */
+492:static int regulator_proxy_consumer_revoke_all(void)
+493-{
+494-	struct proxy_consumer *consumer;
+495-	struct proxy_consumer *temp;
+496-
+497-	mutex_lock(&proxy_consumer_list_mutex);
+498-	proxy_consumers_removed = true;
+499-
+500-	if (!list_empty(&proxy_consumer_list))
+501-		pr_info("removing regulator proxy consumer requests\n");
+502-
+503-	list_for_each_entry_safe(consumer, temp, &proxy_consumer_list, list)
+504-		regulator_proxy_consumer_remove(consumer);
+505-
+506-	mutex_unlock(&proxy_consumer_list_mutex);
+507-
+508-	return 0;
+509-}
+510-
+511-#ifndef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+512-static int __init regulator_proxy_consumer_remove_all(void)
+513-{
+514:	return regulator_proxy_consumer_revoke_all();
+515-}
+516-late_initcall_sync(regulator_proxy_consumer_remove_all);
+517-#endif
+518-
+519-#ifdef CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+520-int regulator_proxy_consumer_kunit_revoke_all(void)
+521-{
+522:	return regulator_proxy_consumer_revoke_all();
+523-}
+524-EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_revoke_all);
+525-
+526-bool regulator_proxy_consumer_kunit_removed(void)
+527-{
+528-	return proxy_consumers_removed;
+529-}
+530-EXPORT_SYMBOL_GPL(regulator_proxy_consumer_kunit_removed);
+531-#endif
+
+=== 5. generated UML .config evidence (from the KUnit build) ===
+config_path=/home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+config_sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+MODULE_FORM_LINES=0
+CONFIG_IS_Y=1
+
+=== 6. built-in proof from vmlinux ===
+vmlinux_sha256=5eb684a3afac5192fdeacfc25538a0bd379094bad5ffbed3de9a8bf5823d3154
+--- seam symbols (nm, lowercase type = local/static, present in the image) ---
+0000000060040425 t regulator_proxy_consumer_kunit_revoke_all.cold
+000000006029af20 t regulator_proxy_consumer_kunit_removed
+000000006029b0e0 t regulator_proxy_consumer_kunit_revoke_all
+000000006029b810 t regulator_proxy_consumer_kunit_observe_unregister
+--- seam object files produced by the build ---
+/home/kerneldev/work/matepad11/round132-agent/kunit-build/drivers/regulator/.proxy-consumer-kunit.o.cmd
+/home/kerneldev/work/matepad11/round132-agent/kunit-build/drivers/regulator/proxy-consumer-kunit.o
+MODULE_OBJECT_COUNT=0
+
+=== 7. KTAP "# module:" annotation is a KBUILD_MODNAME label, not modularity ===
+source: include/kunit/test.h .module_name = KBUILD_MODNAME
+166:		  .module_name = KBUILD_MODNAME}
+178:		  .attr = attributes, .module_name = KBUILD_MODNAME}
+189:		  .attr.speed = KUNIT_SPEED_SLOW, .module_name = KBUILD_MODNAME}
+source: lib/kunit/attributes.c prints the "module" attribute from module_name
+261:		.name = "module",
+262-		.get_attr = attr_module_get,
+263-		.to_string = attr_string_to_string,
+264-		.filter = attr_string_filter,
+224:static void *attr_module_get(void *test_or_suite, bool is_test)
+262:		.get_attr = attr_module_get,
+source: lib/kunit/test.c prints suite attributes (incl. module) before the plan line
+   166		 */
+   167		pr_info(KUNIT_SUBTEST_INDENT "KTAP version 1\n");
+   168		pr_info(KUNIT_SUBTEST_INDENT "# Subtest: %s\n",
+   169			  suite->name);
+   170		kunit_print_attr((void *)suite, false, KUNIT_LEVEL_CASE);
+   171		pr_info(KUNIT_SUBTEST_INDENT "1..%zd\n",
+   172			  kunit_suite_num_test_cases(suite));
+   173	}
+conclusion: the composite object proxy-consumer-kunit-test.o gives KBUILD_MODNAME=proxy_consumer_kunit_test,
+            so the KTAP label appears even for a built-in (obj-y) build; MODULE_OBJECT_COUNT and
+            CONFIGURED_AS_M decide modularity, and both say built-in.
+
+=== 8. verdict ===
+KCONFIG_AND_BUILTIN_RESULT=PASS
+
+=== 6b. seam build artefacts (corrected listing) ===
+build_dir=/home/kerneldev/work/matepad11/round132-agent/kunit-build
+-rw-r--r-- 1 kerneldev kerneldev    701 Nov 26 01:34 kunit-proxy-consumer.dtbo
+-rw-r--r-- 1 kerneldev kerneldev    313 Nov 26 01:34 kunit-proxy-consumer.dtbo.S
+-rw-r--r-- 1 kerneldev kerneldev   1472 Nov 26 01:34 kunit-proxy-consumer.dtbo.o
+-rw-r--r-- 1 kerneldev kerneldev  24536 Nov 26 01:34 proxy-consumer-kunit.o
+-rw-r--r-- 1 kerneldev kerneldev  13616 Nov 26 01:34 proxy-consumer.o
+
+proxy_consumer_kunit_o_sha256=8355b0ca5a464a5b9d6de2a90abb83818ab96a289a1e002b73cc8b2d7a846b72
+kunit_dtbo_o_sha256=fdfd8662d0c522d1b202a0ffa0e850357dd900245d81f485c3aacc0322787f47
+kunit_dtbo_sha256=bdcbe8391cd5018bbdd97e944dabccfc5cacb841138a8369bc8e72c26ba11873
+module_objects_ko=0
+--- vmlinux is the bootable image that contains the seam symbols (nm below) ---
+0000000060040425 t regulator_proxy_consumer_kunit_revoke_all.cold
+000000006029af20 t regulator_proxy_consumer_kunit_removed
+000000006029b0e0 t regulator_proxy_consumer_kunit_revoke_all
+000000006029b810 t regulator_proxy_consumer_kunit_observe_unregister
+--- the KUnit suite symbol itself (built-in, in vmlinux) ---
+SUITE_SYMBOL_IN_VMLINUX=0
+
+=== 6c. correction: actual suite/test-case symbol names in vmlinux ===
+The suite struct is emitted as `proxy_kunit_suite` (data) and the case as
+`proxy_kunit_lifecycle` (text); there is no symbol literally named
+`proxy_consumer_kunit_test_suite`, so the earlier count of 0 for that name
+is a wrong-name lookup, not a missing suite.
+000000006029b860 t proxy_kunit_lifecycle
+00000000604b7f20 d proxy_kunit_suite
+00000000604b8180 d proxy_kunit_cases
+SUITE_SYMBOL_PROXY_KUNIT_SUITE=1
+CASE_SYMBOL_PROXY_KUNIT_LIFECYCLE=1
+Both are present in the vmlinux image that produced the TAP output, i.e. built-in.
+
+################################################################################
+# PART 4/4 — Kconfig negative control: is "=m" selectable for this symbol?
+################################################################################
+
+=== ROUND132 Kconfig negative control: attempt to select =m ===
+kernel_source=/home/kerneldev/work/matepad11/round132-agent/tree-b
+scratch_dir=/home/kerneldev/work/matepad11/round132-agent/kconfig-negative-control
+seeded_from=/home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+seeded_config_sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+--- before ---
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+
+CMD: /home/kerneldev/work/matepad11/round132-agent/tree-b/scripts/config --file /home/kerneldev/work/matepad11/round132-agent/kconfig-negative-control/.config --module CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+SCRIPTS_CONFIG_RC=0
+--- after scripts/config -m ---
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=m
+
+CMD: make -C /home/kerneldev/work/matepad11/round132-agent/tree-b ARCH=um O=/home/kerneldev/work/matepad11/round132-agent/kconfig-negative-control olddefconfig
+make: Entering directory '/home/kerneldev/work/matepad11/round132-agent/tree-b'
+make[1]: Entering directory '/home/kerneldev/work/matepad11/round132-agent/kconfig-negative-control'
+  GEN     Makefile
+  HOSTCC  scripts/basic/fixdep
+  HOSTCC  scripts/kconfig/conf.o
+  HOSTCC  scripts/kconfig/confdata.o
+  HOSTCC  scripts/kconfig/expr.o
+  LEX     scripts/kconfig/lexer.lex.c
+  YACC    scripts/kconfig/parser.tab.[ch]
+  HOSTCC  scripts/kconfig/lexer.lex.o
+  HOSTCC  scripts/kconfig/menu.o
+  HOSTCC  scripts/kconfig/parser.tab.o
+  HOSTCC  scripts/kconfig/preprocess.o
+  HOSTCC  scripts/kconfig/symbol.o
+  HOSTCC  scripts/kconfig/util.o
+  HOSTLD  scripts/kconfig/conf
+.config:868:warning: symbol value 'm' invalid for REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+#
+# configuration written to .config
+#
+make[1]: Leaving directory '/home/kerneldev/work/matepad11/round132-agent/kconfig-negative-control'
+make: Leaving directory '/home/kerneldev/work/matepad11/round132-agent/tree-b'
+OLDDEFCONFIG_RC=0
+
+--- after olddefconfig ---
+NO_MODULE_FORM_LINE
+FINAL_CONFIG_SHA256=20103383f8ed71157f89b5895f9b6ddb7bb762d166335c72cd4578bc8c23939d
+M_SELECTABLE=NO
+--- symbol type as recorded by the Kconfig parser output above ---
+
+--- verbatim final line for the symbol after rejecting =m ---
+868:# CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST is not set
+interpretation: kconfig refused the =m value for a bool symbol, warned, and
+settled on the "is not set" form. There is no way to reach the _MODULE macro
+form for this option, which is exactly why a bool declaration makes the
+#ifdef CONFIG_... guards consistent.

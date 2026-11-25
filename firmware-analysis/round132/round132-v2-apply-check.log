@@ -1,0 +1,933 @@
+
+################################################################################
+# PART 1/3 — frozen input identity (manifest blob resolution + 17 patch SHA-256)
+################################################################################
+
+=== ROUND132 input resolution ===
+repository: hhdy/matepad11-dby-w09-agent-reports
+resolver branch (blob->path map): ai-parallel/stagea-port-until-boot
+
+=== 1. branch tree snapshot used for path resolution ===
+TREE_TRUNCATED=NO
+BLOBS_IN_TREE=188
+UNIQUE_BLOB_SHAS=187
+
+=== 2. frozen manifest ===
+taskbook read location:  https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round61/round32-stagea-series.txt
+required git blob:       9a93b7e3a500d807533517a92b98fe244b2ea456
+probe main branch at taskbook path: HTTP_ERROR HTTP Error 404: Not Found
+paths in resolver tree with that blob: ['kernel-baseline/round61/round32-stagea-series.txt']
+resolved path:           kernel-baseline/round61/round32-stagea-series.txt
+resolved branch:         ai-parallel/stagea-port-until-boot
+bytes:                   6599
+sha256:                  36e1ab53bca5d8fb832a60644055f18ff37abbf02b135be4ce3dd4170efa2e15
+recomputed git blob:     9a93b7e3a500d807533517a92b98fe244b2ea456
+MANIFEST_BLOB_MATCH=YES
+MANIFEST_SHA256_MATCH=YES
+
+=== 3. 17 frozen production patches, resolved by blob SHA ===
+manifest_rows_parsed=17
+manifest_order=1..17 sequential
+
+idx  manifest_path                                                  blob                                      resolved_repo_path                                              bytes   sha256                                                           result
+01 round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft dad87ef8dfefee6141b8a7949982c007c4a03b4a  kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft   1575  9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171  MATCH
+02 round61/patches/round52-0001-context-corrected.patch           e47219d4a944b44f5c1461689b76e77b4f0317a8  kernel-baseline/round61/patches/round52-0001-context-corrected.patch   5093  74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6  MATCH
+03 round61/patches/round36-corrected-power-domain-range.patch     79b00af904454f637098b2882b78b01d52c831cf  kernel-baseline/round61/patches/round36-corrected-power-domain-range.patch   1006  5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764  MATCH
+04 round61/patches/round32-corrected-sc7180-clock-names.patch     2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb  kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch   1151  f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836  MATCH
+05 round61/patches/round33-checkpatch-clean.patch                 f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622  kernel-baseline/round61/patches/round33-checkpatch-clean.patch   8481  e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65  MATCH
+06 round61/patches/round52-0002-checkpatch-clean.patch            7e5df841b756dfef803edec486d9a5e3e753f47b  kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch   4773  d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4  MATCH
+07 round61/patches/round63-0002-qmp-ufs-phy-binding.patch         a6668eebe293f9a35e9c08d6be4f37c4340e7ddd  kernel-baseline/round61/patches/round63-0002-qmp-ufs-phy-binding.patch   1152  534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0  MATCH
+08 round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch  99fffb10603b38bc30a0e6c9db99b0e9888a7b82  kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch   7402  d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539  MATCH
+09 round61/patches/round58-kleaf-target.patch                     dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec  kernel-baseline/round61/patches/round58-kleaf-target.patch       8513  bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec  MATCH
+10 round61/patches/round31-0001-regulator-add-proxy-consumer.patch c7438eb8772c0b90a319ba5a37d5fa71b9342964  kernel-baseline/round61/patches/round31-0001-regulator-add-proxy-consumer.patch  14865  38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003  MATCH
+11 round61/patches/round31-0002-regulator-proxy-consumer-binding.patch d810e771bc16e531bc01082af0e9feea157aeb7a  kernel-baseline/round61/patches/round31-0002-regulator-proxy-consumer-binding.patch   2657  1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6  MATCH
+12 round61/patches/round31-0003-dby-w09-enable-proxy-consumer.patch 2a486d066b8eeb914665730feb9d42b21e847fd6  kernel-baseline/round61/patches/round31-0003-dby-w09-enable-proxy-consumer.patch   1230  c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435  MATCH
+13 round61/patches/round32-0001-regulator-child-scoped-proxy-consumer.patch 6b4f6d9969dde82733523d713b810df8451e934c  kernel-baseline/round61/patches/round32-0001-regulator-child-scoped-proxy-consumer.patch  14265  9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650  MATCH
+14 round61/patches/round32-0002-regulator-child-scoped-proxy-binding.patch ae349d95b011c2193c18e0352a8f482513501e85  kernel-baseline/round61/patches/round32-0002-regulator-child-scoped-proxy-binding.patch   2945  30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15  MATCH
+15 round61/patches/round32-0003-dby-w09-child-scoped-proxy-review-dts.patch 14f0219736c018c3cf361b7608eb00023dacbf77  kernel-baseline/round61/patches/round32-0003-dby-w09-child-scoped-proxy-review-dts.patch   2625  3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594  MATCH
+16 round61/patches/round33-0001-regulator-proxy-self-target-only.patch 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe  kernel-baseline/round61/patches/round33-0001-regulator-proxy-self-target-only.patch   3375  7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4  MATCH
+17 round61/patches/round33-0002-regulator-proxy-self-target-binding.patch d2e818296118672bd708db34ed08d817fcd3895b  kernel-baseline/round61/patches/round33-0002-regulator-proxy-self-target-binding.patch   2848  d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05  MATCH
+
+ALL_17_SHA256_AND_BLOB_MATCH=YES
+
+################################################################################
+# PART 2/3 — TREE A (fresh clone): ACK check + 17-patch replay
+################################################################################
+
+=== TREE A: fresh isolated directory ===
+kernel_repo=/home/kerneldev/work/matepad11/ack-6.18.33-a30/.repo/projects/common.git
+target_dir=/home/kerneldev/work/matepad11/round132-agent/tree-a
+required_ACK=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+
+CMD: git clone --shared --no-checkout <repo> <dir>
+Cloning into '/home/kerneldev/work/matepad11/round132-agent/tree-a'...
+done.
+CLONE_RC=0
+
+CMD: git -C <dir> checkout --detach 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+CHECKOUT_RC=0
+
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+HEAD_TREE=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+HEAD_OBJECT_TYPE=commit
+HEAD_SUBJECT=Merge android17-6.18 into android17-6.18-lts
+HEAD_COMMIT_DATE=2026-10-14 19:10:07 +0000
+--- git status --short (initial) ---
+INITIAL_STATUS_LINES=0
+ACK_EXACT_MATCH=YES
+
+=== 17-patch replay, manifest order 01..17 ===
+applier: git apply --check then git apply (exact context; no fuzz/offset mechanism)
+--- PATCH 01 ---
+file=01.patch
+bytes=1575
+sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/01.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 02 ---
+file=02.patch
+bytes=5093
+sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/02.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 03 ---
+file=03.patch
+bytes=1006
+sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/03.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+Hunk #2 FAILED at 93.
+1 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 04 ---
+file=04.patch
+bytes=1151
+sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/04.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+Hunk #1 FAILED at 100.
+1 out of 1 hunk FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 05 ---
+file=05.patch
+bytes=8481
+sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/05.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/ufs/host/ufs-qcom.c
+Hunk #1 FAILED at 11.
+Hunk #2 FAILED at 2802.
+2 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 06 ---
+file=06.patch
+bytes=4773
+sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/06.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/ufs/host/ufs-qcom.h
+checking file drivers/ufs/host/ufs-qcom.c
+Hunk #1 FAILED at 17.
+Hunk #3 FAILED at 1655.
+patch unexpectedly ends in middle of line
+2 out of 3 hunks FAILED
+patch unexpectedly ends in middle of line
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 07 ---
+file=07.patch
+bytes=1152
+sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/07.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 08 ---
+file=08.patch
+bytes=7402
+sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/08.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+Hunk #1 FAILED at 15.
+1 out of 5 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 09 ---
+file=09.patch
+bytes=8513
+sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/09.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file BUILD.bazel
+Hunk #1 FAILED at 1351.
+Not deleting file BUILD.bazel as content differs from patch
+1 out of 1 hunk FAILED
+checking file arch/arm64/configs/dby_w09_storage_first.fragment
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 10 ---
+file=10.patch
+bytes=14865
+sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/10.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/Kconfig
+checking file drivers/regulator/Makefile
+checking file drivers/regulator/core.c
+checking file drivers/regulator/proxy-consumer.c
+checking file include/linux/regulator/driver.h
+checking file include/linux/regulator/proxy-consumer.h
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 11 ---
+file=11.patch
+bytes=2657
+sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/11.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 12 ---
+file=12.patch
+bytes=1230
+sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/12.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file arch/arm64/configs/dby_w09_storage_first.fragment
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 13 ---
+file=13.patch
+bytes=14265
+sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/13.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/Kconfig
+checking file drivers/regulator/proxy-consumer.c
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 14 ---
+file=14.patch
+bytes=2945
+sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/14.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 15 ---
+file=15.patch
+bytes=2625
+sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/15.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 16 ---
+file=16.patch
+bytes=3375
+sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/16.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/proxy-consumer.c
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -5 lines).
+Hunk #3 succeeded at 274 (offset -1 lines).
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 17 ---
+file=17.patch
+bytes=2848
+sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/17.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+Hunk #1 FAILED at 118.
+Hunk #2 FAILED at 148.
+2 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+
+APPLY17_FAIL=0
+SECONDARY_GNU_PATCH_DIVERGENT_PATCHES=8
+GIT_APPLY_FUZZ_COUNT=0 (git apply has no fuzz mechanism; a fuzzed hunk cannot apply)
+GIT_APPLY_OFFSET_COUNT=0 (git apply has no offset mechanism; a shifted hunk cannot apply)
+
+=== tree state after 17-patch replay ===
+HEAD_UNCHANGED=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+--- git status --short ---
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+--- git diff --stat (worktree vs ACK) ---
+ BUILD.bazel                                        |  19 ++
+ .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml    |   5 +
+ .../bindings/regulator/qcom,rpmh-regulator.yaml    |  46 ++++
+ .../devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml |   1 +
+ .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  51 +++-
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c            | 123 ++++++++-
+ drivers/regulator/Kconfig                          |  15 ++
+ drivers/regulator/Makefile                         |   1 +
+ drivers/regulator/core.c                           |   5 +
+ drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.h                        |   4 +
+ include/linux/regulator/driver.h                   |   3 +-
+ 12 files changed, 546 insertions(+), 8 deletions(-)
+WORKTREE_DIFF_SHA256=3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+--- git diff --check ---
+FINAL_DIFFCHECK_RC=0
+REPLAY_CONTENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+EXPECTED_PARENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+REPLAY_TREE_EQUALS_DECLARED_PATCH_BASE_TREE=YES
+
+=== TREE A frozen parent ===
+PARENT_COMMIT=3f913e565cd889cb7a0f0130ca81cd2fe27a504c
+PARENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+PARENT_STATUS_LINES=0
+TREE_A_RESULT=PASS
+
+################################################################################
+# PART 3/3 — TREE B (second fresh clone): ACK check + 17-patch replay + seam-v2 identity/apply
+################################################################################
+
+=== TREE B: second fresh isolated directory (independent clone) ===
+kernel_repo=/home/kerneldev/work/matepad11/ack-6.18.33-a30/.repo/projects/common.git
+target_dir=/home/kerneldev/work/matepad11/round132-agent/tree-b
+required_ACK=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+sibling_tree=/home/kerneldev/work/matepad11/round132-agent/tree-a (not read, not copied; separate clone from the same bare repo)
+
+CMD: git clone --shared --no-checkout <repo> <dir>
+Cloning into '/home/kerneldev/work/matepad11/round132-agent/tree-b'...
+done.
+CLONE_RC=0
+
+CMD: git -C <dir> checkout --detach 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+CHECKOUT_RC=0
+
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+HEAD_TREE=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+HEAD_OBJECT_TYPE=commit
+--- git status --short (initial) ---
+INITIAL_STATUS_LINES=0
+ACK_EXACT_MATCH=YES
+
+=== 17-patch replay, manifest order 01..17 ===
+applier: git apply --check then git apply (exact context; no fuzz/offset mechanism)
+--- PATCH 01 ---
+file=01.patch
+bytes=1575
+sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/01.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 02 ---
+file=02.patch
+bytes=5093
+sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/02.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 03 ---
+file=03.patch
+bytes=1006
+sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/03.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+Hunk #2 FAILED at 93.
+1 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 04 ---
+file=04.patch
+bytes=1151
+sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/04.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+Hunk #1 FAILED at 100.
+1 out of 1 hunk FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 05 ---
+file=05.patch
+bytes=8481
+sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/05.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/ufs/host/ufs-qcom.c
+Hunk #1 FAILED at 11.
+Hunk #2 FAILED at 2802.
+2 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 06 ---
+file=06.patch
+bytes=4773
+sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/06.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/ufs/host/ufs-qcom.h
+checking file drivers/ufs/host/ufs-qcom.c
+Hunk #1 FAILED at 17.
+Hunk #3 FAILED at 1655.
+patch unexpectedly ends in middle of line
+2 out of 3 hunks FAILED
+patch unexpectedly ends in middle of line
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 07 ---
+file=07.patch
+bytes=1152
+sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/07.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 08 ---
+file=08.patch
+bytes=7402
+sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/08.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+Hunk #1 FAILED at 15.
+1 out of 5 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 09 ---
+file=09.patch
+bytes=8513
+sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/09.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file BUILD.bazel
+Hunk #1 FAILED at 1351.
+Not deleting file BUILD.bazel as content differs from patch
+1 out of 1 hunk FAILED
+checking file arch/arm64/configs/dby_w09_storage_first.fragment
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 10 ---
+file=10.patch
+bytes=14865
+sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/10.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/Kconfig
+checking file drivers/regulator/Makefile
+checking file drivers/regulator/core.c
+checking file drivers/regulator/proxy-consumer.c
+checking file include/linux/regulator/driver.h
+checking file include/linux/regulator/proxy-consumer.h
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 11 ---
+file=11.patch
+bytes=2657
+sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/11.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 12 ---
+file=12.patch
+bytes=1230
+sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/12.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file arch/arm64/configs/dby_w09_storage_first.fragment
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 13 ---
+file=13.patch
+bytes=14265
+sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/13.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/Kconfig
+checking file drivers/regulator/proxy-consumer.c
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 14 ---
+file=14.patch
+bytes=2945
+sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/14.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 15 ---
+file=15.patch
+bytes=2625
+sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/15.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 16 ---
+file=16.patch
+bytes=3375
+sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/16.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file drivers/regulator/proxy-consumer.c
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -5 lines).
+Hunk #3 succeeded at 274 (offset -1 lines).
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+--- PATCH 17 ---
+file=17.patch
+bytes=2848
+sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+CHECK_RC=0
+CMD: patch -p1 --dry-run --fuzz=0 -i /home/kerneldev/work/matepad11/round132-agent/patches/17.patch   [SECONDARY_DIAGNOSTIC_ONLY]
+checking file Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+Hunk #1 FAILED at 118.
+Hunk #2 FAILED at 148.
+2 out of 2 hunks FAILED
+SECONDARY_NOTE=GNU patch dry-run is not the verdict; see report tool-semantics section
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+CMD: git diff --check
+DIFFCHECK_RC=0
+
+APPLY17_FAIL=0
+SECONDARY_GNU_PATCH_DIVERGENT_PATCHES=8
+
+=== tree B state after 17-patch replay (pre-seam) ===
+PRE_SEAM_CONTENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+EXPECTED_PARENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+PRE_SEAM_TREE_EQUALS_DECLARED_PATCH_BASE_TREE=YES
+PARENT_COMMIT=f7a5839e95661ef9864df150bf6ecf103cd12450
+PARENT_TREE=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+PARENT_STATUS_LINES=0
+
+=== seam-v2 identity (before any apply) ===
+path=/home/kerneldev/work/matepad11/round132-agent/inputs/round132-kunit-seam-v2.patch
+bytes=16797
+expected_bytes=16797
+sha256=1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+expected_sha256=1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+git_blob=890b584b6015293c145c221219591f4d98129671
+expected_git_blob=890b584b6015293c145c221219591f4d98129671
+SEAM_V2_IDENTITY=PASS
+signature_headers=0
+diff_git_headers=7
+--- paths touched by the patch (from patch header) ---
+drivers/regulator/Kconfig
+drivers/regulator/Makefile
+drivers/regulator/core.c
+drivers/regulator/kunit-proxy-consumer.dtso
+drivers/regulator/proxy-consumer-kunit.c
+drivers/regulator/proxy-consumer.c
+include/linux/regulator/proxy-consumer.h
+--- git apply --stat ---
+ drivers/regulator/Kconfig                   |   12 +
+ drivers/regulator/Makefile                  |    3 
+ drivers/regulator/core.c                    |    8 +
+ drivers/regulator/kunit-proxy-consumer.dtso |   28 ++
+ drivers/regulator/proxy-consumer-kunit.c    |  320 +++++++++++++++++++++++++++
+ drivers/regulator/proxy-consumer.c          |   23 ++
+ include/linux/regulator/proxy-consumer.h    |    6 +
+ 7 files changed, 399 insertions(+), 1 deletion(-)
+
+=== seam-v2 apply ===
+CMD: git apply --check --verbose /home/kerneldev/work/matepad11/round132-agent/inputs/round132-kunit-seam-v2.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+SEAM_CHECK_RC=0
+CMD: git apply --verbose /home/kerneldev/work/matepad11/round132-agent/inputs/round132-kunit-seam-v2.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/kunit-proxy-consumer.dtso cleanly.
+Applied patch drivers/regulator/proxy-consumer-kunit.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+SEAM_APPLY_RC=0
+
+=== tree B state after seam-v2 ===
+--- git status --short ---
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/regulator/proxy-consumer.c
+ M include/linux/regulator/proxy-consumer.h
+?? drivers/regulator/kunit-proxy-consumer.dtso
+?? drivers/regulator/proxy-consumer-kunit.c
+--- git diff --stat ---
+ drivers/regulator/Kconfig                | 12 ++++++++++++
+ drivers/regulator/Makefile               |  3 +++
+ drivers/regulator/core.c                 |  8 ++++++++
+ drivers/regulator/proxy-consumer.c       | 23 ++++++++++++++++++++++-
+ include/linux/regulator/proxy-consumer.h |  6 ++++++
+ 5 files changed, 51 insertions(+), 1 deletion(-)
+--- git diff --name-status ---
+M	drivers/regulator/Kconfig
+M	drivers/regulator/Makefile
+M	drivers/regulator/core.c
+M	drivers/regulator/proxy-consumer.c
+M	include/linux/regulator/proxy-consumer.h
+--- git diff --check ---
+POST_SEAM_DIFFCHECK_RC=0
+POST_SEAM_DIFF_SHA256=ec91eccbe83b4dc9b6c597c0eb118be00fc07b5a59e4c0dc874d8d26843a8ed9
+SEAM_PATCH_SHA_AFTER_APPLY=1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+SEAM_PATCH_UNMODIFIED=YES
+POST_SEAM_CONTENT_TREE=482e1dfbb6945ff5bce3c95279d65ebfbfebf23e
+--- untracked/added paths present in worktree ---
+drivers/regulator/proxy-consumer-kunit.c bytes=10822 sha256=6682402540af75d6f403d0936d44c7c68f2b3c0eb4a294a6449a792c6cad0a8b
+drivers/regulator/kunit-proxy-consumer.dtso bytes=820 sha256=7beef49c3ae6841ddcceb395be9f3209a0c8e3d60787be6fa681def30c16cd0d
+TREE_B_RESULT=PASS

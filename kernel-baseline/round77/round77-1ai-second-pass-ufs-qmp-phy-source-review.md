@@ -37,6 +37,10 @@ Therefore walking from the required-OPP node to its parent OPP table and then to
 
 The two-domain attach strategy is also aligned with the known topology: MMCX is attached at index 0 for the single required-OPP slot, and GCC `UFS_PHY_GDSC` remains the second direct domain. The helper restricts the special path to the SM8250 UFS compatible and rejects unknown two-domain layouts instead of guessing. This preserves the generic single-domain path.
 
+The placement is also correct relative to the ACK UFS probe sequence: the Qualcomm probe helper runs before `ufshcd_pltfrm_init()`, while that platform helper parses/initializes the UFS OPP table later. The pinned `dev_pm_opp_set_config()` contract requires configuration before OPPs are initialized. The returned attach-list count is checked for exactly two domains; the OPP required-device mapping is registered as a devres action after the domain-attach resource, so OPP configuration is cleared before those attached GenPD devices are detached. The required-dev index is 0, matching the only required-opps entry. The later generic UFS clock-only OPP configuration is independently managed and does not overwrite that required-dev mapping.
+
+Pinned API references: [`drivers/opp/of.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf0563e1ee600e1339e0463c5fcbdc9a/drivers/opp/of.c) and [`drivers/opp/core.c`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf0563e1ee600e1339e0463c5fcbdc9a/drivers/opp/core.c).
+
 **Result: PASS (source-structure and intended mapping).** This does not establish HOS4.3 MMCX→MX voltage-corner equivalence; ROUND25 explicitly leaves that translation/dropout behavior unresolved. Do not add a bare MMCX→MX parent or invent corner conversion.
 
 Pinned source: [`arch/arm64/boot/dts/qcom/sm8250.dtsi`](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a/arch/arm64/boot/dts/qcom/sm8250.dtsi).
@@ -78,6 +82,8 @@ The QMP patch limits the special handling to a DT node that explicitly declares 
 The pinned regulator core confirms that load votes from a disabled consumer do not contribute to DRMS; when the retained consumer is enabled, its requested load participates. The bulk regulator helpers unwind partially enabled/disabled lists on failure, matching the patch's intended normal retry behavior.
 
 The cleanup action is registered after the managed regulator bulk-get and before later PHY/provider resources. Devres LIFO ordering therefore tears down later PHY/provider resources, runs the retained-`vdda-phy` cleanup, and only then releases the regulator handles.
+
+The corresponding binding patch adds `vdda-phy-always-on` as an optional boolean in a schema with `additionalProperties: false`, so explicitly declaring it is necessary and sufficient for the new property to be accepted. The 2号 AI's hosted Phase-B record reports two positive PHY fixtures (property absent and empty boolean present) with empty diagnostics, plus one negative fixture (cell-valued property) rejected as expected. This is corroborating test evidence from the 2号 AI branch, not a new test run by 1号 AI.
 
 **Result: PASS (normal power-on, power-off and managed cleanup ordering).**
 

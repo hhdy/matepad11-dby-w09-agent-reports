@@ -15,7 +15,7 @@
 | B — UFS / PHY binding validation | PASS | Hosted run 45457083961: kernel dt_binding_check with dtschema 2023.9; 2 UFS positive + 8 UFS negative fixtures; 2 PHY positive + 1 PHY negative fixture all behaved as expected. Artifact 14951770706. |
 | C — Kleaf target validation | PASS | Run 45529395645 completed immutable manifest sync, exact ACK pin, Clang `r584948c` / Rust `1.91.1.p3` discovery, ordered patch application, strict checks and Bazel query/cquery for `//common:dby_w09`. Nine-stage workflow completed successfully. Manifest XML SHA-256 `176a19b81642073bd6b8dce5eb59e89522e9d8f3ebf07b1f9a4c50413b6a611b`. |
 | D — final Kconfig + Image build | PASS (latest end-to-end build + independent artifact verification) | Run 45529395645 stages 8/9 both passed. Image 44,820,992 B, SHA-256 `4b0a14a10853bb586b28dbb98aaaaf55cfa4ecb1fc57bff1678eaadda0efeedf`; config 238,376 B, SHA-256 `5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7`; 33/33 required symbols `=y`, no missing/non-y/duplicate assignments. Artifact 14985348694. |
-| E — board DTS + memory/power handoff | BLOCKED | ROUND64 Agent confirms no authorized final post-ABL FDT/EFI handoff and no board-specific PM8150 input-parent evidence. Stock `/memory/reg` is an all-zero placeholder, not usable RAM. Keep the draft review-only. |
+| E — board DTS + memory/power handoff | BLOCKED | ROUND22 syntax-compiled an older pre-rev2 draft in temp only; zero draft-local warnings, but no schema/runtime proof. ROUND64 still leaves final memory handoff and PM8150 physical inputs unresolved; stock `/memory/reg` is all-zero. ROUND23 rev2/rootparam validation pending. |
 | F — boot image / ramdisk / AVB | BLOCKED FOR PACKAGING (read-only inventory complete) | ROUND64/65 confirm header-v2/ramdisk/DTBO/AVB layout, 21-entry base-FDT fstab semantics and prebuilt mkbootimg header-v2 capability. `vbmeta_cust` provenance and ABL-selected DTBO / boot path remain unknown; no candidate package. |
 | G — device validation | NOT RUN | No boot authorization, partition write, or hardware test. |
 
@@ -117,8 +117,7 @@ The workflow now compiles the fixtures with `dtc`, validates the first two with 
 Workflow revision: `de431840a025a3f66ff8bb3de74eae4e59edb863`. Fixture/report update commit: `1c703050087f2d0fb6ad8eed3b01cd63e5229502`.
 
 **Execution status remains PENDING:** this session's GitHub connector exposes job/run-log retrieval only after a run/job ID is known, but does not expose a push-triggered run listing. The new workflow is configured to trigger on these branch changes; no result is claimed until actual runner evidence is available. Local container has no `dtc`, `dt-validate`, `dtschema`, `bazel`, or `repo`, so the fixtures cannot be executed locally here.
-### ROUND63 regulator-list cross-check (2026-11-25)
-Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.
+### ROUND63 regulator-list cross-check (2026-11-25)Independently parsed all 15 static regulator bulk lists in pinned ACK QMP UFS PHY source blob `8af777f7ddd0385a6bb9d9b9563f0e6329699cd3`: all 15 are ordered `vdda-phy`, then `vdda-pll`. Also inspected pinned regulator-core bulk helpers: bulk enable unwinds successful entries on partial failure; bulk disable restores already-disabled entries if a later disable fails; `regulator_set_load()` restores the previous load if DRMS update fails. The ROUND63 report records this source evidence. No runtime regulator state is claimed.
 
 Report update commit: `ff816f9665876200a5df63f14aa42f10385b1c77`.
 
@@ -237,8 +236,7 @@ Moved the four ROUND52-0001 supply/load property definitions and pair requiremen
 - Triggered a fresh manifest-pinned build in commit 17fc9603ce29f0dbaa270fd1c0cfe8922fd4e5e7. Await its actual result; no Bazel query, cquery, Kconfig resolution or Image build is claimed yet.
 ### Current gate summary
 - Phase A: PASS (hosted exact-source patch apply, diff-check and strict style gates).- Phase B: BLOCKED on schema composition / dtschema compatibility; new controlled-version run pending.
-- Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.
-- Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
+- Phase C/D: PARTIAL / NOT RUN beyond source target validation; corrected manifest-pinned Bazel preflight run pending.- Phase E: BLOCKED on target-specific HOS4.3 FDT/EFI memory handoff and PM8150 supply-parent evidence.
 - Phase F/G: NOT RUN; no boot image or device write/boot operation performed.
 
 
@@ -359,7 +357,6 @@ A second static review found that generic `ARM_SMMU=y` alone is not enough to pr
 - Five UFS/PHY validation runs were created by sequential checker/test commits before this issue was noticed. No run was cancelled. Avoid further pushes touching the workflow's path filters until the current set drains; group any future checker changes into one commit.
 - The manifest/Kleaf runner verification remains separately in progress with the independent Agent. No new full Image build was started.
 
-
 ### Updated Phase D validator result
 
 Hosted run `45457083961` at head `055e4b5a51bbfd1c76a04ff15d468f9879c5a7cf` completed the source fetch, immutable identity checks, ordered patch application, strict checkpatch, buildifier and config-helper test steps successfully. The updated **11-test** suite includes:
@@ -478,7 +475,6 @@ Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SEC
 
 The build milestone is complete. The next progress dependency is no longer compilation: Phase E and Phase F need the local Agent's sanitized read-only HOS4.3 evidence described in `AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` and `AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md`. Do not generate DTB/boot/flash packages or start device operations until those evidence gates and separate authorization are complete.
 
-
 ### ROUND64 local-Agent handoff returned — 2026-11-25
 
 The Phase E and Phase F read-only taskbooks have both been completed and their sanitized reports are available on `firmware-audit-v1`:
@@ -494,8 +490,16 @@ No source, DTS, DTBO, boot image, ramdisk, AVB metadata or device state was chan
 
 ### ROUND65 Phase F read-only follow-up issued (2026-11-25)
 
-Second AI added `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_FOLLOWUP_READONLY_SECOND_AI.md` (commit `3155193eb4b1399cd72448b3ffdae2616e2ea76a`). It requests only reuse of already-existing local evidence to inspect the base-DTB first-stage fstab semantics, alternate module-loading evidence, the `vbmeta_cust` file/partition-size provenance, the already-present mkbootimg source/tool contract, and any direct HOS4.3 ABL DTBO/boot-path evidence. It prohibits device access, tool installation, build, image generation, signing, or modification. Target report: `firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md` on `firmware-audit-v1`. Until that report arrives, no boot packaging or device operation is authorized.
+Second AI added `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_FOLLOWUP_READONLY_SECOND_AI.md` (commit `3155193eb4b1399cd72448b3ffdae2616e2ea76a`). It requests only reuse of already-existing local evidence to inspect the base-DTB first-stage fstab semantics, alternate module-loading evidence, the `vbmeta_cust` file/partition-size provenance, the already-present mkbootimg source/tool contract, and any direct HOS4.3 ABL DTBO/boot-path evidence. It prohibits device access, tool installation, build, image generation, signing, or modification. Target report: `firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md` on `firmware-audit-v1`. This task was completed by the ROUND65 report below; no boot packaging or device operation is authorized.
 
+
+### ROUND22 and follow-on offline DTS checks (2026-11-25)
+
+The local Agent's [ROUND22 report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round22/round22_board_dts_compile_and_ufs_regulator_contract_audit.txt) provides syntax-only proof for a pre-rev2 board draft: `cpp` + dtc 1.7.0, temp DTB exit 0, 32 inherited `sm8250.dtsi` warnings and zero draft-local warnings. It is not proof for the Stage-A branch's current draft or the main rev2 candidate, and it does not include schema/runtime validation.
+
+ROUND22 also confirmed the UFS property-to-driver contracts and that omitted PM8150 parent supplies can be papered over by regulator-core dummy-parent behavior on DT boot; this is not evidence of the real board power tree and does not close Phase E.
+
+The repository has additional offline validations already assigned: [ROUND23 rev2 DTB/rootparam composite validation task](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round23/AGENT_TASK.md) and [ROUND24 reserved-memory consumer map task](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/firmware-analysis/round24/AGENT_TASK.md). Both forbid tablet/device operations. Their result reports have not yet appeared on `firmware-audit-v1` at this update.
 ### ROUND65 Agent report received (2026-11-25)
 
 The local Agent completed the read-only audit and uploaded [ROUND65 first-stage fstab / vbmeta_cust / boot-tool report](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round65/round65-first-stage-fstab-vbmeta-cust-and-boot-tool-audit.md). It records 21 base-FDT fstab children, first-stage AVB/logical mount semantics, the actual absence of rc/module files in the standalone ramdisk, the current Image's monolithic build evidence, and the pinned-workspace prebuilt mkbootimg header-v2 capability. It reconciles two different vbmeta_cust structures without guessing and leaves the file provenance unresolved. The selected HOS4.3 DTBO, classic-FDT/EFI entry path, and RAM-boot acceptance remain UNKNOWN. No image/package/device operation occurred.

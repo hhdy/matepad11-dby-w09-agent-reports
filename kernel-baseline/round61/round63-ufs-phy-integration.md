@@ -134,3 +134,57 @@ Hosted run `45443538190` (commit `dc091a5927bbdb8b8b9834996e0e5ea766658a37`) pas
 - all nine config-helper unit tests.
 
 This closes the ROUND63 source-application/checkpatch gate and Phase A. The same run was still installing dtschema prerequisites when this report was updated; schema/fixture results remain pending. The manifest-pinned Bazel/Image workflow is independent and still running.
+
+## 10. ROUND30 — real integration and Image build (executed 2026-11-25)
+
+This section is appended by the ROUND30 executor. It records what was actually run; the earlier
+sections remain the 2号 AI design record and are not rewritten.
+
+**Applied artifact.** `patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch` (blob
+`99fffb10…`, 7,402 B), not the locked ROUND63 draft blob `a06b7d3f…`. The draft's identity is
+correct but it is not appliable by `git apply` or `patch(1)`: its first hunk ends on an added line
+(`+#include <linux/string.h>`) with no trailing context. `-C1`/`-C0` accept it, default context does
+not, which is why a relaxed check would produce a false PASS. The draft was left untouched.
+
+**Ordered series actually applied** (each `--check` → `apply` → `diff --check`, all rc 0):
+`round36/0001-…dual-power-domains.patch.draft`, `round52-0001-context-corrected`,
+`round36-corrected-power-domain-range`, `round32-corrected-sc7180-clock-names`,
+`round33-checkpatch-clean`, `round52-0002-checkpatch-clean`, `round63-0002-qmp-ufs-phy-binding`,
+`round63-0001-phy-qcom-qmp-ufs-always-on`, `round58-kleaf-target`.
+Resulting `git diff --binary` sha256 `04534123…`, reproduced identically in the 41 GiB build copy.
+
+**New fixture.** `fixtures/round63-phy-undeclared-property.dts` — a node that carries an
+undeclared child property, used as the fourth gate case. With the binding still
+`additionalProperties: false`, `dt-validate` must name the offending property; the gate asserts
+that text is present, rather than trusting the tool's exit status.
+
+**`dt-validate` exit-status trap.** On dtschema 2023.9 and 2026.9 alike, `dt-validate` prints
+validation errors and still exits 0, and neither version exposes a flag to change that. Negative
+fixtures are therefore judged by an explicit content gate; raw stdout and raw rc are both kept. Do
+not "simplify" the gate later by switching to exit-code-only assertions — it would silently turn
+the negative cases into no-ops.
+
+**Schema results.** `dt_binding_check` PASS for the binding on both versions, with
+`processed-schema.json` deleted first each time (a stale file makes the target a no-op that also
+returns 0). Four fixture behaviours as designed. `vdda-phy-max-microamp` / `vdda-pll-max-microamp`
+were **not** added to the schema or to any DTS.
+
+**Code review.** 7/7 items re-derived from the applied source, including devres LIFO order
+(`devm_regulator_bulk_get_const` before `devm_add_action_or_reset`, so the cleanup action runs
+before the handles are released), single write to `vdda_phy_enabled`, idempotent second power-on,
+and rejection of a `vreg_list` whose first entry is not `vdda-phy`. PHY core
+`device_link_add(..., DL_FLAG_STATELESS)` gives **no** managed supplier-unbind guarantee, so the
+consumer-first remove ordering in `ufs-qcom` remains a code contract, not something the driver core
+enforces.
+
+**Build.** `tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144` → rc 0,
+775 actions, 370.197 s. `Image` 44,820,992 B `36ed275b…`, `System.map` 7,610,772 B `353911b1…`,
+`vmlinux` 230,254,408 B `b3ea307e…`, `.config` 238,376 B `5f7fd8b3…`. `CONFIG_PHY_QCOM_QMP_UFS=y`
+and `t qmp_ufs_vdda_phy_cleanup` present in `System.map`/`vmlinux` prove the patched driver is in
+the artifact. Object-level before/after: 271,032 B/164 syms → 277,056 B/174 syms, with
+`regulator_set_load`/`regulator_enable`/`regulator_disable` relocations appearing only after the
+patch.
+
+**Still open (deliberately).** PM8150 L5 physical parent supply; HOS4.3 ARC/proxy lifecycle; the
+actual boot entry selected by ABL; ROUND29 schema experiments. Phase E/F stay BLOCKED: an Image
+that links is not a device that boots.

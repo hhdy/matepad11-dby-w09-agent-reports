@@ -1579,7 +1579,21 @@ Stage A 当前状态：Phase D Image build PASS；ROUND27 三目标构建/属性
 - **三目标构建 PASS（按报告）：** Base DTB、rootparam DTBO、composite-check DTB 的 query/cquery/build 退出码均为 0；未构建 kernel/Image 或 dtbo_image。
 - **Composite 属性 PASS（按报告）：** 五项 VG rootparam 值正确；UFS Host 的 MMCX → GCC UFS_PHY_GDSC 顺序正确；QMP PHY domain/supply 检查符合任务书。
 - **Schema NOT CLEAN / FAIL：** narrow run 有 1 条 UFS `vcc-voltage-level` unexpected-property error；full run 有 8 条 error-level diagnostics（另有 root compatible 未列入 qcom.yaml、5 项 Huawei rootparam vendor properties 无 binding 类型声明）。
-- 1号 AI 确认 pinned ACK 6.18.33 UFS binding 不接受 `vcc-voltage-level`，且 UFS 驱动没有读取该属性；不应添加一个只为压掉诊断的空 schema。建议由 2号 AI 将其作为未消费元数据从 ACK-facing 节点移除/注释保留，并补齐 DBY-W09 root compatible 及 rootparam 的真实 binding 后复验。
+- 1号 AI 确认 pinned ACK 6.18.33 UFS binding 不接受 `vcc-voltage-level`，且当前 ACK UFS 驱动没有读取该属性。随后 ROUND82 对照旧 Qualcomm 实现，发现该属性历史上会驱动 `regulator_set_voltage()`，代表真实 VCC 消费端 min/max 约束；不可简单删除。2号 AI 应决定恢复 ACK 的消费端电压约束实现并补充匹配 binding，或提供有证据支持的等价电气替代。并补齐 DBY-W09 root compatible 及 rootparam 的真实 binding 后复验。
 - 报告可接受为验证完成并诚实暴露 schema 失败；但它没有打印 narrow `-l` 的完整 schema ID 列表，也没有说明是否检查过 targeted `dtbs_check` 可用性。这两项为可复现性缺口，不影响已观察到的失败诊断。
 
 **ROUND27 状态：报告完成；三目标构建和 composite 属性 PASS；schema remediation required。** 这不是 boot-ready/ABL selection/device boot 验收。
+
+
+## 2026-11-25 — ROUND82：修正 UFS VCC voltage-level 处置建议
+
+报告：[ROUND82 — Corrected UFS VCC voltage-range schema remediation analysis](./kernel-baseline/round82/round82-corrected-vcc-voltage-level-schema-remediation.md)。
+
+- 旧 Qualcomm UFS binding 定义 `vcc-voltage-level` 为 VCC min/max 电压（µV）；旧 `ufshcd-pltfrm.c` 将二值读入 VCC regulator descriptor，旧 UFS core 再用 `regulator_set_voltage()` 应用。
+- 固定 ACK 6.18.33 的 `struct ufs_vreg` 已无 `min_uV/max_uV` 字段，`ufshcd_populate_vreg()` 不读该属性，`ufshcd_config_vreg()` 仅作 DRMS load，不调用 `regulator_set_voltage()`。因此当前 schema 错误显示的是旧属性与当前 ACK consumer API 的真实功能缺口。
+- DTS 的 UFS VCC consumer range 为 2.504–2.950 V；PM8150 L17 provider 约束为 2.496–3.008 V。后者更宽，不可假设等价。
+- **更正 ROUND81 初始建议：不得单纯删除 `vcc-voltage-level`。** 优先由 2号 AI 评估恢复实际 VCC consumer min/max parsing + regulator_set_voltage，并同步添加有语义的 schema；若走不实现路径，必须证明有等效的电气约束替代。
+- Root compatible 和 Huawei rootparam binding 的修复方向保持：将 `huawei,dby-w09` 纳入 SM8250 board allow-list，另以精准 node-name/property selector 对 `/rootparam` 五项值声明正确类型，不给 bootloader 节点加未经验证的 compatible。
+- 本轮只做源码研究，没有改 2号 AI 补丁、DTS、binding 或测试 Agent 工作区。
+
+**ROUND27 schema 状态仍为 NOT CLEAN。** 需 2号 AI 制订修复实现，再发起新的测试 Agent 验证任务；现有测试 Agent 报告完成后已停止。

@@ -29,7 +29,7 @@
 `https://github.com/hhdy/matepad11-dby-w09-agent-reports/tree/ai2/round132-kunit-option-bool/firmware-analysis/round132`
 
 冻结 manifest 的读取位置：
-`https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round61/round32-stagea-series.txt`
+`https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai-parallel/stagea-port-until-boot/kernel-baseline/round61/round32-stagea-series.txt`
 
 ## 1. 总体规则与停止条件
 

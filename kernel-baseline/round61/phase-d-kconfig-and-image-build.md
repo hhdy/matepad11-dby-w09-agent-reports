@@ -5,7 +5,7 @@
 **Branch:** `ai-parallel/stagea-port-until-boot`  
 **Target:** `//common:dby_w09`  
 **Fixed ACK common commit:** `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`  
-**Status:** PASS for actual Kconfig resolution and Image compilation on prior hosted runs; archived .config independently passes current 33-symbol validation. A repeat build using the corrected transparent 9-stage workflow is currently in stage 8/9.
+**Status:** PASS — run `45529395645` completed the corrected nine-stage manifest-pinned workflow, produced Image/System.map/vmlinux and passed final .config validation; artifact `14985348694` independently verified.
 
 ## 1. Build target and source integrity
 

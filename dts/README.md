@@ -185,3 +185,10 @@ At the pinned ACK source, //common:dtc_includes_aarch64 contains arm64 include-p
 ## ROUND24 — reserved-memory dependency audit
 
 ROUND24 inventories the HOS4.3 34-node reserved-memory tree and all memory-region consumers from existing ROUND19 decompiled files, with physical addresses redacted. It compares against the minimal board rev2 DTS and ACK SM8250 tree to decide which reservations might affect first-stage UFS boot versus deferred subsystems. The four reserved nodes in public same-device Linux 7.0/HOS4.2 are a semantic reference only, not reusable HOS4.3 coordinates.
+
+
+## ROUND73 — public same-device UFS/PMIC comparison
+
+The public same-device Linux 7.0/HOS4.2 DTS uses vcc/vccq/vccq2 and PHY L5/L9, without VDDP ref-clock, VCCQ parent or dual MMCX/GCC Host domains. The current ACK 6.18.33 Image has additional patched consumers; keep the ACK-specific VDDP, PHY-always-on and dual-domain contracts.
+
+The public DTS uses fixed 3.7V vph_pwr for PM8150 S1..S10 inputs, but this is not authoritative HOS4.3 hardware evidence. Do not copy it to the current candidate. See [ROUND73](../kernel-baseline/round73/round73-public-linux-ufs-pmic-model-comparison.md).

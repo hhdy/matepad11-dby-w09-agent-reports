@@ -96,7 +96,7 @@ If 2号 AI confirms the OEM slot is unused for this UFS HBA in the project and e
 6. Keep the exported ufshcd_populate_vreg() and struct ufs_vreg layout unchanged, and keep struct ufs_hba_variant_ops layout unchanged.
 7. Leave the slot zero when the property is absent. Initialize it explicitly and clear it before any teardown path if the object lifetime can outlast the HBA's managed state.
 
-The sidecar is OEM-specific state and must not become a general vendor data channel. There is one OEM slot in this structure; 2号 AI must check whether any downstream/OEM branch already uses it. A local source-tree search is required because this GitHub content query did not provide a reliable repository-wide usage result.
+The sidecar is OEM-specific state and must not become a general vendor data channel. A source-level inventory fetched every C/H file under the pinned `drivers/ufs/core` and `drivers/ufs/host` directories (44 files total) and searched for `android_oem_data`, `ANDROID_OEM_DATA`, `android_vendor_data`, and `ANDROID_VENDOR_DATA`; no existing use was found in the upstream UFS core/host source tree. This narrows the in-tree collision risk, but it does not cover the project’s complete local checkout, device/OEM downstream additions, generated source, or external modules. 2号 AI must still run a direct search in its complete integration worktree and any OEM extension source before adopting the slot.
 
 ### 4.1 Why this fits the current port
 

@@ -1,0 +1,170 @@
+ROUND132 seam-v2 validation -- offset-correction round, delivery manifest
+========================================================================
+
+Repository : hhdy/matepad11-dby-w09-agent-reports
+Branch     : firmware-audit-v1
+Directory  : firmware-analysis/round132/
+
+Purpose of this file
+--------------------
+The correction document cannot contain its own blob hash, and a hash register
+that cites a commit hash it is itself part of is unstable across any rebase or
+amend. This manifest therefore records:
+
+  1. the two commits that make up this correction round,
+  2. the git blob SHA-1 and SHA-256 of each of the three files they add,
+  3. the result of reading each file back through the read-only GitHub
+     contents API and byte-comparing it to the local copy.
+
+Every value below comes from the API readback or from `git rev-parse`, not from
+local computation alone.
+
+
+1. Remote state after the push
+------------------------------
+Remote branch tip (git/ref/heads/firmware-audit-v1) :
+
+  2af6b0a96c479ad55ac28731964c9bda4c566078
+
+Local HEAD at push time :
+
+  2af6b0a96c479ad55ac28731964c9bda4c566078
+
+TIP_MATCH = YES
+
+Push range: dfbf842..2af6b0a  (fast-forward, no force, no rewrite)
+
+
+2. Commits in this round
+------------------------
+6848d12  firmware-analysis/round132: evidence logs for the offset-correction round
+2af6b0a  firmware-analysis/round132: correct the zero-offset verdict to FAIL
+
+Parent of the round: dfbf842  ROUND132: correct frozen manifest branch URL
+
+git diff --stat dfbf842..2af6b0a :
+
+  round132-v2-offset-correction.md                | 277 +++++++++++++++++++
+  round132-v2-retained-evidence-consistency.log   |  85 ++++++
+  round132-v2-series-path-refetch.log             |  65 +++++
+  3 files changed, 427 insertions(+)
+
+No existing file in firmware-analysis/round132/ was modified or deleted by
+these two commits. The ten files that were already present are byte-identical
+to their state at dfbf842.
+
+
+3. Delivered files
+------------------
+                                         size   lines   blob SHA-1 (full)
+round132-v2-offset-correction.md        14120     277   dffd3129dedc6a968d0ffb72cc95515976ddc49b
+round132-v2-series-path-refetch.log      6171      65   b222a0b9396197bab6bdce7c639d38eb4c85ff6f
+round132-v2-retained-evidence-consistency.log
+                                          3529      85   31f61d0aec345c9e3b6812d6a90e6d9cc61cd407
+
+SHA-256 values:
+
+  round132-v2-offset-correction.md
+    21e8a46f55b4f0403208a7ab98446421b3584de62c42426241503364816b678f
+  round132-v2-series-path-refetch.log
+    dd5a141e33c7e4b9822bd8a9608b6aedfac44b0c25def847b049fecccb7db40e
+  round132-v2-retained-evidence-consistency.log
+    24f1111ca6667bee7abf961dc7907961565e5def6a81362820e3352666b5dbf8
+
+
+4. API readback
+---------------
+Method: GET https://api.github.com/repos/hhdy/matepad11-dby-w09-agent-reports
+        /contents/firmware-analysis/round132/<name>?ref=2af6b0a
+Content decoded from base64, SHA-256 recomputed, compared with the local file
+byte for byte.
+
+  round132-v2-offset-correction.md              blob dffd3129dedc6a968d0ffb72cc95515976ddc49b  size 14120  MATCH
+  round132-v2-series-path-refetch.log           blob b222a0b9396197bab6bdce7c639d38eb4c85ff6f  size  6171  MATCH
+  round132-v2-retained-evidence-consistency.log blob 31f61d0aec345c9e3b6812d6a90e6d9cc61cd407  size  3529  MATCH
+
+READBACK = 3/3 MATCH, byte-identical.
+
+
+5. What this round changes and does not change
+----------------------------------------------
+Changed -- the verdict on exactly one clause:
+
+  Taskbook section 2 "zero fuzz / zero offset"  ->  FAIL
+
+  Measured in round132-v2-apply-check.log:376-378 and :401-402: five hunks in
+  two of the seventeen frozen patches report a nonzero offset
+  (patch 16: -25 / -2 / +2; patch 17: +1 / -2).
+
+  Retracted from the previous report: the claim that git apply has no
+  offset mechanism and cannot apply a shifted hunk. The line that asserted it
+  (log:422) was hard-coded by the summariser and contradicted the measured
+  output five lines above it in the same file.
+
+Not changed -- every other clause, all of them PASS:
+
+  - both fresh trees reproduce the declared 17-patch content tree 77e2b2b1
+  - seam-v2 applies cleanly (+399/-1, 7 files), post-apply tree 482e1dfb
+  - Kconfig is bool; a negative control shows 'm' is rejected by kconfig
+  - UML KUnit emits KTAP 1..1 / ok 1, RUN_RC=0, no .ko
+  - host regressions 38/38 and 83/83
+  - product .config byte-identical before and after, no test symbol
+  - checkpatch 0 errors / 0 warnings (3 CHECK lines, documented)
+
+Left byte-unmodified on purpose:
+
+  TEST_AGENT_ROUND132_FINAL_REPORT.txt, round132-v2-apply-check.log,
+  round132-v2-kunit-final-TAP.log, round132-v2-checkpatch.log,
+  round132-v2-config-and-host-regression.log, round132-v2-delivery-manifest.txt
+
+  Rewriting the report to erase a wrong claim would destroy the audit trail
+  that caught it. The correction is a separate document that points at the
+  wrong lines by number.
+
+
+6. Deviations still open at the close of this round
+---------------------------------------------------
+D-1  CLOSED. Taskbook v2 corrected the manifest branch URL from `main` to
+     `ai-parallel/stagea-port-until-boot`. The corrected URL returns
+     6599 B / blob 9a93b7e3 / sha256 36e1ab53, byte-identical to what the
+     blob-sha reverse lookup produced in the previous round. All 17 patches
+     were then fetched by their declared paths: 17/17 MATCH
+     (round132-v2-series-path-refetch.log).
+
+D-2  OPEN. checkpatch --strict is 0 errors / 0 warnings but 3 CHECK lines, so
+     its exit code is 1. The taskbook requires 0/0 and that is met; if the
+     reviewer uses the exit code as the criterion, this clause flips.
+
+D-3  OPEN. Standalone scripts/spdxcheck.py is NOT RUN (python3-ply absent).
+     Not installed, because that exceeds the authority given for this task.
+
+D-4  REVISED. The previous round concluded the GNU-patch-vs-git-apply
+     divergence "does not affect the zero-offset judgement". That conclusion
+     is withdrawn: the divergence is precisely where the offset evidence was
+     overlooked.
+
+D-5  NEW. The previous report contained a false statement about tool
+     behaviour (zero fuzz / zero offset, git apply cannot shift a hunk).
+     Root cause: a hard-coded summary line standing in for output parsing.
+
+Not a deviation, recorded for completeness: the offsets are a property of the
+frozen series, not of the replay method. Patch 16 cannot apply before patch 13
+(it fails at :212), so its generation parent is not "series minus 13"; its
+first hunk declares old line 212 while the unique matching context sits at 187,
+a 25-line surplus that no frozen patch supplies and that no permitted ordering
+reaches. Zero offset is therefore unattainable under the two frozen
+constraints (the seventeen patches as given, and the declared base tree
+77e2b2b1). Resolving it requires either regenerating patches 16 and 17 or
+changing the declared base tree, both of which are outside this task's
+authority and are left to the user as a design decision.
+
+
+7. Boundary
+-----------
+No device was touched, no firmware was downloaded or unpacked, no DTS, DTBO or
+flash package was produced, no product image was built, and the seventeen
+frozen patches were not modified. The seam-v2 patch was read, applied and
+measured, never edited.
+
+Phase E and Phase F remain BLOCKED. Phase G remains NOT RUN.
+Round 133 was not started.

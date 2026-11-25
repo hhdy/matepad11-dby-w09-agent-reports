@@ -63,3 +63,17 @@ ROUND122 报告把“regulator_disable 后置错误”主要归纳成 enable_cou
 ## 6. 审查结论
 
 ROUND122 Agent 验证按其任务范围通过；本轮 1号 AI 复核发现其“load restore”不等于完整恢复 consumer enable reference。应将 ROUND122 作为修复 DRMS ordering 的可构建候选，而不是最终 teardown-safe 方案。下一步继续做固定 ACK / HOS4.3 PM8150 topology 的源码证据审查，再决定是否需要新的 regulator-core 接口/修正；暂不派发新的 Agent 代码或设备任务。
+
+
+## Follow-up from ROUND134 — target-specific reachability refinement (2026-11-26)
+
+See [ROUND134_ACK_UFS_REGULATOR_DISABLE_REACHABILITY.md](../round134/ROUND134_ACK_UFS_REGULATOR_DISABLE_REACHABILITY.md).
+
+The generic core observation above remains valid, but its post-decrement coupling/real-parent branches are not established as reachable on the current DBY-W09 board DTS draft:
+- The draft contains no `regulator-coupled-with` property for the PM8150/PM8150L UFS rails; ACK's regulator core therefore gives each an `n_coupled == 1` descriptor and skips post-decrement voltage balancing.
+- The draft does not declare the PM8150 output's physical `vdd-l*-supply` / `vdd-s*-supply` phandles. If no external alias or matching provider resolves the RPMh driver's descriptor supply name, populated-DT full constraints allow the core to use the dummy regulator. The dummy is always-on and has no operations. This is only a software fallback assumption, not a real electrical source.
+- The UFS host's vendor `qcom,vccq-parent-supply -> S8` is a downstream consumer relationship, not S8's own physical input.
+
+Together with ROUND122/ROUND128 load-first, this means the normal current-candidate path avoids the known post-decrement DRMS failure; RPMh provider disable errors occur before the consumer count is decremented. This is not a final-DTB or runtime guarantee and must be revisited if a real parent/coupling edge is added.
+
+The persistent disable-failure detach problem remains open: devres still releases managed regulator handles after cleanup errors, and the core warns then destroys a handle with nonzero consumer enable count. Do not claim full teardown safety.

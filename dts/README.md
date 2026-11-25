@@ -217,3 +217,6 @@ A direct child enumeration of the existing ROUND19 decompiled HOS4.3 base_2.dts 
 ## ROUND76 — inherited memory placeholder
 
 The board source does not explicitly define /memory, but it includes the pinned ACK sm8250.dtsi. That source defines a top-level device_type="memory" node with zero size and a comment expecting bootloader fill. Therefore the compiled board DTB inherits a memory node. HOS4.3 also has a zero-size memory placeholder, but its initial base cells differ. ABL's fixup of the inherited node is still UNKNOWN; do not add a duplicate node or guessed RAM range. See [ROUND76](../kernel-baseline/round76/round76-inherited-sm8250-memory-placeholder.md).
+
+
+ROUND76 also cross-checked that the public same-device Linux 7.0 board DTS includes the same sm8250.dtsi without declaring its own /memory node, so it inherits the same bootloader-fill placeholder. That project reports successful boot on an earlier HOS generation, which supports this structure as a same-device reference but does not prove HOS4.3 ABL fixup behavior.

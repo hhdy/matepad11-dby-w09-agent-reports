@@ -14,7 +14,7 @@ The required consumer-first Stage-A UFS shutdown order is:
 1. **Join the UFS-owned async scan** at the beginning of `ufshcd_remove()`, before any HBA state teardown.
 2. Perform the ordinary UFS host remove sequence: SCSI host removal, IRQ disable and HBA stop.
 3. Enter `ufshcd_hba_exit()`; the variant exit runs before generic UFS supply teardown.
-4. Qualcomm `ufs_qcom_exit()` powers off/exits the QMP PHY. QMP sets PHY hardware power-down, disables clocks, drops the L9 PLL load/reference when possible, and sets the retained L5 PHY load to zero while keeping its one retained enable reference.
+4. Qualcomm `ufs_qcom_exit()` powers off/exits the QMP PHY. QMP sets PHY hardware power-down and disables clocks, then attempts load-zero-before-disable for the L9 PLL consumer and sets the retained L5 PHY load to zero while keeping its one retained enable reference. Both L5 and L9 are PMIC5 NLDO DRMS consumers in this board; abort each corresponding disable if load-zero fails.
 5. Generic UFS rail shutdown then processes VCC/L17, VCCQ/L6 and VCCQ2/S4. The VCC and VCCQ DRMS load requests must be set to zero **before** their regulator enable references are disabled. This avoids regulator-core post-decrement DRMS errors.
 6. Generic HBA/device rails and clocks are shut down. VCCQ/L6 is now off as a UFS consumer, but the separate VDDP/REF_CLK L6 consumer remains enabled at 100µA.
 7. `ufshcd_remove()` returns. Device devres release runs the later-registered VDDP custom action before the managed VDDP regulator put. The action must set its 100µA load to zero first, then disable its reference.
@@ -53,7 +53,7 @@ A source-complete result must prove all of the following in the final integrated
 
 - The UFS-owned async callback has completed before `ufshcd_remove()` touches the HBA or starts any rail teardown.
 - The normal HBA remove order invokes variant exit before generic VCC/VCCQ shutdown.
-- The QMP provider L5 retained enable and L9 state remain balanced through successful and partially failed power cycles.
+- The QMP provider L5 retained enable and L9 tail reference/load state remain balanced through successful and partially failed power cycles; both PMIC5 NLDO consumers use load-zero-before-disable.
 - Generic VCC/L17 and VCCQ/L6 requests are load-zero-before-disable and keep voltage-request state separate from enable/load state.
 - Generic VCCQ L6 shutdown does not consume or disable VDDP independent L6 reference.
 - VDDP L6 cleanup is load-zero-before-disable after generic VCCQ shutdown.
@@ -83,3 +83,17 @@ ROUND102 supersedes the earlier ROUND95 OEM-slot-plus-devm-sidecar design for th
 Accordingly, the generic HBA-private state in this map is **not** a separate devm allocation and has no independent devres release step. It remains alive as part of the Scsi_Host private area until the existing host-release action calls `scsi_host_put()`. ROUND108's per-HBA registered async-domain join must complete before `ufshcd_remove()` begins teardown, ensuring that callback can no longer access the embedded state before final host release.
 
 The Qualcomm VDDP `ufs_qcom_host` allocation and the QMP PHY `struct qmp_ufs` provider state remain distinct objects with their own devres lifetimes.
+
+
+## 8. ROUND109 refinement — QMP L9 is also a DRMS consumer
+
+The QMP L9 tail rail must use load-zero-before-disable as well as L5. The pinned SM8250 QMP list configures `vdda-pll` at 18.8mA; ACK PM8150 L9 is a PMIC5 NLDO with a 30mA HPM threshold. A shared aggregate may cross that threshold when this consumer's vote is removed. The implementation must not assume that an 18.8mA individual request cannot trigger a post-decrement DRMS failure.
+
+For the L9 tail:
+- request load zero while its consumer enable reference is held;
+- if load-zero fails, abort disable and retain the stored load/ref state;
+- only disable after load-zero success;
+- clear the tail enable flag only after regulator_disable succeeds;
+- restore 18.8mA before reuse or acquire a new reference on the next power-on.
+
+The current pinned QMP driver has 15 two-rail regulator lists, always vdda-phy first and vdda-pll second. In the DBY-W09 special path, the retained L5 and trailing L9 load/enable states can therefore be represented separately without a generic multi-tail array for this exact ACK revision.

@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Huawei MatePad 11 (2021), DBY-W09 — minimal ABL rootparam overlay.
+ *
+ * VG / board-id 0x206a candidate only.
+ *
+ * Evidence:
+ *   - HOS4.3 ROUND19 entry 8 records board-id 0x206a, DBY_W09_VG,
+ *     hardware_version SH1DBSLM and qcom,boardid <0x08 0x02 0x09 0x08>.
+ *   - All nine stock entries populate the base /rootparam with the same
+ *     five property names; only variant identity values differ.
+ *   - Public same-device Linux reference:
+ *     https://github.com/svesnav/linux-dby-w09/blob/main/dby-w09-rootparam.dtso
+ *
+ * IMPORTANT:
+ *   - This is a source draft, not a compiled DTBO or a bootable package.
+ *   - ROUND19 did NOT establish which board-id HOS4.3 ABL selects on the
+ *     user's actual tablet. Do not treat VG as a proven runtime selection.
+ *   - Confirm board identity / selected entry before packaging.
+ *   - Keep the full 143-145-fragment HOS stock DTBO out of the minimal ACK
+ *     base; those fragments target Huawei/vendor nodes absent from this DTS.
+ *   - Compile with dtc -@ against the actual board base DTS so the rootparam
+ *     symbol/fixup is retained. Validate the generated DTBO header/table
+ *     metadata separately; this file alone is not ABL acceptance evidence.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	model = "Huawei MatePad 11 (2021) DBY-W09";
+	compatible = "huawei,dby-w09", "qcom,sm8250";
+	qcom,board-id = <0x206a 0>;
+
+	fragment@0 {
+		target = <&rootparam>;
+
+		__overlay__ {
+			qcom,boardid = <0x08 0x02 0x09 0x08>;
+			qcom,board_name = "DBY_W09_VG";
+			qcom,product_name = "DBY-W09";
+			hardware_version = "SH1DBSLM";
+			huawei,modem_id = <0xffffffff 0x00>;
+		};
+	};
+};

@@ -1,0 +1,267 @@
+================================================================================
+AGENT ROUND131 - GITEE SIX-REPOSITORY READ-ONLY MIRROR TO GITHUB
+TASK ID: AGENT-ROUND131-GITEE-MIRROR
+EXECUTOR: User local WorkBuddy Agent (1号 AI task)
+RESULT: PASS (6/6 repositories mirrored to private GitHub targets, ref-verified)
+REPORT GENERATED: 2026-11-25 (UTC+8)
+================================================================================
+
+0. SCOPE AND SAFETY DECLARATIONS
+--------------------------------------------------------------------------------
+- This task was a COPY (mirror) from public Gitee sources to new private GitHub
+  repositories under owner "hhdy". It was NOT a migration: no Gitee source was
+  deleted, pushed to, force-pushed, or modified.
+- SOURCE UNMODIFIED VERIFIED: after all work, a read-only `git ls-remote <gitee>
+  HEAD` re-probe returned the identical HEAD SHA for all six sources (UNCHANGED
+  =YES x6). See section 6.
+- DEVICE SAFETY: no tablet, USB, ADB, fastboot, or serial-port access was used;
+  no device commands were executed at any point.
+- No token, credential, or binary is included in this report. Token values were
+  read from a local file at runtime and never printed or written to any repo.
+- This is not a kernel task; no 2号 AI was involved; no code/branch/build tree of
+  any other agent was touched.
+
+1. ACCOUNT / TOOLING / COVERAGE PROTECTION (Taskbook section B)
+--------------------------------------------------------------------------------
+- gh CLI: NOT INSTALLED (command not found). Taskbook B.1 requires verifying the
+  GitHub identity is "hhdy" with private-repo creation rights; the equivalent
+  non-interactive GitHub REST API was used instead (per taskbook's allowance for
+  equivalent non-interactive means when gh is unavailable).
+- Identity verification (GET /user via PAT): login=hhdy, type=User, site_admin=
+  false. Two PATs resolved to hhdy. Confirmed this is not a different owner.
+- git-lfs: NOT INSTALLED. Determined to be irrelevant: all six sources contain
+  NO LFS pointers and NO lfs objects (see per-repo sections), so no LFS fetch/
+  push was required. Recorded as NONE honestly rather than installing tooling.
+- Target existence check (GET /repos/hhdy/<name>): all six returned 404 ABSENT
+  before creation -> no target existed, so no SKIPPED_TARGET_EXISTS and no
+  overwrite/force-push of any pre-existing repository occurred.
+  (gxde-touch-calibration first returned a transient 503; retry returned 404.)
+- Creation: six repos created via POST /user/repos with private=true; all six
+  returned HTTP 201, private=True. Target #6 uses the mandatory "-gitee-mirror"
+  suffix: hhdy/UniXNU-dby_w09-gitee-mirror (does NOT touch WQSQW/UniXNU-dby_w09
+  or bangbang0822 or any existing repository).
+- Write permission nuance (recorded for transparency): the PAT that could
+  create repos (token A) lacked Contents write on new repos (PUT probe 403:
+  "Resource not accessible by personal access token"); a second hhdy PAT (token
+  B) had write access (PUT probe 201). Final pushes used token B. Probe files
+  were created and removed immediately; on the two repos whose source default
+  branch is master, the probe's main branch was removed via API (DELETE
+  refs/heads/main, 204) and default branch set back to master (PATCH 200) so the
+  final target refs exactly match the source. No probe file remains anywhere.
+
+2. METHOD (Taskbook section C)
+--------------------------------------------------------------------------------
+For each source: fresh independent temp dir under _r131/work/ -> `git clone
+--mirror <gitee-url>` (RC=0 for all six). Source metadata captured: remote -v,
+symbolic HEAD, HEAD SHA, full show-ref, ref/head/tag counts, latest commit,
+count-objects -v, LFS check, submodule/gitlink check across ALL refs.
+Then `git push --mirror <github-url>`. GitHub rejects Gitee's `refs/pull/*`
+namespace ("deny updating a hidden ref"); per taskbook, source refs were NOT
+deleted, and a fallback `git push refs/heads/* refs/tags/* refs/notes/*` was run
+(it reported "Everything up-to-date", confirming all pushable refs landed).
+Then a SECOND independent temp dir under _r131/verify/ received `git clone
+--mirror <github-url>`; source/target refs compared ref-by-ref (SHA equality),
+heads/tags sets compared, default branch / latest commit checked via API, and
+`git fsck --full --no-dangling` run on each target (RC=0 for all six).
+
+3. PER-REPOSITORY RESULTS
+--------------------------------------------------------------------------------
+
+### 3.1 hhdy/gxde-kernel-dby-w09
+  SOURCE URL      : https://gitee.com/gxde-pocket/gxde-kernel-dby-w09.git
+  TARGET URL      : https://github.com/hhdy/gxde-kernel-dby-w09
+  PRIVATE         : True (API private=True)
+  CLONE RC        : 0 (1s)
+  SOURCE HEAD     : refs/heads/main = f5d066bc0600605d14d51a3604cc5b9af1b14a13
+  DEFAULT BRANCH  : main (source and target identical)
+  REFS/HEADS/TAGS : 7 / 3 / 0
+  HEADS           : main, docs/usb-dp-verified, feat/gc8054-front-camera
+  LATEST COMMIT   : f5d066bc0600605d14d51a3604cc5b9af1b14a13 2026-11-14T12:57:56Z
+                    "!1 docs: mark DP Alt Mode video as verified (merge !1)"
+  COUNT-OBJECTS   : source in-pack=47, size-pack=18 KiB; target in-pack=45,
+                    size-pack=16 KiB (delta = 2 commits exclusive to refs/pull/*)
+  LFS             : NONE (no git-lfs, no .gitattributes filter=lfs, 0 lfs objects)
+  SUBMODULE       : NONE (no .gitmodules, no mode-160000 gitlink on any ref)
+  REF COMPARE     : COMMON=3 MISMATCH=0; HEADS_MATCH=True; TAGS_MATCH=True;
+                    HEAD SHA src=tgt=f5d066bc...; FSCK_RC=0
+  REF COMPLETENESS: pushable refs COMPLETE. Missing refs = 4 Gitee PR refs,
+                    GitHub platform-reserved, intentionally not pushed:
+                    refs/pull/1/MERGE 85bbcb2d0a170da99fa8f06193567d1f6e25504d
+                    refs/pull/1/head  587a77dd039c9c87e542704942c7880725a9ac1a
+                    refs/pull/2/MERGE 9f4ba9671b18977fef09632a4332f11d13e04230
+                    refs/pull/2/head  d3af15e5ffbef8b68dd5dcff8cde3a1d41b983f0
+  RESULT          : PASS (all source heads/tags fully mirrored and verified)
+
+### 3.2 hhdy/gxde-hwsupport-dby-w09
+  SOURCE URL      : https://gitee.com/gxde-pocket/gxde-hwsupport-dby-w09.git
+  TARGET URL      : https://github.com/hhdy/gxde-hwsupport-dby-w09
+  PRIVATE         : True
+  CLONE RC        : 0 (1s)
+  SOURCE HEAD     : refs/heads/main = e0a8b93a7e49c864f1901dc8a7fb37a7ec1e88af
+  DEFAULT BRANCH  : main (source and target identical)
+  REFS/HEADS/TAGS : 4 / 2 / 0
+  HEADS           : main, feat/usb-dp-verified
+  LATEST COMMIT   : e0a8b93a7e49c864f1901dc8a7fb37a7ec1e88af 2026-11-14T12:57:54Z
+                    "!1 usb-dp: record verified alt-mode state (merge !1)"
+  COUNT-OBJECTS   : source in-pack=37, size-pack=11 KiB; target in-pack=36,
+                    size-pack=10 KiB (delta = 1 commit exclusive to refs/pull/*)
+  LFS             : NONE
+  SUBMODULE       : NONE
+  REF COMPARE     : COMMON=2 MISMATCH=0; HEADS_MATCH=True; TAGS_MATCH=True;
+                    HEAD SHA src=tgt=e0a8b93a...; FSCK_RC=0
+  REF COMPLETENESS: pushable refs COMPLETE. Missing refs = 2 Gitee PR refs:
+                    refs/pull/1/MERGE 12681b3ed8bfed97a9e1adea0b542229d528ff8a
+                    refs/pull/1/head  e6f2a70317b45c89a3ca7e0d4a1fc03d255c997a
+  RESULT          : PASS
+
+### 3.3 hhdy/gxde-dby-w09
+  SOURCE URL      : https://gitee.com/gxde-pocket/gxde-dby-w09.git
+  TARGET URL      : https://github.com/hhdy/gxde-dby-w09
+  PRIVATE         : True
+  CLONE RC        : 0 (2s)
+  SOURCE HEAD     : refs/heads/master = e96d9823308107a8607a689eb2e121d948fc67b8
+  DEFAULT BRANCH  : master (source and target identical; target default was
+                    corrected from probe-main back to master, probe ref removed)
+  REFS/HEADS/TAGS : 4 / 2 / 0
+  HEADS           : master, feat/usb-dp-altmode
+  LATEST COMMIT   : e96d9823308107a8607a689eb2e121d948fc67b8 2026-11-14T12:57:51Z
+                    "!1 usb-dp: recover sink without EDID, landscape (merge !1)"
+  COUNT-OBJECTS   : source in-pack=156, size-pack=77 KiB; target in-pack=155,
+                    size-pack=76 KiB (delta = 1 commit exclusive to refs/pull/*)
+  LFS             : NONE
+  SUBMODULE       : NONE
+  REF COMPARE     : COMMON=2 MISMATCH=0; HEADS_MATCH=True; TAGS_MATCH=True;
+                    HEAD SHA src=tgt=e96d9823...; FSCK_RC=0
+  REF COMPLETENESS: pushable refs COMPLETE. Missing refs = 2 Gitee PR refs:
+                    refs/pull/1/MERGE 1247066b84d5be920da33010dc89b48db276989f
+                    refs/pull/1/head  a10fef813ce4066dc8853a6907bf6afc9b9eb246
+  RESULT          : PASS
+
+### 3.4 hhdy/pocket-linux
+  SOURCE URL      : https://gitee.com/gxde-pocket/pocket-linux.git
+  TARGET URL      : https://github.com/hhdy/pocket-linux
+  PRIVATE         : True
+  CLONE RC        : 0 (8s)
+  SOURCE HEAD     : refs/heads/main = 5e8b9690f03943ce0546d17f50fac4fab5d47bb0
+  DEFAULT BRANCH  : main (source and target identical)
+  REFS/HEADS/TAGS : 1 / 1 / 0
+  HEADS           : main
+  LATEST COMMIT   : 5e8b9690f03943ce0546d17f50fac4fab5d47bb0 2026-11-01T02:36:50+08:00
+                    "feat: minimal DBY-W09 system switch app"
+  COUNT-OBJECTS   : source in-pack=20, size-pack=7 KiB; target in-pack=20,
+                    size-pack=7 KiB (identical: no refs/pull/* in source)
+  LFS             : NONE
+  SUBMODULE       : NONE
+  REF COMPARE     : COMMON=1 MISMATCH=0 SRC_ONLY=0 TGT_ONLY=0;
+                    HEADS_MATCH=True; TAGS_MATCH=True;
+                    HEAD SHA src=tgt=5e8b9690...; FSCK_RC=0
+  REF COMPLETENESS: FULL - mirror push RC=0, no missing refs.
+  RESULT          : PASS
+
+### 3.5 hhdy/gxde-touch-calibration
+  SOURCE URL      : https://gitee.com/gxde-pocket/gxde-touch-calibration.git
+  TARGET URL      : https://github.com/hhdy/gxde-touch-calibration
+  PRIVATE         : True
+  CLONE RC        : 0 (1s)
+  SOURCE HEAD     : refs/heads/master = 1e79acf2fa133370d1a927862cad3d559b467a9d
+  DEFAULT BRANCH  : master (source and target identical; target default corrected
+                    from probe-main, probe ref removed)
+  REFS/HEADS/TAGS : 1 / 1 / 0
+  HEADS           : master
+  LATEST COMMIT   : 1e79acf2fa133370d1a927862cad3d559b467a9d 2026-11-01T14:29:08+08:00
+                    "Fit and persist a quadratic raw-space correction"
+  COUNT-OBJECTS   : source in-pack=80, size-pack=23 KiB; target in-pack=80,
+                    size-pack=23 KiB (identical: no refs/pull/* in source)
+  LFS             : NONE
+  SUBMODULE       : NONE
+  REF COMPARE     : COMMON=1 MISMATCH=0 SRC_ONLY=0 TGT_ONLY=0;
+                    HEADS_MATCH=True; TAGS_MATCH=True;
+                    HEAD SHA src=tgt=1e79acf2...; FSCK_RC=0
+  REF COMPLETENESS: FULL - no missing refs (mirror rejected only probe-main
+                    deletion, which was subsequently removed via API).
+  RESULT          : PASS
+
+### 3.6 hhdy/UniXNU-dby_w09-gitee-mirror
+  SOURCE URL      : https://gitee.com/uni-xnu-dby-w09/UniXNU-dby_w09.git
+  TARGET URL      : https://github.com/hhdy/UniXNU-dby_w09-gitee-mirror
+  PRIVATE         : True
+  NAME SAFETY     : "-gitee-mirror" suffix applied; WQSQW/UniXNU-dby_w09 and
+                    bangbang0822 and all other existing repos untouched.
+  CLONE RC        : 0 (5s)
+  SOURCE HEAD     : refs/heads/main = af7a7b2445e8ecb7006b5ba49bf692b6504b365d
+  DEFAULT BRANCH  : main (source and target identical)
+  REFS/HEADS/TAGS : 9 / 1 / 2
+  HEADS           : main
+  TAGS            : dby-w09-2026.11.13, dby-w09-kernel-0144a47a
+  LATEST COMMIT   : af7a7b2445e8ecb7006b5ba49bf692b6504b365d 2026-11-25T21:23:59+08:00
+                    "docs: the 120 Hz and charging specifications, reviews"
+  COUNT-OBJECTS   : source in-pack=3237, size-pack=4399 KiB; target in-pack=3230,
+                    size-pack=4395 KiB (delta = 7 commits exclusive to refs/pull/*)
+  LFS             : NONE
+  SUBMODULE       : NONE
+  REF COMPARE     : COMMON=3 MISMATCH=0; HEADS_MATCH=True; TAGS_MATCH=True;
+                    TAGS src=tgt identical:
+                      dby-w09-2026.11.13 = 7da005a0fc6fecab1611612d937bc0e4d1a03d36
+                      dby-w09-kernel-0144a47a = f386a36edc463a0b93d26675ab34d8b102d25494
+                    HEAD SHA src=tgt=af7a7b24...; FSCK_RC=0
+  REF COMPLETENESS: pushable refs COMPLETE (incl. both tags). Missing refs = 6
+                    Gitee PR refs, GitHub platform-reserved:
+                    refs/pull/1/MERGE 1ca0306e3f2f6861652a7279f21e87ac822beedb
+                    refs/pull/1/head  d8ed883134576b98b96b6768234d9adb08f42924
+                    refs/pull/2/MERGE 1f786be8632f1e38103edde22fb50bde06ed56ee
+                    refs/pull/2/head  88a7c4b02c0f0e345bf979abcb63c3187f8df947
+                    refs/pull/3/MERGE eaa77621998aa9352aecb44e10b24be9130f8ca9
+                    refs/pull/3/head  c53868a9217ba35577ec551d4cecaac707c9ac1b
+  RESULT          : PASS
+
+4. AGGREGATE VERIFICATION TABLE
+--------------------------------------------------------------------------------
+  REPO                          PRIVATE CLONE HEADS/TAGS MISMATCH FSCK RESULT
+  gxde-kernel-dby-w09           True    0     3/0       0        0    PASS
+  gxde-hwsupport-dby-w09        True    0     2/0       0        0    PASS
+  gxde-dby-w09                  True    0     2/0       0        0    PASS
+  pocket-linux                  True    0     1/0       0        0    PASS
+  gxde-touch-calibration        True    0     1/0       0        0    PASS
+  UniXNU-dby_w09-gitee-mirror   True    0     1/2       0        0    PASS
+  ---------------------------------------------------------------------------
+  TOTAL: 6 PASS, 0 FAILED, 0 SKIPPED_TARGET_EXISTS.
+  All six targets Private=True. All source heads/tags byte-identical SHAs at
+  target. All target object stores pass git fsck. Default branches match source.
+
+5. KNOWN, DISCLOSED LIMITATIONS (no impact on mirror completeness of pushable refs)
+--------------------------------------------------------------------------------
+- gh CLI unavailable -> REST API used (equivalent non-interactive means).
+- git-lfs unavailable -> but no source uses LFS, so no LFS objects to transfer;
+  recorded NONE rather than installing tooling.
+- 14 Gitee refs/pull/* refs across 4 repos were not pushed because GitHub denies
+  writes to its reserved refs/pull namespace. Taskbook explicitly anticipates
+  this: source refs were not deleted; heads/tags/notes were pushed instead; all
+  omitted refs are individually listed in section 3. No repository's branch or
+  tag content is missing.
+- Smaller target in-pack object counts are exactly the commits unique to those
+  unmigrated refs/pull refs; all reachable objects for heads/tags are present
+  (MISMATCH=0, FSCK_RC=0).
+
+6. SOURCE-UNMODIFIED PROOF (read-only re-probe after completion)
+--------------------------------------------------------------------------------
+  gxde-kernel-dby-w09      HEAD f5d066bc... == re-probe f5d066bc... UNCHANGED
+  gxde-hwsupport-dby-w09   HEAD e0a8b93a... == re-probe e0a8b93a... UNCHANGED
+  gxde-dby-w09             HEAD e96d9823... == re-probe e96d9823... UNCHANGED
+  pocket-linux             HEAD 5e8b9690... == re-probe 5e8b9690... UNCHANGED
+  gxde-touch-calibration   HEAD 1e79acf2... == re-probe 1e79acf2... UNCHANGED
+  UniXNU-dby_w09           HEAD af7a7b24... == re-probe af7a7b24... UNCHANGED
+  No push was ever directed at any gitee.com URL. Gitee remotes remain read-only.
+
+7. CLEANUP AND STOP CONDITION
+--------------------------------------------------------------------------------
+- All temporary mirror clones (_r131/work/*.git), verification clones
+  (_r131/verify/*.git), and scratch logs will be removed by the executor after
+  this report is uploaded, without touching any other agent's working directory
+  or build tree.
+- Per taskbook: after uploading this single report and reading it back, STOP.
+  ROUND132 is NOT started.
+- Only report added: firmware-analysis/round131/AGENT_ROUND131_GITEE_MIRROR_REPORT.txt
+  on branch firmware-audit-v1. No binaries, no tokens, no credentials uploaded.
+================================================================================
+END OF REPORT
+================================================================================

@@ -88,3 +88,8 @@ Include exact local tool versions, commands, exit codes, SHA identities, warning
 ## 7. Stop rule
 
 After the one report has been uploaded successfully, stop. Do not edit sources, add Kconfig, build kernel, package/sign or contact the tablet.
+
+ 
+### ROUND23 addendum — DTBO blob alignment check
+
+For the rootparam-only DTBO compile, use the AOSP-compatible dtc blob alignment option -a 4 when producing the packaging-candidate temporary .dtbo. This rounds the FDT blob to a 4-byte boundary; it is NOT the same as the DT table header page_size=4096. Do not pass -a 4096 merely because the stock table page size is 4096. Keep both the unaligned diagnostic and aligned output only in the ROUND23 temp directory if useful, and record exact dtc command/size. No dtbo.img packaging.

@@ -1,0 +1,345 @@
+AI2-ROUND28 - Pinned ACK UFS property consumption audit and Huawei schema isolation experiment
+==============================================================================
+
+Task ownership confirmation (taskbook section 0 / final confirmation):
+  Execute-record line : 接受任务 AI2-ROUND28；下发方 2号 AI；执行方本地 Agent
+  Task ID             : AI2-ROUND28
+  Issued by / tech lead: 2号 AI
+  Executor            : local Agent (WorkBuddy, on the user's machine)
+  1号 AI              : does NOT execute this task; may only review independently.
+                        This task is NOT merged with any 1号 AI task and is NOT
+                        declared shared. No conflicting task was in progress.
+  Taskbook            : firmware-analysis/round28/AI2_ROUND28_TASKBOOK.md
+                        (firmware-audit-v1) blob ab5ec3ab58d8cfb15ecd316d46124d37cf818ecb
+  Deliverable branch  : firmware-audit-v1
+  Deliverable path    : firmware-analysis/round28/AI2_ROUND28_PINNED_UFS_AND_HUAWEI_SCHEMA_REPORT.txt
+  Status              : COMPLETED (read-only source verification + disposable
+                        schema experiment; NOT a boot/image/runtime claim)
+  Generated           : 2026-11-25
+
+This is a sanitized report. It carries no raw DTB/DTBO/composite binary, no
+source file, no original build log, no sensitive filesystem path, no physical
+RAM/base/reg address and no device-unique identifier. MMIO node unit-addresses
+are intentionally omitted and referred to only by node role. All property
+values below are logical devicetree values or object sizes.
+
+------------------------------------------------------------------------------
+0. PREREQUISITE CHECK (taskbook section 2)
+------------------------------------------------------------------------------
+Result: SATISFIED. All four prerequisite inputs were read from firmware-audit-v1
+and each was verified byte-for-byte against its git blob SHA-1:
+  - round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt  blob ee573f75048a  size 17493  match
+  - round27/AI2_ROUND27_TASKBOOK.md                        blob 87eb4782f7ef  size 7597   match
+  - round25/round25-hos43-mmcx-mx-arc-request-semantics.txt blob 8bcfd37d290f size 16090  match
+  - round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt blob e55ecacaf0b3 size 16532 match
+No prerequisite was guessed or substituted; no BLOCKED condition applies.
+
+------------------------------------------------------------------------------
+1. WORK PACKAGE A - PINNED ACK SOURCE LINE-BY-LINE VERIFICATION
+------------------------------------------------------------------------------
+1.1 Commit / tag proof (taskbook section 4, first requirement)
+  In the existing ROUND18 ACK checkout (common tree):
+    git rev-parse HEAD                              = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    git rev-parse 'android17-6.18.33_r00^{commit}' = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    HEAD_MATCH_FIXED = YES ; TAG_MATCH_FIXED = YES ; git cat-file -t = commit
+  The checkout exists, HEAD and tag both equal the taskbook's fixed commit.
+  No web result, upstream HEAD, downstream tree or adjacent commit was used.
+
+1.2 Source path note (disclosed, not a version substitution)
+  The taskbook names 'drivers/scsi/ufs/ufshcd-pltfrm.c'. That path does NOT exist
+  at the fixed commit (git cat-file -e => NO). The same file in this ACK 6.18
+  tree lives at 'drivers/ufs/host/ufshcd-pltfrm.c' (Linux 6.x moved the UFS
+  driver out of drivers/scsi/ufs/). This is the canonical-path change inside the
+  SAME fixed commit; the file was read from 8ad08f75... only. The binding path
+  'Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml' exists at the
+  fixed commit as named and was read from there.
+
+1.3 Does the pinned driver read 'vcc-voltage-level'?  --> NO.
+  Command: git grep -n 'vcc-voltage-level' <fixed> -- (whole tree)
+  Result : EMPTY. Zero occurrences anywhere in the fixed tree (driver, headers,
+           UFS bindings). The property is not parsed by the driver and is not
+           declared by the binding.
+
+1.4 Where VCC min/max voltage is set, and what the driver sends to regulator
+  (a) Parsed supply fields - drivers/ufs/host/ufshcd-pltfrm.c (fixed commit):
+      ufshcd_populate_vreg() (starts at line 121) builds the property name as
+      "%s-supply" and only checks phandle presence; for non-skipped rails it
+      reads "%s-max-microamp" into vreg->max_uA (line ~152). It reads NO voltage
+      property. ufshcd_parse_regulator_info() (line ~172) calls it for vdd-hba,
+      vcc, vccq, vccq2.
+  (b) vreg data model - include/ufs/ufs.h:604 'struct ufs_vreg':
+      fields = regulator *reg; const char *name; bool always_on; bool enabled;
+               int max_uA;
+      There is NO min_uV / max_uV field. The driver tracks current, not a
+      voltage range.
+  (c) Regulator API actually used - drivers/ufs/core/ufshcd.c (fixed commit):
+      ufshcd_config_vreg_load() (line 9449) calls regulator_set_load(dev, reg,
+      ua). ufshcd_config_vreg() (line 9490) gates on regulator_count_voltages()
+      and calls set_load with max_uA (on) or 0 (off). hpm/lpm wrappers (lines
+      9475/9481) use max_uA and UFS_VREG_LPM_LOAD_UA. vreg->reg is obtained via
+      devm_regulator_get(dev, vreg->name) at line 9579.
+      git grep 'regulator_set_voltage' under drivers/ufs at the fixed commit:
+      only drivers/ufs/host/ufs-mediatek.c (a different vendor host driver) -
+      NOT the Qualcomm/DBY path. The generic UFS path never sets a voltage.
+  (d) Four-layer distinction required by the taskbook:
+      (1) Driver parses the property?      NO (1.3).
+      (2) Driver-internal vreg min/max:    only max_uA current cap; no voltage
+                                           min/max in struct ufs_vreg (1.4b).
+      (3) What regulator framework receives: regulator_set_load(ua) and
+                                           enable/disable; NO voltage request
+                                           from the generic path (1.4c).
+      (4) PMIC/regulator node voltage constraints: NOT established in this task.
+          They live in the regulator nodes / PMIC DTS, which this task did not
+          audit for voltage values. UNKNOWN here.
+      IMPORTANT: "the driver does not read vcc-voltage-level" is NOT expanded
+      into "the hardware does not need this voltage range". That conclusion is
+      not supported by this evidence and is explicitly not claimed.
+
+1.5 Binding constraint at the fixed commit
+  Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml (fixed commit):
+    select: compatible contains an enum of qcom,* -ufshc plus qcom,msm8998-ufshc
+            and requires compatible.
+    properties: compatible (items enum + const qcom,ufshc + const jedec,ufs-2.0),
+                reg (maxItems 1), reg-names (const std), clocks (minItems 7,
+                maxItems 8), clock-names, qcom,ice (phandle).
+    required: compatible, reg.
+    allOf: $ref qcom,ufs-common.yaml ; plus an sc7180-specific clocks maxItems
+           7 / else minItems 8 conditional.
+    unevaluatedProperties: false
+  qcom,ufs-common.yaml (fixed commit, relevant): clocks/clock-names minItems 7
+    maxItems 9, dma-coherent, interconnects/inconnect-names, iommus, phys/
+    phy-names, power-domains (maxItems 1), required-opps, resets/#reset-cells/
+    reset-names/reset-gpios. It does NOT define vcc-voltage-level.
+  There is NO 'additionalProperties:'; the controlling key is
+  'unevaluatedProperties: false'. Because vcc-voltage-level is not declared by
+  either binding, an instance carrying it is rejected - exactly the ROUND27
+  diagnostic recorded in section 2 below.
+
+------------------------------------------------------------------------------
+2. WORK PACKAGE B - ROUND27 DIAGNOSTIC ATTRIBUTION (all diagnostics, none omitted)
+------------------------------------------------------------------------------
+Source: ROUND27 report section 5, dt-validate 2026.9 on the composite DTB.
+All 1 narrow + 8 full diagnostics are reproduced by node/schema/property/error
+and attributed to one of: schema constraint itself, missing Huawei binding,
+schema-selection/evaluation issue, or insufficient evidence.
+
+NARROW run (limit to UFS/host/common, QMP UFS PHY, GCC, RPMhPD, power-domain,
+PM8150/RPMh regulator schema ids), RC=0, 1 diagnostic:
+  [N1] node /soc@0/ufshc (qcom,sm8250-ufshc), property vcc-voltage-level
+       "Unevaluated properties are not allowed ('vcc-voltage-level' was unexpected)"
+       schema: ufs/qcom,sc7180-ufshc.yaml
+       Attribution: SCHEMA CONSTRAINT ITSELF. Fixed binding has
+       unevaluatedProperties:false and does not declare the property (1.5);
+       fixed driver does not parse it (1.3). Not a missing-Huawei-binding case;
+       this is a vendor DTS property with no upstream schema declaration.
+
+FULL run (no limit), RC=0, 8 diagnostics:
+  [F1] node / (huawei,dby-w09): compatible 'oneOf' failed - the pair
+       [huawei,dby-w09, qcom,sm8250] is not an upstream-known board compatible
+       list. schema: arm/qcom.yaml
+       Attribution: MISSING HUAWEI BOARD BINDING / SCHEMA SELECTION. The board
+       compatible pair is real in the pinned DTB but has no upstream board
+       schema entry; arm/qcom.yaml enumerates known board compatibles via oneOf.
+  [F2] node /soc@0/ufshc (qcom,sm8250-ufshc), property vcc-voltage-level:
+       "value is not of type object/integer/array/boolean/null"
+       schema: dt-core.yaml
+       Attribution: SCHEMA-SELECTION/EVALUATION + UNDECLARED PROPERTY. With no
+       binding typing vcc-voltage-level, the generic core pass treats it as an
+       unconstrained raw value. Same root cause as [N1].
+  [F3] node /soc@0/ufshc (qcom,sm8250-ufshc), property vcc-voltage-level:
+       "Unevaluated properties are not allowed ('vcc-voltage-level' was unexpected)"
+       schema: qcom,sc7180-ufshc.yaml
+       Attribution: SCHEMA CONSTRAINT ITSELF (duplicate of N1 under full run).
+  [F4] node /rootparam, property huawei,modem_id = <0xffffffff 0>:
+       "byte blob is not of type object/integer/array/boolean/null"
+       schema: dt-core.yaml
+       Attribution: MISSING HUAWEI BINDING. Vendor cell array on a compatible-less
+       node; generic core cannot type it without a binding.
+  [F5] node /rootparam, property hardware_version = "SH1DBSLM":
+       "byte blob is not of the expected type" -- dt-core.yaml
+       Attribution: MISSING HUAWEI BINDING (vendor string, no typed binding).
+  [F6] node /rootparam, property qcom,product_name = "DBY-W09":
+       "byte blob is not of the expected type" -- dt-core.yaml
+       Attribution: MISSING HUAWEI BINDING (vendor string, no typed binding).
+  [F7] node /rootparam, property qcom,board_name = "DBY_W09_VG":
+       "byte blob is not of the expected type" -- dt-core.yaml
+       Attribution: MISSING HUAWEI BINDING (vendor string, no typed binding).
+  [F8] node /rootparam, property qcom,boardid = <8 2 9 8>:
+       "byte blob is not of the expected type" -- dt-core.yaml
+       Attribution: MISSING HUAWEI BINDING (vendor cell array, no typed binding).
+
+compatible-match mode (-c): RC=0, reproduces [F1] only (retained).
+Grouping summary:
+  - UFS Host schema rejects a property : N1, F2, F3 (vcc-voltage-level)
+  - /rootparam Huawei private props     : F4-F8 (missing binding)
+  - root compatible combination         : F1 (missing board binding / selection)
+  - other independent diagnostics       : none beyond the above.
+Values of /rootparam were independently verified in ROUND27 section 4 to match
+the VG candidate exactly; those diagnostics do NOT mean the values are wrong.
+No diagnostic was filtered, reclassified away or suppressed.
+
+------------------------------------------------------------------------------
+3. WORK PACKAGE C - MINIMAL HUAWEI BINDING DRAFT (ISOLATED EXPERIMENT)
+------------------------------------------------------------------------------
+3.0 Environment: disposable copy only, under /tmp/ai2r28_trial (WSL). No tracked
+    ACK source, DTS, binding, config, patch or Image was modified. All temporary
+    files were removed before completion (section 5).
+
+3.1 Design decisions (taskbook section 6):
+  - Root compatible expressed EXACTLY as the real pair:
+      items: [ const huawei,dby-w09 ; const qcom,sm8250 ]. No vendor board
+      compatible was substituted or fabricated.
+  - /rootparam constrained as a NAMED CHILD of the board node because it has no
+    'compatible'; dt-schema cannot schema-select a compatible-less standalone
+    node. This is the compliant alternative path the taskbook asks for; NO fake
+    compatible was added to the node.
+  - Property names kept verbatim; types/cells limited to observed shape:
+      qcom,boardid    uint32-array minItems=4 maxItems=4
+      huawei,modem_id uint32-array minItems=2 maxItems=2
+      qcom,board_name  string
+      qcom,product_name string
+      hardware_version string
+    All described as vendor-defined/opaque; no hardware semantics invented.
+  - The guarded node /rootparam uses additionalProperties:false and requires all
+    five properties. Only properties with direct evidence are declared.
+
+3.2 Draft iteration (retained for audit; not hidden):
+  - v1: top-level additionalProperties:false. dt-doc-validate meta-schema OK,
+        but a single-schema targeted run reported 25 false diagnostics on generic
+        root properties (cpus, chosen, soc@0, reserved-memory, ...) that belong
+        to core/arm schemas, not to this draft.
+  - v2: top-level key removed. Targeted positive = 0, negative = 1, but
+        dt-doc-validate RC=1: meta-schema core.yaml requires exactly one of
+        unevaluatedProperties / additionalProperties at the top level.
+  - v3 (FINAL): top-level additionalProperties:true with an explicit in-file
+        scope statement that only /rootparam is guarded and generic root/SoC
+        properties remain with their owning schemas; rootparam itself stays
+        closed (additionalProperties:false). This satisfies the meta-schema
+        without relaxing or swallowing diagnostics on the guarded node.
+
+3.3 Commands and exact exit codes (final v3):
+  yaml safe_load parse (system python3/PyYAML) .......... OK
+      TOP_additionalProperties=True ; ROOTPARAM_additionalProperties=False
+      declared properties = the five listed in 3.1
+  yamllint ............................................ NOT AVAILABLE in local
+      venv (ModuleNotFoundError). Disclosed; YAML parse used instead.
+  round18-venv/bin/dt-doc-validate -n <draft.yaml> .... DTDOC_RC=0
+  round18-venv/bin/dt-mk-schema -j -u -o <schema.json> <draft.yaml> ... DTMK_RC=0
+  targeted dt_binding_check equivalent: the make target exists in common/Makefile
+      (line 1580), but running it writes generated files into the tracked tree;
+      to honor the "no tracked change" boundary, the equivalent local processing
+      (dt-doc-validate + dt-mk-schema) was used instead. Disclosed, not hidden.
+  Positive targeted dt-validate on ROUND27 composite DTB:
+      dt-validate -s <v3 schema json> -l 'huawei,dby-w09' <composite.dtb>
+      RC=0 ; diagnostics=0  -> the five real /rootparam values satisfy the draft.
+  Negative fixture 1 (wrong cell count):
+      composite DTB copy with qcom,boardid overwritten from 4 cells to 3 cells
+      (fdtget read-back: 8 2 9). Targeted dt-validate RC=0, diagnostics=1:
+      "qcom,boardid: [8, 2, 9] is too short"  -> draft REJECTS wrong cell count.
+  Negative fixture 2 (wrong type):
+      composite DTB copy with qcom,board_name overwritten as u32 cells.
+      Targeted dt-validate RC=0, diagnostics=1:
+      "b'...' is not of type 'array'"  -> draft REJECTS wrong value type.
+  Note on RC: dt-validate returns 0 even when JSON diagnostics are present; the
+  diagnostic counts above, not the RC, are the pass/fail evidence (as in ROUND27).
+
+3.4 Limits of the draft (disclosed):
+  - It resolves F4-F8 (rootparam) under targeted validation and provides a
+    compliant, auditable shape, but it does NOT by itself resolve F1 (board
+    compatible oneOf in arm/qcom.yaml) or F2/F3 (vcc-voltage-level), which are
+    separate binding/driver questions (sections 1 and 2). No claim of a global
+    clean schema pass is made.
+  - The draft was not added to any tracked binding directory and no processed
+    schema corpus was regenerated; it is an isolated experiment only.
+
+------------------------------------------------------------------------------
+4. WORK PACKAGE D - UFS PROPERTY DECISION TREE (NO DTS CHANGE)
+------------------------------------------------------------------------------
+Question: what to do with vcc-voltage-level in the board DTS?
+
+Established facts (pinned ACK + ROUND27 DTB evidence):
+  - Fixed ACK generic UFS driver does NOT parse vcc-voltage-level (1.3).
+  - The driver tracks only max_uA current and sends regulator_set_load() +
+    enable/disable; no voltage request from the generic path (1.4).
+  - Fixed UFS bindings have unevaluatedProperties:false and do not declare the
+    property (1.5); hence the real schema diagnostics (N1/F2/F3).
+  - The board DTS carrying the property is a Huawei/vendor artifact; the value
+    observed in ROUND27 is a logical DT value, not evidence of an enforced
+    hardware voltage.
+
+Decision tree:
+  CASE 1 - pinned driver does not read it (THIS CASE, proven in 1.3):
+    * Do NOT keep the property while calling it "effective": nothing in the
+      pinned generic path consumes it, so that would be inaccurate.
+    * Do NOT delete it merely to obtain a schema PASS: taskbook section 3
+      forbids removing hardware properties to suppress diagnostics, and the
+      property may document a vendor bootloader/PMIC contract we have not
+      established.
+    * Correct posture: classify it as UNRESOLVED vendor metadata. Before any
+      change, collect evidence sufficient to decide which of these owns it:
+        (i)   a pinned regulator/PMIC node constraint that actually enforces the
+              VCC range (requires PMIC DTS + regulator consumer binding evidence
+              for the exact rail, not inferred here);
+        (ii)  a driver-side consumer that would need an explicit, reviewed
+              extension to parse and apply the range (not present at fixed
+              commit; adding it is a separate, reviewed code change);
+        (iii) the original vendor DTS / vendor bootloader source showing the
+              property's intended consumer and units;
+        (iv)  board measurement / schematics tying the value to a real rail.
+      Until one of (i)-(iv) is established with pinned evidence, the property
+      stays as-is and the schema diagnostic stays reported. No fixed voltage,
+      min/max number or PMIC parent-supply relation is proposed here.
+  CASE 2 - if a pinned driver WERE found to read it (NOT this tree):
+    * Only then would one pinpoint the exact read site, format and unit and let
+      the binding describe that behavior. This case is explicitly not triggered.
+
+Boundary restated: "driver doesn't parse it" is NOT equal to "hardware doesn't
+need the range"; that hardware question remains OPEN and unanswered here.
+
+------------------------------------------------------------------------------
+5. CLEANUP / SOURCE-TREE INTEGRITY (taskbook section 8)
+------------------------------------------------------------------------------
+  - Disposable copy /tmp/ai2r28_trial removed (verification: REMOVED).
+    This included the draft YAML, generated schema json, positive JSON, negative
+    fixture DTBs (3-cell boardid, wrong-type board_name) and their outputs.
+  - common git status after cleanup (unchanged from pre-task baseline):
+      8 modified tracked files (BUILD.bazel; qcom,sc8280xp-qmp-ufs-phy.yaml;
+      qcom,sc7180-ufshc.yaml; qcom,ufs-common.yaml; phy-qcom-qmp-ufs.c;
+      ufs-qcom.c; ufs-qcom.h) and 1 untracked storage-first config fragment.
+      No new temporary file in the tracked tree.
+  - common git HEAD unchanged: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a.
+  - No pre-existing ROUND18 output, patch, fragment, .config or Image deleted
+    or overwritten. No generated schema was written into the tracked tree.
+
+------------------------------------------------------------------------------
+6. BOUNDARIES / NOT PERFORMED
+------------------------------------------------------------------------------
+  Not executed: kernel/Image build, dtbo_image, boot.img, dtbo.img, vbmeta,
+  AVB/footer/signing/repack, any flash package or dt_table id/rev selection.
+  No device connected or operated: no ADB, fastboot, recovery, reboot, unlock,
+  root, flash, temporary boot or partition read/write.
+  No toolchain downloaded/installed/updated; no repo init/sync; no new source
+  fetched; no WSL configuration changed.
+  No tracked ACK source, DTS, Kconfig, fragment, .config, patch, Image or formal
+  binding modified. No protected branch or pull request touched.
+  No 1号 AI task merged; no ROUND29 started; no boot claim made.
+
+------------------------------------------------------------------------------
+7. DELIVERABLE AND STOP
+------------------------------------------------------------------------------
+Exactly one sanitized UTF-8 report is uploaded for AI2-ROUND28 at:
+  firmware-analysis/round28/AI2_ROUND28_PINNED_UFS_AND_HUAWEI_SCHEMA_REPORT.txt
+No binary, source file or original build log is uploaded. Per the taskbook stop
+rule, work stops after this single report; no ROUND29, no boot package, no
+device contact.
+
+Open items / limitations (carried, not hidden):
+  - Path naming: taskbook's drivers/scsi/ufs/ufshcd-pltfrm.c is the pre-6.x
+    path; the fixed 6.18 commit uses drivers/ufs/host/ufshcd-pltfrm.c (same
+    commit, canonical path). Disclosed in 1.2.
+  - yamllint unavailable; YAML parse substituted (3.3).
+  - dt_binding_check make target avoided to keep tracked tree clean; equivalent
+    dt-doc-validate + dt-mk-schema used (3.3).
+  - PMIC/regulator node voltage constraints not audited; UNKNOWN (1.4d).
+  - Draft resolves rootparam diagnostics only; board-compatible oneOf and
+    vcc-voltage-level diagnostics remain real and unresolved (3.4).

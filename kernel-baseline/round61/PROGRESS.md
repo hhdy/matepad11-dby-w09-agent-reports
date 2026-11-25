@@ -458,3 +458,8 @@ The detailed reports have been reconciled with verified evidence:
 - `phase-e-board-dts-and-memory-handoff.md` is now committed and linked above. It documents the actual HOS4.3 final-memory-handoff and PM8150 physical-input-parent evidence required before DTS promotion.
 
 No board DTB/boot package or device operation has been attempted. Phase E/F remain BLOCKED; Phase G remains NOT RUN.
+
+
+### Phase G — controlled device validation plan prepared
+
+Second AI committed `kernel-baseline/round61/phase-g-device-validation.md` (commit `a8f8d71116d0d3db309e64c0c14b2cb571a20831`). It defines strict entry gates, the pre-boot review packet, first-boot evidence checklist, stop conditions and Stage-A device acceptance criteria. It authorizes no operation: Phase G remains NOT RUN; no device connection, bootloader action, reboot, partition write or hardware test has been performed.

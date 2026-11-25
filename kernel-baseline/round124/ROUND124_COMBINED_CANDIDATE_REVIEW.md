@@ -54,3 +54,19 @@ See `TEST_AGENT_ROUND124_TASKBOOK.md`. Agent must validate the candidates byte-f
 ## 6. Acceptance boundary
 
 If combined apply, source gates, UFS object compilation and complete Kleaf Image build all pass, ROUND124 may be accepted as a **combined buildable AI1 candidate**. This does not authorize integration into the AI2 branch, modify board DTS, close Phase E/F, or claim hardware/boot validation. Phase E/F remain BLOCKED and Phase G remains NOT RUN pending their separate boot-path and hardware evidence.
+
+
+## 7. ROUND124 Agent validation result (2026-11-25)
+
+The combined candidate was independently validated on the exact ROUND32 15-patch Stage A baseline. Agent report: [TEST_AGENT_ROUND124_COMBINED_UFS_CORE_REPORT.txt](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round124/TEST_AGENT_ROUND124_COMBINED_UFS_CORE_REPORT.txt).
+
+- Both patch blob IDs and SHA-256 values matched. Sequential ROUND120 → ROUND122 apply/check/diff-check all returned 0 with zero offset/fuzz.
+- The overlay changed only `drivers/ufs/core/ufshcd.c` and `drivers/ufs/core/ufshcd-priv.h`; the AI2 ROUND33 patch 16/17 was not included.
+- All ROUND120/ROUND122 source gates passed. All seven UFS core objects compiled, and full `//common:dby_w09` Image build returned `BUILD_RC=0`.
+- Image SHA-256: `903164d7f1c78dc80435e569e6037abe7c38ab582fbb21263f0211d79c35d6bc`. .config was byte-identical to Stage A-only (`0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15`).
+- Workspace restoration was exact: pre/post tracked diff SHA-256 `613e7ea4bcd826b732cb13ed27f7374f7e114a8e527232f02336be4a636f2aed`.
+- Checkpatch results are not clean RC=0: patch 0001 had 0E/4W/1C, patch 0002 had 0E/0W/2C; both returned RC=1. The Agent did not edit either patch.
+- **Disposition:** accepted as a combined buildable AI1 candidate, isolated and not merged to AI2. ROUND122 partial regulator-disable/devm teardown limits remain. No hardware or boot validation is claimed.
+- **Metadata follow-up:** report omitted manifest commit, manifest XML SHA-256, Rust version and Bazel version required by the taskbook. Keep environment metadata marked PARTIAL until recovered from this exact workspace/log set; do not infer or borrow unrelated values.
+
+See [ROUND124_ACCEPTANCE.md](./ROUND124_ACCEPTANCE.md) for the full acceptance record.

@@ -1,0 +1,193 @@
+ROUND23 — DBY-W09 rev2 board DTB and rootparam-only overlay composite validation
+================================================================================
+Owner: local WorkBuddy Agent
+Mode: local, offline, read-only, temporary-copy validation
+Kernel source: exact ROUND18 ACK android17-6.18.33_r00 / common
+               8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Device: Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250
+
+--- Scope and boundaries (observed, not assumed) -------------------------------
+This round consumed only byte-identical temporary copies of two main-branch
+candidate texts plus the already-pinned ROUND18 ACK source worktree. No main
+candidate, source, config, fragment, DTS, DTBO, firmware or prior report was
+modified. Firmware was not re-extracted; WSL was not redeployed; no tool was
+downloaded or installed. Kleaf/Bazel, olddefconfig, dt_binding_check,
+dtbs_check and any kernel build were not run. No dtbo.img/mkdtimg table,
+boot.img, AVB footer/signature or boot candidate was produced. No device,
+ADB/fastboot, recovery, reboot, unlock/root, flash or partition write occurred.
+The protected ack18-dby-w09-dts-draft branch, ai-parallel/stagea-port-until-boot
+branch and PR #1 were not touched.
+
+Inputs (main @ latest, exact blob SHA-256 of the retrieved text bytes):
+  - dts/dby-w09-ack18-board.dts.rev2.candidate
+      GitHub blob sha1 9918efe3f253a3e4821689ffeb899d5a0f237e8f
+      local temp copy SHA-256 7f7a416a0b1a354bce4edec2f0ed8d53a7524a6c321dcff7f549fd3028050fd4
+      16089 bytes
+  - dts/dby-w09-ack18-rootparam.dtso.draft
+      GitHub blob sha1 c7e5b145d4308e0675ff648b4e046033c5560083
+      local temp copy SHA-256 b51e086aa70d02217ce7f1752e125009ec17b50b73386e451577641d08846b56
+      1979 bytes
+  - ROUND22 report (input reference only): round22_board_dts_compile_and_ufs_
+    regulator_contract_audit.txt — 32-warning baseline, DTB 145841 bytes.
+  - pinned ACK source worktree: <SRC>/arch/arm64/boot/dts/qcom/sm8250.dtsi,
+    <SRC>/include/dt-bindings/power/qcom,rpmhpd.h,
+    <SRC>/include/dt-bindings/clock/qcom,gcc-sm8250.h,
+    <SRC>/include/dt-bindings/regulator/qcom,rpmh-regulator.h.
+
+Tools (all pre-installed, no installation in this round):
+  dtc            DTC 1.7.0
+  cpp            Ubuntu 13.3.0-6ubuntu2~24.04.1 GCC 13.3.0
+  fdtoverlay     DTC 1.7.0
+  fdtget         DTC 1.7.0
+  fdtdump        present (fdtdump -V prints no version line; used for dump only)
+
+All temporary artifacts live only under a dedicated ROUND23 temp directory in
+the existing WSL instance. No binary, script, parser or firmware is uploaded.
+
+--- Work package A — rev2 board DTS compile -----------------------------------
+RESULT: PASS
+
+Proven two-step ROUND22 flow, exact pinned include paths. Commands (shell form,
+run against the byte-identical temp copy):
+
+  cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
+    -I <SRC>/arch/arm64/boot/dts -I <SRC>/arch/arm64/boot/dts/qcom \
+    -I <SRC>/include -I <SRC>/scripts/dtc/include-prefixes \
+    -o <TMP>/board_rev2.dtc <TMP>/board_rev2.dts
+  cpp exit 0; preprocessed size 160955 bytes; cpp stderr empty.
+
+  dtc -@ -I dts -O dtb \
+    -i <SRC>/arch/arm64/boot/dts -i <SRC>/include \
+    -i <SRC>/scripts/dtc/include-prefixes \
+    -o <TMP>/board_rev2.dtb <TMP>/board_rev2.dtc
+  dtc exit 0; DTB size 145849 bytes (ROUND22 baseline 145841; +8 bytes).
+
+New header resolution — both headers resolved from the pinned source tree:
+  <SRC>/include/dt-bindings/power/qcom,rpmhpd.h:16    #define RPMHPD_MMCX  6
+  <SRC>/include/dt-bindings/clock/qcom,gcc-sm8250.h:263 #define UFS_PHY_GDSC 4
+The rev2 candidate adds includes for qcom,gcc-sm8250.h and qcom,rpmhpd.h
+(lines 41-42 of the candidate text); cpp resolved both without error.
+
+UFS Host dual-domain value and order (verified on the compiled DTB, not only
+on the source text). Decompiled DTB roundtrip shows the ufshc@1d84000 node:
+  power-domains = <0x34 0x06 0x30 0x04>;
+Phandle owner resolution from the same roundtrip DTS:
+  phandle 0x34 -> compatible "qcom,sm8250-rpmhpd"  (RPMhPD provider)
+  phandle 0x30 -> compatible "qcom,gcc-sm8250"     (GCC clock/power provider)
+Therefore the specifiers are, in order:
+  index 0 = RPMhPD MMCX, argument 6  (RPMHPD_MMCX)
+  index 1 = GCC UFS_PHY_GDSC, argument 4 (UFS_PHY_GDSC)
+This is the order required by ufs_qcom_attach_sm8250_domains() as documented in
+the rev2 candidate comment (lines 284-291). The UFS PHY ufshc sibling retains
+  power-domains = <0x30 0x04>;   (GCC UFS_PHY_GDSC only)
+so the PHY domain was not displaced by the host dual-domain change.
+
+Warnings: dtc emitted 32 warnings, identical in count and type to the ROUND22
+baseline. Breakdown:
+  30 x Warning (unique_unit_address)
+   2 x Warning (avoid_unnecessary_addr_size)
+Source attribution: 32/32 reference sm8250.dtsi paths; 0 reference the rev2
+candidate temp copy. Non-sm8250 warnings: none. No new warning was introduced
+by the rev2 edits. These are inherited upstream SoC DTSI warnings, not defects
+of the board candidate; schema validation (dtbs_check/dt_binding_check) was
+explicitly out of scope this round and remains an open gate.
+
+--- Work package B — rootparam-only overlay compile ---------------------------
+RESULT: PASS
+
+The overlay draft is a /plugin/ source with one fragment targeting the
+rootparam label. Compiled from a byte-identical temp copy:
+
+  dtc -@ -I dts -O dtb -o <TMP>/rootparam.dtbo <TMP>/rootparam.dtso
+  exit 0; DTBO 536 bytes (unaligned diagnostic output).
+
+  dtc -@ -a 4 -I dts -O dtb -o <TMP>/rootparam_a4.dtbo <TMP>/rootparam.dtso
+  exit 0; DTBO 536 bytes (AOSP mkdtimg-compatible 4-byte blob alignment).
+
+The addendum requirement was followed exactly: -a 4 rounds the FDT blob to a
+4-byte boundary and is NOT the DT table header page_size. -a 4096 was not used.
+No dtbo.img or mkdtimg table was generated. The unaligned and -a 4 outputs are
+byte-identical here (both 536 bytes, same SHA-256), because this small blob is
+already 4-byte aligned; the -a 4 flag is retained for packaging-candidate
+correctness but changes nothing for this fragment.
+
+fdtdump inspection of the plugin DTBO confirms:
+  - root qcom,board-id = <0x0000206a 0x00000000>  (VG candidate only)
+  - fragment@0 with target = <0xffffffff> (unresolved phandle placeholder)
+  - __overlay__ payload: qcom,boardid <0x08 0x02 0x09 0x08>,
+    qcom,board_name "DBY_W09_VG", qcom,product_name "DBY-W09",
+    hardware_version "SH1DBSLM", huawei,modem_id <0xffffffff 0x00>.
+  - __fixups__: rootparam = "/fragment@0:target:0";
+This is a genuine fragment target fixup for the rootparam label; the fixup
+string resolves to the /fragment@0 target cell. Root identity fields in the
+DTBO root remain as authored. Candidate board-id 0x206a is NOT proof of HOS4.3
+ABL runtime selection.
+
+--- Work package C — fdtoverlay composite and inspection ----------------------
+RESULT: PASS (mechanics only; runtime selection remains UNKNOWN)
+
+fdtoverlay is pre-installed, so package C was executed, not blocked:
+
+  fdtoverlay -i <TMP>/board_rev2.dtb -o <TMP>/composite.dtb <TMP>/rootparam_a4.dtbo
+  exit 0; composite DTB 146045 bytes.
+Only the one rootparam overlay was applied. No stock HOS overlay was applied.
+
+Composite inspection (fdtget numeric reads and decompiled DTB roundtrip):
+
+a) /rootparam qcom,boardid        = 8 2 9 8        (0x08 0x02 0x09 0x08)  PASS
+b) /rootparam qcom,board_name     = DBY_W09_VG                           PASS
+c) /rootparam qcom,product_name   = DBY-W09                              PASS
+d) /rootparam hardware_version    = SH1DBSLM                             PASS
+e) /rootparam huawei,modem_id     = 4294967295 0  (0xffffffff, 0)        PASS
+f) root qcom,board-id             = 0 0  (unchanged base value)          see note
+   root compatible                = huawei,dby-w09 qcom,sm8250
+g) UFS Host power-domains         = <0x34 0x06 0x30 0x04>                PASS
+   = RPMhPD MMCX(6) then GCC UFS_PHY_GDSC(4), two entries, correct order.
+h) UFS PHY power-domains          = <0x30 0x04> (GCC UFS_PHY_GDSC kept)   PASS
+   PHY also retains vdda-phy-supply, vdda-phy-always-on, vdda-pll-supply,
+   status = "okay".
+i) UFS Host supplies present: vcc-supply, vccq-supply, vccq2-supply,
+   qcom,vccq-parent-supply (with -max-microamp), qcom,vddp-ref-clk-supply
+   (with -max-microamp), status = "okay".                               PASS
+j) vdd-hba-supply: 0 occurrences in the composite DTB decompilation.     PASS
+   The host GDSC is expressed only via power-domains, not as a regulator.
+
+NOTE ON (f): the root qcom,board-id of the applied composite is <0 0>, the
+base candidate value. The overlay DTBO root does carry qcom,board-id
+<0x206a 0>, but dtc/fdtoverlay do not propagate an overlay root-level
+property into the base root node through a fragment-only apply — only the
+fragment@0 payload was merged into /rootparam. This is exactly the layer
+separation the task requires to be recorded: the overlay root qcom,board-id
+property alone does NOT set the dt_table_entry ID/rev, and the root board
+identity of the composite does not become the VG candidate. DT table entry
+metadata and root qcom,board-id are separate layers; no dt_table_entry was
+created or inspected in this round (no dtbo.img packaging allowed).
+
+Explicit boundary statement: this composite operation validates symbol/fixup
+mechanics and property values only. It does NOT prove that HOS4.3 ABL selects
+the VG/0x206a variant, that ABL accepts a one-entry replacement DTBO table,
+that the selected table entry ID/rev is correct, or that the memory/reserved-
+memory handoff to the new ACK DTB is valid. All of those remain UNKNOWN or
+BLOCKED pending final ABL FDT evidence.
+
+--- Work package D — recommendation matrix ------------------------------------
+  rev2 base DTB syntax + header resolution        : PASS
+  rootparam overlay syntax + fixup generation     : PASS
+  fdtoverlay composite (one overlay, temp only)   : PASS
+  UFS dual-domain value/order (MMCX6, GDSC4)      : PASS
+  rootparam payload values (a-e)                  : PASS
+  root board-id propagation via fragment-only     : NOT OBSERVED (see note f)
+  runtime board variant selection (VG vs other)   : UNKNOWN
+  dt_table_entry ID/rev / dtbo.img packaging      : NOT TESTED (out of scope)
+  full DTB/DTBO schema (dtbs_check/binding_check) : NOT TESTED (out of scope)
+  Kleaf/Bazel integration target                  : NOT TESTED (out of scope)
+  final memory / reserved-memory handoff          : BLOCKED (ROUND19/24 gate)
+  PM8150 physical input parents                   : BLOCKED (ROUND22 gate)
+
+DO NOT recommend boot or packaging on this evidence. If the temporary checks
+remain green, the appropriate next stage is exact pinned-source dtc/schema
+validation and Kleaf rule integration, while preserving the final RAM/PMIC and
+ABL-variant gates as unresolved. No source/config/DTS/DTBO was changed, no
+candidate image was built or signed, and the tablet was not contacted.
+
+--- End of report -------------------------------------------------------------

@@ -470,3 +470,8 @@ Second AI committed `kernel-baseline/round61/phase-g-device-validation.md` (comm
 ### Phase E — precise local Agent handoff prepared
 
 Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_E_READONLY_SECOND_AI.md` (commit `69e890925b7e968c0db12217394e1b8c46d01dd8`). It requests only a sanitized, source-backed HOS4.3 final ABL-to-Linux FDT/EFI memory handoff and PM8150 physical input-parent map, with strict no-reboot/no-write/no-unlock/no-policy-bypass limits. It explicitly allows the Agent to return BLOCKED if those facts cannot be obtained from already-authorized evidence. This taskbook does not authorize device access or change Phase E's BLOCKED status.
+
+
+### Phase F — precise local Agent handoff prepared
+
+Second AI committed `kernel-baseline/round61/AGENT_TASKBOOK_PHASE_F_READONLY_SECOND_AI.md` (commit `9c18289442fadb83434bfab62614e99adc824872`). It limits the task to local, read-only inspection of existing HOS4.3 boot-v2, separate ramdisk, DTBO and AVB footer/vbmeta metadata, using only an already-installed trusted tool. It prohibits tool installation, raw image upload, AVB metadata disclosure, repacking and all device operations. No AVB/boot-package gate is claimed closed.

@@ -116,3 +116,18 @@ The README historically names `dby-w09-ack18-rootparam.dtso.draft`, but that fil
 ### Next validation boundary
 
 ROUND22 is the active local audit for exact ACK DTS includes/labels, temporary syntax-only DTB compilation, UFS property-to-driver contract, PM8150 input parent software/electrical distinction, and correction of this historical /memory wording. No board DTB has yet passed a full pinned-source build. The board file remains `.draft`, not a build input. Stage A remains unaccepted until a real 6.18.33 kernel boots on DBY-W09 and storage/essential hardware are evidenced.
+
+
+## ROUND64 evidence update — final FDT and AVB metadata
+
+The local Agent tried to retrieve /sys/firmware/fdt in ROUND2 and received Permission denied; the local hash sidecar says the live FDT is unavailable. No final ABL-to-Linux RAM map or final reserved-memory layout is available. The inspected base FDT's zeroed /memory/reg is a pre-ABL template value only. Do not invent RAM or carveout tuples.
+
+The PM8150 physical input-parent topology remains unresolved because the authorized HOS4.3 corpus has no board-specific schematic/power tree or explicit physical vdd-s* / vin / vph-pwr mapping.
+
+ROUND64 Phase F used the pre-existing AOSP avbtool 1.4.0 from the pinned ACK source tree in read-only info_image mode. It confirms AVB footers and descriptor/chain targets for boot, standalone ramdisk and dtbo; root vbmeta links those images. This is metadata inventory, not signature verification. The vbmeta_cust.img footer points beyond the 1 MiB file to an empty Algorithm NONE object, so cust coverage remains UNKNOWN. The selected HOS4.3 DTBO remains UNKNOWN. Do not package a candidate, reuse modified stock footer/hash metadata, assume ABL accepts an unverified payload, or assume a RAM-only boot is possible.
+
+Reports:
+- [ROUND64 Phase E](../firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md)
+- [ROUND64 Phase F](../firmware-analysis/round64/round64-dby-w09-hos43-bootv2-ramdisk-dtbo-avb-evidence.md)
+
+The source/Image build milestone remains complete; board DTB and boot-package gates are not complete.

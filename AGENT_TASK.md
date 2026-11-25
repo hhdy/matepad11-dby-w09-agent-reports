@@ -738,3 +738,21 @@ It is derived from the existing review draft and makes only two evidence-based c
 2. Corrects the HOS4.3 memory comment: /memory is present, device_type is memory, and reg is the all-zero placeholder.
 
 The original review draft is untouched. This rev2 candidate has not been dtc-compiled, schema-validated, included in a Kleaf DTB target, or built into any DTB. It does not close the final memory handoff or PM8150 electrical parent gates. Rootparam VG remains candidate-only. Do not promote the rev2 file or create a boot package until the ROUND22 report and subsequent dtc/schema checks are reviewed.
+
+
+## 2026-11-25 — ROUND68 Kleaf DTB/DTBO build-graph review
+
+A source/API design note was added at kernel-baseline/round68/round68-kleaf-dtb-dtbo-build-graph.md.
+
+The verified pipeline distinguishes:
+- dtb() for the base board DTB (set generate_symbols=True for overlay labels);
+- dtbo() for the rootparam-only overlay;
+- dtb_composite() as a build-time overlay resolution test;
+- dtbo_image() for the actual dt_table_header / dt_table_entry partition image;
+- dtb_image() only for concatenated DTB blobs embedded in boot/vendor_boot and not as a DTBO partition substitute.
+
+Kleaf docs say //common:dtc_includes_aarch64 can be used as a dependency for kernel DTSI and binding header includes. Exact rule/module revision must still be confirmed from the user's synced manifest workspace before committing a real BUILD.bazel rule.
+
+ROUND64 confirms the stock HOS4.3 DTBO table uses page size 4096, version 0, 9 entries, 32-byte entry size and entry 8 id 0x206a/rev 0. AOSP mkdtimg takes id/rev/custom table metadata separately from compiling the root DTS property, and supports cfg_create. Do not assume the DT overlay root property alone sets DT table entry ID. The VG overlay candidate is not yet known to be the actual selected variant, so the illustrative one-entry config in the note is NOT a package recommendation.
+
+No BUILD target, DTB, DTBO or dtbo.img was created.

@@ -90,3 +90,16 @@ ROUND23 only compiles and applies the raw overlay to a temporary composite DTB. 
 - Raw rootparam overlay compile/composite: pending ROUND23.
 - DTBO partition packaging: NOT RUN.
 - Device boot: NOT RUN.
+
+ 
+## Addendum — AOSP DTBO metadata semantics
+
+AOSP's DTB/DTBO partition specification explicitly defines dt_table_entry id/rev/custom fields as optional hardware-identification metadata. Its sample bootloader logic first checks entry fields and, if those fields are insufficient, loads and parses the DTB/DTBO root node for additional hardware properties. The mkdtimg create/cfg_create tool can set entry fields explicitly or read a 32-bit value from a root property path.
+
+This confirms the distinction between:
+- table-level fields: dt_table_entry.id / rev / custom[4];
+- overlay-root fields: such as qcom,board-id=<board-id, board-revision> and qcom,boardid.
+
+It does not specify how Huawei HOS4.3 ABL implements matching. In particular, optional metadata does not mean every ABL treats id=0 as wildcard. The public same-device Linux id=0 packaging is an older-HOS project observation only. Keep HOS4.3 replacement table id/rev unknown.
+
+AOSP reference: https://source.android.com/docs/core/architecture/dto/partitions

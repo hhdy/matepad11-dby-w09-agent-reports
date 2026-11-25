@@ -782,3 +782,11 @@ Public source references used for triage: historical Qualcomm UFS property docum
 - Schema caveat retained: the *-supply meta-schema limitation prevents expressing the phandle target type via $ref; the report's bad-phandle-type case is accepted by meta-schema and is not evidence that an arbitrary runtime target is safe. Runtime self-target validation rejects non-self targets before handle acquisition.
 - Permanent-vote semantics and L5/L9 physical parent-supply provenance remain unverified.
 - Phase E/F remain BLOCKED pending actual ABL final FDT / EFI memory map and PM8150 input topology evidence; Phase G NOT RUN. No device, ADB/fastboot, partition, boot/DTBO/AVB/vbmeta, firmware upload, or HOS4.3 evidence operation was performed. ROUND34 was not started.
+
+## 2026-11-25 — AI2 ROUND34 assigned: kernel-native regulator lifecycle test
+
+- Ownership: **2号 AI 专属任务书**; task ID `AI2-ROUND34`; local Agent is executor. Taskbook: `firmware-analysis/round34/AI2_ROUND34_TASKBOOK.md` on `firmware-audit-v1`; commit `a86193484b30ee1c942692b4529b981ddbb6585f`.
+- Scope: inspect pinned ACK KUnit/regulator test facilities and, only if genuinely feasible, add a test-only KUnit integration exercising actual regulator-core registration, proxy handle/vote teardown and owner unregister ordering. Existing ROUND33 lifecycle coverage is host-mock level; this round targets that remaining evidence gap.
+- Runtime driver/binding patches, product config, DTS/DTBO and existing 17-patch series are frozen. If a real regulator-core test cannot be run without altering production semantics, Agent must report BLOCKED/PARTIAL rather than create a simulated integration test.
+- No full Image rebuild is requested. Existing host suites must remain 38/38 and 83/83. No device, partition, boot, DTBO, AVB, firmware or HOS4.3 evidence-upload operation is authorized.
+- Agent must stop after the single report; ROUND35 is not authorized automatically. Phase E/F remain BLOCKED and Phase G remains NOT RUN.

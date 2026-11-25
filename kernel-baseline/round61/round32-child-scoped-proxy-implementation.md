@@ -159,3 +159,12 @@ board entry), asserted explicitly in the fixture gate instead of being
   - Patch 17 binding: blob `d2e818296118672bd708db34ed08d817fcd3895b`, SHA-256 `d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05`.
 - A local structural pass now confirms all five hunk headers exactly match their body line counts: driver 6/30, 6/7, 6/25; binding 7/9, 11/11. This is only text-structure verification, **not** proof of git apply or source-context applicability.
 - The series record now has 17 patches. All runtime tests, checkpatch, schema checks, and full Image rebuild remain pending a fresh local Agent run.
+
+
+
+## ROUND33 — host harness alignment after second validation failure (2号 AI)
+
+- The second validation exposed two stale test assumptions, not a reason to weaken the runtime self-target-only rule.
+- Legacy ROUND31 fixtures now provide explicit provider-node `proxy-supply` phandles to each request owner's regulator child and register those targets in the mock regulator registry. The two-rail bulk-revoke case uses two provider fixtures, each with its own self-target, so no cross-regulator proxy handle is modeled.
+- ROUND32/33 ghost cross-target cases now assert immediate `-EINVAL` before regulator lookup and never dereference an error pointer. A separate deferred self-target case covers individual unregister while no target rdev is registered.
+- These are host-test changes only; kernel patch 16/17 and binding semantics are unchanged. No local execution result is claimed. The final 17-patch apply, both host suites, schema gates, fresh full Image build and ROUND58 regression must all be rerun by the local Agent.

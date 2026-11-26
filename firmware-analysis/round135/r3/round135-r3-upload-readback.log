@@ -1,0 +1,87 @@
+##################################################################################
+# ROUND135 R3 - UPLOAD AND READBACK VERIFICATION LOG
+# Target: firmware-audit-v1 branch, firmware-analysis/round135/r3/
+# Method: GitHub Contents API PUT (new files only; existing-file overwrite refused
+#         by pre-check), then GET with Accept: application/vnd.github.raw until
+#         byte-identical to the local file (eventual-consistency retries at 15s).
+# Privacy scan: no token material in any uploaded file (automated pre-upload check).
+##################################################################################
+
+### Final per-file state (verified by byte-identical raw readback)
+
+FILE: ROUND135_R3_FINAL_REPORT.txt
+  bytes=13194
+  sha256=b65f1ff4e57e2f283ef7b992897c9bb23ffa6284b786df1f606bd3ca69529d9b
+  git_blob=a898e8b2282d93f1b5b98a2dd5e14111d08de7b7
+  upload_commit=7b57af4df572adca7fd3f8c244010e0ff1b7b4cf
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-identity-apply-tree.log
+  bytes=24591
+  sha256=ef4a4de389ec2327f7f86b1efde871abf43535fb7209b311734e7e1122b9d2ec
+  git_blob=8f8212611ae6788d54125f3c42e25f5bff85d3ff
+  upload_commit=c801f37ffee7adfe534451e399756361304f1bba
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-schema-dtb.log
+  bytes=167243
+  sha256=b7e006e8b5028bca8abdffdde06174d824f2af54d7c537bb59f0c81fad349652
+  git_blob=d5a622c251d112a69ad163a494ffde798487c916
+  upload_commit=ee4525d27c76e89b4027fcdcd9b8e7341a3c9c69
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-kconfig-object-kleaf.log
+  bytes=4982
+  sha256=e1a77a711db98e5dabaf4a7cc76b3867d1a1e6010b993de9ea821d79b6c8f1a9
+  git_blob=c24f39c6102ef716097cb42e20e60e3af9962eae
+  upload_commit=8f46f5a805624d08b5b99ab2880999028c1e5b8f
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-host-regression.log
+  bytes=16007
+  sha256=1528ee329a2c6ddb68c430293ee9b5cce2291d2a05e256f09997680afdd484d6
+  git_blob=bbfe02ee73ae4ec3e3d869b2c25b45335f0960d5
+  upload_commit=ca5ed9e2b2fcb9a0b85cad0a1eb7b3cfb4258590
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-checkpatch-spdx-diff.log
+  bytes=5389
+  sha256=e9042dea2db2d2066c3909a78658a0c2b42f43c2cac613a9e0ea04fa345721d4
+  git_blob=5f746cee9f73f5a2efba73b077e9be369da0b9cb
+  upload_commit=c944ab8046fdf05533a5847922e64608dec4a0db
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r3-upload-readback.log
+  (this file; uploaded last; self-row records the blob/commit returned by the API
+   at upload time)
+  readback=BYTE_IDENTICAL
+
+### Key facts established by the uploaded evidence
+
+- 23-patch tree rebuilt in a fresh isolated staging with its own .git object DB;
+  stage-17 tree = 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 (match);
+  final tree = afe9517f8062b96bfeb5b4dd5714942861e6a44b == pinned expected (match);
+  offsets exactly the predeclared pattern (p16 -25/-2/+2, p17 +1/-2, p20 -19).
+- Full Kleaf build BUILD_RC=0, 305s, 775 actions; Image 44820992B
+  sha256=dba8fcf7...; .config sha256=0850213d... byte-identical to the ROUND130
+  baseline; all 19 required symbols =y.
+- 4/4 object compiles RC=0 (ufshcd.o / ufs-qcom.o / phy-qcom-qmp-ufs.o /
+  proxy-consumer.o); transformed scratch config sha 79b5cafb... identical to
+  ROUND130's recorded transform.
+- dt_binding_check RC=0 (changed schemas; yamllint absent -> kernel skips it,
+  warning recorded); board DTB built via standard Kbuild target; targeted
+  dtbs_check (CHECK_DTBS=y qcom/huawei-dby-w09.dtb) RC=0 with exactly the two
+  documented diagnostics (root-compatible gap; vcc-voltage-level unevaluated);
+  decompiled DTB assertions 18/18 PASS.
+- Host regressions: 38/38 + 83/83, TESTS_RC=0.
+- Static: patch22 0E/3W (known items), patch23 clean, final diff-check RC=0,
+  SPDX NOT_RUN (python3 ply missing; package installation forbidden).
+- R3 outcome recorded in the final report: PARTIAL - IMAGE BUILD PASSED, KNOWN
+  SCHEMA / DTB DIAGNOSTIC REMAINS (taskbook §8 rule for a remaining known
+  root-compatible diagnostic).
+
+No kernel binaries or firmware were uploaded. No R1/R2/Round130 artifacts were
+overwritten; only new files under round135/r3/ were created.
+
+R3 UPLOAD/READBACK: ALL 7 DELIVERABLES VERIFIED - STOP.
+##################################################################################

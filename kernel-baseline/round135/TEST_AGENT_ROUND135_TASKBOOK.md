@@ -223,3 +223,127 @@ The updated DTS synchronizes with the latest reviewed main DTS while retaining t
 8. Stop after upload and readback. No device connection, ADB/fastboot/recovery/serial, firmware extraction, boot/flash, partition read/write, packaging or branch merge.
 
 The first ROUND135 report remains historically BLOCKED. The rerun can be marked PASS only under original §9's full criteria and only after 1号 AI independently reviews its raw logs. If the corrected patch still fails, stop and report the exact failure; do not repair it locally.
+
+
+---
+
+## Revision 2 — dual-tree identity / expected-tree establishment and controlled-offset protocol (2026-11-26)
+
+**This revision supersedes the original patch-22/patch-23 input identity in §1 and R1 addendum.** The first Agent run remains historical BLOCKED. The R1 patch22 fix is preserved, and the series has since been corrected to remove a duplicate driver patch. Do not execute R1 using its old patch23 file or old identity.
+
+### R2 roles
+
+- 下发方 / 技术负责人 / 源码候选负责人：**1号 AI（ChatGPT）**
+- 执行方：**用户本地 WorkBuddy 测试 Agent**
+- 独立核验方：**2号 AI**
+- 最终复核和决定是否下发后续完整测试：**1号 AI**
+
+2号 AI is an independent reviewer, not the local Agent executor. The Agent must not ask 2号 AI to perform local commands or modify code.
+
+### R2 fixed identities
+
+- ACK repo/ref: `aosp-mirror/kernel_common@8ad08f75ddf056e1ee600e1339e0463c5fcbdc9`
+- ACK root tree: `790a68ae6d4f4ac51ab2d88977b6fd5c031473b7`
+- Frozen 17 manifest: `ai-parallel/stagea-port-until-boot:kernel-baseline/round61/round32-stagea-series.txt`
+- Frozen manifest blob: `9a93b7e3a500d807533517a92b98fe244b2ea456`
+- Frozen 17-patch post-series content tree, pre-established by ROUND132 two-tree replay: `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`
+- ROUND135 23-patch manifest: this branch, `kernel-baseline/round135/ROUND135_23_PATCH_SERIES_MANIFEST.md`, blob `6268dd363c08f549e2fd092364adafc65bce93e9`
+- Updated board DTS source blob: `58293f7a62a50f8109886c92ce4b9cd14d7980e2`
+- Patch 22 (board DTS file only): `ab0108364c835d87ac35ca670347d9d0001a821d`
+- Patch 23 (qcom Makefile DTB target only): `ceb72ed206d97beb2c2fa8558cb120ee186cb685`
+- Frozen patch 5 already contains the ROUND45 UFS dual-GenPD / required-OPP driver implementation: blob `f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622`. **Do not add or apply the former duplicate driver patch** `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`; that separate file has been removed from the series.
+- Patch 23's new path is `kernel-baseline/round135/series/23-round135-huawei-dby-w09-dtb-makefile.patch`. It must not be confused with the removed former driver patch.
+
+Re-fetch the manifest on the specified branch and check every blob / byte size / SHA-256 for all 23 entries before applying. The fixed ACK Makefile blob for the exact TAB-sensitive hunk remains `296688f7cb26550f75bce65826f234bc24110356`.
+
+### Why R2 has two stages
+
+The exact full 23-patch final Git Tree SHA has not yet been independently established. The 17-patch SHA `77e2b2b1515b3813f7538aedffe4c5a4e90edb57` is only the frozen 17-patch intermediate tree. **It must never be copied or relabelled as the 23-patch expected tree.**
+
+Therefore R2 is deliberately limited to independently establishing the completed 23-patch tree identity. It is not yet authorization to run schema, DTB, Kconfig, compile, Image build or regressions. After R2 upload, 2号 AI independently verifies both trees and raw logs; 1号 AI then records the verified full 23-patch expected Tree SHA in a follow-on taskbook revision before any downstream validation begins.
+
+### R2-A — create two truly independent clean trees
+
+Create **two separate Git repositories / working copies** from the exact fixed ACK source, named Tree A and Tree B. They must not share:
+- a Git index;
+- an object database via alternates or shared object store;
+- a linked-worktree common repository;
+- mutable source files or build/output directories.
+
+A new independent clone with no hardlinks (for example, a local clone using `--no-hardlinks`) is acceptable if the starting HEAD is exactly the pinned ACK and each clone has its own `.git` object directory. Do not merely run two sequential applies in one worktree or use two linked worktrees sharing one Git repository.
+
+For each tree, before applying anything, record:
+- `git rev-parse HEAD` = exact fixed ACK commit;
+- `git rev-parse HEAD^{tree}` = `790a68ae6d4f4ac51ab2d88977b6fd5c031473b7`;
+- `git status --porcelain=v1` empty;
+- `git rev-parse --git-dir` and `git rev-parse --git-common-dir`, demonstrating the two trees do not share a common Git directory;
+- initial tree SHA and source/manifest identity records.
+
+Do not reuse or mutate the preserved original ROUND135 first-run tree under `round135-agent/a30`, nor any previous ROUND130 / ROUND18 build workspace. Do not recreate WSL, repo init, repo sync, install packages or download a new compiler. Use the already available pinned local ACK source as the source to make two new independent local clones.
+
+### R2-B — apply exactly 23 patches in both trees
+
+In **each** tree, apply the 23 entries in the exact order in the updated manifest:
+1–17 frozen series; 18 ROUND120; 19 ROUND122; 20 ROUND128 V2; 21 ROUND126; 22 DBY-W09 board DTS file; 23 qcom Makefile DTB target.
+
+For every single patch in both trees:
+1. Record source Git blob, byte size and SHA-256 against the manifest.
+2. Run `git apply --check --verbose`; save complete stdout/stderr and exit code.
+3. If and only if it returns 0, run the actual `git apply --verbose`; save complete stdout/stderr and exit code.
+4. Run `git diff --check`; save complete output and exit code.
+5. Capture and enumerate every hunk offset emitted by both primary commands. No summary counter may replace the per-hunk table.
+
+No fuzz, rejects, partial apply, skip, reorder, manual edit, context reduction, `--ignore-whitespace`, `--unidiff-zero`, `--3way`, or fallback applier. Any identity mismatch, failed check/apply, reject, context relaxation, or unexplained file causes immediate stop in that tree; preserve raw logs and report BLOCKED/FAIL. Never “fix” an input inside a test tree.
+
+### R2-C — explicit controlled-offset rule
+
+Use the project policy file `kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md` (blob `6712f686da9940937ed87eab2f4b27d44cb29626`) as the normative rule. The following requirements are mandatory:
+
+- A nonzero hunk offset is **not automatically a failure**, but it must be reported accurately for each patch/hunk in both Tree A and Tree B.
+- Both `git apply --check` and the actual `git apply` must return 0. There must be no failed hunk, reject, skip, partial application, fuzz, ignored whitespace, context relaxation or 3-way repair.
+- The same offset pattern must reproduce in Tree A and Tree B. Any new nonzero offset not already present in the historical evidence must be individually called out for explicit AI1/AI2 review; it is not self-accepted merely because both tools returned 0.
+- Historical known offsets expected to recur are:
+  - patch 16: H1 `-25`, H2 `-2`, H3 `+2`;
+  - patch 17: H1 `+1`, H2 `-2`;
+  - patch 20 / ROUND128 V2: H3 `-19` (confirm the actual current patch/manifest position; do not shift its identity or mislabel its patch index).
+- Patches with no emitted offset must be reported as “no offset line emitted by the primary applier”, not inferred from a separate GNU patch diagnostic.
+- Any secondary tool output (for example GNU `patch --dry-run`) must be separately labelled and never merged into the primary `git apply` offset table.
+- Run and report clean `git diff --check` in both trees.
+
+The offset rule does **not** authorize choosing a resulting-tree SHA after seeing arbitrary results and calling that the expected value. R2 only establishes a candidate expected full-series tree, which 2号 AI must independently verify before 1号 AI pins it as the expected SHA for later testing.
+
+### R2-D — expected tree SHA outputs and stopping gate
+
+At the end of patch 17 in each tree:
+- calculate the full content tree with all patch changes included in a temporary index or staged index;
+- require Tree A's 17-stage tree and Tree B's 17-stage tree to equal the predeclared `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`;
+- record the exact commands, raw output, and index/worktree restoration state.
+
+After patch 23 in each tree:
+- calculate the **full 23-patch resulting Git Tree SHA** from the complete resulting content (include all modified and untracked files; do not use plain `git write-tree` on an unstaged index and mistake the unchanged HEAD tree for the resulting tree);
+- record `git diff --stat`, `git status --short`, `git diff --check`, total changed paths, and the final content tree SHA;
+- Tree A and Tree B final 23-patch Tree SHAs must be exactly equal.
+
+The full expected 23-patch SHA is intentionally **not hard-coded yet** because a trustworthy value has not been established. Do not invent one, use the 17-patch SHA, or copy the SHA from only one tree. R2 must deliver the same candidate 23-patch tree SHA from both independent trees.
+
+**R2 stop condition:** upload the preflight logs/report and read them back from GitHub; then stop. Do not run dt_binding_check, dtbs_check, board DTB build, DTB decompile, Kconfig, UFS object compile, Kleaf/Image build, Host regressions, checkpatch or SPDX in R2. These stages will be authorized in a later taskbook only after 2号 AI independently validates the exact 23-patch result-tree SHA and 1号 AI pins that SHA before execution.
+
+### R2 deliverables
+
+Upload new, non-overwriting files to `firmware-audit-v1/firmware-analysis/round135/r2-preflight/`:
+1. `ROUND135_R2_PREFLIGHT_FINAL_REPORT.txt` — Tree A / Tree B outcome, full candidate tree SHA, exact blockers, executor statement.
+2. `round135-r2-tree-a-identity-apply.log` — Tree A exact identity, per-patch check/apply/diff logs, offsets, intermediate tree17 and final tree23.
+3. `round135-r2-tree-b-identity-apply.log` — same for independent Tree B.
+4. `round135-r2-tree-equivalence-and-offsets.log` — side-by-side per-patch/per-hunk offsets; Tree A/B initial, 17-stage and 23-stage SHA; diff-check and tree equality assertions.
+5. `round135-r2-upload-readback.log` — uploaded commit, Git blob, nonempty readback and content identity for every delivered file.
+
+Preserve the first-run and R1 historical reports/logs. Upload no kernel binaries or firmware.
+
+### Safety / branch boundaries
+
+- No tablet, USB, ADB, fastboot, recovery, serial, root, boot, flash or partition access.
+- No firmware read, download or extraction.
+- No patch/source/DTS/config modification by Agent; no patch repair.
+- No changes to main, AI2 branch, protected DTS branch or PR #1; no cherry-pick/merge/PR.
+- Do not overwrite any previous ROUND135 file.
+- R2 stops after upload and readback. Wait for 2号 AI independent verification and 1号 AI follow-up authorization.

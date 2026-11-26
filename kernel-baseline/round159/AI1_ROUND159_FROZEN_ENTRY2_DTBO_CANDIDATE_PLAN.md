@@ -6,7 +6,7 @@
 - Candidate ACK: android17-6.18.33_r00, commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9
 - Accepted source tree: c56d93eafa35057d65176db6594d67d5144868a0
 - Candidate base DTB: 108,680 B, SHA-256 9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60
-- Exact target ABL payload: SHA-256 a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747b404
+- Exact target ABL payload: SHA-256 a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404
 - Captured stock dtbo partition: 25,165,824 B, SHA-256 51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c
 - Scope: one bounded implementation task to produce and review ONE host-side HOS4.3 DTBO candidate component. No device interaction or flashing.
 

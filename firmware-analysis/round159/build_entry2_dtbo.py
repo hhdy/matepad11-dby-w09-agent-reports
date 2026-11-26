@@ -264,15 +264,26 @@ def parse_container(data):
     for i in range(cnt):
         o = eo + i * es
         sz, do, eid, rev, c0, c1, c2, c3 = struct.unpack_from(">4I4I", data, o)
+        if do < eo + cnt * es:
+            raise ValueError("entry %d payload overlaps entry table" % i)
         if do + sz > total:
             raise ValueError("entry %d payload out of bounds" % i)
-        blob = data[do:do + sz]
-        if len(blob) < 4 or struct.unpack_from(">I", blob, 0)[0] != FDT_MAGIC:
+        if len(blob_ok := data[do:do + sz]) < 40 or \
+                struct.unpack_from(">I", blob_ok, 0)[0] != FDT_MAGIC:
             raise ValueError("entry %d payload is not an FDT" % i)
+        fdt_total = struct.unpack_from(">I", blob_ok, 4)[0]
+        if fdt_total != sz:
+            raise ValueError("entry %d FDT totalsize %d != dt_size %d"
+                             % (i, fdt_total, sz))
         entries.append({"index": i, "dt_size": sz, "dt_offset": do,
                         "id": eid, "rev": rev,
                         "custom": [c0, c1, c2, c3],
-                        "fdt": blob, "sha256": sha256(blob)})
+                        "fdt": blob_ok, "sha256": sha256(blob_ok)})
+    ranges = sorted((e["dt_offset"], e["dt_offset"] + e["dt_size"])
+                    for e in entries)
+    for a, b in zip(ranges, ranges[1:]):
+        if a[1] > b[0]:
+            raise ValueError("entry payload ranges overlap")
     return {"magic": magic, "total_size": total, "header_size": hs,
             "dt_entry_size": es, "dt_entry_count": cnt,
             "dt_entries_offset": eo, "page_size": pg, "version": ver,
@@ -304,6 +315,37 @@ def encode_prop(p):
     if enc == "raw-bytes":
         return bytes.fromhex(p["hex"])
     raise ValueError("unknown encoding %r for %s" % (enc, p.get("name")))
+
+
+def render_prop_dts(p, indent):
+    pad = " " * indent
+    enc = p.get("encoding")
+    if enc == "string":
+        return "%s%s = \"%s\";" % (pad, p["name"], p["value"])
+    if enc == "u32-cells":
+        return "%s%s = <%s>;" % (pad, p["name"],
+                                 " ".join("0x%x" % v for v in p["u32"]))
+    if enc == "raw-bytes":
+        return "%s%s = [%s];" % (pad, p["name"], p["hex"])
+    raise ValueError("unknown encoding %r" % enc)
+
+
+def render_dts_text(facts):
+    """Textual DTS source of the overlay (the .dtso deliverable)."""
+    out = ["/dts-v1/;", ""]
+    out.append("/ {")
+    for p in facts["selector_root_properties"]:
+        if p.get("required", True):
+            out.append(render_prop_dts(p, 4))
+    out.append("    fragment@0 {")
+    out.append("        target-path = \"/rootparam\";")
+    out.append("        __overlay__ {")
+    for p in facts["rootparam_properties"]:
+        out.append(render_prop_dts(p, 12))
+    out.append("        };")
+    out.append("    };")
+    out.append("};")
+    return "\n".join(out) + "\n"
 
 
 def build_overlay_fdt(facts):
@@ -346,7 +388,7 @@ def verify_facts(facts):
     return errs
 
 
-def run_build(facts_path, base_path, outdir, fdtoverlay_bin):
+def run_build(facts_path, base_path, outdir, fdtoverlay_bin, dtc_bin=None):
     facts = json.load(open(facts_path))
     errs = verify_facts(facts)
     if errs:
@@ -383,12 +425,36 @@ def run_build(facts_path, base_path, outdir, fdtoverlay_bin):
 
     os.makedirs(outdir, exist_ok=True)
     paths = {}
-    for name, blob in (("entry2-rootparam.dtso", overlay),
-                       ("entry2-rootparam.dtbo", overlay),
-                       ("entry2-candidate.dtbo.img", container)):
+    dtso_text = render_dts_text(facts)
+    artifacts = [("entry2-rootparam.dtso", dtso_text.encode()),
+                 ("entry2-rootparam.dtbo", overlay),
+                 ("entry2-candidate.dtbo.img", container)]
+    for name, blob in artifacts:
         p = os.path.join(outdir, name)
         open(p, "wb").write(blob)
         paths[name] = p
+
+    # cross-validate: dtc-compile the textual .dtso and compare structurally
+    # with our binary writer output (props equality, not byte equality --
+    # dtc may pad/order strings differently)
+    crossval = {"performed": False}
+    if dtc_bin:
+        tmp_dts = os.path.join(outdir, ".dtso-crossval.dts")
+        tmp_dtb = os.path.join(outdir, ".dtso-crossval.dtb")
+        open(tmp_dts, "wb").write(dtso_text.encode())
+        rc = os.system("%s -I dts -O dtb -o %s %s 2>/dev/null"
+                       % (dtc_bin, tmp_dtb, tmp_dts))
+        if rc == 0:
+            a = parse_fdt(overlay)
+            b = parse_fdt(open(tmp_dtb, "rb").read())
+            diffs = fdt_diff(a, b)
+            crossval = {"performed": True, "structural_diff_count": len(diffs),
+                        "match": len(diffs) == 0}
+            for d in diffs:
+                crossval.setdefault("diff", []).append(list(d))
+        else:
+            crossval = {"performed": True, "dtc_compile_rc": rc,
+                        "match": False}
 
     # host merge check via fdtoverlay (if available)
     merge = {"tool": fdtoverlay_bin or "none"}
@@ -429,6 +495,7 @@ def run_build(facts_path, base_path, outdir, fdtoverlay_bin):
         "container_fields": {k: v for k, v in reparsed.items() if k != "entries"},
         "entry0": {k: v for k, v in reparsed["entries"][0].items() if k != "fdt"},
         "resulting_dtbo_idx": facts["abl_decision"].get("resulting_dtbo_idx"),
+        "dtso_dtc_crossval": crossval,
         "merge": merge,
     }
     mp = os.path.join(outdir, "entry2-candidate-manifest.json")
@@ -560,13 +627,21 @@ def main():
     ap.add_argument("--base", default="/tmp/r159_selftest_base.dtb")
     ap.add_argument("--outdir", default=".")
     ap.add_argument("--fdtoverlay", default=None)
+    ap.add_argument("--dtc", default=None)
     a = ap.parse_args()
     fdto = a.fdtoverlay
+    dtc = a.dtc
     if fdto is None:
         for cand in ("/usr/bin/fdtoverlay",
                      "/home/kerneldev/work/matepad11/r157-windowA/out-dtb/scripts/dtc/fdtoverlay"):
             if os.path.exists(cand):
                 fdto = cand
+                break
+    if dtc is None:
+        for cand in ("/usr/bin/dtc",
+                     "/home/kerneldev/work/matepad11/r157-windowA/out-dtb/scripts/dtc/dtc"):
+            if os.path.exists(cand):
+                dtc = cand
                 break
     if a.command == "selftest":
         if a.base != "/tmp/r159_selftest_base.dtb" and os.path.exists(a.base):
@@ -574,7 +649,7 @@ def main():
         return run_selftest(a.base, fdto)
     if not a.facts:
         print("build requires --facts"); return 2
-    return run_build(a.facts, a.base, a.outdir, fdto)
+    return run_build(a.facts, a.base, a.outdir, fdto, dtc)
 
 
 if __name__ == "__main__":

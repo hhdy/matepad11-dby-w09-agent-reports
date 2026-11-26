@@ -1,0 +1,11 @@
+reparse_count_is_1                             PASS
+reserialize_byte_identical                     PASS
+embedded_fdt_equals_dtbo_file                  PASS
+entry0_meta_all_zero                           PASS
+total_size_is_64_plus_payload                  PASS
+header_page_size_4096_version_0                PASS
+overlay_root_board_id_is_0x200e_0              PASS
+merge_diff_exactly_5_rootparam_added           PASS
+negative_truncated_REJECTED                    PASS
+negative_fdt_totalsize_lie_REJECTED            PASS
+negative_realfacts_typo_FAILS                  PASS

@@ -1,0 +1,9 @@
+fdt_roundtrip                            PASS
+reader_vs_candidate_dtb                  PASS
+container_roundtrip                      PASS
+negative_truncated_REJECTED              PASS
+negative_badmagic_REJECTED               PASS
+negative_totalsize_lie_REJECTED          PASS
+negative_targetpath_typo_FAILS           PASS
+positive_synthetic_merge_5_additions_only PASS
+SELFTEST PASS

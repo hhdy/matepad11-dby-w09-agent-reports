@@ -1,0 +1,93 @@
+{
+  "round": 159,
+  "facts_sha256": "f1dbe1aa6873120be0133febfdc86759ad083a1491949605337115559a805658",
+  "base_dtb_sha256": "9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60",
+  "artifacts": {
+    "entry2-rootparam.dtso": {
+      "sha256": "34939a4146e3280ff7ee521b48b0d3a388b172770fd6ac306b127172dbaf0442",
+      "size": 369
+    },
+    "entry2-rootparam.dtbo": {
+      "sha256": "5d596c2e38d18d71ebe6cee3a77617a9185ab13a941b995e57e75d8fc6ae7ea3",
+      "size": 378
+    },
+    "entry2-candidate.dtbo.img": {
+      "sha256": "f185c13de5f9d2ca8dc2610c4cef33d12db601bfa29bae079fb5827951c1a6cc",
+      "size": 442
+    }
+  },
+  "container_fields": {
+    "magic": 3619138334,
+    "total_size": 442,
+    "header_size": 32,
+    "dt_entry_size": 32,
+    "dt_entry_count": 1,
+    "dt_entries_offset": 32,
+    "page_size": 4096,
+    "version": 0
+  },
+  "entry0": {
+    "index": 0,
+    "dt_size": 378,
+    "dt_offset": 64,
+    "id": 0,
+    "rev": 0,
+    "custom": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "sha256": "5d596c2e38d18d71ebe6cee3a77617a9185ab13a941b995e57e75d8fc6ae7ea3"
+  },
+  "resulting_dtbo_idx": 0,
+  "dtso_dtc_crossval": {
+    "performed": true,
+    "structural_diff_count": 0,
+    "match": true
+  },
+  "merge": {
+    "tool": "/usr/bin/fdtoverlay",
+    "rc": 0,
+    "diff_count": 5,
+    "diff": [
+      [
+        "/rootparam",
+        "hardware_version",
+        "ADDED",
+        "",
+        "5348314442534c4d00"
+      ],
+      [
+        "/rootparam",
+        "huawei,modem_id",
+        "ADDED",
+        "",
+        "ffffffff00000000"
+      ],
+      [
+        "/rootparam",
+        "qcom,board_name",
+        "ADDED",
+        "",
+        "4442595f5730395f564400"
+      ],
+      [
+        "/rootparam",
+        "qcom,boardid",
+        "ADDED",
+        "",
+        "00000008000000020000000000000006"
+      ],
+      [
+        "/rootparam",
+        "qcom,product_name",
+        "ADDED",
+        "",
+        "4442592d57303900"
+      ]
+    ],
+    "exactly_five_rootparam_additions": true,
+    "payloads_match_facts": true
+  }
+}

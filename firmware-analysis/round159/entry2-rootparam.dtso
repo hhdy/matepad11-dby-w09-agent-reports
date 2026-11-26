@@ -1,0 +1,15 @@
+/dts-v1/;
+
+/ {
+    qcom,board-id = <0x200e 0x0>;
+    fragment@0 {
+        target-path = "/rootparam";
+        __overlay__ {
+            qcom,boardid = <0x8 0x2 0x0 0x6>;
+            qcom,board_name = "DBY_W09_VD";
+            qcom,product_name = "DBY-W09";
+            hardware_version = "SH1DBSLM";
+            huawei,modem_id = <0xffffffff 0x0>;
+        };
+    };
+};

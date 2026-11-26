@@ -1,0 +1,191 @@
+################################################################################
+# ROUND135 R3-validation - host regression evidence (round61 harness, pinned blobs)
+################################################################################
+
+=== harness staging (outside source tree) ===
+pinned harness identities (pre-run, GitHub-verified blobs):
+  run_tests.sh                           blob=e29f8a237e1836420dfcd85b7d970cf8d9a956d8 sha256=145bf8d3b65b4445339724129fe2ba67f9f37e3afd745eab41dc0e2ebc3be624 size=2013
+  test_proxy_consumer_r31.c              blob=14515c62c48d95e86bfc6dca9c2070c81e031489 sha256=58b0ca477b964a1cf28a8f81a170e8d686266b8bec025539b7f5073adceb8d5c size=9287
+  test_proxy_consumer_round32.c          blob=aff9ec3c5bc65c880726431b5f23750b19339c1f sha256=138213990ce269707a66c1bcca3101aa0445a1f90169293e3606fad618089250 size=17728
+  mock/mock_core.h                       blob=98820fc6c6439237563dad52c4129db022fb1260 sha256=d0dc8deb82d6dcb4a6fb62afb3c8e32514b01786444bbeb2ad67e786ae56d33c size=10691
+  mock/linux/errno.h                     blob=8a8e39690876ebe9ffd3b56c553c2c773c2e333f sha256=39e6adaf501606be13f5f5a5e47d539995354a158e4866d9dfb3475a37d4b69c size=500
+expected blobs: run_tests.sh=e29f8a23... r31=14515c62... round32=aff9ec3c... mock_core=98820fc6... errno=8a8e3969...
+
+=== host regression: 38/38 + 83/83 (worktree = validated vtree) ===
+TESTS_RC=0
+COMPILE_RC=0
+checks=38 failures=0
+RESULT: PASS
+TEST_RC=0
+COMPILE_RC=0
+checks=83 failures=0
+RESULT: PASS
+TEST_RC=0
+HARNESS_RESULT: PASS
+
+=== checkpatch patch22 (board DTS only) ===
+
+=== full test output ===
+--- test_proxy_consumer_r31 ---
+source sha256: 5e21001fb7d105007aa56effa3b364f6da02d705fffcfe0c1283aff182f62db1
+COMPILE_RC=0
+== ROUND31 proxy-consumer lifecycle test ==
+ok   no proxy properties -> NULL consumer
+ok   no proxy properties -> no regulator_get
+ok   no proxy properties -> rdev untouched
+ok   enable+current -> consumer registered
+ok   exactly one regulator_get
+ok   supply id is "proxy"
+ok   single 100000 uA load vote
+ok   single enable, balance 1
+ok   unregister clears rdev->proxy_consumer
+ok   unregister disables once, balance 0
+ok   unregister drops load vote to 0
+ok   unregister puts the regulator once
+ok   second unregister is a no-op
+[dev_err] 0x7ffc9bd5b5f0OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before regulator_get
+ok   rejected -> rdev untouched
+[dev_err] 0x7ffc9bd5b5f0OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable -> -EINVAL
+ok   type error rejected before regulator_get
+[dev_err] 0x7ffc9bd5b5f0OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   min > max voltage -> -EINVAL
+[dev_err] 0x7ffc9bd5b5f0OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never touches a regulator
+[pr_err] regulator_set_load pm8150-rpmh-regulators-l5 failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> regulator_put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-rpmh-regulators-l5 failed, rc=-6
+ok   enable failure propagates
+ok   enable failure restores load to 0
+ok   enable failure -> regulator_put once
+ok   two rails registered
+ok   two rails -> enable balance 2
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   late_initcall_sync drops both enables
+ok   late_initcall_sync drops both load votes
+ok   late_initcall_sync puts both regulators
+ok   late_initcall_sync clears both back-pointers
+ok   second late_initcall_sync is a no-op
+ok   registration after removal -> -EPERM
+ok   refused registration does not vote
+
+checks=38 failures=0
+RESULT: PASS
+TEST_RC=0
+--- test_proxy_consumer_round32 ---
+source sha256: 5e21001fb7d105007aa56effa3b364f6da02d705fffcfe0c1283aff182f62db1
+COMPILE_RC=0
+== ROUND32 child-scoped proxy consumer lifecycle test ==
+ok   plain child without proxy props -> NULL
+ok   plain child -> no regulator lookup
+ok   plain child -> rdev untouched
+ok   l5 child-scoped consumer registered
+ok   l9 child-scoped consumer registered
+ok   exactly one lookup per child
+ok   l5 resolved via its own node phandle
+ok   l9 resolved via its own node phandle
+ok   l5 target carries exactly one 100000 uA load vote
+ok   l9 target carries exactly one 100000 uA load vote
+ok   each target enabled exactly once
+ok   no cross-disable before teardown
+ok   l5 unregister clears back-pointer
+ok   l5 disable happened exactly once
+ok   l5 handle put once
+ok   l5 load vote withdrawn
+ok   l9 not disabled by l5 unregister
+ok   l9 handle untouched
+ok   global enable balance drops by exactly one
+ok   double unregister: no second disable
+ok   double unregister: no second put
+ok   late_initcall_sync hook captured
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke disables l9 once
+ok   bulk revoke puts l9 once
+ok   bulk revoke balance 0
+ok   bulk revoke clears back-pointer
+ok   repeat bulk revoke is a no-op
+ok   child-scoped after revoke -> -EPERM
+ok   refused registration does not look up
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   deferred target -> consumer parked, not an error
+ok   consumer marked deferred
+ok   deferred consumer made no votes
+ok   lookup returned -EPROBE_DEFER
+ok   deferred consumer holds no enable
+ok   late_initcall retry hook captured
+ok   retry with target still absent keeps no votes
+ok   retry leaves the consumer parked
+ok   retry clears deferred flag
+ok   retry enables exactly once
+ok   retry applies the 100000 uA load vote
+[pr_info] removing regulator proxy consumer requests
+ok   bulk revoke withdraws the retried consumer once
+ok   bulk revoke clears retried back-pointer
+[dev_err] 0x57eb070c5160OF: proxy-supply must target the regulator child owning this proxy request
+ok   non-self ghost target -> -EINVAL
+ok   non-self ghost rejected before regulator lookup
+ok   non-self ghost leaves owner back-pointer empty
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   self-target without registered regulator is parked
+ok   self-target consumer is deferred
+[pr_info] dropping deferred proxy consumer for 0x57eb070c5160OF without voting
+ok   unregistering a deferred self-target does not touch regulators
+ok   deferred self-target consumer freed
+[dev_err] 0x57eb070c5200OF: child-scoped and group-level proxy-supply are mutually exclusive
+ok   group+child proxy-supply mix -> -EINVAL
+ok   ambiguity rejected before any lookup
+ok   ambiguity leaves rdev untouched
+ok   legacy group-level consumer registered
+ok   legacy lookup used regulator_get("proxy")
+ok   legacy votes applied through the group-level self-target handle
+ok   legacy unregister disables its self-target once
+[dev_err] 0x57eb070c5200OF: qcom,proxy-consumer-current 2147483648 uA is out of range
+ok   current > INT_MAX -> -EINVAL
+ok   rejected before lookup (child-scoped)
+[dev_err] 0x57eb070c5200OF: qcom,proxy-consumer-enable must be an empty property
+ok   non-empty enable flag -> -EINVAL
+[dev_err] 0x57eb070c5200OF: invalid qcom,proxy-consumer-voltage range 1200000..900000 uV
+ok   inverted voltage range -> -EINVAL
+[dev_err] 0x57eb070c5200OF: proxy consumer properties present but no request expressed
+ok   zero-only request -> -EINVAL
+ok   zero-only request never looked up
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-5
+ok   set_load failure propagates
+ok   set_load failure -> no enable
+ok   set_load failure -> handle put once
+ok   failed registration leaves rdev clean
+[pr_err] regulator_enable pm8150-regulators failed, rc=-6
+ok   enable failure propagates
+ok   enable failure withdrew the load vote
+ok   enable failure -> handle put once
+ok   enable failure leaves rdev clean
+[pr_info] proxy target for pm8150-regulators deferred, will retry before late_initcall_sync
+ok   parked consumer waiting for target
+[pr_err] regulator_set_load pm8150-regulators failed, rc=-7
+[pr_err] deferred proxy consumer for 0x57eb070c5200OF failed to apply votes, rc=-7
+ok   retry vote failure does not enable
+ok   failed retry frees the consumer (back-pointer cleared)
+ok   legacy after revoke -> -EPERM
+[dev_err] 0x57eb070c5200OF: proxy-supply must target the regulator child owning this proxy request
+ok   child-scoped cross-target rejected with -EINVAL
+ok   child-scoped cross-target rejected before regulator lookup
+ok   child-scoped cross-target leaves owner back-pointer empty
+[dev_err] 0x57eb070c5200OF: proxy-supply must target the regulator child owning this proxy request
+ok   legacy group cross-target rejected with -EINVAL
+ok   legacy group cross-target rejected before regulator lookup
+ok   legacy group cross-target leaves owner back-pointer empty
+ok   legacy group self-target still registers
+ok   legacy group self-target resolves the owner node
+ok   legacy self-target owner teardown withdraws once
+
+checks=83 failures=0
+RESULT: PASS
+TEST_RC=0
+HARNESS_RESULT: PASS

@@ -1,0 +1,99 @@
+################################################################################
+# ROUND135 R3 - Kconfig / object compile / full Kleaf Image build evidence (§5)
+################################################################################
+
+### ROUND135 R3 s2: full Kleaf build 2026-11-26T07:38:18Z
+workspace=/home/kerneldev/work/matepad11/round135-r3-agent/a30
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+pre_build_dirty=20
+command: tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+nproc=12 mem_free_MB=6910
+BUILD_RC=0 ELAPSED=310s
+
+=== bazel raw log tail ===
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 11s linux-sandbox
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 41s linux-sandbox
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 101s linux-sandbox
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 161s linux-sandbox
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 221s linux-sandbox
+[775 / 775] no actions running
+INFO: Found 1 target...
+Target //common:dby_w09 up-to-date:
+  bazel-bin/common/dby_w09/.config
+  bazel-bin/common/dby_w09/Image
+  bazel-bin/common/dby_w09/System.map
+  bazel-bin/common/dby_w09/vmlinux
+INFO: Elapsed time: 305.218s, Critical Path: 288.43s
+INFO: 775 processes: 523 internal, 252 linux-sandbox.
+INFO: Build completed successfully, 775 total actions
+
+=== artifacts ===
+Image      size=44820992   sha256=dba8fcf756a57b7995886bdcb93872555b5fee9300eadb4e9b0bdfd7f37ebea1
+.config    size=238410     sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+System.map size=7611571    sha256=e7760acc2d928f847ad229e6bdc4855726d5e0aaa67b31da965c9a479cb56412
+vmlinux    size=230259072  sha256=eb364b5806572e0198a63b50e7bd04ff0dbde6687307cac995aefbb039174d1f
+
+config_saved r3_final_config.config sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+ROUND130_baseline_config_sha=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+
+=== required symbol resolution (from final .config) ===
+SCSI_UFSHCD                  CONFIG_SCSI_UFSHCD=y
+SCSI_UFSHCD_PLATFORM         CONFIG_SCSI_UFSHCD_PLATFORM=y
+SCSI_UFS_QCOM                CONFIG_SCSI_UFS_QCOM=y
+PM_DEVFREQ                   CONFIG_PM_DEVFREQ=y
+PM_OPP                       CONFIG_PM_OPP=y
+PM_GENERIC_DOMAINS           CONFIG_PM_GENERIC_DOMAINS=y
+PM_GENERIC_DOMAINS_OF        CONFIG_PM_GENERIC_DOMAINS_OF=y
+QCOM_GDSC                    CONFIG_QCOM_GDSC=y
+QCOM_RPMH                    CONFIG_QCOM_RPMH=y
+QCOM_COMMAND_DB              CONFIG_QCOM_COMMAND_DB=y
+QCOM_RPMHPD                  CONFIG_QCOM_RPMHPD=y
+OF                           CONFIG_OF=y
+REGULATOR                    CONFIG_REGULATOR=y
+REGULATOR_QCOM_RPMH          CONFIG_REGULATOR_QCOM_RPMH=y
+IOMMU_SUPPORT                CONFIG_IOMMU_SUPPORT=y
+ARM_SMMU                     CONFIG_ARM_SMMU=y
+ARM_SMMU_QCOM                CONFIG_ARM_SMMU_QCOM=y
+INTERCONNECT_QCOM_SM8250     CONFIG_INTERCONNECT_QCOM_SM8250=y
+PHY_QCOM_QMP_UFS             CONFIG_PHY_QCOM_QMP_UFS=y
+
+### s2 end 2026-11-26T07:43:28Z BUILD_RC=0
+
+=== object compiles (§5.2) ===
+### ROUND135 R3 s4: object compiles 2026-11-26T07:44:37Z
+toolchain: Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c) clang version 22.0.1 (https://android.googlesource.com/toolchain/llvm-project 2d65e4108033380e6fe8e08b1f1826cd2bfb0c99)
+config source: Kleaf build .config sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+GENDWARFKSYMS transform (host-tool only, per established ROUND130 procedure):
+olddefconfig_rc=0  transformed_config_sha256=79b5cafb4c1bfa6c683a3825abce8aec1b0deff80e24f713b42d57da39a51b6b
+delta vs Kleaf .config (symbol lines): 42
+356d355
+< # CONFIG_BLK_DEV_RUST_NULL is not set
+597d595
+< # CONFIG_CPUFREQ_DT_RUST is not set
+874d871
+< # CONFIG_DRM_NOVA is not set
+1030d1026
+< # CONFIG_DRM_TYR is not set
+1176a1173
+> # CONFIG_GENDWARFKSYMS is not set
+
+=== compile drivers/ufs/core/ufshcd.o ===
+RC=0
+  size=952992 sha256=d816ca9766118afef9fa54ca66d76f19a203006539355b98e918319bfdbf7a47
+
+=== compile drivers/ufs/host/ufs-qcom.o ===
+RC=0
+  size=346968 sha256=2d725fc5005601a7e9ae05c60e866b3630554c2f1b5bd35d7a8dde6bf0f4be80
+
+=== compile drivers/phy/qualcomm/phy-qcom-qmp-ufs.o ===
+RC=0
+  size=283856 sha256=625757b489792380ee9def76d8f4266266ec05c3233fc71c6700efbdbc24207b
+
+=== compile drivers/regulator/proxy-consumer.o ===
+RC=0
+  size=176336 sha256=3906e3fef50f479080c68caedd0b4467897c7d34b2c0891de3f58cb9a3bef4ff
+
+### s4 end 2026-11-26T07:44:48Z
+
+=== note: execution order disclosure ===
+# .config is resolved by the pinned Kleaf mechanism itself, so the full build (§5.3) ran first and the resolved .config (sha 0850213d..., byte-identical to the ROUND130 baseline) then fed the §5.1 symbol check, the §5.2 object compiles and the §4.4 DTB build. This ordering is recorded here; no stage was skipped or altered.

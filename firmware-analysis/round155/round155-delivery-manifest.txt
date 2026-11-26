@@ -1,0 +1,25 @@
+ROUND155 / WorkBuddy Window A — delivery manifest
+==================================================
+Report repository: hhdy/matepad11-dby-w09-agent-reports
+Branch: workbuddy/round155-readonly-bootchain-backup
+Commit (report): a4b99e72c508f604f7a3cc5d3c32cdcc0335213b
+Remote tip verified by read-only ls-remote: a4b99e72c508f604f7a3cc5d3c32cdcc0335213b
+
+[1] firmware-analysis/round155/WORKBUDDY_A_ROUND155_READONLY_BOOTCHAIN_PARTITION_CAPTURE_REPORT.md
+    git blob 07ed0907fe1a008f115b20aa469d4fd8c3758340
+    bytes 21044
+    sha256 5873a3564463ab0669dbf74cceb8f6fb5812ffed1030f331d5c15667473740ff
+    readback via git cat-file blob | cmp - local file: IDENTICAL (byte-for-byte)
+
+Scope of capture (local only, NOT uploaded): 18 read-only partition images,
+all verified by exact byte count, independent device-side SHA-256 in a second
+read pass, and local readback; 10 of them additionally have a verified second
+host copy. Raw binaries, full host paths, private logs and device identifiers
+remain local. No signing keys were extracted; no image was modified.
+
+Device identity verified before capture: Huawei MatePad 11 DBY-W09 / HWDBY,
+A-only layout (no _a/_b slots). Root gate PASS (KernelSU context). No device
+write, reboot, fastboot, recovery entry, mount, remount, or non-target
+partition read occurred.
+
+This manifest intentionally omits its own blob hash (self-reference).

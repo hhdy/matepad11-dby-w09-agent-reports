@@ -2435,3 +2435,46 @@ These checks are exact-source inspections only. 1号 AI has **not** claimed a re
 Run the new **ROUND135 taskbook revision 1** from a fresh isolated tree. Reverify all input blobs, replay patches 1–21 and confirm the same 17-patch content tree, then apply corrected patch 22 and patch 23. Only if both apply cleanly should the Agent proceed through all original schema, actual DTB + dtbs_check, Kconfig, object, Image and 38/38 + 83/83 checks. New results must be uploaded under `firmware-analysis/round135/r1/` without overwriting the initial blocked report.
 
 No device access, firmware extraction, boot packaging, ADB/fastboot, boot/flash or partition operation is included. Stage E/F blockers (final ABL memory handoff, PM8150 physical input topology, ARC equivalence risk, vbmeta_cust/DTBO/ramdisk path) remain unchanged. Phase G remains NOT RUN. Stage B DerpFest remains deferred until real Stage A device boot and storage/basic-hardware acceptance.
+
+
+---
+
+## 2026-11-26 — ROUND135 Revision 2: duplicate-driver removal, 23-patch identity preflight and controlled offsets
+
+### First Agent run remains historically BLOCKED
+
+The first ROUND135 Agent run stopped correctly at old patch 22 because the Makefile hunk had spaces instead of the pinned ACK TAB. Original report and five logs remain unchanged in `firmware-audit-v1/firmware-analysis/round135/`; do not overwrite them or describe the first run as a complete 23-patch pass.
+
+### Source-series correction discovered during R1/R2 review
+
+A second source comparison found that the immutable frozen 17-patch base already contains the full SM8250 UFS dual-GenPD / required-OPP driver in frozen patch 5 (`round33-checkpatch-clean.patch`). The originally appended patch 23 was a duplicate copy of the same driver diff body, differing only by one alignment whitespace character; it would try to re-apply includes and code already introduced by patch 5.
+
+The AI1 branch therefore retains exactly 23 meaningful ordered patch inputs, but corrects the final two:
+- Patch 22 is now **board DTS file only**, blob `ab0108364c835d87ac35ca670347d9d0001a821d`.
+- Patch 23 is now **qcom Makefile DTB target only**, blob `ceb72ed206d97beb2c2fa8558cb120ee186cb685`, with literal TAB context/insertion.
+- The duplicate ROUND45 driver patch is removed from the series; the driver implementation remains supplied by frozen patch 5.
+- Updated DTS source blob: `58293f7a62a50f8109886c92ce4b9cd14d7980e2`; it retains `vdda-phy-always-on;`, omits obsolete PHY max-microamp properties, and describes the inherited zero-size /memory placeholder plus 37 reserved-memory children.
+- Updated manifest blob: `6268dd363c08f549e2fd092364adafc65bce93e9`.
+
+Detailed source note: `kernel-baseline/round135/ROUND135_PATCH23_DEDUPLICATION_1AI_REVIEW.md`, blob `58c634b6861a2d0b1aa68452d4f8e023c84bc236`.
+
+### ROUND135 R2 taskbook and start prompt
+
+- Taskbook: `kernel-baseline/round135/TEST_AGENT_ROUND135_TASKBOOK.md`, current blob `7bb2c2ea1749e0c7b84469472123d498c5823e8c`.
+- Agent start prompt: `kernel-baseline/round135/START_PROMPT_R2.md`, blob `fc04ecaf99e54562a114c80ee077a6a636cb3878`.
+- AI1 branch HEAD: `4342b8d258cc10d5f18b97cc7f2bc9c6460cacdf`.
+
+R2 requires two truly independent clean source clones (independent Git object stores, indexes and working directories), exact identity and ordered application of all 23 inputs, per-patch `git apply --check` / apply / diff-check logs, faithful hunk-offset records, and full final Tree SHA calculation in both trees. It also requires the 17-patch intermediate tree in both trees to equal the already-declared `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+
+### Expected full 23-patch Tree SHA — do not fabricate
+
+The full 23-patch expected result-tree SHA is **not yet pinned**. The known `77e2b2...` value is only the 17-patch intermediate tree and must not be mislabeled as the 23-patch result. 1号 AI did not find a trustworthy existing 23-patch result-tree identity in the current reports; an attempted independent reconstruction did not reproduce the known 17-patch tree, so its derived hash was rejected rather than published.
+
+R2 is consequently a gated preflight:
+1. Agent produces the candidate full-series Tree SHA independently in Tree A and Tree B and uploads raw logs only.
+2. 2号 AI independently checks patch identities, raw logs, every offset, both intermediate trees and the final 23-patch Tree SHA.
+3. 1号 AI then pins the 2号 AI-verified full 23-patch Tree SHA into a follow-on taskbook before schema/DTB/Kconfig/C/Image/regression testing is authorized.
+
+The project controlled-offset policy remains `kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md`, blob `6712f686da9940937ed87eab2f4b27d44cb29626`. Nonzero offsets are not automatically a failure, but must be fully itemized, reproduced identically in both independent trees, have no fuzz/context relaxation/reject/partial apply, and finish at the independently verified predeclared tree SHA. Until the complete 23-patch SHA is pinned after independent review, R2 may establish a candidate SHA but may not mark the series accepted or run downstream tests.
+
+R2 Agent output goes to `firmware-audit-v1/firmware-analysis/round135/r2-preflight/` and stops after upload/readback. No device access, firmware extraction, boot/flash/partition operation or branch merge is authorized. Phase E/F blockers remain; Phase G NOT RUN; Stage B remains deferred.

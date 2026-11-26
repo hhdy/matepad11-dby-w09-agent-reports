@@ -1,0 +1,41 @@
+ROUND154 / WorkBuddy Window A — delivery manifest (local source commit 491d0cb)
+=============================================================================
+Report repository: hhdy/matepad11-dby-w09-agent-reports
+Branch: workbuddy/round154-candidate-dtbo-symbol-fixup-boot-packaging
+Commit A (report + patch): ccc7749b3124a0e271cb026d72163494ff20aa67
+Remote tip verified by ls-remote: ccc7749b3124a0e271cb026d72163494ff20aa67
+
+[1] firmware-analysis/round154/WORKBUDDY_A_ROUND154_MINIMAL_RAM_PATCH_AND_DTBO_BOOT_PACKAGE_GATE_REPORT.md
+    git blob 5b2f51e598b6550b27bd9ab9eafdffb805178a7f
+    sha256   e90aa38a2772dd3ab092d5bbf08755cb2e2f78e2126f5e4e4063aadeb4540a2c
+    readback git cat-file blob | cmp - local file: IDENTICAL (byte-for-byte)
+
+[2] kernel-baseline/round154/r154-minimal-ram-only.patch
+    git blob 1d3ce3c0c536ca5ae1b9d63bddf08259e301c0df
+    sha256   047a0af868fcdfceac0b0bb30360dbc9587530c0cedb38e4e6b940fa923afda1
+    bytes     4919
+    readback git cat-file blob | cmp - local file: IDENTICAL (byte-for-byte)
+
+Source (kernel) repository is local-only repo-sync object store; no remote source
+repository is configured. The reversible patch is therefore published separately
+under the source-pattern path kernel-baseline/round154/ in this branch. No full
+source file, firmware binary, device partition data or private log was uploaded.
+
+Source-tree identity
+    pinned ACK                8ad08f75ddf056e1ee600e1339e0463c5fcbdc9
+    frozen candidate tree     afe9517f8062b96bfeb5b4dd5714942861e6a44b
+    local base commit         0c5c84b5c89d32068af4ba0bd4a3032090cafbd9
+    patch commit              491d0cbffb4d16e2840c1788674e6a05b26e88a2
+    new candidate tree        c56d93eafa35057d65176db6594d67d5144868a0
+    changed file              arch/arm64/boot/dts/qcom/huawei-dby-w09.dts (+32/-15)
+    DTS blob before/after     58293f7a62a50f8109886c92ce4b9cd14d7980e2
+                              f9cc42ff621f6fe02ef22981eab9fbc9cb170aa8
+
+Build/analysis outputs (local only, not uploaded)
+    accepted DTB              108680 B / 9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60
+    scratch -@ DTB            145881 B / 235663547667c06871c1f2b7a2977395905e0f49ed4b6b543602477316e35ef7
+    stock boot.img            100663296 B / 027f88fd6f318523925ca27a4d681d17a9bbca904b0c471ccc05e651d3da19b8
+    stock dtbo.img            25165824 B / 51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c
+
+This manifest cannot contain its own blob hash without a self-reference; its
+commit id is given in the final response instead of being asserted here.

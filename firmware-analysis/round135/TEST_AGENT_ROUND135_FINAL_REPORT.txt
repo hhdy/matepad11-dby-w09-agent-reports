@@ -1,0 +1,183 @@
+TEST_AGENT_ROUND135_FINAL_REPORT.txt
+generated: 2026-11-26 (UTC) by WorkBuddy test agent
+taskbook: TEST_AGENT_ROUND135_TASKBOOK.md @ ai1/round130-stagea-ufs-lifecycle-integration
+role: executor (1号 AI taskbook); reviewer: 1号 AI (ChatGPT)
+
+====================================================================
+0. FINAL VERDICT
+====================================================================
+
+BLOCKED — patch 22 of the pinned 23-patch series cannot be applied to the
+pinned ACK tree; per taskbook §3.2 ("任意 fuzz/reject / apply 错误，停止并报告
+BLOCKED，等待 1号 AI 审查；不得尝试调整 patch 或上下文") execution stopped at
+patch 22 with all evidence preserved. No patch, source, DTS, config, manifest
+or taskbook file was modified. Patch 23 was NOT attempted (skip/reorder
+forbidden). All downstream stages (§4 schema/DTB, §5 Kconfig/build, §6 host
+regression) are NOT RUN.
+
+The blocker is a whitespace-format defect inside patch 22 itself, NOT an
+environment/toolchain problem, and NOT a new offset:
+
+  * Pinned ACK file arch/arm64/boot/dts/qcom/Makefile blob
+    296688f7cb26550f75bce65826f234bc24110356 — byte-identical to the blob the
+    ROUND135 manifest itself pins for this file (manifest §3), so the target
+    tree is exactly what patch 22 was declared to be written against.
+  * Actual ACK Makefile line 283 raw bytes (cat -A):
+      dtb-$(CONFIG_ARCH_QCOM)^I+= sm8250-mtp.dtb$
+    i.e. every dtb- line uses a TAB between $(CONFIG_ARCH_QCOM) and +=.
+  * Patch 22 hunk context lines (cat -A, leading space is the diff prefix):
+      dtb-$(CONFIG_ARCH_QCOM) += sm8150-sony-xperia-kumano-griffin.dtb$
+    i.e. the patch was written with a SPACE before += instead of the TAB.
+  * git apply therefore cannot match the context:
+      error: while searching for: (6 context lines)
+      error: patch failed: arch/arm64/boot/dts/qcom/Makefile:279
+      error: arch/arm64/boot/dts/qcom/Makefile: patch does not apply
+    ("git apply --check --verbose" exited non-zero; nothing was applied.)
+
+  Fix belongs to the patch author (1号 AI): regenerate patch 22 with TAB
+  context lines (e.g. re-diff against the real file). Per taskbook the test
+  agent must not adjust the patch or context, so no workaround was attempted
+  (no --ignore-whitespace, no hand editing, no -C reduction).
+
+====================================================================
+1. WHAT PASSED BEFORE THE BLOCKER
+====================================================================
+
+1.1 Input identity (taskbook §1/§3.1) — ALL MATCH
+  * Frozen 17-patch manifest fetched from
+    ai-parallel/stagea-port-until-boot:kernel-baseline/round61/round32-stagea-series.txt
+    Git blob 9a93b7e3a500d807533517a92b98fe244b2ea456 = expected value; size
+    6599; sha256 36e1ab53bca5d8fb832a60644055f18ff37abbf02b135be4ce3dd4170efa2e15.
+    (Local reports-a30 export carries the same 17 patch rows; only the status
+    wording of rows 16/17 differs ("pending-local-apply-check" vs the final
+    "PASS" wording). idx/path/blob/sha256 columns identical for all 17 rows.)
+  * All 17 frozen patches verified per item: Git blob AND sha256 MATCH
+    (including idx 1 = round36 ...patch.draft, blob dad87ef8..., sha 9bd87c76...).
+  * ROUND135 23-patch manifest fetched from
+    ai1/round130-stagea-ufs-lifecycle-integration:kernel-baseline/round135/
+    ROUND135_23_PATCH_SERIES_MANIFEST.md; size 5338; blob
+    a492fe78228836fceb980363143aff35365c9d6f.
+  * Patches 18-23: all six Git blobs MATCH the manifest table; 18-21 are
+    additionally BYTE-IDENTICAL (cmp) to the ROUND130-accepted candidate
+    copies, confirming "byte-identical copies" as the manifest claims.
+  * ACK Makefile blob in tree = 296688f7cb26550f75bce65826f234bc24110356,
+    identical to the blob pinned by manifest §3.
+
+1.2 Isolated staging (taskbook §2.6 / §3.1)
+  * Fresh staging /home/kerneldev/work/matepad11/round135-agent with
+    cp -al hardlinked read-only top, fresh common clone, fresh out/out-obj;
+    own Bazel output_user_root.
+  * common clone HEAD = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a exactly;
+    dirty=0 at start. Original ack-6.18.33-a30 workspace untouched throughout
+    (HEAD 8ad08f75..., dirty=16 before and after).
+
+1.3 Ordered application 1-21 (taskbook §3.2)
+  * Protocol per patch: git apply --check --verbose -> git apply --verbose ->
+    git diff --check. All three exit codes 0 for patches 1-21. No fuzz, no
+    reject, no skip, no reorder.
+  * Actual hunk offsets recorded verbatim (taskbook's explicit requirement;
+    nothing assumed zero, nothing hidden):
+      patch 16 (round33-0001): Hunk#1 offset -25, Hunk#2 offset -2, Hunk#3 offset +2
+      patch 17 (round33-0002): Hunk#1 offset +1, Hunk#2 offset -2
+      patch 20 (R128 V2):      Hunk#3 offset -19
+      patches 1-15, 18, 19, 21: applied cleanly, no offset lines emitted
+    All three offset sets match the historical records cited by the taskbook
+    (ROUND132 log for 16/17; ROUND130 report for R128 V2 hunk3 -19). No NEW
+    offsets appeared on any patch that applied.
+  * 17-patch stage content tree: after correcting an agent-side staging bug
+    (initial `git write-tree` without staging returned the HEAD tree
+    790a68ae6d4f4ac51ab2d88977b6fd5c031473b7; rebuilt via a temporary index),
+      tree17 = 77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+      -> EXACT MATCH with the ROUND132 two-tree cross-check value.
+    This is the strongest possible confirmation that the frozen 17-patch base
+    reproduced byte-for-byte.
+  * 21-patch content tree (temporary index snapshot): b6a82b03c281cc8248b44db1a03714ca3ee54dc8.
+  * git status at stop: 18 dirty files (14 M + 4 ??), exactly the union of
+    patches 1-21 paths (see identity-and-apply.log SECTION D/E).
+
+1.4 Static checks (taskbook §7, partial by design)
+  * git diff --check: RC=0 for every applied patch (1-21).
+  * checkpatch --strict --no-signoff on patch FILES (tree blocked, so
+    post-apply DTS-file checkpatch is NOT RUN):
+      patch 22: RC=1, 0 errors, 2 warnings
+        - "added, moved or deleted file(s), does MAINTAINERS need updating?"
+        - DT compatible "huawei,dby-w09" un-documented (known ROUND29 gap F1,
+          deliberately kept per manifest §4; not a new issue)
+      patch 23: RC=1, 0 errors, 1 warning, 1 check
+        - WARNING: commit description line >75 chars
+        - CHECK: Alignment should match open parenthesis
+  * Patches 18-21 checkpatch: historical ROUND130 facts recorded as-is
+    (R120 0E/4W/1C, R122 0E/0W/2C, V2 0E/1W/0C, R126 0E/0W/0C); not re-run,
+    per §7.
+  * SPDX: NOT RUN (no checker dependency available) — recorded, not PASSed.
+
+====================================================================
+2. WHAT IS NOT RUN (blocked, never faked)
+====================================================================
+
+Per taskbook §3.2 the sequence stops at the first apply error; nothing below
+was executed and no synthetic log exists:
+
+  * §4.1 source-level structural assertions on the final merged DTS — NOT RUN
+    (arch/arm64/boot/dts/qcom/huawei-dby-w09.dts never created in tree).
+  * §4.2 dt_binding_check on the four binding files — NOT RUN.
+  * §4.3 real huawei-dby-w09.dtb build, full dtbs_check, decompile and
+    per-item DTB assertions — NOT RUN.
+  * §5 final .config, 14 dependency symbols, comparison with ROUND130 config
+    sha 0850213d..., ufs-qcom.o object compile, full tools/bazel build
+    //common:dby_w09 — NOT RUN.
+  * §6 host regression 38/38 + 83/83 — NOT RUN (entry reproduction not
+    started; would be meaningless while the candidate series is incomplete).
+
+====================================================================
+3. CONCLUSION RULES APPLIED (taskbook §9)
+====================================================================
+
+"任一身份不符、patch 错误、错误 topology、C compile / DTB / build / regression
+失败：FAIL" — patch 22 has a patch-content defect, but the taskbook's §3.2
+apply-error clause explicitly routes this to "停止并报告 BLOCKED，等待 1号 AI
+审查" and the same §2.8 clause says "停止对应阶段，保存证据并报告
+BLOCKED/FAIL". Since the blocker is a patch-author defect awaiting 1号 AI
+review and remediation, the verdict is BLOCKED (not FAIL): the validation
+goal of §0 is unreachaable with the current pinned input, but no validation
+step produced a false result, and the frozen base (1-21) is proven sound.
+
+Unblock condition: 1号 AI re-issues patch 22 (and, if touched, an updated
+23/manifest blob row) with Makefile hunk context using TABs, bumps the
+manifest/branch, and re-sends the ROUND135 validation. The 17+4 part of the
+series (patches 1-21) does not need re-validation beyond the usual identity
+re-check: this round already reproduced tree17 exactly.
+
+====================================================================
+4. SAFETY / BOUNDARY STATEMENT (taskbook §2)
+====================================================================
+
+  * No tablet connected; no USB/ADB/fastboot/recovery/root/serial used; no
+    partition read or write; no boot/flash/packaging of any kind.
+  * No firmware downloaded, extracted or read (taskbook §2.3).
+  * No modification to any patch, source, DTS, Kconfig, product config,
+    manifest, taskbook or branch; no PR/merge/cherry-pick; firmware-audit-v1,
+    ai1/*, ai-parallel/*, main all untouched.
+  * Fresh isolated tree + fresh build output base only; original a30 build
+    workspace and all prior evidence directories untouched.
+  * No schema loosening, no fixture removal, no check removal anywhere.
+  * Nothing was applied past patch 22's failed check; the tree remains at the
+    21-patch state (verified: 18 dirty files, all belonging to patches 1-21).
+
+====================================================================
+5. EVIDENCE INDEX (uploaded alongside this report)
+====================================================================
+
+  round135-23patch-identity-and-apply.log
+      Section A identity summary; Section B offset table; Section C prep +
+      17-patch identity verbatim; Section D ordered apply log verbatim
+      (stopped at 22); Section E failure diagnostics verbatim; Section F
+      final state incl. corrected tree17.
+  round135-dt-schema-and-dtb.log        — NOT RUN record + reason.
+  round135-kconfig-and-kleaf-build.log  — NOT RUN record + reason.
+  round135-host-regression.log          — NOT RUN record + reason.
+  round135-checkpatch-and-diff.log      — diff --check per patch, checkpatch
+      full logs for 22/23, TAB-vs-space cat -A probe, 18-21 historical facts,
+      SPDX NOT RUN record.
+
+-end of report-

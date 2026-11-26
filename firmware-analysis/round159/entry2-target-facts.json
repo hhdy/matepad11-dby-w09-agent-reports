@@ -1,0 +1,259 @@
+{
+ "schema": "round159-entry2-target-facts/1",
+ "device": "DBY-W09 / HOS 4.3.0.196(C00E100) / SM8250",
+ "source_artifacts": {
+  "dtbo_partition_image": {
+   "size": 25165824,
+   "sha256": "51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c"
+  },
+  "abl_pe_payload_decompressed": {
+   "size": 2597064,
+   "sha256": "a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404"
+  },
+  "live_runtime_fdt_round151": {
+   "size": 800316,
+   "sha256": "fefeaa049f64a9cc79f0aa7558883f7a31ba98cf0ad73f541834c0ec2d46b700"
+  },
+  "entry2_extracted_fdt": {
+   "size": 329240,
+   "sha256": "0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b"
+  }
+ },
+ "dt_table_header": {
+  "magic": "0xd7b7ab1e",
+  "total_size": 2963810,
+  "header_size": 32,
+  "dt_entry_size": 32,
+  "dt_entry_count": 9,
+  "dt_entries_offset": 32,
+  "page_size": 4096,
+  "version": 0,
+  "total_size_vs_file": {
+   "file_size": 25165824,
+   "trailing_bytes": 22202014,
+   "trailing_content": "AVB0 descriptor at 0x2d39c0-relative + AVBf footer in last 64 bytes; footer original_image_size == header.total_size"
+  }
+ },
+ "dt_table_entries": [
+  {
+   "index": 0,
+   "dt_size": 329044,
+   "dt_offset": 320,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 0,
+   "dt_offset_mod_page": 320
+  },
+  {
+   "index": 1,
+   "dt_size": 329352,
+   "dt_offset": 329364,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 0,
+   "dt_offset_mod_page": 1684
+  },
+  {
+   "index": 2,
+   "dt_size": 329240,
+   "dt_offset": 658716,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 0,
+   "dt_offset_mod_page": 3356
+  },
+  {
+   "index": 3,
+   "dt_size": 329098,
+   "dt_offset": 987956,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 0,
+   "dt_offset_mod_page": 820
+  },
+  {
+   "index": 4,
+   "dt_size": 329340,
+   "dt_offset": 1317054,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 2,
+   "dt_offset_mod_page": 2238
+  },
+  {
+   "index": 5,
+   "dt_size": 329356,
+   "dt_offset": 1646394,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 2,
+   "dt_offset_mod_page": 3898
+  },
+  {
+   "index": 6,
+   "dt_size": 329356,
+   "dt_offset": 1975750,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 2,
+   "dt_offset_mod_page": 1478
+  },
+  {
+   "index": 7,
+   "dt_size": 329352,
+   "dt_offset": 2305106,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 2,
+   "dt_offset_mod_page": 3154
+  },
+  {
+   "index": 8,
+   "dt_size": 329352,
+   "dt_offset": 2634458,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 2,
+   "dt_offset_mod_page": 730
+  }
+ ],
+ "entry2": {
+  "table_fields": {
+   "index": 2,
+   "dt_size": 329240,
+   "dt_offset": 658716,
+   "id": 0,
+   "rev": 0,
+   "custom0": 0,
+   "custom1": 0,
+   "custom2": 0,
+   "custom3": 0,
+   "dt_offset_mod_4": 0,
+   "dt_offset_mod_page": 3356
+  },
+  "fdt_totalsize": 329240,
+  "fdt_version": 17,
+  "root_properties": {
+   "compatible": {
+    "encoding": "string-list",
+    "hex": "71636f6d2c6b6f6e612d7172640071636f6d2c6b6f6e610071636f6d2c71726400",
+    "value": [
+     "qcom,kona-qrd",
+     "qcom,kona",
+     "qcom,qrd"
+    ]
+   },
+   "model": {
+    "encoding": "string",
+    "value": "Huawei Technologies, Inc. DBY-W09"
+   },
+   "qcom,board-id": {
+    "encoding": "u32-cell-list",
+    "hex": "0000200e00000000",
+    "u32": [
+     8206,
+     0
+    ],
+    "note": "<0x200e 0x0>"
+   },
+   "qcom,msm-id": null,
+   "qcom,pmic-id": null
+  },
+  "rootparam_payload_via_fragment@143/__overlay__": {
+   "qcom,boardid": {
+    "encoding": "u32-cell-list",
+    "len": 16,
+    "hex": "00000008000000020000000000000006",
+    "u32": [
+     8,
+     2,
+     0,
+     6
+    ],
+    "sha256": "b1d1c09e1992ee1df6eb30e4e4e00e5a5826eff648e49a7ffb8e7d74e2c6ad37",
+    "live_fdt_rootparam_byte_identical": true
+   },
+   "qcom,board_name": {
+    "encoding": "string",
+    "len": 11,
+    "hex": "4442595f5730395f564400",
+    "ascii": "DBY_W09_VD",
+    "sha256": "57a764019b27ded9a052b2f771ebbfbc7187ed28cf6e8b8218edb241919be9f1",
+    "live_fdt_rootparam_byte_identical": true
+   },
+   "qcom,product_name": {
+    "encoding": "string",
+    "len": 8,
+    "hex": "4442592d57303900",
+    "ascii": "DBY-W09",
+    "sha256": "7659477258493b605369344c9861c4be5ce98ae4dfd75e908f76986849991745",
+    "live_fdt_rootparam_byte_identical": true
+   },
+   "hardware_version": {
+    "encoding": "string",
+    "len": 9,
+    "hex": "5348314442534c4d00",
+    "ascii": "SH1DBSLM",
+    "sha256": "bb002cab9e01a59ee3b8c8aac1da3f3e61285c0fd9c2f283fb1c051e94077b66",
+    "live_fdt_rootparam_byte_identical": true
+   },
+   "huawei,modem_id": {
+    "encoding": "u32-cell-list",
+    "len": 8,
+    "hex": "ffffffff00000000",
+    "u32": [
+     4294967295,
+     0
+    ],
+    "sha256": "72a4fa3544e43a836ffcb268ce06ccdbc55d44d5e6b1b1c19216a53ea98301fd",
+    "live_fdt_rootparam_byte_identical": true
+   }
+  }
+ },
+ "verification": {
+  "live_dtbo_idx": 2,
+  "all_nine_entry_fdts_magic_and_totalsize_ok": true,
+  "rootparam_live_vs_stock_entry2_fragment": "byte-identical on all five properties"
+ },
+ "layout_facts": {
+  "packing": "entries strictly back-to-back starting at dt_entries_offset=32; no inter-entry padding",
+  "alignment": "dt_offset mod 4 \u2208 {0,2}; dt_offset mod page_size(4096) \u2260 0 for all entries; entry3 dt_size mod 4 = 2; stock is NOT 4-byte or page aligned",
+  "trailing_beyond_total_size": "22,202,014 bytes, contains nonzero AVB data; device still selects Entry 2 (androidboot.dtbo_idx=2 live)"
+ }
+}

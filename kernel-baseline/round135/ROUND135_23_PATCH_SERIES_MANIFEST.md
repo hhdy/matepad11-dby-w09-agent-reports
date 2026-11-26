@@ -83,3 +83,31 @@ To preserve an honest 23-patch manifest without duplicate implementation:
 - the duplicate ROUND45 driver patch is removed from this series; its implementation is already carried by frozen patch 5.
 
 The corrected series still contains 17 frozen patches + 4 ROUND130 patches + 2 independent DTS/Makefile integration patches = 23 ordered patch inputs.
+
+
+## 8. ROUND135 R2 result-tree identity — pinned for R3 (2026-11-26)
+
+R2 completed the exact identity/apply preflight in two independent clean Git trees. The Agent's result and raw evidence are preserved under `firmware-audit-v1:firmware-analysis/round135/r2-preflight/`:
+
+- Final report: `ROUND135_R2_PREFLIGHT_FINAL_REPORT.txt`, blob `2d8b006482b4542e6018e27afbe8b4d8fbeed5d8`.
+- Tree A raw log: blob `6fe70593091d0aaed0478b8b5bb100d1479c1b7f`.
+- Tree B raw log: blob `87c7119c687448b1f1336f120a437ec15d8bba6d`.
+- Tree equivalence / offsets: blob `1a191291963d0e78c2138332fb639e5232d9d687`.
+- Upload/readback: blob `f03511589fba658a503fcb11efb6365396ff8a42`.
+
+Both trees independently produced the frozen 17-patch intermediate tree `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`, then the same full 23-patch content tree:
+
+**Pinned expected ROUND135 R3 content Tree SHA: `afe9517f8062b96bfeb5b4dd5714942861e6a44b`.**
+
+This is the expected Git content-tree identity after all 23 manifest inputs are applied. It is not a commit SHA, kernel Image SHA, proof of source compilation, or proof of device boot. R3 must independently rebuild the tree from the exact ACK base and 23 immutable inputs and stop before any build/test if the resulting tree differs.
+
+The controlled offsets accepted as the predeclared R2 pattern are:
+- patch 16: H1=-25, H2=-2, H3=+2;
+- patch 17: H1=+1, H2=-2;
+- patch 20 (ROUND128 V2): H3=-19.
+
+All were reproduced identically in both R2 trees, with successful check/apply/diff-check, no fuzz, no rejects, no context relaxation and no fallback applier. Other patches emitted no offset line from the primary `git apply` applier. This does not permit suppressing or rewriting offset diagnostics in R3.
+
+Frozen-manifest note: Tree A's log records an older local snapshot blob `96b52a4fdbc1f63023ec1fbfc9aec12b8176cfdb`; the authoritative frozen GitHub manifest remains `9a93b7e3a500d807533517a92b98fe244b2ea456`. The two snapshots differ only in the trailing status annotations on patch 16 and 17; patch paths, source blobs, SHA-256 values and order match. The R2 report preserves this disclosure. Do not call the two manifest blobs byte-identical.
+
+R3 authorization is limited to reconstructing this exact content tree, then performing the schema/DTB/Kconfig/object/Image/Host validation specified by the dedicated R3 taskbook. R3 must not change any patch or DTS to make a test pass. The known memory/ABL handoff, PM8150 physical input topology, ARC/MMCX equivalence, AVB/DTBO/ramdisk and hardware-startup blockers remain open.

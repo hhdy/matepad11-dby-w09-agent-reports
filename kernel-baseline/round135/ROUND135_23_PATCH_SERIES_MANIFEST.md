@@ -21,7 +21,7 @@ The exact frozen series was independently replayed in two fresh trees for ROUND1
 | 19 | `kernel-baseline/round135/series/19-round122-ufs-regulator-load-first.patch` | `64dd2ad9022251e2411a1a745aeb920a0badfa85` | exact ROUND122 candidate; original source blob preserved |
 | 20 | `kernel-baseline/round135/series/20-round128-qmp-ufs-dual-rail-v2.patch` | `22ccec1cabf2d78e61442d19219985135f8341e7` | exact ROUND128 V2 candidate; original source blob preserved |
 | 21 | `kernel-baseline/round135/series/21-round126-proxy-consumer-load-first.patch` | `c180dbf458403d68b2c32c1d54776a7559e7e5db` | exact ROUND126 candidate; original source blob preserved |
-| 22 | `kernel-baseline/round135/series/22-round135-huawei-dby-w09-real-dts.patch` | `d303439a9fde864ea765f59ef0888ada3f20468c` | new real-path board DTS plus qcom Makefile DTB entry |
+| 22 | `kernel-baseline/round135/series/22-round135-huawei-dby-w09-real-dts.patch` | `ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f` | new real-path board DTS plus qcom Makefile DTB entry |
 | 23 | `kernel-baseline/round135/series/23-round135-ufs-dual-genpd-driver.patch` | `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5` | exact ROUND45 dual-GenPD / required-OPP driver candidate |
 
 All four ROUND130 source blobs (18–21) are byte-identical copies of the accepted candidate inputs. Patch 23 is a byte-identical copy of the fixed-ACK source-reviewed ROUND45 driver patch.
@@ -30,7 +30,7 @@ All four ROUND130 source blobs (18–21) are byte-identical copies of the accept
 
 Patch 22 creates:
 - Kernel source path: `arch/arm64/boot/dts/qcom/huawei-dby-w09.dts`
-- Source file Git blob on this branch: `f51c5691d2955909149ba8f76d0b99dcf671e36f`
+- Source file Git blob on this branch: `58293f7a62a50f8109886c92ce4b9cd14d7980e2`
 - Base board-DTS source: `dts/dby-w09-ack18-board.dts.draft`, blob `dd9035083458ea6ccdb5fdd852b7a1860509fbaf`
 - Fixed ACK qcom Makefile source: `arch/arm64/boot/dts/qcom/Makefile`, blob `296688f7cb26550f75bce65826f234bc24110356`
 
@@ -66,3 +66,8 @@ This manifest defines a **disposable validation candidate**, not a production-re
 ## 5. Required independent validation
 
 The ROUND135 Agent taskbook on this branch is the operational authority. It requires exact identity checks for all 23 patches, clean application with all offsets transparently reported, dt-schema and DTB inspection, Kconfig resolution, target-object compilation, and a full `//common:dby_w09` candidate build. No validation result is implied by this manifest.
+
+
+## 6. ROUND135 patch-22 remediation (2026-11-26)
+
+The first Agent pass correctly blocked at patch 22 because the qcom Makefile hunk used spaces where the pinned ACK file uses a TAB before `+=`. Patch 22 has been regenerated against the manifest-pinned ACK Makefile using TABs in both context and inserted lines. The board DTS has also been synchronized with the latest reviewed main-branch evidence: `vdda-phy-always-on` is retained; obsolete PHY `*-max-microamp` properties are omitted because the pinned SM8250 QMP UFS regulator list already supplies those loads; memory comments now state that the included `sm8250.dtsi` supplies a bootloader-filled zero-size `/memory` node and HOS4.3 has 37 reserved-memory children. The dual-domain Host order remains MMCX index 0, GCC UFS_PHY_GDSC index 1. This is a candidate correction only; it is not yet revalidated by Agent.

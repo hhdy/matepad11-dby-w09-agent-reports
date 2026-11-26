@@ -275,3 +275,135 @@ The fixed ACK RPMh cache lookup is by `cmd->addr`: `__find_req()` finds one cach
 - UFS MMCX OPP vote remains a candidate-specific replacement, not a stock HOS direct consumer relationship.
 
 **Model B — ARC owns `mmcx.lvl`**
+- Port/register the HOS-compatible ARC `mmcxlvl` resource and its child regulators as the sole writer.
+- Remove, disable or redesign the RPMHPD MMCX path so it cannot write the same address.
+- UFS OPP must no longer issue an independent RPMHPD MMCX request; if UFS performance needs a vote, route it through the single ARC owner with a verified child/level mapping.
+- This is closer to the HOS regulator-child graph but requires exact HOS CMD-DB AUX and ARC request semantics.
+
+**Model C — one shared arbitration provider owns `mmcx.lvl`**
+- Create one resource owner that accepts both GenPD-style performance-state requests and regulator-child requests, computes a single state across all clients, and emits one coherent ACTIVE/SLEEP/WAKE vote set.
+- The adapter APIs must not write directly to RPMh; only the common owner may write.
+- This is the only model that can potentially preserve both APIs without independent writers. It is a new design requiring explicit lock, aggregation, suspend/wake, error and teardown semantics.
+
+**Model D — GenPD for UFS plus non-overlapping ARC groups**
+- Potentially retain the UFS GenPD OPP path and port only ARC resource groups that do not collide with RPMHPD resources.
+- This still does not reproduce HOS's MMCX child-supply graph or the 11 GDSC-to-MMCX consumers. Those GDSC consumers must be explicitly remapped or intentionally omitted with a documented functional gap. A coarse GenPD parent link is not a drop-in substitute for child regulator supply dependencies.
+
+**No model is selected for implementation in ROUND152.** The exact HOS AUX tables, active/sleep/wake vote values and complete GDSC consumer requirements are not yet available.
+
+---
+
+## 5. Proxy-consumer lifecycle evidence boundary
+
+### 5.1 HOS declarations
+
+ROUND139/ROUND151 report:
+- eight `proxy-supply` declarations, self-referential at the provider/child level;
+- ten `qcom,proxy-consumer-enable` declarations;
+- four `qcom,proxy-consumer-current` declarations;
+- ROUND151 additionally identifies a `qcom,proxy-consumer-voltage` property on the MX MMCX-supply child;
+- L5 and L9, the two UFS PHY rails, are among the proxy-bearing resources.
+
+These are DT declarations, not proof of actual runtime proxy handles.
+
+Sources:
+- [ROUND139 proxy census and property sites, §2.3](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round139/round139-hos43-pmic-ufs-and-boot-avb-static-evidence-audit.md#L135-L167)
+- [ROUND151 proxy declaration table, §5.4](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/workbuddy/round151-root-readonly-runtime-audit/firmware-analysis/round151/WORKBUDDY_ROUND151_ROOT_READONLY_RUNTIME_AUDIT_REPORT.md#L435-L447)
+
+### 5.2 What pinned ACK lacks
+
+ROUND148's pinned-source census finds no proxy-consumer header/source, no `CONFIG_REGULATOR_PROXY_CONSUMER`, no Makefile object and no proxy register/unregister/sync-state lifecycle helpers in the fixed ACK. Generic device `.sync_state` infrastructure exists, but it is not the missing proxy library.
+
+The fixed ACK RPMh regulator driver itself declares only `VRM` and `XOB` types and its OF match table is a PMIC-regulator table; it has no ARC provider type or `qcom,rpmh-arc-regulator` match. The regulator core does, however, provide nested child-supply lookup and recursive parent enable/disable. This confirms the split: generic regulator plumbing exists, while the target-specific ARC producer and proxy consumer implementation are missing.
+
+- [ACK RPMh regulator type enum, `qcom-rpmh-regulator.c` L20-L36](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/qcom-rpmh-regulator.c#L20-L36)
+- [ACK RPMh regulator OF match table, `qcom-rpmh-regulator.c` L1640-L1755](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/qcom-rpmh-regulator.c#L1640-L1755)
+- [ACK nested child lookup, `of_regulator.c` L571-L640](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/of_regulator.c#L571-L640)
+- [ACK recursive supply resolution, `regulator/core.c` L1975-L2140](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/core.c#L1975-L2140)
+- [ACK recursive enable/disable, `regulator/core.c` L2898-L3060](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/core.c#L2898-L3060)
+
+- [ROUND148 pinned ACK proxy API gap, §3](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round148-arc-regulator-portability-review/firmware-analysis/round148/AI2_ROUND148_ARC_REGULATOR_AND_PROXY_CONSUMER_PORTABILITY_AUDIT.md#L28-L73)
+- [AI1 ROUND151 proxy conclusion, §5.2](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round151/AI1_ROUND151_INDEPENDENT_REVIEW_AND_ROUND152_PLAN.md#L153-L157)
+
+### 5.3 What ROUND151 runtime summary does and does not prove
+
+ROUND151 says the full `regulator/regulator_summary` debugfs read was 25,966 bytes and was inspected locally. The public report publishes selected user counts, consumer nesting and proxy declaration sites, but it does **not** publish the complete raw summary or a per-proxy handle list that identifies proxy registration, enable state, request values and release time.
+
+No explicit proxy-named runtime consumer lifecycle is established by the public report. Normal rail user counts cannot be assigned to proxy handles merely by subtracting known UFS/BT/CNSS consumers.
+
+Therefore:
+- proxy supply graph declarations: **PRESENT**;
+- exact runtime proxy handle creation: **UNKNOWN**;
+- whether each proxy is enabled at the captured time: **UNKNOWN**;
+- sync_state/late-init release timing on Huawei's 4.19 kernel: **UNKNOWN**;
+- whether proxy votes are required for L5/L9 or MMCX child defaults: **UNKNOWN**.
+
+Do not use the OnePlus SM8475 implementation as proof of Huawei HOS cleanup semantics. ROUND148 explicitly classifies it as a generic Qualcomm reference from a different target/kernel, not exact HOS source.
+
+---
+
+## 6. Architecture options and decision matrix
+
+| Option | Preserves | Does not preserve / hazards | Assessment |
+|---|---|---|---|
+| **1. Keep candidate GenPD-only UFS OPP, no ARC** | Current ACK-supported UFS OPP, RPMHPD MMCX request, GCC UFS PHY GDSC GenPD, two ICC paths | Does not reproduce seven HOS ARC providers, five ARC child edges, 13 GDSC-to-ARC supply links or proxy lifecycle; UFS-to-MMCX vote is not declared by HOS | **Best frozen baseline only; not HOS-equivalent** |
+| **2. ARC provider plus single-owner/arbitrated MMCX** | Closest route to HOS ARC child-regulator graph and GDSC supply relationships | Must resolve `mmcx.lvl` owner; cannot retain independent RPMHPD MMCX writer; exact CMD-DB AUX and HOS vote semantics missing | **Potential full-fidelity direction, not ready** |
+| **3. ARC + proxy + redesigned UFS performance control** | Could preserve ARC child supplies, proxy requests and an independently redesigned UFS scaling path | Proxy library absent in ACK; HOS lifecycle unknown; largest API/boot risk; still requires one MMCX owner | **Most complete in theory, least supportable now** |
+| **4. GenPD-only UFS plus non-overlapping ARC groups and remapped GDSC users** | Keeps candidate UFS performance design while allowing some independent ARC resources | MMCX ARC children and 11 GDSC consumers need explicit remapping; GenPD hierarchy does not recreate nested regulator handles | **Possible staged compromise, but remapping is not designed** |
+| **5. Unified MMCX resource owner exposing both client models** | Could expose ARC regulator-child and GenPD performance-state APIs while issuing one RPMh vote stream | Requires new common aggregation design and rigorous ACTIVE/SLEEP/WAKE, locking, error, probe and teardown semantics | **Best theoretical single-writer architecture if both APIs are truly required; no implementation authorized** |
+
+### Recommendation
+
+1. **Immediate:** Option 1 remains the unmodified candidate baseline only. Keep it frozen; do not add ARC nodes or alter the UFS domains/OPPs in this round.
+2. **If full HOS fidelity is required:** evaluate Option 5 or a rigorously exclusive Option 2. The common resource owner must be settled before any `mmcxlvl` provider is introduced.
+3. **If a smaller upstream-native port is acceptable:** Option 1 or Option 4 may be selected only after explicitly accepting that the stock ARC regulator-child/proxy graph is not reproduced and after remapping or excluding every affected GDSC consumer.
+4. Do not choose based on `mmcx.lvl`, `ufs_phy_gdsc`, `LOW_SVS`, `NOM`, or other matching labels alone. The resource AUX map and consumer semantics determine the hardware request.
+
+---
+
+## 7. Minimal next evidence/source steps (dependency order)
+
+These are future evidence tasks, not actions performed or authorized in this round.
+
+1. **Obtain exact HOS source provenance** matching HOS 4.3.0.196 / kernel 4.19.157-perf+: UFS platform glue, `ufshcd-qcom` variant, GDSC driver, RPMh VRM/ARC provider and proxy-consumer library. Do not substitute the OnePlus SM8475 reference.
+2. **Resolve HBA GDSC semantics** from that exact source and the exact HOS merged FDT: optional/fixed `vdd-hba` handling, GDSC enable/disable conditions, retain/always-on flags, status reporting and firmware ownership.
+3. **Reconcile candidate GenPD lifecycle** from the already-published candidate patch/report: attach-list flags, device links, required OPP binding, PHY provider attachment, host runtime suspend ordering and domain state ownership. Do not inspect private workspaces.
+4. **Map stock bus performance requests**: HOS 26-case/two-path msm-bus vectors versus candidate `ufs-ddr` / `cpu-ufs` ICC paths, including units, average/peak values, gear/lane tables and the `active_icc_level` interpretation.
+5. **Establish resource identity and mapping** for every ARC resource: CMD-DB address, slave ID, AUX bytes, level map, child defaults, active/sleep/wake request values and all GDSC consumers.
+6. **Choose exactly one `mmcx.lvl` writer** and specify how the 11 GDSC-to-MMCX consumers and the MMCX→MX-MMCX-supply→CX-MMCX-supply chain are represented.
+7. **Prove proxy lifecycle separately**: runtime handle names/requests, enable timing, sync_state or late-init release and teardown/error unwind.
+8. Only after the above design is reviewed should a separate taskbook authorize DTS/source changes, static checks and a new compile. First boot requires its own explicit gate and authorization.
+
+---
+
+## 8. First-boot implications and stop boundary
+
+The candidate changes more than names:
+- HOS has a `vdd-hba` regulator declaration with no active runtime user; candidate removes that consumer and uses GenPD.
+- Candidate adds host-side MMCX performance-state voting through OPP/required-opps; HOS UFS has no corresponding declared domain/OPP consumer.
+- Candidate relies on ACK ICC paths and RPMhPD mappings; equivalence to the HOS legacy msm-bus vectors is unproven.
+- Candidate currently avoids the conditional ARC/RPMHPD `mmcx.lvl` collision by having zero published ARC providers. Adding ARC without an owner decision would introduce the conflict.
+- Candidate does not reproduce HOS proxy lifecycle because ACK lacks the proxy-consumer library.
+
+These are **design and first-boot risk factors**, not a prediction that the candidate will or will not boot. The evidence does not justify removing GDSC GenPD, retaining it unchanged as a proven HOS equivalent, or adding ARC/proxy code.
+
+**Independent boot gate from ROUND143 remains open:** the candidate `/memory@80000000` zero-size `reg` tuple is skipped by the fixed ACK ordinary FDT memory scanner; EFI memory-map recovery is conditional on the EFI stub/configuration and complete `/chosen` metadata, none of which is proven for the target boot path. The candidate's 18 reserved-memory children versus HOS's 37 is not, by itself, a proven defect. This separate ARM64/FDT gate is unaffected by the UFS power decision and independently prevents first-boot authorization.
+- [ROUND143 FDT zero-size tuple and EFI handoff boundary, §2–3](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round143-arm64-fdt-memory-handoff-audit/firmware-analysis/round143/AI2_ROUND143_ARM64_BOOT_HANDOFF_FDT_MEMORY_AUDIT.md#L16-L25)
+- [ROUND143 zero-size memory scanner result, §2.2–2.3](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round143-arm64-fdt-memory-handoff-audit/firmware-analysis/round143/AI2_ROUND143_ARM64_BOOT_HANDOFF_FDT_MEMORY_AUDIT.md#L49-L70)
+
+**First boot remains BLOCKED / NOT AUTHORIZED.** No device access, source/DTS/DTBO/config edits, patch generation, build, test, flash or boot was performed.
+
+---
+
+## 9. Compliance and final status
+
+- Read only the supplied public taskbook/start prompt, public ROUND139/143/146/148/150/151 reports, ROUND144/145 reports, and fixed ACK source at commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9`.
+- No tablet, ADB, root, fastboot, recovery, UART, partition or private Agent workspace access.
+- No WorkBuddy or 2号 Agent local captures accessed.
+- No source, DTS, DTBO, config, patch or candidate artifact edited.
+- No build, test, compile, boot or flash.
+- No new compile is justified: no safe source/DTS delta has been established, and this taskbook explicitly limits the work to static review.
+
+**Final disposition: PARTIAL — SOURCE TRACE COMPLETE FOR ACK UFS HBA / GENPD / OPP / RPMHPD PATHS; HOS GDSC BEHAVIOR, EXACT MSM-BUS EQUIVALENCE, ARC AUX/VOTES, AND PROXY LIFECYCLE REMAIN UNKNOWN.**
+
+— END OF AI2 ROUND152 REPORT —

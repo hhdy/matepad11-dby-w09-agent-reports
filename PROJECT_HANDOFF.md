@@ -2393,3 +2393,45 @@ For every future local Agent task, if a test or evidence step may require connec
 - **Current ROUND132 state: ELIGIBLE FOR AI2 OWNER ACCEPTANCE, NOT YET OWNER-ACCEPTED.** 2号 AI retains implementation/testbook ownership and must publish an owner addendum correcting the false zero-offset assertion, confirming tree equality, and accepting or rejecting the three CHECK findings. No new Agent run is required solely to remeasure the already-recorded offsets if the exact test artifacts remain unchanged; any source change requires a new taskbook and exact-patch rerun.
 - Prior 1AI review updated with the superseding decision: [ROUND132_AGENT_EVIDENCE_1AI_REVIEW.md](./kernel-baseline/round132/ROUND132_AGENT_EVIDENCE_1AI_REVIEW.md), latest commit `e9b1bc06d6cace44103c3ccd66b255e5d9e13ee3`.
 - Future patch-series tasks should use controlled-offset acceptance and predeclare the expected content tree; blanket zero-offset should not be used unless there is a specific technical reason for it.
+
+
+---
+
+## 2026-11-26 — ROUND135 first Agent pass BLOCKED; corrected R1 candidate prepared
+
+### First ROUND135 execution result
+
+The local WorkBuddy Agent completed the first test run and uploaded the report/log set to `firmware-audit-v1/firmware-analysis/round135/`.
+
+- Final report blob: `70da4ab61669a433e1826a7fc1459f0f335ce217`
+- Patch identity/apply log blob: `634f3ae6802a8649ae11d333e7df17e605260653`
+- DTS/schema/DTB log blob: `3a6d7e7233b2f53bc87c3dd0b8604ee3188c1622`
+- Kconfig/Kleaf log blob: `86129cf5174bddf3bf5ee5ceb09d4eb71d1f73fb`
+- Host regression log blob: `290609384123ab4bef20880f49aee4343d71a181`
+- Checkpatch/diff log blob: `6db9e3cc2c6a04644cdcef35ea670bcc2ecbbd13`
+
+Verdict: **BLOCKED at patch 22**, not a toolchain problem. Patches 1–21 had per-patch check/apply/diff-check RC=0. All 17 frozen patch identities matched, and the corrected content-tree calculation matched the ROUND132 expected tree `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`. Known offsets on patches 16/17 and ROUND128 V2 matched historical evidence. Patch 22 failed because its qcom Makefile hunk used spaces where the exact pinned ACK Makefile uses a TAB before `+=`; patch 23 was not attempted. Schema, DTB/dtbs_check, Kconfig, UFS object, full Image build and ROUND135 regressions were therefore NOT RUN. The original report/logs are historical evidence and must not be overwritten.
+
+### 1号 AI correction
+
+1号 AI independently fetched the exact ACK Makefile and the latest main review-only board DTS, then prepared a corrected candidate on `ai1/round130-stagea-ufs-lifecycle-integration`.
+
+- Corrected DTS blob: `58293f7a62a50f8109886c92ce4b9cd14d7980e2`
+- Corrected patch 22 blob: `ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f`
+- Patch 23 unchanged: `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`
+- Updated 23-patch manifest blob: `ffcb225b4a28974350bd1cc8588fdb95df9372d0`
+- Updated taskbook blob: `865c0f2a7eb15f3cf8594c757cf658005d33ea3f`
+- Remediation review: `kernel-baseline/round135/ROUND135_PATCH22_REMEDIATION_1AI_REVIEW.md`, commit `2cd78808db9429b972493abee74ec5f46841a3a9`
+- Current AI1 branch head after taskbook revision 1: `db6458bcfc02d0b77f9239c6a5c7b3464dbccec4`
+
+The corrected Makefile hunk uses literal TABs in all context rows and the inserted DTB row. 1号 AI's exact-source inspection confirmed the six context lines exist byte-for-byte in the manifest-pinned ACK Makefile, the inserted DTB target is not duplicated, and the patch's added DTS payload exactly equals the updated candidate DTS file.
+
+The DTS was also brought forward to the latest reviewed main evidence: retain `vdda-phy-always-on;`, remove obsolete PHY max-microamp properties because the pinned ACK SM8250 QMP UFS regulator list already supplies these load values, and correct memory notes to the inherited bootloader-filled zero-size `/memory` placeholder plus 37 HOS4.3 reserved-memory children. The MMCX index-0 / GCC UFS_PHY_GDSC index-1 Host power-domain pair remains.
+
+These checks are exact-source inspections only. 1号 AI has **not** claimed a real `git apply`, dt-schema, DTB, Kconfig, C compile, Kleaf build or regression result for the corrected patch.
+
+### Next step
+
+Run the new **ROUND135 taskbook revision 1** from a fresh isolated tree. Reverify all input blobs, replay patches 1–21 and confirm the same 17-patch content tree, then apply corrected patch 22 and patch 23. Only if both apply cleanly should the Agent proceed through all original schema, actual DTB + dtbs_check, Kconfig, object, Image and 38/38 + 83/83 checks. New results must be uploaded under `firmware-analysis/round135/r1/` without overwriting the initial blocked report.
+
+No device access, firmware extraction, boot packaging, ADB/fastboot, boot/flash or partition operation is included. Stage E/F blockers (final ABL memory handoff, PM8150 physical input topology, ARC equivalence risk, vbmeta_cust/DTBO/ramdisk path) remain unchanged. Phase G remains NOT RUN. Stage B DerpFest remains deferred until real Stage A device boot and storage/basic-hardware acceptance.

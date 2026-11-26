@@ -1,0 +1,87 @@
+{
+  "source": {
+    "dtbo_img_sha256": "51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c",
+    "dtbo_img_size": 25165824,
+    "entry2_fdt_sha256": "0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b",
+    "entry2_fdt_size": 329240,
+    "origin_branch": "workbuddy/round159-exact-entry2-facts",
+    "origin_report_blob": "a54c849a84924387b0f13eaf25dd1702398e8b5b",
+    "origin_json_blob": "db1866588836df69e959a90809e2a5fb12d89cc6"
+  },
+  "dt_table_header": {
+    "magic": "0xd7b7ab1e",
+    "total_size": 2963810,
+    "header_size": 32,
+    "dt_entry_size": 32,
+    "dt_entry_count": 9,
+    "dt_entries_offset": 32,
+    "page_size": 4096,
+    "version": 0
+  },
+  "entry2_table_fields": {
+    "dt_size": 329240,
+    "dt_offset": 658716,
+    "id": "0x0",
+    "rev": "0x0",
+    "custom": [
+      "0x0",
+      "0x0",
+      "0x0",
+      "0x0"
+    ]
+  },
+  "selector_root_properties": [
+    {
+      "name": "qcom,board-id",
+      "encoding": "u32-cells",
+      "u32": [
+        8206,
+        0
+      ],
+      "required": true
+    }
+  ],
+  "rootparam_properties": [
+    {
+      "name": "qcom,boardid",
+      "encoding": "u32-cells",
+      "u32": [
+        8,
+        2,
+        0,
+        6
+      ]
+    },
+    {
+      "name": "qcom,board_name",
+      "encoding": "string",
+      "value": "DBY_W09_VD"
+    },
+    {
+      "name": "qcom,product_name",
+      "encoding": "string",
+      "value": "DBY-W09"
+    },
+    {
+      "name": "hardware_version",
+      "encoding": "string",
+      "value": "SH1DBSLM"
+    },
+    {
+      "name": "huawei,modem_id",
+      "encoding": "u32-cells",
+      "u32": [
+        4294967295,
+        0
+      ]
+    }
+  ],
+  "abl_decision": {
+    "one_entry_go": true,
+    "resulting_dtbo_idx": 0,
+    "preserve_index_2": false,
+    "table_layout": "single-entry",
+    "evidence_grade": "B",
+    "evidence_note": "Window A ROUND159 report: exact HOS4.3 ABL validator permits count=1 within table bounds; match loop selects the one root qcom,board-id <0x200e 0> entry at index 0. No fixed index 2 consumer was found inside the decoded ABL. Userspace consumers of androidboot.dtbo_idx were not audited; host-only component decision, not boot proof."
+  }
+}

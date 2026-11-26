@@ -172,3 +172,57 @@ Sources:
 - First device boot: **BLOCKED / NOT AUTHORIZED**
 
 No source or DTS was changed. No build or device operation was performed.
+
+
+## 10. ROUND146 supplementary check — proxy-consumer facility is also absent
+
+A second compatibility check was completed after the initial report upload.
+
+### 10.1 Pinned ACK absence is directly verified
+
+At the pinned ACK commit:
+- drivers/regulator/Kconfig has no REGULATOR_PROXY_CONSUMER or REGULATOR_PROXY_CONSUMER_LEGACY option. Its opening config list contains the normal regulator framework options but no proxy-consumer facility.
+- drivers/regulator/Makefile has no CONFIG_REGULATOR_PROXY_CONSUMER object entry.
+- include/linux/regulator/proxy-consumer.h returns GitHub 404 / NOT_FOUND at the pinned commit.
+- drivers/regulator/proxy-consumer.c returns GitHub 404 / NOT_FOUND at the pinned commit.
+- Pinned ACK regulator core/of_regulator files contain no proxy-consumer symbols or calls.
+- ROUND139 already counted HOS proxy-consumer-enable occurrences and proxy-supply properties as vendor-only and unconsumed by pinned ACK.
+
+This is distinct from the ARC type gap. Even if the ARC aggregate driver logic were adapted, importing its devm_regulator_proxy_consumer_register() calls verbatim would not compile against this pinned ACK tree because the corresponding header, implementation, Kconfig option and Makefile object are absent.
+
+### 10.2 Public Qualcomm reference proxy facility behavior
+
+The same public Qualcomm reference tree has:
+- include/linux/regulator/proxy-consumer.h;
+- drivers/regulator/proxy-consumer.c;
+- CONFIG_REGULATOR_PROXY_CONSUMER and optional CONFIG_REGULATOR_PROXY_CONSUMER_LEGACY;
+- a corresponding proxy-consumer.o Makefile entry.
+
+The implementation checks for qcom,proxy-consumer-enable, qcom,proxy-consumer-voltage and qcom,proxy-consumer-current on each provider/child node. It optionally reads qcom,proxy-consumer-name (default supply name "proxy"), obtains the regulator and applies requested voltage range, current/load, and enable state. It tracks proxy requests and removes them either via the provider driver's sync_state callback or the selected legacy cleanup policy.
+
+This is relevant to HOS4.3 because ROUND139 found proxy-supply on eight provider/child sites and qcom,proxy-consumer-enable on those sites plus GDSC/refgen providers; qcom,proxy-consumer-current occurs on four regulator child sites. The proxy request mechanism is not the same as an ARC parent-supply edge, and it is not a physical input rail. It is another independent vote/boot-state dependency.
+
+### 10.3 Consequence for driver porting estimate
+
+A faithful port of the public Qualcomm ARC approach may require at least two separable facilities:
+1. ARC aggregate producer logic: CMD-DB resource address/slave-id/AUX level mapping, per-child ARC regulators, aggregation of ACTIVE/SLEEP requests, and parent-supply registration.
+2. Proxy consumer logic or a carefully justified replacement: parse proxy properties and apply/release enable, voltage and load requests with correct sync_state/legacy lifetime semantics.
+
+Do not assume the first facility alone preserves HOS behavior. Do not blindly add proxy support without reviewing all affected HOS nodes, their provider dependencies and lifecycle timing. In particular, the HOS vendor properties qcom,proxy-consumer-enable/current and proxy-supply are absent from the pinned ACK implementation, so the existing candidate must not claim to honor them.
+
+Additional immutable references:
+- [Pinned ACK regulator Kconfig opening — no proxy option](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/Kconfig#L1-L75)
+- [Pinned ACK regulator Makefile opening — no proxy object](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/regulator/Makefile#L1-L18)
+- [Qualcomm reference proxy-consumer API](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8475/blob/7278ce9a3c8539b4630d6988cc80f90c31c07336/include/linux/regulator/proxy-consumer.h#L1-L39)
+- [Qualcomm reference proxy-consumer implementation](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8475/blob/7278ce9a3c8539b4630d6988cc80f90c31c07336/drivers/regulator/proxy-consumer.c#L41-L147)
+- [Qualcomm reference proxy-consumer lifecycle and sync_state](https://github.com/OnePlusOSS/android_kernel_oneplus_sm8475/blob/7278ce9a3c8539b4630d6988cc80f90c31c07336/drivers/regulator/proxy-consumer.c#L149-L400)
+
+### 10.4 Updated final status
+
+- HOS ARC provider driver support in pinned ACK: **ABSENT**
+- HOS proxy-consumer facility in pinned ACK: **ABSENT**
+- Generic regulator nested supply recursion in pinned ACK: **PRESENT**
+- Generic Qualcomm ARC and proxy-consumer implementation reference: **FOUND, but not HOS-specific**
+- Candidate compiled DTB ARC/proxy node inventory: **NOT PUBLISHED / UNVERIFIED**
+- Faithful porting effort is larger than adding one RPMhPD parent pointer: **CONFIRMED**
+- Safe implementation design: **NOT YET ESTABLISHED**

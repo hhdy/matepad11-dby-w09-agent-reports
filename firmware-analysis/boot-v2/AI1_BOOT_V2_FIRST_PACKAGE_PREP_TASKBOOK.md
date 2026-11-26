@@ -1,24 +1,26 @@
-# PREP-BOOTV2-01 — Exact HOS4.3 boot-v2 package prerequisites (Window A)
+# PREP-BOOTV2-01 — Android 17 target boot package preparation using the HOS4.3 device boot-chain baseline (Window A)
 
 - Issuer / owner: **1号 AI (ChatGPT)**
 - Executor: **WorkBuddy Window A / 1号 Agent**
 - Independent reviewer: **2号 AI**, only after Window A publishes the final evidence (do not assign this task to Window B / 2号 Agent)
-- Target: Huawei MatePad 11 **DBY-W09**, HOS **4.3.0.196(C00E100)**, SM8250
+- Device: Huawei MatePad 11 **DBY-W09**, SM8250. Current stock firmware used as the reference baseline: HOS **4.3.0.196(C00E100)**.
+- **Actual target OS: Android 17 (ACK 6.18.33 kernel bring-up first), followed by DerpFest Android 17. This task is not a HarmonyOS port.**
 - Scope: offline analysis of already captured local backup files and existing build outputs; no device connection required
 - Status: taskbook only; no image or partition is approved for temporary boot or flashing
 
 ## 0. Objective
 
-Establish the exact stock HOS4.3 boot packaging contract for this physical device, using only its own already captured backups and the already extracted ABL. Determine how a future host-built package must be assembled from:
+Establish the exact *device bootloader/partition packaging contract* for this physical device. HOS4.3 is only the currently installed donor/reference firmware that supplies the stock partition samples and ABL binary. The deliverable being prepared later is an **Android 17 target package**, not a HarmonyOS package. Use the HOS4.3 backups only to discover the formats and constraints ABL expects. Determine how a future host-built Android 17 candidate must fit that contract, including:
 
-1. stock `boot` partition structure and its original header-v2 payload;
-2. stock `ramdisk` partition structure and its payload/footer;
-3. the frozen kernel candidate and frozen base DTB;
-4. the frozen one-entry ROUND159 DTBO component;
-5. ABL-provided kernel command line, FDT `/chosen` fields, and initrd placement;
-6. the existing AVB/vbmeta/OEM acceptance chain.
+1. the stock `boot` partition's on-device container/header format and payload boundaries (reference only);
+2. the stock separate `ramdisk` partition's container/footer format and its role in the boot chain (reference only);
+3. the frozen Android 17 ACK kernel candidate and frozen device base DTB;
+4. the frozen one-entry ROUND159 device DTBO component;
+5. an **Android 17-compatible target ramdisk/initramfs and required boot configuration**, which must come from the target Android 17 build/source and must not be copied from the HOS4.3 stock ramdisk;
+6. ABL-provided kernel command line, FDT `/chosen` fields, and initrd placement;
+7. the existing AVB/vbmeta/Huawei OEM acceptance chain.
 
-This is an evidence-extraction and host-only reproducibility task. It is **not** a boot attempt, an image-writing task, or permission to change AVB/security state.
+This is an evidence-extraction and host-only reproducibility task. It is **not** a HarmonyOS image rebuild, not a boot attempt, not an image-writing task, and not permission to change AVB/security state. The stock HOS4.3 kernel/ramdisk payloads are used only for parsing and round-trip tests; they are not the Android 17 target payloads. Do not substitute the HOS4.3 stock ramdisk for the Android 17 target ramdisk.
 
 ## 1. Immutable project anchors
 
@@ -55,11 +57,11 @@ Use the local copies already captured in ROUND155 and later rounds. Do not read 
 
 If a required input is absent or the original backup cannot be hash-verified, do not connect the tablet to fill the gap. Report the exact missing item and stop that subtask.
 
-## 3. Parse the exact stock `boot` partition
+## 3. Parse the stock `boot` partition as a device-format reference
 
 Use a pinned, identified Android boot-image parser/unpacker. Record the tool name, version/commit, and exact command. Do not rely on an undocumented local script.
 
-Parse the actual stock `boot` partition and report all fields, including:
+Parse the actual stock HOS4.3 `boot` backup solely to learn the container and loader contract. Report all fields, including:
 
 - partition byte size and whole-partition SHA-256;
 - magic and header version (verify; do not assume version 2 merely from a project note or another port);
@@ -78,7 +80,7 @@ Parse the actual stock `boot` partition and report all fields, including:
 
 Do not label all remaining bytes as AVB without parsing. Use exact offsets and show the arithmetic that bounds every payload within the partition.
 
-## 4. Parse the exact stock `ramdisk` partition
+## 4. Parse the stock `ramdisk` partition as a device-format reference
 
 Determine its actual on-disk format from the backup bytes; do not assume it is raw gzip/cpio or a header-v0 Android boot image.
 
@@ -94,9 +96,9 @@ Report:
 
 If the device uses a different partition label or additional boot-chain partition, document the actual layout instead of forcing it into a `boot` + `ramdisk` assumption. Do not substitute `recovery_ramdisk` for `ramdisk`.
 
-## 5. Host-only stock round-trip reconstruction
+## 5. Host-only stock-reference round-trip reconstruction
 
-This step proves the parser/packer combination understands the **actual HOS4.3 images**.
+This step proves the parser/packer combination understands the **actual stock reference images**. It does not build the Android 17 target package.
 
 1. Unpack the stock `boot` backup to a temporary host directory.
 2. Repack it with the exact parsed header values and original payloads.
@@ -105,9 +107,9 @@ This step proves the parser/packer combination understands the **actual HOS4.3 i
 5. Run an independent second parser over each reconstructed file.
 6. Preserve all logs, commands, tool versions, offsets, and hashes.
 
-This is a **round-trip test using original stock payloads only**. Do not substitute the candidate kernel, candidate DTB, or a newly built initramfs in this step. Do not produce a purported flashable image. Do not write anything to a device.
+This is a **round-trip test using original HOS4.3 reference payloads only**. Do not substitute the candidate kernel, candidate DTB, or Android 17 target ramdisk in this validation step. Do not produce a purported flashable image. Do not write anything to a device.
 
-## 6. ABL boot handoff and FDT `/chosen`
+## 6. ABL boot handoff and FDT `/chosen` contract for the Android 17 payload
 
 Use only the extracted HOS4.3 ABL payload whose SHA-256 is pinned above, plus the already captured ROUND151 live FDT. Static binary findings must be labeled static evidence, not runtime proof.
 
@@ -130,7 +132,7 @@ Required analysis:
 
 Use exact disassembly addresses, string references, control-flow evidence, and relevant raw bytes where possible. If static analysis cannot prove a behavior, state exactly what remains unknown.
 
-## 7. AVB / Huawei acceptance analysis — read-only only
+## 7. AVB / Huawei acceptance analysis for modified Android 17 payloads — read-only only
 
 Inspect the already backed-up originals for `boot`, `ramdisk`, `dtbo`, `vbmeta`, `vbmeta_cust`, and all identified chained boot partitions.
 
@@ -177,13 +179,13 @@ Publish on a new Window A branch, without rewriting AI1/AI2 branches:
 
 ## 10. Final result must answer these exact questions
 
-1. What exact bytes and format does this HOS4.3 device expect in its `boot` partition?
-2. What exact bytes and format does it expect in its `ramdisk` partition?
-3. Does the stock `boot` header carry a ramdisk, or does ABL load a separate ramdisk partition?
-4. What exact ABL behavior creates the live initrd range and the `/chosen` properties?
-5. Can the stock images be unpacked/repacked byte-for-byte over the meaningful payload region with the identified tools?
-6. Which AVB/OEM checks authenticate each modified component, and is there a legitimate signer available?
-7. Is there enough evidence to begin a **host-only candidate package assembly**, or is there a specific blocker that must be closed first?
+1. What exact container/header and payload constraints must an Android 17 candidate respect in the device's `boot` partition?
+2. What exact format/container and placement does the device expect for a separate `ramdisk` partition, if confirmed?
+3. Does ABL consume an embedded boot ramdisk, a separate ramdisk partition, or both—and what is the evidence?
+4. What exact ABL behavior creates the live initrd range and the `/chosen` properties, and how must Android 17 supply the corresponding payload?
+5. Can the original HOS4.3 reference images be unpacked/repacked byte-for-byte over the meaningful payload region with the identified tools?
+6. Which AVB/OEM checks authenticate the modified Android 17 components, and is there a legitimate signer available?
+7. Is there enough evidence to begin **host-only Android 17 candidate package assembly**, or is there a specific blocker that must be closed first?
 8. What exact next task is necessary? Do not create a broad new audit cycle.
 
-**Expected end state:** an exact, device-derived boot-v2 packaging specification and a go/no-go decision for offline package assembly. This task does not authorize temporary boot or partition flashing.
+**Expected end state:** an exact, device-derived boot-chain/package specification for the **Android 17 target**, plus a GO/NO-GO decision for offline Android 17 candidate package assembly. HOS4.3 contributes only the stock boot-chain reference evidence; the eventual target payload is Android 17, then DerpFest Android 17. This task does not authorize temporary boot or partition flashing.

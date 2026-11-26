@@ -1,0 +1,29 @@
+ROUND156 / WorkBuddy Window B — delivery manifest
+==================================================
+Report repository: hhdy/matepad11-dby-w09-agent-reports
+Branch: agent2/round156-candidate-dtb-firstboot-package-variants
+Commit (report): c377e41e0806b651f90a96fa9ba472ce0e68f2b1
+Remote tip verified by read-only ls-remote: c377e41e0806b651f90a96fa9ba472ce0e68f2b1
+
+[1] firmware-analysis/round156/WORKBUDDY_B_ROUND156_CANDIDATE_FIRSTBOOT_DTB_VARIANTS_REPORT.md
+    git blob ba1d953c24ec19e43d57326992b048655e6f4ceb
+    bytes 17099
+    sha256 330c927be8496eff4fc61c27f036c1651c09e481643e90165bd6a9a3cf2ebfa7
+    readback via git cat-file blob | cmp - local file: IDENTICAL (byte-for-byte)
+
+Scope: offline scratch-only DTB/DTBO validation in Window B's own workspace.
+Three variants were rebuilt and compared from frozen Window B inputs:
+  A 108680 B 9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60
+  B 108676 B 47ca4ff748baf6e72bc4ab26c4369ef13a15df9443a0a8dac16135ac0a7e78c7
+  C 108676 B 647af49b8c21198d9cba99fac444131aaf95e86c99b28af87b610fc46b30cea2
+  199 B overlay 05494d47506a127f7826fb3db3f3319a9865fbcea5c59fd3c3f603653af1a1c2
+A and C are byte-identical to the frozen R154/R155 Window B outputs; B differs
+from A by exactly one UART status property, and B/C are property-identical.
+Negative unknown-target-path apply returned FDT_ERR_NOTFOUND (rc=1, no output).
+
+No raw binary, device data, Window A private path, key or full kernel build was
+uploaded. No DTBO container or boot.img was created. No device, ADB, root,
+fastboot, recovery, flash, reboot or boot operation occurred. No accepted
+source branch or patch was edited; frozen inputs were re-hashed at delivery.
+
+This manifest intentionally omits its own blob hash (self-reference).

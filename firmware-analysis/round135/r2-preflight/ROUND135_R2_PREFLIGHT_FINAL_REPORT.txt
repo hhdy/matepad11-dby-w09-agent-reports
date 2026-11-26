@@ -1,0 +1,198 @@
+##################################################################################
+# ROUND135 Revision 2 - PREFLIGHT FINAL REPORT (two independent trees, 23-patch
+# identity / offset / final-tree establishment)
+##################################################################################
+
+Executor        : WorkBuddy local test Agent (not AI2)
+Dispatcher      : AI1 (ChatGPT), via START_PROMPT_R2.md + TEST_AGENT_ROUND135_TASKBOOK.md
+                  Revision 2 (taskbook blob 7bb2c2ea1749e0c7b84469472123d498c5823e8c,
+                  byte-verified against GitHub before execution)
+Independent reviewer for this report: AI2 (does NOT execute; Agent did not ask AI2
+to run anything)
+Date            : 2026-11-26 (UTC timestamps inside logs)
+Scope           : R2 preflight ONLY - identity, controlled-offset application, and
+                  result-tree establishment in two independent clean ACK trees.
+                  No schema/DTB/Kconfig/compile/Image/regression/checkpatch was run
+                  (explicitly forbidden by R2 stop condition).
+No device, USB, ADB, fastboot, recovery, serial, root, partition, or firmware
+access occurred. No source/patch/DTS/config was modified by the Agent. No
+previous ROUND135 report or historical tree (round135-agent/a30) was touched.
+
+==================================================================================
+1. RESULT SUMMARY
+==================================================================================
+
+R2 preflight: PASS (candidate establishment only)
+
+- Tree A and Tree B (two independent clean ACK clones) both applied all 23
+  patches in manifest order with:
+  - git apply --check --verbose: RC=0 for 23/23 patches
+  - git apply --verbose:        RC=0 for 23/23 patches
+  - git diff --check:           RC=0 for 23/23 patches (and at final state)
+  - no fuzz, no reject, no partial apply, no context reduction, no
+    --ignore-whitespace / --unidiff-zero / --3way / fallback applier
+- 17-patch stage content tree, BOTH trees:
+    77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+    == pre-declared ROUND132 two-tree replay value: MATCH (recorded, not forced)
+- Full 23-patch resulting content tree, BOTH trees (candidate, NOT pinned):
+    afe9517f8062b96bfeb5b4dd5714942861e6a44b
+  Tree A == Tree B: YES
+- Offset pattern identical between Tree A and Tree B: YES
+- Per-patch identity (blob/size) and RC sequence identical between trees: YES
+- Changed-path sets identical between trees: YES
+
+This candidate SHA is NOT an approved expected value. Per R2-C/R2-D it must be
+independently verified by AI2 and then pinned by AI1 in a follow-on taskbook
+before any downstream validation is authorized. The Agent has not adopted it as
+"expected" and has not run any downstream stage.
+
+==================================================================================
+2. FIXED INPUT IDENTITY VERIFICATION (all re-fetched and byte-verified)
+==================================================================================
+
+| Item                                   | Required blob                            | Verified |
+|----------------------------------------|------------------------------------------|----------|
+| ACK commit                             | 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a | YES (HEAD of both trees) |
+| ACK root tree                          | 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7 | YES (HEAD^{tree} both trees) |
+| ACK qcom Makefile                      | 296688f7cb26550f75bce65826f234bc24110356 | YES (git ls-tree at pinned commit) |
+| Frozen 17-patch manifest               | 9a93b7e3a500d807533517a92b98fe244b2ea456 | YES (GitHub raw == local copy) |
+| R2 23-patch manifest                   | 6268dd363c08f549e2fd092364adafc65bce93e9 | YES |
+| R2 taskbook Revision 2                 | 7bb2c2ea1749e0c7b84469472123d498c5823e8c | YES |
+| ROUND132 offset policy                 | 6712f686da9940937ed87eab2f4b27d44cb29626 | YES (main branch) |
+| Patch 22 (board DTS only)              | ab0108364c835d87ac35ca670347d9d0001a821d | YES |
+| Patch 23 (qcom Makefile DTB entry only)| ceb72ed206d97beb2c2fa8558cb120ee186cb685 | YES |
+| Candidate board DTS                    | 58293f7a62a50f8109886c92ce4b9cd14d7980e2 | YES |
+
+- All 17 frozen patch files verified against the frozen manifest:
+  17/17 git blob + SHA-256 + size OK.
+- All 6 extension patches verified against the R2 manifest:
+  18 f604c867..., 19 64dd2ad9..., 20 22ccec1c..., 21 c180dbf4...,
+  22 ab010836..., 23 ceb72ed2... : 6/6 OK.
+- Patch 22 payload extraction (343 added lines) is byte-identical to the
+  candidate DTS blob 58293f7a62a50f8109886c92ce4b9cd14d7980e2.
+- The former duplicate driver patch 2bf34810... was NOT used anywhere; the
+  dual-GenPD/required-OPP driver implementation comes only via frozen patch 5
+  (round33-checkpatch-clean.patch, blob f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622,
+  verified in this run).
+
+Disclosure A (frozen manifest snapshot annotation):
+  The local reports-a30 repo commit 2f212331... contains an older snapshot of
+  round32-stagea-series.txt (blob 96b52a4f...) whose patch 16/17 rows end with
+  "pending-local-apply-check" instead of "PASS: 17-patch final revalidation
+  2026-11-25". All blob IDs and SHA-256 values in those rows are identical; only
+  the trailing annotation text differs (same discrepancy was present in the R1
+  run). The GitHub-pinned blob 9a93b7e3... (byte-identical local copy) is treated
+  as the sole authority, and all 17 entries were verified against it.
+
+==================================================================================
+3. R2-A: TWO INDEPENDENT CLEAN TREES
+==================================================================================
+
+Tree A: /home/kerneldev/work/matepad11/round135-r2-agent/tree-a/common
+  - transport clone (--no-local --no-hardlinks --no-checkout) from the pinned
+    local ACK source .repo/projects/common.git; HEAD detached at 8ad08f75...
+  - full independent object DB: 14,655,001 objects, 1 pack, 7.30 GiB,
+    alternates=none, no hardlink sharing, .git/shallow absent.
+Tree B: /home/kerneldev/work/matepad11/round135-r2-agent/tree-b/common
+  - first attempt was a transport clone from the same source; it was interrupted
+    by an executor-side process timeout mid-fetch (abandoned tmp_pack garbage,
+    no refs/HEAD; recorded in prep_r2a_log.txt tail and prep_r2b_log.txt).
+  - rebuilt as a local clone with --no-hardlinks --no-checkout FROM Tree A
+    (itself a verified clean clone of the pinned ACK): the object database is
+    copied file-by-file into Tree B's own .git/objects - no alternates, no
+    shared inode (pack inode A=4406694 vs B=4504720), distinct gitdirs, full
+    pack 14,655,001 objects / 7.30 GiB, .git/shallow absent.
+  - The taskbook R2-A wording explicitly allows a local clone using
+    --no-hardlinks provided HEAD is exactly the pinned ACK and each clone has
+    its own .git object directory; both conditions hold.
+Both trees, before any patch:
+  HEAD=8ad08f75..., HEAD^{tree}=790a68ae..., status --porcelain empty,
+  git-dir/git-common-dir recorded in logs, alternates=none.
+No shared index, no shared object store, no linked worktree, no shared build dir.
+The preserved first-run tree (round135-agent/a30) and all prior workspaces were
+not read or modified (only a dirty-file count was taken from it in the R1 run;
+in this R2 run it was not touched at all).
+
+==================================================================================
+4. R2-B: ORDERED APPLICATION RESULTS (both trees, identical)
+==================================================================================
+
+Order: 1-17 frozen series, 18 ROUND120 per-HBA async join, 19 ROUND122 regulator
+load-first, 20 ROUND128 QMP dual-rail V2, 21 ROUND126 proxy-consumer load-first,
+22 DBY-W09 board DTS file (new), 23 qcom Makefile DTB entry.
+
+Per-patch gates (each tree): 23 patches x (check + apply + diff-check) = 69/69
+RC=0. File-level verbose checks: 64 "Checking patch" lines; 20 unique files
+modified/created; final state: 15 modified tracked paths + 5 new untracked files
+(dby-w09-proxy-review.dts, huawei-dby-w09.dts, dby_w09_storage_first.fragment,
+drivers/regulator/proxy-consumer.c, include/linux/regulator/proxy-consumer.h);
+FINAL git diff --check RC=0.
+
+4.1 Controlled-offset table (primary applier = git apply; per-hunk, verbatim):
+
+| Patch | File (representative)            | Hunk offsets emitted (both trees)    | Historical expectation      | Match |
+|-------|----------------------------------|--------------------------------------|-----------------------------|-------|
+| 16    | drivers/regulator/proxy-consumer.c | H1 -25, H2 -2, H3 +2              | patch16: -25 / -2 / +2      | YES   |
+| 17    | qcom,rpmh-regulator.yaml         | H1 +1, H2 -2                         | patch17: +1 / -2            | YES   |
+| 20    | drivers/phy/qualcomm/phy-qcom-qmp-ufs.c | H3 -19                        | ROUND128 V2: H3 -19         | YES   |
+| all others | (each file)                 | "Applied patch ... cleanly." (no offset line emitted by the primary applier) | n/a | n/a |
+
+Notes:
+- The offset lines appear twice in the raw logs for patches 16/17/20: once in
+  the "git apply --check --verbose" phase and once in the actual
+  "git apply --verbose" phase (both are the primary applier emitting hunk
+  placement diagnostics). Values are identical between the two phases and
+  between the two trees.
+- No secondary tool (GNU patch etc.) was used; nothing was merged into the
+  primary offset table.
+- No NEW nonzero offset beyond the historical controlled list was observed in
+  either tree.
+
+4.2 Tree results:
+
+| Stage       | Tree A                                 | Tree B                                 | Equal |
+|-------------|----------------------------------------|----------------------------------------|-------|
+| after 17    | 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 | 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 | YES (= ROUND132 declared) |
+| after 23    | afe9517f8062b96bfeb5b4dd5714942861e6a44b | afe9517f8062b96bfeb5b4dd5714942861e6a44b | YES (candidate) |
+
+Tree computation method (both stages, both trees): temporary index
+(GIT_INDEX_FILE=<repo>/.git/idx-r2-tmp) with read-tree HEAD + add -A +
+write-tree, index file removed afterwards; the main index was never staged, so
+no plain "unstaged git write-tree" fallacy is possible and index/worktree
+restoration state is clean. Commands and raw outputs are in the tree logs.
+
+==================================================================================
+5. R2 SCOPE BOUNDARY - NOT RUN (by design, per R2 stop condition)
+==================================================================================
+
+The following were NOT executed in R2 and are NOT implied by this report:
+dt_binding_check, dtbs_check, board DTB build or decompile, Kconfig resolution,
+UFS object compile, Kleaf/Image build, Host regressions, checkpatch, SPDX.
+
+==================================================================================
+6. DELIVERABLES (uploaded to firmware-audit-v1:firmware-analysis/round135/r2-preflight/)
+==================================================================================
+
+1. ROUND135_R2_PREFLIGHT_FINAL_REPORT.txt         (this file)
+2. round135-r2-tree-a-identity-apply.log          (input verification + Tree A identity + 23-patch raw apply evidence)
+3. round135-r2-tree-b-identity-apply.log          (Tree B rebuild evidence + raw apply evidence)
+4. round135-r2-tree-equivalence-and-offsets.log   (side-by-side offsets, per-patch identity/RC equality, tree equality assertions)
+5. round135-r2-upload-readback.log                (upload commit/blob + raw readback identity for every file)
+
+Upload commit SHA, per-file Git blob, and raw readback verification are recorded
+in deliverable 5. No kernel binaries or firmware were uploaded.
+
+==================================================================================
+7. EXECUTOR STATEMENT AND STOP
+==================================================================================
+
+All statements above are backed by raw logs listed in section 6; no result is
+inferred from a different round or summarized without raw evidence. The full
+23-patch candidate tree afe9517f8062b96bfeb5b4dd5714942861e6a44b is submitted
+for AI2 independent verification; AI1 will pin the verified expected SHA in a
+follow-on taskbook. Per the R2 stop condition, this Agent stops here and will
+not start schema/DTB/build/regression stages or any other round without new
+explicit instructions.
+
+R2 final status: PASS - PREFLIGHT CANDIDATE ESTABLISHED (pending AI2 verification and AI1 pinning)
+##################################################################################

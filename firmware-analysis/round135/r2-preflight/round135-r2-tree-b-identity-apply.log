@@ -1,3 +1,52 @@
+################################################################################
+# ROUND135 R2 - TREE B identity + ordered apply evidence log
+# Part 1: Tree B rebuild evidence (independent no-hardlinks local clone)
+# Part 2: Tree B per-patch check/apply/diff-check raw logs, offsets, tree17, tree23
+################################################################################
+
+### ROUND135 R2-A addendum: Tree B rebuild 2026-11-26T05:56:13Z
+
+=== background note ===
+Tree B first attempt (--no-local transport clone from .repo/projects/common.git) was interrupted
+by an executor-side process timeout mid-fetch: abandoned tmp_pack garbage, no refs/HEAD.
+Tree A (complete, verified clean clone of pinned ACK) is intact and untouched.
+Tree B is rebuilt via: git clone --no-hardlinks --no-checkout <Tree A common> <Tree B common>
+R2-A rule check: local clone with --no-hardlinks copies the object database file-by-file into
+Tree B's own .git/objects (no alternates, no shared inode, no common gitdir) - explicitly
+allowed by the taskbook R2-A wording for --no-hardlinks local clones; Tree A is itself a
+verified clean transport clone of the pinned ACK with HEAD exactly 8ad08f75... .
+
+=== rebuild tree-b ===
+HEAD                 = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (expect 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a)
+HEAD^{tree}          = 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7 (expect 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7)
+status_dirty_count   = 0 (expect 0)
+git-dir              = .git
+git-common-dir       = .git
+abs-git-dir          = /home/kerneldev/work/matepad11/round135-r2-agent/tree-b/common/.git
+alternates=none
+count-objects: count: 0;size: 0 bytes;in-pack: 14655001;packs: 1;size-pack: 7.30 GiB;prune-packable: 0;garbage: 0;size-garbage: 0 bytes;
+shallow_file=absent
+
+=== Tree A re-verification (untouched) ===
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a tree=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7 dirty=0
+abs-git-dir=/home/kerneldev/work/matepad11/round135-r2-agent/tree-a/common/.git
+
+=== independence proof: distinct gitdirs, no shared inodes, no alternates ===
+treeA_gitdir=/home/kerneldev/work/matepad11/round135-r2-agent/tree-a/common/.git
+treeB_gitdir=/home/kerneldev/work/matepad11/round135-r2-agent/tree-b/common/.git
+GITDIRS_DISTINCT=YES
+treeA_pack_inode=4406694
+treeB_pack_inode=4504720
+NO_SHARED_INODE=YES
+alternates_check_done
+
+R2B_FAIL=0
+### end 2026-11-26T05:56:31Z
+
+################################################################################
+# PART 2: Tree B ordered 23-patch apply raw evidence
+################################################################################
+
 ### ROUND135 R2-B ordered 23-patch apply: TREE=tree-b 2026-11-26T05:57:18Z
 git_version=git version 2.43.0
 worktree=/home/kerneldev/work/matepad11/round135-r2-agent/tree-b/common

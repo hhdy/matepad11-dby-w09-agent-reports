@@ -1,0 +1,159 @@
+TEST_AGENT_ROUND135_R1_FINAL_REPORT.txt
+generated: 2026-11-26 (UTC) by WorkBuddy test agent
+taskbook: TEST_AGENT_ROUND135_TASKBOOK.md (Revision 1 addendum, 2026-11-26)
+          @ ai1/round130-stagea-ufs-lifecycle-integration
+role: executor (1号 AI taskbook); reviewer: 1号 AI (ChatGPT)
+scope: mandatory rerun after patch-22 remediation; first-run BLOCKED report preserved
+
+====================================================================
+0. FINAL VERDICT (RERUN)
+====================================================================
+
+BLOCKED — the corrected patch 22 now applies cleanly (its TAB remediation is
+verified fixed), but patch 23 cannot be applied to the 22-patch tree, and the
+root cause is a **manifest-content defect, not an environment issue**:
+
+  Patch 23 ("ROUND45 dual-GenPD / required-OPP driver candidate", blob
+  2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5) is, in substance, the SAME change
+  as frozen patch 5 (round33-checkpatch-clean.patch, blob
+  f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622):
+
+    * both files' hunk headers on drivers/ufs/host/ufs-qcom.c are identical:
+        @@ -11,12 +11,18 @@   and   @@ -2802,15 +2808,214 @@
+    * stripping the commit-message headers, the patch bodies differ in only
+      two cosmetic spots:
+        - two commit-message lines wrapped differently (text only);
+        - one alignment whitespace difference in a single + line
+          (tab/space count before "struct device_node *opp").
+      Every hunk line, every added include, and the full +214-line driver
+      body are line-identical.
+
+  Frozen Stage A already applied this exact change as patch 5. Therefore, at
+  the 22-patch state, ufs-qcom.c already contains errno.h, pm_domain.h,
+  pm_opp.h and the two dt-bindings includes that patch 23 "adds", and its
+  hunk-1 context (module.h directly followed by of.h) no longer exists:
+    error: patch failed: drivers/ufs/host/ufs-qcom.c:11
+    error: drivers/ufs/host/ufs-qcom.c: patch does not apply
+
+  This is not fixable by the test agent (Revision 1: "do not repair it
+  locally"; --ignore-whitespace/--3way/reduced context all forbidden). The
+  manifest's claim that patch 23 is an additional "exact ROUND45 ... driver
+  candidate" on top of the frozen base is incorrect: the ROUND45 driver
+  content is already inside the frozen base via patch 5.
+
+====================================================================
+1. WHAT PASSED IN THIS RERUN
+====================================================================
+
+1.1 Revision-1 identity re-verification — ALL MATCH
+  * Updated 23-patch manifest blob ffcb225b4a28974350bd1cc8588fdb95df9372d0
+    = expected; manifest diff vs first run touches only the patch-22/DTS
+    blob rows plus a new §6 remediation note (verified by diff).
+  * Corrected patch 22 blob ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f = expected.
+  * Patch 23 blob 2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5 = expected.
+  * Frozen manifest blob 9a93b7e3... = expected; patches 1-17 verified in the
+    first run against the same frozen-commit export (blob+sha256 per item).
+  * Patches 18-21 blobs = expected (byte-identical to ROUND130 copies).
+  * Corrected patch 22 TAB check (cat -A): all six Makefile context rows and
+    the inserted huawei-dby-w09.dtb row carry literal ^I before += — the
+    remediation is real and correct.
+  * ACK qcom Makefile blob in tree 296688f7cb26550f75bce65826f234bc24110356
+    = manifest §3 pinned value.
+
+1.2 Fresh isolated tree (Revision-1 step 1)
+  * NEW staging /home/kerneldev/work/matepad11/round135r1-agent: cp -al
+    hardlinked top, fresh common clone at exactly
+    8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (dirty=0), fresh out/out-obj,
+    own Bazel output_user_root.
+  * First-run tree round135-agent preserved untouched (18 dirty files
+    confirmed unchanged before and after).
+
+1.3 Ordered application
+  * Patches 1-22: git apply --check --verbose / apply --verbose /
+    diff --check all RC=0. No fuzz, no reject, no skip, no reorder.
+  * Actual hunk offsets (verbatim): patch16 -25/-2/+2, patch17 +1/-2,
+    patch20 hunk3 -19 — all match prior logs; no new offsets anywhere.
+  * 17-patch stage content tree = 77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+    -> EXACT MATCH with the ROUND132 cross-check (Revision-1 step 3 satisfied).
+  * Corrected patch 22 applied cleanly (no offset): huawei-dby-w09.dts
+    created (15,437 B) and Makefile entry `huawei-dby-w09.dtb` added at
+    line 282 with correct TAB.
+  * 22-patch content tree = afe9517f8062b96bfeb5b4dd5714942861e6a44b;
+    diff vs HEAD: 20 files, +1748/-16; binary diff sha256
+    2a784c2007cdbb468f59d8ab0cdcc7a00d7bd35bb9c7a7cd8d97dce75371fdae.
+  * Patch 23: apply --check FAILED at ufs-qcom.c:11 (root cause SECTION 0).
+
+1.4 Static checks (partial by design)
+  * git diff --check RC=0 for every applied patch (1-22).
+  * checkpatch --strict --no-signoff on patch FILES:
+      patch 22 v2: RC=1, 0E/3W — MAINTAINERS reminder; known
+        "huawei,dby-w09" undocumented gap; NEW warning "line length of 130
+        exceeds 100 columns" (not present in the v1 patch file run).
+      patch 23:    RC=1, 0E/1W/1C — commit-description >75 chars; alignment
+        CHECK. (Same as first run; patch unchanged.)
+  * Patches 18-21: historical ROUND130 facts recorded, not re-run (§7).
+  * SPDX: NOT RUN (no checker dependency), recorded not PASSed.
+
+====================================================================
+2. WHAT IS NOT RUN (never faked)
+====================================================================
+
+Per Revision-1 step 4-5, §4-§7 proceed only if BOTH patches apply. They do
+not, so:
+  * §4.1 final merged DTS structural assertions (incl. the Revision-1 items:
+    vdda-phy-always-on, no *-max-microamp, 37 reserved-memory children,
+    zero-size /memory comment) — NOT RUN;
+  * §4.2 dt_binding_check on the four bindings — NOT RUN;
+  * §4.3 real DTB build, dtbs_check, decompile assertions — NOT RUN;
+  * §5 .config + 14 symbols, ROUND130 config baseline comparison, ufs-qcom.o
+    object compile, full //common:dby_w09 build — NOT RUN;
+  * §6 host regressions 38/38 + 83/83 — NOT RUN (Revision-1 step 6 explicitly
+    forbids carrying old round results).
+
+====================================================================
+3. CONCLUSION RULES (§9 + Revision 1) APPLIED
+====================================================================
+
+PASS is impossible: "所有 23 个 patch ... 成功应用" is violated by patch 23.
+This is not a FAIL of validation work either: no validation step produced a
+false result, the failure is a pinned-input defect awaiting 1号 AI review,
+exactly the situation Revision 1 routes to "stop and report the exact
+failure". Verdict: BLOCKED.
+
+Unblock condition: 1号 AI must resolve the patch-23 duplication. Two honest
+options, both requiring a manifest/branch change and re-dispatch:
+  (a) drop patch 23 from the series (the ROUND45 driver content is already
+      fully present via frozen patch 5), update the manifest, and re-dispatch
+      — the rerun would then be a 22-patch validation; or
+  (b) if patch 23 is meant to carry ADDITIONAL changes beyond frozen patch 5,
+      regenerate it as a true delta patch against the frozen-base ufs-qcom.c
+      (blob-verified), with the ROUND45-unique hunks only.
+This agent takes no design decision between (a) and (b); that is 1号 AI's.
+
+====================================================================
+4. SAFETY / BOUNDARY (taskbook §2 + Revision 1 step 8)
+====================================================================
+
+  * No tablet connection, no USB/ADB/fastboot/recovery/serial, no partition
+    access, no boot/flash/packaging, no firmware input.
+  * No modification of any patch/source/DTS/Kconfig/config/manifest/taskbook;
+    no branch changes, no PR/merge/cherry-pick.
+  * New isolated tree + new output dir only; first-run tree and all prior
+    evidence preserved untouched.
+  * No schema loosening, no fixture removal, no local patch repair.
+  * Tree left at the verified 22-patch state (staged snapshot recorded).
+
+====================================================================
+5. EVIDENCE INDEX (uploaded to firmware-analysis/round135/r1/)
+====================================================================
+
+  round135-r1-identity-and-apply.log — A identity; B offsets; C prep; D
+      ordered apply verbatim (stopped at 23); E patch-23 root-cause evidence
+      (include-block forensics + byte-compare vs frozen patch 5); F final state.
+  round135-r1-schema-and-dtb.log       — NOT RUN record + reason.
+  round135-r1-kconfig-and-build.log    — NOT RUN record + reason.
+  round135-r1-regressions.log          — NOT RUN record + reason.
+  round135-r1-checkpatch.log           — diff --check, checkpatch full logs
+      for 22v2/23, 18-21 historical facts, SPDX NOT RUN.
+
+-end of report-

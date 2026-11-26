@@ -134,4 +134,144 @@ Therefore this is best described as **one shared GenPD with multiple device clie
 
 **Lifecycle caution:** the UFS QMP PHY platform driver does not define a platform `.pm` callback in its driver structure; the host's `ufs_qcom_setup_clocks()` explicitly calls `phy_power_off()` / `phy_power_on()` as part of UFS clock sequencing. The generic PHY core only obtains runtime PM on the PHY class device when that PHY device has runtime PM enabled. This makes the host's explicit domain device-link/runtime-PM sequencing important; a shared domain reference alone does not prove that every PHY on/off transition is tracked as an independent GenPD client.
 - [QMP UFS PHY platform driver, fixed ACK `phy-qcom-qmp-ufs.c` L2127-L2242](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c#L2127-L2242)
-- [PHY runtime-PM gating, fixed ACK `phy-core.c`
+- [PHY runtime-PM gating, fixed ACK `phy-core.c`` L157-L215](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/phy/phy-core.c#L157-L215)
+- [PHY power-on/off calls runtime-PM helpers, fixed ACK `phy-core.c` L305-L380](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/phy/phy-core.c#L305-L380)
+- [UFS-QCOM clock sequencing controls PHY power, fixed ACK `ufs-qcom.c` L1360-L1435](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/host/ufs-qcom.c#L1360-L1435)
+
+**INFERENCE:** the host's attached GDSC virtual device and its device link are expected to provide the active UFS client reference while the host is running; the PHY's `phy_power_on/off` is sequenced by the host. This may be a workable ACK design, but the HOS snapshot does not prove that this GenPD policy is required or equivalent. The candidate runtime state and first boot remain unverified.
+
+### 2.5 How could HOS be active while its `vdd-hba` handle is disabled?
+
+**KNOWN**
+- HOS has the `vdd-hba-supply` declaration and a registered GDSC regulator provider.
+- The regulator summary reports no active UFS enable request.
+- UFS is active at the snapshot.
+- HOS has no UFS GenPD attachment.
+
+**POSSIBLE, NOT PROVEN**
+- The Huawei 4.19 UFS variant may not acquire or enable this optional HBA regulator on this board/build, despite the overlay property.
+- The vendor may treat the empty `vdd-hba-fixed-regulator` marker specially.
+- The GDSC may be in a retained/firmware-controlled or otherwise non-voted state while the framework reports no active consumer.
+- The regulator's software status may not describe the physical state in the simple way assumed by the candidate.
+
+No one of these explanations is established by the public report. The exact HOS UFS variant source, vendor regulator parsing and GDSC register/status semantics are needed.
+
+### 2.6 Is candidate GDSC GenPD required for first boot?
+
+**UNKNOWN.** Fixed ACK's UFS core can initialize with no `vdd-hba` supply; the source does not make the HBA regulator mandatory. The candidate's GenPD attachment is an architectural/power-management choice, not a generic ACK UFS probe requirement demonstrated by the source alone. However, the target-specific hardware may require a GDSC state for reliable UFS PHY operation. The HOS runtime snapshot is not enough to remove or retain the candidate GenPD safely.
+
+Minimum evidence to decide retain/remove/alter:
+1. Exact HOS `ufshcd-qcom` / platform glue source matching `4.19.157-perf+`, including handling of `vdd-hba-fixed-regulator`, `vdd-hba-supply`, and runtime/system PM.
+2. Exact HOS GDSC node and provider implementation for `0x177004`: `pwrsts`, `always-on`/retention flags, status check, enable/disable sequence, boot-on state and any firmware ownership.
+3. Candidate source/DT attachment call order and device-link flags, plus actual GenPD runtime status for the host virtual clients and PHY provider.
+4. A sanctioned, read-only runtime trace or existing boot log showing GDSC state transitions during UFS probe, active operation, runtime suspend and resume. No new device operation is authorized by this round.
+
+---
+
+## 3. HOS legacy devfreq/msm-bus versus candidate OPP/ICC/RPMhPD
+
+### 3.1 Stock HOS
+
+**PUBLISHED OBSERVATION**
+- HOS UFS host has legacy `qcom,msm-bus,name = "ufshc_mem"`, `num-cases = 26`, `num-paths = 2`, `vectors-KBps`, and `bus-vector-names`.
+- It has no `interconnects`, `operating-points-v2`, or `required-opps`.
+- ROUND151 live UFS devfreq: `simple_ondemand`, current 37.5 MHz, maximum 300 MHz; current `active_icc_level = 0x0F`.
+- The UFS host is active at HS-G1 ×2 in that snapshot.
+- The report also records a `qcom/bus_speed_mode` runtime view. This is consistent with the vendor legacy path, but does not disclose every bus vote or prove its numeric equivalence to ACK ICC.
+
+Sources:
+- [ROUND139 HOS `msm-bus` / no OPP or interconnect declarations, §2.4](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round139/round139-hos43-pmic-ufs-and-boot-avb-static-evidence-audit.md#L169-L188)
+- [ROUND151 live devfreq and UFS state, §4.6](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/workbuddy/round151-root-readonly-runtime-audit/firmware-analysis/round151/WORKBUDDY_ROUND151_ROOT_READONLY_RUNTIME_AUDIT_REPORT.md#L336-L365)
+- [AI1 ROUND151 comparison, §3–5](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round151/AI1_ROUND151_INDEPENDENT_REVIEW_AND_ROUND152_PLAN.md#L81-L133)
+
+### 3.2 Fixed ACK UFS scaling and ICC
+
+**PINNED SOURCE FACT**
+- If the UFS host has `operating-points-v2`, `ufshcd_parse_operating_points()` sets up OPP clock configuration, parses the OPP table and sets `hba->use_pm_opp = true`; otherwise the generic driver can use the legacy `freq-table-hz` path.
+- During devfreq scaling, the OPP-enabled path calls `dev_pm_opp_set_opp()` for the selected frequency. The OPP core applies the clock configuration and required performance-state request(s).
+- The UFS-QCOM variant obtains two ICC paths (`ufs-ddr` and `cpu-ufs`) and applies bandwidth votes. It requests maximum bandwidth before controller/device initialization, then updates bandwidth based on negotiated gear/lane and during clock transitions.
+- Thus the candidate's published two ICC paths are not merely decorative DT properties: fixed ACK UFS-QCOM source contains the corresponding ICC consumer path.
+
+Sources:
+- [`ufshcd_parse_operating_points()`, fixed ACK `ufshcd-pltfrm.c` L414-L487](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/host/ufshcd-pltfrm.c#L414-L487)
+- [UFS OPP clock set and scaling, fixed ACK `ufshcd.c` L1135-L1228](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/core/ufshcd.c#L1135-L1228)
+- [UFS devfreq target uses OPP when enabled, fixed ACK `ufshcd.c` L1585-L1665](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/core/ufshcd.c#L1585-L1665)
+- [UFS-QCOM ICC path setup and initial max vote, fixed ACK `ufs-qcom.c` L1466-L1491](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/host/ufs-qcom.c#L1466-L1491)
+- [UFS-QCOM ICC path votes and mode table selection, fixed ACK `ufs-qcom.c` L848-L901](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/host/ufs-qcom.c#L848-L901)
+- [UFS-QCOM ICC updates during clock transitions, fixed ACK `ufs-qcom.c` L1360-L1435](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/ufs/host/ufs-qcom.c#L1360-L1435)
+
+### 3.3 Candidate OPP / required-opps / RPMhPD mapping
+
+**PUBLISHED OBSERVATION — ROUND139 / ROUND144 / ROUND151**
+- Candidate UFS host has `operating-points-v2`, two OPP entries, `required-opps` to the RPMhPD table, and two ICC paths.
+- The two candidate UFS OPPs are reported at 37.5 MHz and 300 MHz, with `required-opps` pointing to RPMhPD table entries `opp3` and `opp6`.
+- ROUND144 confirms the candidate patch attaches domain devices in the order MMCX then UFS PHY GDSC, and the single UFS `required-opps` slot maps to the first attached device with `required_dev_index=0`.
+- The selected SM8250 `RPMHPD_MMCX` descriptor is the plain MMCX object with `res_name = "mmcx.lvl"` and no parent pointer. A similarly named MMCX-with-CX-parent descriptor exists but is not selected by the SM8250 array.
+- The ACK UFS PHY GDSC descriptor has no `.parent` relationship to MMCX.
+
+Sources:
+- [ROUND144 OPP mapping and attachment order, §3–4](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round144/AI1_ROUND144_UFS_OPP_REQUIRED_DEVICE_AND_PROBE_ORDER_AUDIT.md#L58-L109)
+- [ROUND145 descriptor object identity and SM8250 selection, §1–2](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round145/AI1_ROUND145_RPMHPD_ARC_PARENT_DESCRIPTOR_COMPATIBILITY_AUDIT.md#L14-L68)
+- [RPMHPD MMCX descriptors and `mmcx.lvl`, fixed ACK `rpmhpd.c` L126-L153](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/pmdomain/qcom/rpmhpd.c#L126-L153)
+- [SM8250 RPMhPD array selects plain MMCX and CX-with-MX-parent, fixed ACK `rpmhpd.c` L465-L477](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/pmdomain/qcom/rpmhpd.c#L465-L477)
+- [RPMHPD probe reads CMD-DB resource address/AUX and registers domains, fixed ACK `rpmhpd.c` L1001-L1068](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/pmdomain/qcom/rpmhpd.c#L1001-L1068)
+- [RPMHPD corner requests, fixed ACK `rpmhpd.c` L806-L970](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/pmdomain/qcom/rpmhpd.c#L806-L970)
+
+### 3.4 Classification
+
+The candidate is **not** a direct equivalent of HOS UFS scaling.
+
+It is a **plausible upstream-native replacement** for some vendor-specific performance/bus-vote functions:
+- UFS clock frequency is represented by OPP;
+- MMCX performance state is represented by RPMhPD;
+- DDR/CPU bandwidth is represented by ICC;
+- UFS devfreq continues to provide a scaling policy.
+
+But it is **not proven equivalent**:
+- HOS does not declare UFS as an MMCX ARC or RPMhPD consumer;
+- HOS's 26-case/two-path `qcom,msm-bus` vectors have not been numerically mapped to candidate ICC votes;
+- HOS current `active_icc_level=0x0F` is not shown to be the same unit or state as candidate OPP level / RPMhPD corner;
+- HOS live 37.5 MHz is one snapshot, not proof that its complete performance policy has only two levels;
+- candidate adds a UFS-to-MMCX RPMhPD request that is not present in the stock UFS FDT.
+
+The candidate does contain ICC paths and the fixed ACK UFS-QCOM consumer code uses them, so it is **not correct to say that candidate ICC is wholly missing**. What remains unknown is whether the path topology, bandwidth table, average/peak units and requested values reproduce the vendor msm-bus vectors.
+
+**Risk classification:** option 2 in the taskbook — a plausible upstream-native replacement — with an additional **potentially excessive/unverified MMCX performance vote**. It is not yet a justified HOS behavior replacement.
+
+---
+
+## 4. `mmcx.lvl` single-owner rule: ARC MMCX versus RPMHPD MMCX
+
+### 4.1 Shared resource identity
+
+**PUBLISHED OBSERVATION / PINNED SOURCE FACT**
+- HOS has ARC provider group `mmcxlvl`, resource name `mmcx.lvl`.
+- Fixed ACK SM8250 `RPMHPD_MMCX` also uses `mmcx.lvl`.
+- ROUND151 / ROUND147 reports the currently published candidate DTB has zero `qcom,rpmh-arc-regulator` providers. Thus the candidate currently does not demonstrate an active two-writer collision.
+- If an ARC `mmcxlvl` provider is later added while retaining RPMHPD MMCX, both paths resolve the same CMD-DB resource address.
+
+Sources:
+- [ROUND139 seven ARC groups and five child links, §2.4](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/firmware-audit-v1/firmware-analysis/round139/round139-hos43-pmic-ufs-and-boot-avb-static-evidence-audit.md#L147-L179)
+- [ROUND148 shared-resource collision analysis, §1–2](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round148-arc-regulator-portability-review/firmware-analysis/round148/AI2_ROUND148_ARC_REGULATOR_AND_PROXY_CONSUMER_PORTABILITY_AUDIT.md#L1-L25)
+- [AI1 ROUND151 confirms conditional conflict and candidate zero-ARC status, §5.1](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai1/round130-stagea-ufs-lifecycle-integration/kernel-baseline/round151/AI1_ROUND151_INDEPENDENT_REVIEW_AND_ROUND152_PLAN.md#L135-L151)
+
+### 4.2 Why RPMh does not arbitrate the two drivers
+
+The fixed ACK RPMh cache lookup is by `cmd->addr`: `__find_req()` finds one cache entry for a resource address, and `cache_rpm_request()` updates that same entry's sleep/wake value. `__rpmh_write()` then sends ACTIVE_ONLY requests directly to the controller. This is transport/cache behavior, not a cross-driver max-vote service.
+
+- [RPMh cache keyed by command address, fixed ACK `rpmh.c` L48-L150](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/soc/qcom/rpmh.c#L48-L150)
+- [RPMh cache update and write path, fixed ACK `rpmh.c` L130-L250](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/soc/qcom/rpmh.c#L130-L250)
+- [RPMHPD aggregates only its own domain/peer objects, fixed ACK `rpmhpd.c` L852-L927](https://github.com/aosp-mirror/kernel_common/blob/8ad08f75ddf056e1ee600e1339e0463c5fcbdc9/drivers/pmdomain/qcom/rpmhpd.c#L852-L927)
+- [Generic Qualcomm ARC reference aggregates its own child requests; ROUND148 §4.3](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round148-arc-regulator-portability-review/firmware-analysis/round148/AI2_ROUND148_ARC_REGULATOR_AND_PROXY_CONSUMER_PORTABILITY_AUDIT.md#L74-L106)
+
+**Rule:** do not instantiate two independent writers for `mmcx.lvl`. Two separate aggregators do not become a max-vote arbiter merely because they use the same RPMh transport or resource name.
+
+### 4.3 Acceptable ownership models
+
+**Model A — GenPD owns `mmcx.lvl`**
+- Keep RPMHPD MMCX as the sole writer.
+- Do not register an ARC `mmcxlvl` provider that also writes `mmcx.lvl`.
+- Consequence: the HOS ARC MMCX child-regulator API and its five-edge graph are not preserved by this choice. The 11 HOS GDSC consumers of MMCX ALL cannot simply retain their old regulator `parent-supply` references unless they are deliberately remapped to a GenPD-compatible design.
+- UFS MMCX OPP vote remains a candidate-specific replacement, not a stock HOS direct consumer relationship.
+
+**Model B — ARC owns `mmcx.lvl`**

@@ -2515,3 +2515,15 @@ The latest AI2 branch commit currently available is `c35fe440d0219dfe623f5e3babf
 R2 intentionally did **not** run dt_binding_check, dtbs_check, actual board DTB build/decompile, Kconfig/.config, UFS object compile, Kleaf/Image build, Host regressions, checkpatch or SPDX. These remain NOT_RUN by design. Once AI2 publishes its independent raw-evidence ruling, 1号 AI will pin the AI2-verified full 23-patch Tree SHA in a new follow-on taskbook, then authorize the next validation stage. Do not start downstream tests before that SHA is pinned. No device, USB, ADB/fastboot, recovery, serial, root, firmware, boot, flash or partition operation occurred or is authorized by R2.
 
 Phase E/F blockers remain unchanged: actual HOS4.3 ABL memory/reserved-memory handoff, PM8150 physical input supply topology, ARC/MMCX-to-MX semantic equivalence, and AVB/vbmeta/DTBO/ramdisk path. Phase G remains NOT RUN. Stage B DerpFest remains deferred until Stage A 6.18.33 kernel boot and storage/basic-hardware acceptance.
+
+
+---
+
+## 2026-11-26 — ROUND136: 1号 AI static review of UFS async and regulator candidate patches 18–21
+
+- 1号 AI reviewed the four exact ROUND135 series inputs 18–21 against immutable ACK `android17-6.18.33_r00` commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`.
+- Review report: [ROUND136_UFS_ASYNC_REGULATOR_QMP_STATIC_REVIEW.md](./kernel-baseline/round136/ROUND136_UFS_ASYNC_REGULATOR_QMP_STATIC_REVIEW.md), commit `0e9a36effab75f3bc2116477c777766f23175eae`.
+- **Static review disposition: no new source-level blocker found.** ROUND120 per-HBA async domain initialization and `cookie+1` join are correctly ordered before UFS HBA/SCSI teardown; the saved cookie/fence semantics match the pinned ACK async implementation. ROUND122 restores UFS load before the already-enabled fast path and clears load before disabling. ROUND128 V2's special SM8250 QMP UFS path matches the pinned two-entry `vdda-phy` / `vdda-pll` list and the actual `devm_regulator_bulk_get_const()` initial-load behavior. ROUND126 moves proxy-consumer load clearing ahead of disable as intended.
+- **Existing teardown caveat remains:** persistent provider disable failure during final detach is not solved. ROUND126 deliberately continues best-effort disable if load-zero fails because regulator unregister cleanup cannot veto teardown. ROUND122/128 safety against post-decrement balancing errors remains conditional on the reviewed candidate DTS having no regulator coupling / physical parent-supply links. The actual PMIC electrical input topology remains UNKNOWN; do not fabricate parent links.
+- This is a source review only. ROUND136 did not run apply, checkpatch, compile, dt-schema, DTB/dtbs_check, Kconfig, Kleaf/Image, regressions, runtime stress or device validation.
+- This review does not bypass ROUND135 R2's gate. The full 23-patch candidate SHA `afe9517f8062b96bfeb5b4dd5714942861e6a44b` remains unpinned until 2号 AI independently verifies the raw R2 logs and manifest snapshot disclosure. Only after that can 1号 AI pin the expected tree in a new taskbook and authorize downstream Agent tests.

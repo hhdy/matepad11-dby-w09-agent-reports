@@ -1,0 +1,242 @@
+################################################################################
+
+ROUND135 R3-validation — FINAL REPORT (TEST-AGENT-AI1-ROUND135-R3)
+
+Executor:      user-local WorkBuddy test agent (AI-executes / user-decides SOP)
+Dispatched by: AI1 (ChatGPT), START_PROMPT_R3 fast-track addendum
+Taskbook:      kernel-baseline/round135/TEST_AGENT_ROUND135_R3_TASKBOOK.md
+               (git blob 729236571a3b788dfbad464f6430b31d81955bcf, 22,236 B)
+Manifest:      kernel-baseline/round135/ROUND135_23_PATCH_SERIES_MANIFEST.md
+               (git blob 9188de2022f88c374bfcaa367c505428812608d9)
+Reconciliation: kernel-baseline/round135/AI1_ROUND135_UBUNTU_REFERENCE_RECONCILIATION.md
+               (git blob f4dca432c1b244e61aa2d51bbf0ea3f2757a1e4f, 6,436 B)
+Offset policy: kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md
+               (git blob 6712f686da9940937ed87eab2f4b27d44cb29626)
+Date:          2026-11-26 (local, GMT+8)
+Environment:   WSL Ubuntu-24.04, git 2.43.0, 12 CPUs
+
+################################################################################
+
+FINAL CONCLUSION: PASS — BUILD/DTB INTEGRATION ONLY
+
+All required gates in taskbook §3–§7 have real logs and passed:
+identity / exact tree SHA / accepted-offset replay / source assertions /
+dt_binding_check / real board DTB build + compiled-DTB reconciliation
+inspection / targeted dtbs_check / final Kconfig / 5 affected-object compiles /
+full Kleaf //common:dby_w09 Image / 38+83 host regressions / diff-check /
+checkpatch.
+
+Per taskbook §9, this proves OFFLINE source/schema/DTB/build/host validation
+ONLY. It does NOT prove UFS real probe, MMCX physical voltage voting,
+MMCX-to-MX ARC equivalence, PMIC physical input rails, ABL final FDT / memory
+handoff, reserved-memory ownership, selected DTBO, AVB/footer provenance,
+boot-v2 ramdisk selection, storage enumeration, device boot or hardware
+stability. Phase E/F blockers remain BLOCKED; Phase G remains NOT RUN. No
+device, USB, ADB, fastboot, flash or packaging action was performed.
+
+################################################################################
+
+1. PINNED INPUTS (§2, all verified byte-exact)
+
+- Pinned ACK commit: 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  (android17-6.18.33_r00), root tree 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+- Frozen 17-patch manifest blob 9a93b7e3a500d807533517a92b98fe244b2ea456
+  (fetched fresh from GitHub ai-parallel branch per §1; the known R2 local
+  snapshot note-difference at rows 16/17 is again disclosed: values identical,
+  only trailing status annotations differ)
+- 23 patch inputs: all git blob / SHA-256 / byte size / manifest order verified
+  (see round135-r3-identity-apply.log). Key identities:
+  patch22 (DTS-only)  blob ab0108364c835d87ac35ca670347d9d0001a821d
+  patch23 (Makefile)  blob ceb72ed206d97beb2c2fa8558cb120ee186cb685
+  board DTS           blob 58293f7a62a50f8109886c92ce4b9cd14d7980e2
+  frozen patch5 (dual-GenPD driver) blob f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622
+  excluded old ROUND45 driver patch 2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5:
+  NOT applied (per §2.2 driver identity clarification)
+- Harness blobs (round61, verified before run):
+  run_tests.sh              e29f8a237e1836420dfcd85b7d970cf8d9a956d8
+  test_proxy_consumer_r31.c 14515c62c48d95e86bfc6dca9c2070c81e031489
+  test_proxy_consumer_round32.c aff9ec3c5bc65c880726431b5f23750b19339c1f
+  mock/mock_core.h          98820fc6c6439237563dad52c4129db022fb1260
+  mock/linux/errno.h        8a8e39690876ebe9ffd3b56c553c2c773c2e333f
+
+2. VALIDATION TREE + TREE SHA GATE (§3) — ALL PASS
+
+- Fresh disposable clone round135-r3v-agent/vtree/common, independent local
+  --no-hardlinks clone from the R2-verified Tree A: own .git object DB, no
+  alternates, no linked worktree, no shared objects. HEAD and root tree equal
+  pinned values; initial status clean (0 files).
+- 23/23 patches: primary git apply --check --verbose RC=0, git apply --verbose
+  RC=0, git diff --check RC=0 (69/69 zero exit codes). No fuzz, no reject, no
+  fallback appliers, no whitespace relaxations, no manual edits.
+- Accepted-offset replay EXACTLY reproduced:
+  patch16: H1 -25 / H2 -2 / H3 +2 (regulator proxy-consumer.c)
+  patch17: H1 +1  / H2 -2      (rpmh-regulator.yaml)
+  patch20: H3 -19              (qmp-ufs.c, succeeded at 2310)
+  all other patches: primary applier emitted no offset lines (recorded as
+  such, not inferred)
+- tree17 (temp index incl. untracked, temp file removed):
+  77e2b2b1515b3813f7538aedffe4c5a4e90edb57 — TREE17_MATCH
+- tree23 (temp index, tracked + untracked, temp file removed):
+  afe9517f8062b96bfeb5b4dd5714942861e6a44b — TREE23_MATCH_PINNED
+- Final re-assert after Lane B (§7.3): FINAL_TREE23_MATCH, overlay status
+  exactly 20 modified/new paths, final git diff --check RC=0.
+
+3. UBUNTU RECONCILIATION (§4) + SOURCE ASSERTIONS (§5.1) — PASS
+
+Source assertions 12/12 PASS + compiled-DTB assertions 28/28 PASS
+(round135-r3-schema-dtb.log). Mandatory §4 items verified on the COMPILED DTB,
+not only source:
+- Host power-domains exactly 2 entries, ordered: PD[0] = qcom,sm8250-rpmhpd
+  with cell == RPMHPD_MMCX (index 0); PD[1] = qcom,gcc-sm8250 with cell ==
+  UFS_PHY_GDSC (index 1). Binding header values resolved from include/dt-bindings.
+- UFS PHY power-domains remains exactly GCC UFS_PHY_GDSC (single entry).
+- UFS Host RETAINS the inherited operating-points-v2 = <ufs_opp_table>; board
+  overlay does not touch it (source + compiled DTB both verified).
+- Both available OPP entries (37.5 MHz, 300 MHz) carry exactly one
+  required-opps; targets resolve to the provider's exact advertised table:
+  37.5 MHz -> node opp3 with opp-level == RPMH_REGULATOR_LEVEL_LOW_SVS;
+  300 MHz -> node opp6 with opp-level == RPMH_REGULATOR_LEVEL_NOM; both nodes
+  are children of the rpmhpd provider's advertised OPP table in the compiled
+  DTB.
+- drivers/ufs/host/ufs-qcom.c (frozen patch5 implementation) contains the
+  exact-table / all-available-OPP validator (for_each_available_child_of_node,
+  of_device_is_available, "provider's exact OPP table"), the
+  devm_pm_domain_attach_list(dev, &pd_data, &pd_list) attach with
+  PD_FLAG_DEV_LINK_ON, and sets opp_config.required_dev =
+  pd_list->pd_devs[0] with required_dev_index = 0 — all BEFORE
+  ufshcd_pltfrm_init(pdev, &ufs_hba_qcom_vops) (line-order verified).
+- Inherited IOMMU SIDs 0x0e0/0x4e0 preserved; board supplies retained;
+  vdda-phy-always-on retained; no vdda-phy/pll-max-microamp added; no vph_pwr
+  / dummy fixed regulator / local memory node (comment-stripped check — the
+  board DTS comments legitimately mention banned tokens as do-not-add
+  warnings); qcom Makefile exactly one TAB-separated huawei-dby-w09.dtb entry;
+  qcom,vccq-parent-supply remains DTS metadata only (no runtime consumer
+  string in ufs-qcom.c).
+- Per reconciliation §1: the Ubuntu DTB topology was NOT used to modify the
+  frozen candidate. No MMCX removal, no required_dev change, no second
+  required-opps slot, no PHY domain change, no patch edits.
+
+4. SCHEMA / DTB (§5.2–5.4)
+
+- dt_binding_check RC=0 (dtschema 2026.9, DTC 1.7.0, Python 3.12.3) over the
+  four reconciliation schemas (qcom,ufs-common.yaml, qcom,sc7180-ufshc.yaml,
+  qcom,sc8280xp-qmp-ufs-phy.yaml, qcom,rpmh-regulator.yaml); all example.dtb
+  built. Disclosed environment items (unchanged ACK, not caused by this
+  series): firmware/gunyah-cma-mem.yaml ignored (parse error, historical);
+  yamllint absent (kernel skips; taskbook forbids package installation).
+- Real board DTB build RC=0, standard Kbuild target qcom/huawei-dby-w09.dtb,
+  independent O=out-dtbA, pinned clang-r584948c.
+  DTB sha256 cab82fe3901bdb40533197eeb48b2d99b08b46e5d5497ff1a6f688e9938db77e
+  size 108,648 B.
+- Decompile via scripts/dtc/dtc -I dtb -O dts: 6,159 lines.
+- Targeted dtbs_check (CHECK_DTBS=y qcom/huawei-dby-w09.dtb) RC=0 with the
+  two KNOWN diagnostic items, recorded verbatim and unchanged:
+  (a) root compatible huawei,dby-w09 has no documented binding (KNOWN gap F1,
+      taskbook §5.2 requires verbatim recording; NOT weakened, no fixture
+      deleted, no schema edited);
+  (b) vcc-voltage-level unexpected property (§4.2 pre-announced known item).
+  Full-tree dtbs_check was not run: the targeted CHECK_DTBS=y run is the
+  same schema machinery scoped to this board; a full ACK-wide dtbs_check
+  would only add hundreds of unrelated historical schema diagnostics and
+  significant build time. Classified as scope note, not as hidden failure.
+
+5. KCONFIG / OBJECT COMPILE / FULL KLEAF IMAGE (§6) — PASS
+
+- Staging round135-r3v-agent/a30build built as hardlink copy of the ACK
+  pinned workspace top level + hardlink copy of the validated vtree/common
+  (nothing in any historical workspace mutated). Build-input proof: temp-index
+  tree on the staging worktree = afe9517f8062b96bfeb5b4dd5714942861e6a44b
+  (BUILD_INPUT_TREE_MATCH).
+- tools/bazel build //common:dby_w09 --jobs=2 (per §6.3), BUILD_RC=0,
+  346 s, 775 total actions, dedicated bazel output inside the disposable
+  staging only.
+- Artifacts: Image 44,820,992 B sha256 ee94c4fa0364018244d4aa467dcc4318a816b
+  53363a25b3b717acb6a002e82c6; System.map 7,611,571 B sha a7a597bef4228c01
+  8b3f465949c8bc1327254ff8f9e06058fccf71d63e90ee2c; vmlinux 230,259,072 B
+  sha efac6aed109aa1b97bfbed47962092ffa1399fe72d2c8dfd88cce3c3d2b169d8;
+  .config 238,410 B.
+- .config sha 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+  — byte-identical to the ROUND130 baseline (cmp PASS, CONFIG_IDENTICAL).
+  Disclosed: Image/vmlinux SHAs are staging-path-specific (embedded path
+  strings) and are not comparable across separate staging roots; the config
+  identity is the meaningful cross-run anchor.
+- All 14 required §6.1 symbols =y (SCSI_UFSHCD, SCSI_UFS_QCOM, PM_DEVFREQ,
+  PM_OPP, PM_GENERIC_DOMAINS, PM_GENERIC_DOMAINS_OF, QCOM_GDSC, QCOM_RPMH,
+  QCOM_COMMAND_DB, QCOM_RPMHPD, OF, REGULATOR, IOMMU_SUPPORT, ARM_SMMU — plus
+  supplementary platform/interconnect/phy symbols, all =y).
+- 5/5 affected-object compiles RC=0 with pinned clang (GENDWARFKSYMS transform
+  per established ROUND130 procedure, transformed config sha 79b5cafb...,
+  42 symbol-line delta identical in nature to prior rounds):
+  drivers/ufs/core/ufshcd.o, drivers/ufs/host/ufs-qcom.o,
+  drivers/phy/qualcomm/phy-qcom-qmp-ufs.o, drivers/regulator/core.o,
+  drivers/regulator/proxy-consumer.o.
+
+6. HOST REGRESSION / CHECKPATCH / DIFF / SPDX (§7)
+
+- Host regression from the round61 runner with pinned blobs, worktree = the
+  validated vtree, scratch outside the source tree:
+  legacy suite checks=38 failures=0, TEST_RC=0;
+  ROUND32/33 suite checks=83 failures=0, TEST_RC=0;
+  HARNESS_RESULT: PASS. (Runner header comment still says 73; per §7.1 the
+  actual executed assertion count 83 is the expectation and was met.)
+- checkpatch --strict --no-signoff:
+  patch22: 0 E / 3 W / 0 C / RC=1 — all three warnings are the known items
+  (MAINTAINERS notice, undocumented huawei,dby-w09 compatible = known gap F1,
+  one 130-char line);
+  patch23: 0 E / 0 W / 0 C / RC=0 (clean);
+  bare board DTS file: RC=1 with the unified-diff ERROR — tool limitation
+  (checkpatch expects a diff); DTS content diagnostics are already covered by
+  patch22; recorded as diagnostic, no files modified.
+- patches 18-21 checkpatch: HISTORICAL evidence quoted from the accepted
+  ROUND130 report, NOT re-executed: ROUND120 0E/4W/1C/RC=1; ROUND122 0E/0W/2C/
+  RC=1; ROUND128 V2 0E/1W/0C/RC=1; ROUND126 0E/0W/0C/RC=0. Frozen patch5
+  driver checkpatch history: ROUND61/ROUND45 records.
+- git diff --check final: RC=0, empty output.
+- SPDX: NOT RUN — scripts/spdxcheck.py requires python3 'ply', which is not
+  installed and the taskbook forbids package installation. Recorded as
+  NOT_RUN (not PASS).
+
+7. EXECUTION DISCIPLINE NOTES
+
+- Lanes executed per the fast-track addendum: Lane B (host regression +
+  static checks) ran in parallel with the full Kleaf build; Lane A (schema/
+  DTB) and Lane C part2 (object compiles) ran after the build provided the
+  pinned .config, each in its own isolated O= directory (out-dtbA, out-objA).
+  No lane wrote into the source tree; host scratch stayed outside it; no
+  competing Kbuild processes shared an O= directory; no concurrent full Kleaf
+  builds.
+- Process honesty notes: two earlier s1 attempts aborted before the tree
+  gates due to script defects (wrong glob-based patch ordering that missed
+  the .patch.draft input, and a misplaced tree17 computation); the manifest
+  explicit-order run that produced all matching gates is the evidence of
+  record and no partial/failing run was used as evidence. Assertion scripts
+  were iterated (comment-stripping for absence checks, phandle bracket
+  stripping, regex capture fix); all raw iterations remain in the logs.
+- No source, patch, DTS, binding, Kconfig, config, test or manifest file was
+  modified. No branch other than read-only local clones was touched. No
+  device, firmware, partition, boot, flash or packaging action occurred.
+
+8. REMAINING BLOCKERS (unchanged by this run)
+
+- MMCX physical voltage behavior / MMCX-to-MX ARC equivalence (HOS4.3)
+- PM8150 physical input rails (vdd-s*/vin network)
+- ABL final FDT / EFI memory handoff
+- Boot chain / AVB / DTBO selection path
+- Device UFS probe / storage enumeration / hardware stability
+
+Phase E/F: BLOCKED (per prior evidence). Phase G: NOT RUN.
+
+9. DELIVERABLES (firmware-audit-v1:firmware-analysis/round135/r3-validation/)
+
+1. ROUND135_R3_FINAL_REPORT.txt          (this file)
+2. round135-r3-identity-apply.log        (identity + ordered apply + offsets + tree gates)
+3. round135-r3-schema-dtb.log            (source assertions + dt_binding_check + DTB build/decompile + 28 reconciliation assertions)
+4. round135-r3-kconfig-object-kleaf.log  (full build + config identity + 5 object compiles)
+5. round135-r3-host-regression.log       (harness identities + 38/38 + 83/83 full output)
+6. round135-r3-checkpatch-diff-spdx.log  (checkpatch raw + historical quotes + diff-check + SPDX status)
+
+Each file was uploaded via the GitHub Contents API and verified by raw
+readback (byte-identical) — commit/blob identities are recorded in
+the upload log lines of this run's transcript and in the readback check.
+
+— END OF REPORT —

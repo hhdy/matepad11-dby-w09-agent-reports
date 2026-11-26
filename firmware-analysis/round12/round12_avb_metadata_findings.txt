@@ -1,0 +1,92 @@
+ROUND12 — HOS4.3 boot / ramdisk / DTBO AVB metadata check (read-only)
+Date: 2026-11-24
+Task: firmware-analysis/round12/AGENT_TASK.md
+Outcome: BLOCKED at the tool gate. No AVB footer/descriptor parsing was performed.
+
+======================================================================
+1. Tool gate (task section "Safety and tool gate", items 1-2)
+======================================================================
+STATUS: BLOCKED — no trusted, already-installed AVB inspection tool and no
+already-reviewed read-only AVB helper is available on this machine.
+
+Checks actually run (detection only, nothing installed/executed as an AVB tool):
+- Command lookup: avbtool -> NOT FOUND; avbtool.py -> NOT FOUND.
+- Python import check: modules "avb", "avbtool", "avbtoolpy" -> all NOT FOUND.
+- Common install locations (Android SDK / user profile / local workspaces,
+  bounded depth) for any avbtool* file -> none found.
+- A bounded full-tree search was attempted but was stopped by the local
+  command safety policy; per the task boundary it was NOT retried and no
+  policy/security setting was changed, no WSL used.
+- Reviewed local scripts were inspected for reusable AVB logic:
+  * ROUND2 Analyze-DBY-W09-Firmware.ps1 only does whole-file magic detection
+    (recognises the leading "AVB0" vbmeta magic). It has NO AVB footer reader
+    and NO vbmeta descriptor parser.
+  * ROUND3 Analyze-DBY-W09-DeviceTree.py / Analyze-DBY-W09-Super.py: FDT and
+    sparse/LP-metadata parsers only; their "Descriptor" class is LP partition
+    table metadata, not AVB. Not reusable for AVB.
+  * ROUND4 Extract-DBY-W09-LogicalPartitions.py: partition extraction only.
+
+A leading "AVB0" magic (already reported in ROUND2) is NOT equivalent to
+reading an AVB footer or enumerating vbmeta descriptors. No existing reviewed
+function can answer the ROUND12 questions.
+
+Per the task gate: tool absent -> report BLOCKED and stop. No tool installed,
+nothing downloaded, no parser written, no unknown EXE/DLL executed, no WSL,
+no PowerShell/security policy change. No ADB/fastboot, no device connection,
+no unlock/root/flash/write, no writable mount, no compile, no firmware
+re-extraction, no source-image modification.
+
+======================================================================
+2. Requested checks — per-item status
+======================================================================
+Known total file sizes (ROUND2 already-reported, quoted only, NOT re-measured):
+- boot.img  = 100663296 B (96 MiB)
+- ramdisk.img = 2097152 B (2 MiB)
+- dtbo.img  = 25165824 B (24 MiB)
+- root vbmeta.img and chained vbmeta_*.img files were already inventoried in
+  ROUND2; sizes not restated here.
+
+boot.img
+  - total file size: COMPLETE (ROUND2 value quoted above)
+  - AVB footer present at image end: BLOCKED (no trusted tool)
+  - footer original-image-size value: BLOCKED
+  - standalone-footer vs hash/hashtree-covered vs undetermined: UNKNOWN
+
+ramdisk.img
+  - total file size: COMPLETE (ROUND2 value quoted above)
+  - AVB footer present at image end: BLOCKED
+  - footer original-image-size value: BLOCKED
+  - coverage classification: UNKNOWN
+
+dtbo.img
+  - total file size: COMPLETE (ROUND2 value quoted above)
+  - AVB footer present at image end: BLOCKED
+  - footer original-image-size value: BLOCKED
+  - coverage classification: UNKNOWN
+
+root / chained vbmeta images
+  - read-only metadata listing: BLOCKED
+  - which vbmeta lists hash/hashtree descriptors for boot/ramdisk/dtbo: UNKNOWN
+  - descriptor chains into other vbmeta partitions: UNKNOWN
+  - descriptor type / target partition / parent vbmeta role: NOT_RUN
+  (No key material, digests, salts, signatures, rollback values or full hashes
+   were read, derived or published.)
+
+======================================================================
+3. What would unblock this task
+======================================================================
+- An already-installed, trusted avbtool (or an already-reviewed read-only AVB
+  metadata helper) made available on this machine, with permission to use it;
+  OR a task book that explicitly approves a specific tool/function.
+- Until then, the AVB boundary that gates ROUND18 packaging, dm-verity/FEC
+  configuration and any boot-test write strategy remains unresolved.
+- No inference was made from ROUND2 image sizes or "AVB0" magic; a footer or
+  descriptor was neither assumed present nor assumed absent.
+
+======================================================================
+4. Deliverable / boundary
+======================================================================
+Only this UTF-8 text report is uploaded. No binaries, no local absolute paths,
+no full local SHA-256, no keys/signatures/salts/digests/rollback values, no
+serial/MAC/IMEI, no tokens. ROUND2-ROUND11 reports untouched. main, the ACK
+DTS draft branch and PR #1 were not modified. Stop after upload.

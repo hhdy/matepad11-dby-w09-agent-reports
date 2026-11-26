@@ -1,0 +1,127 @@
+# ROUND36 — source hash register
+# ---------------------------------------------------------------------------
+# Audited by : 2号 AI (local agent)
+# Date       : 2026-11-26
+# Method     : read-only. No build, no firmware upload, no device access, and
+#              no modification of any registered input.
+# Columns    : sha256 | bytes | lines | git blob | path
+#   sha256   = SHA-256 of the COMMITTED BLOB content
+#              (git cat-file blob <commit>:<path>), NOT of the working-tree copy
+#   bytes    = git cat-file -s <blob>
+#   git blob = git rev-parse <commit>:<path>
+# Line numbers quoted in the ROUND36 matrices are 1-based on these exact blobs.
+#
+# Why blob-derived: core.autocrlf is "true" in these worktrees, so a checked-out
+# CRLF file has different bytes from its blob. Hashing the blob makes every value
+# below reproducible from a fresh clone on any platform. See section [4].
+# ---------------------------------------------------------------------------
+
+TREE_ACK_COMMIT        8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+TREE_REPORT_BRANCH     firmware-audit-v1
+TREE_REPORT_COMMIT     be4f5178c41b4a26c5bc5f5658244e3470d82151   (evidence base the audit read)
+TREE_ROUND36_DELIVERABLES  the commit(s) that add firmware-analysis/round36/*.md and
+                       *.txt on top of the evidence base above; they modify no
+                       registered input, so every hash in this file is unchanged
+                       by them
+TREE_STAGEA_BRANCH     ai-parallel/stagea-port-until-boot
+TREE_STAGEA_COMMIT     f0b00e38c8222be14adfb21f122db7f8cac94c14
+
+===========================================================================
+[1] firmware-audit-v1 @ be4f5178c41b4a26c5bc5f5658244e3470d82151
+===========================================================================
+45166938ebeef79344f464ff1afc4d4df416028f56864390aae69dc33dd8b4cb      8301      73  56e32d7989157d6c4eab22cb8ddf8a83a9c2f960  firmware-analysis/round64/round64-dby-w09-hos43-final-memory-and-pm8150-input-evidence.md
+abd85d49d7ec9bc34d812dcc701fbf0a7551bd0bc96011545422f14b2f8be14c     25170     349  a0167df755521fa583b4ce3f73b1b2260306b426  firmware-analysis/round24/round24-hos43-reserved-memory-and-consumer-map.txt
+e6aa7b3d926dae017e19a1e2b0b05ba008e8379ae369f2129fa2d3ce6ec6eedf     16532     276  e55ecacaf0b345971062142765fd36e46551484e  firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt
+8e9bf840f64c7dbb7b7d92ba5ecd5daa2cf0dc900a61fb40882adea35f365257     44392     802  c96b30ca763b29dcc58aada6e93c25faaea8e34d  firmware-analysis/round19/round19_hos43_boot_ramdisk_avb_dtbo_audit.txt
+a0833f2e874a0b7df809bc1795b8d190910f0d11e7a071ca420cdb3a71d22fc3     65078    1273  4ff1928bd1cc3043f3908b69289503d5650ab900  firmware-analysis/round20/round20_efi_stub_memory_handoff_and_boot_payload_compatibility.txt
+8903536144a9f4f58d9c6a7ea8a675818cd6a1a15ea54ada53da0289f175cd6d      6606     113  1ef1606f6c73ea82d838ce49f1522ff565a75ddf  firmware-analysis/round11/round11_pmic_parent_supply_findings.txt
+7c5a92eadd5188e55d50031d3e7bf1c765fa5f1eb30a7494446a9ac5112e3e51     23425     419  c3dd45dac71ee45e34697b1fb78abccc40f94b26  firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt
+6a510c2d65536f2ab8ec51aa9d45b6077a0f57e4e22b98aa6145f23e487b0e59      6514      55  8e3b8c79d1b81289438e86b26996948095358720  firmware-analysis/round7/dby_w09_hw_matrix.txt
+94bd996c0384276ba3ee21c8333f2950b116648de95979b460affa7e64df277b   1094393    7938  991020d8e63b91b24352cbe01cdafeb8631ac03c  firmware-analysis/round7/dtb_property_inventory.csv
+266c9fdc7639c9d663e71dcc6a36d4867fa05454e84e14525cfb98dfd6460030      1472      10  d9960ad458383a07649f5ea61395642cdf7dfad7  firmware-analysis/round7/dtbo_board_rootparam_matrix.csv
+6d796daaf119e511c834ed328eeb4efce408ca91ec603c64e38543aee96546b9       543       9  82cd694be17b6cf92a8ec8239656576a622baf03  round2-adb/live_dtb_status.txt
+27a6c3cee4743faff50dc04ec2a71162a460d456663e1e2507d0670d354dcba5      7006     119  05474b3dfac7a990e852293369bab286288de6b7  round2-adb/devicetree_nodes_redacted.txt
+202d2c5406d9dc186390f75a578776012a3278fb527b02d1a848b6f66bf52d49      4478      84  2093b3887ff2c33fbb9b5ba22962e6f9592e1d6f  round2-adb/devicetree_base_redacted.txt
+d24f20c03fccbf289ee20cb714b9a86e379b85f6276ee38d18488e4ce19a5293      6266      88  6900dafe0888c3c263bb71525ea8ad49ad8e35a4  round2-adb/partition_names_redacted.txt
+33a223cf14ba1c06230dfd1c863b88d005f5780301557e28c225d46bc4ae1b56      6766      89  ce0ff9f4f04cf6eff0c6c8d645a3675f9a0b3b6e  firmware-analysis/round36/AI2_ROUND36_TASKBOOK.md
+
+===========================================================================
+[2] ai-parallel/stagea-port-until-boot @ f0b00e38c8222be14adfb21f122db7f8cac94c14
+===========================================================================
+70ce3be4e1253843710c0a4a0fcfd7fe9437067276a8075a3ba7749bb725c71d      8716     113  06f91fdf6853b382dfe8fd8da7a83c7aaf24c902  kernel-baseline/round19/hos43-memory-reserved-memory-handoff-review.md
+97d05fce73df796218a1dfb5c17239172180f463222451f685a020dbb4e8d461     10704     129  3402acb92c7fe794fbb106097e00c81e87bcc845  kernel-baseline/round21/ack-pm8150-vrm-parent-supply-gap.md
+e81e57e14b735f6e90c8e1927dcceb62a555ce4f4046b8b68f1ce75c9f84af8f     15389     165  1ba87a9079f00aed370c82d3b9a1c8c76ded1c24  kernel-baseline/round42/hos43-memory-handoff-sm8250-abl-fdt-prerequisite.md
+fa10f2add901020972ab0d3f84bf21318d94e494828c309cff77fa4d1f36737a     12973     159  2a89fdf94ec59d4744d6b2eb752760737c34da53  kernel-baseline/round43/ack-6.18.33-fdt-memory-scan-classic-vs-efi-handoff.md
+c23cd174ba1705b06c8dcc991a961ae2aad0fbe35042ea4b72e7a7a429e9c316      5509      56  3e9f18db04ec4833dd4b033570a816482489cb7b  kernel-baseline/round61/phase-e-board-dts-memory-power-gates.md
+97f29557a45815481eb92d593b6d30c8d072aa5862b803f6f963a1a05c8e3cd3     14341     320  dd9035083458ea6ccdb5fdd852b7a1860509fbaf  dts/dby-w09-ack18-board.dts.draft
+
+===========================================================================
+[3] ACK android17-6.18.33_r00 @ 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+    Hashed from the ACK baseline blob (git cat-file blob <commit>:<path>),
+    never from a patched work tree. See section [4](b) for work-tree deltas.
+===========================================================================
+59eb93ddc319aaf1890c2e6a5d061c3a6957a2b996c1cacaebe9a64d94fa3c5d     67948    1751  109f0aae09b1df431d2e14d45a64d115e87cdec4  drivers/regulator/qcom-rpmh-regulator.c
+30b5dd3ac1da623d71a30bb6cf76dc58c2e532dddcf7e1a7688dddaa86e5a9f6    173934    6608  39d317ad73a33c4aa27e179cc436d8bf4daf5bcc  drivers/regulator/core.c
+be908adff3009a50bae78177a715ae55af3c4d82403ed8e1006f15f3733f8ca2     15755     558  4c5b0629aa3e622579b54a226785139a0b986079  Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+
+===========================================================================
+[4] Notes on byte identity
+===========================================================================
+(a) core.autocrlf is "true" in both report worktrees. A file whose blob stores
+    LF is checked out as CRLF, so sha256sum on the working-tree copy differs
+    from sha256sum on the blob. Measured this round:
+      firmware-analysis/round19/round19_hos43_boot_ramdisk_avb_dtbo_audit.txt
+        working tree (CRLF) : a0e38aa2b70ceff2d6f009844960c96cf3af7d1ad0d5705d8b6914565b2016d6
+        blob (LF)           : 8e9bf840f64c7dbb7b7d92ba5ecd5daa2cf0dc900a61fb40882adea35f365257
+    Section [1]/[2] values are the BLOB hashes, which is the reproducible form:
+    they do not depend on the clone's autocrlf setting. Cited line numbers are
+    unaffected, since normalisation never changes the line count. Some files
+    (e.g. round2-adb/devicetree_nodes_redacted.txt) store CRLF inside the blob
+    itself, so their two hashes coincide; that is recorded as-is, not "fixed".
+
+(b) The three ACK files in section [3] were hashed from their baseline blobs at
+    the pinned commit, so those values are pristine android17-6.18.33_r00
+    content. Two of them are modified in the local patched work tree used to
+    read them (the 17 frozen production patches plus the ROUND35S KUnit seam).
+    No cited line is affected:
+
+    drivers/regulator/qcom-rpmh-regulator.c
+        byte-identical to the ACK baseline. Work-tree lines 447 (supply_name
+        assignment), 907-912 (RPMH_VREG macro), 980-1010 (pm8150_vreg_data) and
+        1012-1034 (pm8150l_vreg_data) are ACK lines.
+
+    drivers/regulator/core.c
+        work-tree additions are confined to two hunks whose new-side ranges
+        begin at 6000 and 6056 (@@ -5999,0 +6000,3 @@ and
+        @@ -6052,0 +6056,10 @@), i.e. entirely after every line cited here.
+        The patched copy has 6621 lines against the baseline's 6608. Lines
+        114-117 (have_full_constraints), 2070-2091 and 2227-2238 are identical
+        to the baseline.
+
+    Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+        the work-tree copy carries +46 lines of proxy-consumer binding text (604
+        lines against the baseline's 558). Every line cited by this round
+        (136-138 required:, 162/170/172 pm8150l branch, 282/289/290/294 pm8150
+        branch) is a BASELINE line number referring to the 558-line blob hashed
+        above, not to the patched copy.
+
+===========================================================================
+[5] Searched-but-not-registered
+===========================================================================
+Other files under firmware-analysis/ and kernel-baseline/ exist and were listed
+during the search but support no row of the ROUND36 matrices, so they are not
+registered here. Nothing was omitted in order to hide a contrary finding: the
+conflict register in AI2_ROUND36_EVIDENCE_AUDIT.md §5 lists every discrepancy
+found, including the two that change a previously published number or
+statement.
+
+===========================================================================
+[6] Reproduction
+===========================================================================
+  git -C <tree> rev-parse HEAD
+  git -C <tree> rev-parse <commit>:<path>
+  git -C <tree> cat-file -s <blob>
+  git -C <tree> cat-file blob <blob> | sha256sum
+  git -C <tree> cat-file blob <blob> | wc -l
+
+Every value above was produced by exactly those commands on 2026-11-26.

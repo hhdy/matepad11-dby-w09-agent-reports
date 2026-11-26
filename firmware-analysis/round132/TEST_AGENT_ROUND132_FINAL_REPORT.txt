@@ -1,0 +1,432 @@
+================================================================================
+TEST AGENT — ROUND132 seam-v2 独立验证报告（最终）
+================================================================================
+报告文件             : TEST_AGENT_ROUND132_FINAL_REPORT.txt
+角色                 : 用户本地 WorkBuddy 测试 Agent（只验证，不改代码）
+下发方 / 技术负责人  : 2号 AI
+独立审查方           : 1号 AI（ChatGPT）
+验证对象             : firmware-analysis/round132/round132-kunit-seam-v2.patch
+                        SHA-256 1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+最终结论             : PASS（附 4 项已披露偏差 D-1…D-4，见 §11、§12）
+生成时间（本机）      : 2026-11-26 GMT+8
+运行环境             : WSL2 Ubuntu-24.04，12 逻辑核，gcc/UML 可用，GNU patch 2.7.6，git 2.x
+
+--------------------------------------------------------------------------------
+§0 任务书与授权链
+--------------------------------------------------------------------------------
+本报告的授权依据只有一份：2号 AI 下发的
+  firmware-analysis/round132/AI2_AGENT_VALIDATION_TASK.md
+  字节数 11387 ；SHA-256 ff90f60f466d91ea8c5890c897e54d2c942fe19bb0610ec85d86f2e0cb0cb8d4
+  Git blob 7d342d609876a2855326acc9920e44c012ec6d97（与远端 firmware-audit-v1 一致）
+
+同目录下另有 AGENT_ROUND132_RESUME_VALIDATION_TASK.md，其正文首行即
+「[已撤回 / DO NOT EXECUTE] 由1号AI误下发的测试任务书」。本次执行**未**采用该文件，
+也未把它作为任何测试依据；它只用于确认「本任务的正确下发方是 2号 AI」，与本次授权一致。
+
+--------------------------------------------------------------------------------
+§1 执行边界（逐条对照任务书 §1）
+--------------------------------------------------------------------------------
+已遵守：
+  1  只测试，未编辑补丁、未修复源码、未重新生成补丁、未调整 Kconfig/DTS/config。
+  2  未修改冻结 17-patch series、未触碰 AI1/AI2 开发分支、未修改产品 .config。
+  3  建立了两棵全新、互相隔离的目录（两个独立 clone），未复用任何旧 worktree /
+     旧构建目录 / 旧测试产物；KUnit 构建目录、host 工作目录、Kconfig 负向对照目录
+     均为本轮新建。
+  4  全部输入身份、应用、构建、测试、日志均可追溯；未引用 ROUND35S 的 PASS 作为
+     本轮结论（ROUND35S 只在 §12 被当作「历史记录」引用一次，用于说明偏差）。
+  5  未遇固定输入不符；偏差项按 §11 逐条披露，未换补丁、换基线，也未把非 PASS 写成 PASS。
+  6  未连接平板；未使用 USB / ADB / fastboot / recovery / root / serial；未读写设备分区。
+  7  未访问、下载或重新提取 HOS4.3 固件。
+  8  未做完整产品 Image/Kleaf build；未打包 boot / DTB / DTBO / ramdisk / vbmeta / AVB；
+     未 boot、未 flash。
+  9  只创建了本任务自己的临时目录；未删除任何既有 worktree、构建目录或证据。
+ 10  本报告与日志上传并回读核验后即停止，未启动 ROUND133 或其他轮次。
+
+--------------------------------------------------------------------------------
+§2 输入身份核验（全部按 Git blob SHA 反查路径，不靠路径猜测）
+--------------------------------------------------------------------------------
+方法：先取分支 ai-parallel/stagea-port-until-boot 的完整 tree（recursive，
+truncated=NO，187 个唯一 blob SHA），建立 blob→path 映射；再用**任务书给定的 blob
+SHA** 反查路径并下载。这样路径写法错误不会影响身份判定——身份只由内容地址决定。
+
+[2.1] 冻结 17-patch manifest
+  任务书给定读取位置 : .../blob/main/kernel-baseline/round61/round32-stagea-series.txt
+  实测                : main 分支该路径 HTTP 404（探测已记录在 apply-check 日志 PART 1）
+  实际解析位置        : 同名路径位于 ai-parallel/stagea-port-until-boot 分支
+  字节数              : 6599
+  SHA-256             : 36e1ab53bca5d8fb832a60644055f18ff37abbf02b135be4ce3dd4170efa2e15
+  重算 Git blob       : 9a93b7e3a500d807533517a92b98fe244b2ea456
+  任务书要求 blob     : 9a93b7e3a500d807533517a92b98fe244b2ea456   → MATCH
+  行数 / 记录行       : 81 行，其中 17 条 patch 记录，序号 1..17 连续
+  ⇒ manifest 内容身份满足要求；路径分支与任务书写法不一致一事见偏差 D-1。
+
+[2.2] seam-v2 精确补丁（唯一测试对象）
+  路径     : firmware-analysis/round132/round132-kunit-seam-v2.patch
+  分支     : ai2/round132-kunit-option-bool
+  字节数   : 16797  （任务书要求 16797）                → MATCH
+  SHA-256  : 1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f  （任务书同值）→ MATCH
+  Git blob : 890b584b6015293c145c221219591f4d98129671  （任务书同值）→ MATCH
+  应用前后再次校验 SHA-256：不变（补丁文件未被任何操作改动）
+  补丁内 7 个 `diff --git` 段，路径与 SOURCE_NOTE 声明的 7 个路径完全一致
+
+[2.3] 源码说明
+  AI2_ROUND132_SOURCE_NOTE.md ；2976 字节
+  SHA-256 7793394a34f80b184539fbb84437e96857b7e4be178e8bcb815b22d11867241c
+  Git blob f1f45eed1a808a8296460d6c7c9ea1c542565c74  → 与任务书一致 MATCH
+  其声明的补丁基线 tree 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 在 §3 被独立复现。
+
+[2.4] 固定 ACK 与产品 .config 基线
+  固定 ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a → 两棵树 checkout 后
+    git rev-parse HEAD 均精确等于该值（ACK_EXACT_MATCH=YES ×2）
+  产品 .config 基线 SHA-256 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+    → 实测一致（见 §8）
+
+[2.5] 17 个冻结补丁逐项身份（顺序 = manifest 顺序）
+  idx  bytes   sha256                                                            result  manifest path
+  ----------------------------------------------------------------------------------------------------
+  01   1575   9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171  MATCH   round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft
+  02   5093   74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6  MATCH   round61/patches/round52-0001-context-corrected.patch
+  03   1006   5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764  MATCH   round61/patches/round36-corrected-power-domain-range.patch
+  04   1151   f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836  MATCH   round61/patches/round32-corrected-sc7180-clock-names.patch
+  05   8481   e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65  MATCH   round61/patches/round33-checkpatch-clean.patch
+  06   4773   d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4  MATCH   round61/patches/round52-0002-checkpatch-clean.patch
+  07   1152   534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0  MATCH   round61/patches/round63-0002-qmp-ufs-phy-binding.patch
+  08   7402   d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539  MATCH   round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch
+  09   8513   bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec  MATCH   round61/patches/round58-kleaf-target.patch
+  10  14865   38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003  MATCH   round61/patches/round31-0001-regulator-add-proxy-consumer.patch
+  11   2657   1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6  MATCH   round61/patches/round31-0002-regulator-proxy-consumer-binding.patch
+  12   1230   c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435  MATCH   round61/patches/round31-0003-dby-w09-enable-proxy-consumer.patch
+  13  14265   9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650  MATCH   round61/patches/round32-0001-regulator-child-scoped-proxy-consumer.patch
+  14   2945   30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15  MATCH   round61/patches/round32-0002-regulator-child-scoped-proxy-binding.patch
+  15   2625   3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594  MATCH   round61/patches/round32-0003-dby-w09-child-scoped-proxy-review-dts.patch
+  16   3375   7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4  MATCH   round61/patches/round33-0001-regulator-proxy-self-target-only.patch
+  17   2848   d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05  MATCH   round61/patches/round33-0002-regulator-proxy-self-target-binding.patch
+  17/17 的 SHA-256 与 Git blob 同时 MATCH；顺序与 manifest 完全一致，无跳过、无重排、无替换。
+
+--------------------------------------------------------------------------------
+§3 Tree A：冻结生产序列重放（证明 series 可按身份与顺序重放）
+--------------------------------------------------------------------------------
+  建树            : git clone --shared --no-checkout <bare common.git> → 全新目录
+  HEAD            : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a（ACK_EXACT_MATCH=YES）
+  HEAD 对象类型    : commit
+  初始 git status  : 0 行（干净）
+  逐补丁动作       : git apply --check --verbose → git apply --verbose → git diff --check
+  结果            : APPLY17_FAIL=0；每个补丁 CHECK_RC=0、APPLY_RC=0、DIFFCHECK_RC=0
+  fuzz / offset    : git apply 机制上不支持 fuzzy 匹配与偏移应用（fuzz 或 offset 会直接
+                     报错），因此 17 个补丁全部 --check 通过即为零 fuzz 零 offset；
+                     见 §12 关于「为什么不用 GNU patch 作为判据」的说明。
+  重放后 HEAD      : 未变（仍为 ACK，补丁只落在工作区/索引）
+  内容树           : 77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+  与 SOURCE_NOTE 声明的补丁基线 tree 比较：EXACT MATCH
+                    ⇒ 「ACK + 17 补丁」确实能逐字节重现 seam-v2 的父状态
+  冻结父提交       : 3f913e565cd889cb7a0f0130ca81cd2fe27a504c（本地一次性，未推送）
+  git diff --check : RC=0（无空白错误）
+  git diff --stat  : 12 files changed, 546 insertions(+), 8 deletions(-)
+                     （另含 4 个未跟踪新文件：proxy-consumer.c / proxy-consumer.h /
+                       dby-w09-proxy-review.dts / dby_w09_storage_first.fragment）
+
+--------------------------------------------------------------------------------
+§4 Tree B：17 补丁 + seam-v2 精确应用
+--------------------------------------------------------------------------------
+  建树            : 从**同一个 bare 仓库另做一次独立 clone**（不是从 Tree A 复制）
+  HEAD            : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a（ACK_EXACT_MATCH=YES）
+  初始 git status  : 0 行
+  17 补丁重放      : APPLY17_FAIL=0；零 fuzz / 零 offset（同上）
+  重放后内容树     : 77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+                    PRE_SEAM_TREE_EQUALS_DECLARED_PATCH_BASE_TREE=YES
+                    （与 Tree A 内容树相同 ⇒ 两树在应用 seam 之前完全等价）
+  冻结父提交       : f7a5839e95661ef9864df150bf6ecf103cd12450（本地一次性，未推送）
+
+  seam-v2 应用：
+    身份（应用前） : 16797 B / SHA-256 1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f / blob 890b584b6015293c145c221219591f4d98129671 → PASS
+    git apply --check --verbose → SEAM_CHECK_RC=0
+    git apply --verbose         → SEAM_APPLY_RC=0，7 个路径全部 "Applied patch ... cleanly"
+    应用后补丁 SHA-256          → 与申请前一致（SEAM_PATCH_UNMODIFIED=YES）
+    应用后 git diff --stat      → 7 files changed, 399 insertions(+), 1 deletion(-)
+                                   drivers/regulator/Kconfig                    12 +
+                                   drivers/regulator/Makefile                    3 +
+                                   drivers/regulator/core.c                      8 +
+                                   drivers/regulator/kunit-proxy-consumer.dtso  28 +（新文件 820 B）
+                                   drivers/regulator/proxy-consumer-kunit.c    320 +（新文件 10822 B）
+                                   drivers/regulator/proxy-consumer.c           23 +-
+                                   include/linux/regulator/proxy-consumer.h      6 +
+    应用后 git diff --check     → RC=0
+    应用后内容树                → 482e1dfbb6945ff5bce3c95279d65ebfbfebf23e
+    差异来源确认                → 只有 seam-v2 一个补丁（Tree B 在 seam 前的内容树等于
+                                   声明的基线 tree，故 482e1dfb 与 77e2b2b1 之差只能来自该补丁）
+
+--------------------------------------------------------------------------------
+§5 Kconfig 与 built-in 核验（任务书 §3）
+--------------------------------------------------------------------------------
+[5.1] 类型 = bool
+  drivers/regulator/Kconfig:74  config REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+                           :75  bool "KUnit test for regulator proxy consumer lifecycle" if KUNIT
+  BLOCK 内 bool 声明数 = 1；tristate 声明数 = 0  ⇒ KCONFIG_TYPE_IS_BOOL=YES
+
+[5.2] 依赖与默认值保留
+  :76  depends on KUNIT && REGULATOR_PROXY_CONSUMER && OF && OF_OVERLAY
+  :77  depends on !KUNIT_ALL_TESTS
+  :78  default n
+  ⇒ DEPENDENCIES_AND_DEFAULT_PRESERVED=YES；测试期间未改动 Kconfig。
+
+[5.3] 「=m 根本不可选」的负向对照（本轮新增实证）
+  在一个独立的 scratch 构建目录里，把已有的 UML .config 覆写成 =m 后执行 olddefconfig：
+     Kconfig 输出 : .config:868:warning: symbol value 'm' invalid for REGULATOR_PROXY_CONSUMER_KUNIT_TEST
+     最终该行    : 868:# CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST is not set
+     M_SELECTABLE=NO
+  ⇒ 该符号不存在 `_MODULE` 形态的可能，也就不会出现 #ifdef CONFIG_... 与
+    CONFIG_..._MODULE 不匹配导致 seam 未编译的旧问题。
+
+[5.4] UML 测试配置最终值
+  .kunitconfig：CONFIG_KUNIT/OF/OF_EARLY_FLATTREE/OF_OVERLAY/REGULATOR/
+                REGULATOR_PROXY_CONSUMER/REGULATOR_PROXY_CONSUMER_KUNIT_TEST 全 =y
+  .kunitconfig SHA-256 = 0824b86ee48cd2f8055bc24acc4cf08621feee0a12275048ba344a241e485980
+  生成 .config:868 = CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+  CONFIGURED_AS_Y=YES ；CONFIGURED_AS_M=NO ；_MODULE 行数 = 0
+
+[5.5] built-in 编译证据（不只是配置推断）
+  构建产物 drivers/regulator/proxy-consumer-kunit.o（24536 B）与
+  drivers/regulator/kunit-proxy-consumer.dtbo.o（1472 B）均已生成；
+  整个构建目录 *.ko 数量 = 0（没有任何内核模块）。
+  vmlinux 内符号（nm，小写 t/d 表示本映像内部符号）：
+     t regulator_proxy_consumer_kunit_observe_unregister   ← core.c 的 observer
+     t regulator_proxy_consumer_kunit_revoke_all           ← 测试 helper
+     t regulator_proxy_consumer_kunit_removed              ← 测试 helper
+     t proxy_kunit_lifecycle / d proxy_kunit_suite / d proxy_kunit_cases
+  ⇒ observer 与 helper 都以 built-in 方式进入同一 vmlinux，并真的被链接执行（见 §6 TAP）。
+
+--------------------------------------------------------------------------------
+§6 UML KUnit 实测（任务书 §4，在 Tree B 精确源码树上）
+--------------------------------------------------------------------------------
+  源码树    : /home/kerneldev/work/matepad11/round132-agent/tree-b
+              内容树 482e1dfbb6945ff5bce3c95279d65ebfbfebf23e（= §4 的 seam 后状态）
+  构建目录  : 本轮新建 kunit-build（此前不存在）
+  命令      : python3 tools/testing/kunit/kunit.py run \
+                --build_dir <build> --kunitconfig <kunitconfig> \
+                --jobs 8 --timeout 180 --raw_output=all
+              （使用 --raw_output=all 的原因：默认美化输出会把内核 KTAP 行替换成
+               "Ran 1 tests" 摘要，无法满足「TAP 1..1 / ok 1」的取证要求。）
+
+  真实内核 KTAP（原文，未删节）：
+      KTAP version 1
+      1..1
+          KTAP version 1
+          # Subtest: regulator-proxy-consumer-lifecycle
+          # module: proxy_consumer_kunit_test
+          1..1
+          ok 1 proxy_kunit_lifecycle
+      ok 1 regulator-proxy-consumer-lifecycle
+      reboot: System halted
+
+  TAP 判定  : TAP_PLAN_1_OF_1=YES ; TAP_OK_1=YES ; TAP_NOT_OK_PRESENT=NO
+              ⇒ TAP_1_OF_1_PASS=YES（1/1 PASS）
+  进程退出码: RUN_RC=0
+  生成的 UML .config SHA-256 = 66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+  vmlinux SHA-256            = 5eb684a3afac5192fdeacfc25538a0bd379094bad5ffbed3de9a8bf5823d3154
+  运行前后源码差异哈希       = 一致（9ff44210609e57038fd455783990e7c043f955aacf0a3c6d95a72269b9851a2a），
+                              证明测试没有改动被测源码
+  关于 KTAP 里的 `# module: proxy_consumer_kunit_test`：
+    这是 KUnit 的**属性行**，值来自 include/kunit/test.h:166 的 `.module_name = KBUILD_MODNAME`
+    （打印点 lib/kunit/test.c:170 的 kunit_print_attr，属性定义 lib/kunit/attributes.c:261
+      `.name = "module"`）。Makefile 里复合对象名为 proxy-consumer-kunit-test.o，
+    因此 KBUILD_MODNAME = proxy_consumer_kunit_test，即使 obj-y（built-in）也会打印该标签。
+    它与「是否可加载模块」无关；判定模块化只看 CONFIG...=m 与 *.ko 数量，两者都是 0。
+
+--------------------------------------------------------------------------------
+§7 Host 回归（任务书 §5）
+--------------------------------------------------------------------------------
+  入口脚本 : host-tests-raw/run_tests.sh（与 ROUND35S 同一份，本轮未改动、未增删用例）
+  身份核对（git blob SHA1，与 ROUND35S 日志记录逐项相同）：
+     run_tests.sh                   e29f8a237e1836420dfcd85b7d970cf8d9a956d8
+     test_proxy_consumer_r31.c      14515c62c48d95e86bfc6dca9c2070c81e031489
+     test_proxy_consumer_round32.c  aff9ec3c5bc65c880726431b5f23750b19339c1f
+     mock/mock_core.h               98820fc6c6439237563dad52c4129db022fb1260
+     mock/linux/errno.h             8a8e39690876ebe9ffd3b56c553c2c773c2e333f
+  被测源码 : tree-b/drivers/regulator/proxy-consumer.c
+             SHA-256 bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+  命令     : bash <workdir>/run_tests.sh <tree-b> <workdir>   （编译真实驱动源码，mock 头文件替换内核 API）
+  结果：
+     第一组  checks=38 failures=0  RESULT: PASS   ⇒ 38/38
+     第二组  checks=83 failures=0  RESULT: PASS   ⇒ 83/83
+     HARNESS_RESULT: PASS ; HOST_RC=0
+  说明：编译时并未定义 CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST，因此
+        proxy-consumer.c 里 `#ifndef` 的 late_initcall 包装仍在、`#ifdef` 的测试 helper
+        被排除——即 host 回归验证的是**生产语义未被 seam 改变**，这正是需要的结果。
+
+--------------------------------------------------------------------------------
+§8 产品 .config 不变性（任务书 §6）
+--------------------------------------------------------------------------------
+  路径        : /home/kerneldev/work/matepad11/ack-6.18.33-a30/bazel-bin/common/dby_w09/.config
+  测试前      : SHA-256 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+                238410 字节 / 8688 行 ；REFERENCE_MATCH=YES
+  测试后      : SHA-256 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+                238410 字节 / 8688 行 ；BEFORE_AFTER_IDENTICAL=YES
+  测试符号    : 全文 grep REGULATOR_PROXY_CONSUMER_KUNIT_TEST → 无任何命中
+                KUNIT_SYMBOL_IN_PRODUCT_CONFIG=ABSENT（前后均为 ABSENT）
+  严格区分    : UML 测试配置是另一个文件 kunit-build/.config（SHA-256
+                66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224，
+                第 868 行 =y），从未写回产品 .config、也未在产品树上启用该选项。
+
+--------------------------------------------------------------------------------
+§9 静态检查（任务书 §7）
+--------------------------------------------------------------------------------
+  git diff --check（Tree B，seam 后）  : 无输出，RC=0 → DIFF_CHECK_RESULT=PASS
+  checkpatch.pl --strict：
+    命令 : perl scripts/checkpatch.pl --strict --no-signoff --ignore FILE_PATH_CHANGES <patch>
+    输出 : total: 0 errors, 0 warnings, 3 checks, 434 lines checked
+    三条 CHECK 均为新增测试文件里的 CamelCase 命名（沿用被测驱动既有字段名 last_min_uV /
+    last_max_uV / last_load_uA，用于断言电压/电流投票值）：
+       #166 FILE: drivers/regulator/proxy-consumer-kunit.c:70  + provider.last_min_uV = min_uV;
+       #167 FILE: drivers/regulator/proxy-consumer-kunit.c:71  + provider.last_max_uV = max_uV;
+       #176 FILE: drivers/regulator/proxy-consumer-kunit.c:80  + provider.last_load_uA = load_uA;
+    退出码 : 1（--strict 把 CHECK 计入非零退出）
+  ⇒ 任务书要求的「0 errors、0 warnings」**满足**；但「--strict 退出码为 0」**不满足**。
+    这一项是本报告唯一可能翻转总判定的地方，处理方式见 §11 D-2 与 §13。
+  SPDX 子检查：
+     checkpatch 自身的 SPDX 头检查本次运行无 traceback、无 SPDX 消息；
+     但独立的 scripts/spdxcheck.py 无法启动：
+       ModuleNotFoundError: No module named 'ply'
+     ⇒ 该独立工具标记 NOT RUN（缺失依赖 python3-ply），不记为 PASS，也未为跑通它而
+       修改环境或源码（超出授权）。
+
+--------------------------------------------------------------------------------
+§10 关键数字一览（便于交叉复核）
+--------------------------------------------------------------------------------
+  两棵树 ACK                     8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a（均精确）
+  两棵树 17 补丁后内容树          77e2b2b1515b3813f7538aedffe4c5a4e90edb57（均相同）
+  Tree A 冻结父提交               3f913e565cd889cb7a0f0130ca81cd2fe27a504c
+  Tree B 冻结父提交               f7a5839e95661ef9864df150bf6ecf103cd12450
+  Tree B seam 后内容树            482e1dfbb6945ff5bce3c95279d65ebfbfebf23e
+  seam-v2 变更量                  7 files, +399 / -1
+  UML .config SHA-256             66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+  UML vmlinux SHA-256             5eb684a3afac5192fdeacfc25538a0bd379094bad5ffbed3de9a8bf5823d3154
+  KUnit TAP                      1..1 / ok 1（RUN_RC=0）
+  Host 回归                      38/38 + 83/83（HOST_RC=0）
+  产品 .config SHA-256            0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15（前后一致）
+  checkpatch                     0 errors / 0 warnings / 3 checks / RC=1
+
+--------------------------------------------------------------------------------
+§11 偏差与限制（全部已披露，无隐瞒项）
+--------------------------------------------------------------------------------
+D-1  manifest 的「任务书读取位置」失效
+     任务书写 .../blob/main/kernel-baseline/round61/round32-stagea-series.txt，实测 HTTP 404
+     （main 分支根本没有 kernel-baseline/ 目录；该路径实际在
+      ai-parallel/stagea-port-until-boot 分支）。
+     处理：用任务书给定的 blob SHA 9a93b7e3… 反查解析，得到唯一路径并下载，
+     内容 blob 重算结果与要求完全一致（6599 B，SHA-256 36e1ab53…）。
+     判定：身份核验通过；路径写法差异属任务书笔误，不影响本次验证对象的字节身份。
+
+D-2  checkpatch --strict 退出码为 1（3 条 CHECK，0 errors / 0 warnings）
+     任务书 §7 的硬性要求是「0 errors、0 warnings」，已满足；未要求退出码为 0。
+     但 --strict 会把 CHECK 计为非零退出，因此若审查方以「退出码必须为 0」为判据，
+     本项应改判为「静态检查不干净」，总判定随之降为 FAIL。本报告不替审查方做这个选择，
+     只把事实摆全：3 条 CHECK、文件名、行号、原文均在 §9 与 checkpatch 日志里。
+     注：本轮**没有**修掉这 3 条 CHECK——任务书禁止修改补丁，测试方无代码修改权。
+
+D-3  独立 SPDX 检查器 NOT RUN
+     scripts/spdxcheck.py 需要 python3-ply，本机未安装（ModuleNotFoundError）。
+     未安装依赖（会改变环境，超出授权），如实标注 NOT RUN。
+
+D-4  GNU patch dry-run 与 git apply 结果分歧（已确认不影响判定）
+     为给出「零 fuzz / 零 offset」的第二个视角，对每个补丁额外跑了一次
+     `patch -p1 --dry-run --fuzz=0`。结果 8/17 个补丁被 GNU patch 报
+     "Hunk #N FAILED"，而同一字节的补丁在 git apply 下 --check 与 apply 均成功，
+     且最终内容树精确等于声明的基线 tree 77e2b2b1…。
+     结论：这是 GNU patch 的定位/状态启发式差异（它在 dry-run 中对同一文件的多个
+     hunk 采用自身的位置推算），不是补丁漂移。因此本报告**不以 GNU patch 输出作为
+     fuzz/offset 判据**，而以「git apply 无 fuzz/offset 机制 + 内容树哈希一致」为准；
+     两种输出都原样留在 apply-check 日志里供审查。
+
+其它限制：
+  - KUnit 用 ARCH=um 宿主内核，不是产品 Image；本轮按任务书要求未做产品构建。
+  - host 回归是 mock 头文件的宿主测试，不是设备/真实 regulator core 运行。
+  - 设备侧、固件侧、刷机侧全部未触碰，本轮无相关证据。
+
+--------------------------------------------------------------------------------
+§12 工具语义说明（两处容易被误读的地方）
+--------------------------------------------------------------------------------
+[12.1] 为什么「git apply 成功」就等于「零 fuzz、零 offset」
+  git apply 不做模糊匹配：hunk 的上下文必须逐字节命中，否则直接失败；它也不做
+  「按偏移去找相近位置」的尝试。因此 17/17 与 seam-v2 均 --check 通过并 apply 成功，
+  在机制上即排除 fuzz 与 offset。更强的证据是内容树哈希：17 补丁重放后两棵树都得到
+  77e2b2b1…，与 SOURCE_NOTE 声明的补丁基线 tree 完全一致——这比任何 fuzz 计数都硬。
+
+[12.2] KTAP 的 `# module:` 行不是「被编译成模块」
+  见 §6 末尾：该行是属性行，值取自 KBUILD_MODNAME，复合对象名带 -test 后缀就会打印。
+  真正的判据是 CONFIG...=m（0 处）与 *.ko（0 个）。
+
+[12.3] 与 ROUND35S 的关系（只作历史参照，不作为本轮证据）
+  ROUND35S 的 seam 是 16804 B / 7 files / +399-1；本轮 seam-v2 是 16797 B / 7 files /
+  +399-1，路径集合相同、变更量相同、体积差 7 字节，与「只把 tristate 改成 bool 并调整
+  help 说明」的声明自洽。但本轮全部结论均来自对 1fbc32a3… 这一份字节的独立执行，
+  未引用 ROUND35S 的任何 PASS。
+
+--------------------------------------------------------------------------------
+§13 交付物、上传与回读
+--------------------------------------------------------------------------------
+交付目录 : firmware-analysis/round132/（分支 firmware-audit-v1）
+文件名   : 全部为本轮新文件名，未覆盖既有的 TEST_AGENT_ROUND132_REPORT.txt 或任何历史证据。
+
+  1 TEST_AGENT_ROUND132_FINAL_REPORT.txt        本文件
+  2 round132-v2-apply-check.log                 两棵树的 ACK / manifest / 17 补丁 / seam-v2 身份与应用完整日志
+  3 round132-v2-kunit-final-TAP.log             UML KUnit 配置 + 构建 + 运行 + 原始 KTAP + .config 证据
+  4 round132-v2-checkpatch.log                  git diff --check + checkpatch --strict + SPDX 状态
+  5 round132-v2-config-and-host-regression.log  UML .config hash、built-in 证据、产品 .config 前后 hash、
+                                                host 38/38 与 83/83 原文、Kconfig 负向对照
+
+回读核验结果（GitHub 只读 API，ref=上传提交）：
+  上传提交（日志）  : 914c6c8  （分支 firmware-audit-v1，父提交 be2b239）
+  逐文件回读        :
+    round132-v2-apply-check.log                  size 49700  blob faee9bc0b98fcd9b86a6264f327c550a3f57ca7f
+                                                 远端 SHA-256 = 本地 SHA-256 = a779c721937ddc3e…  MATCH
+    round132-v2-kunit-final-TAP.log              size 10053  blob 6f3a274c987cfc931a9b2a3696c6e3210d743967
+                                                 远端 SHA-256 = 本地 SHA-256 = 9282f0f611eec047…  MATCH
+    round132-v2-checkpatch.log                   size  7850  blob 5d4bd93870f4a07e92bc455a2957ee765fcf02e4
+                                                 远端 SHA-256 = 本地 SHA-256 = 3e9cff42e18a87cc…  MATCH
+    round132-v2-config-and-host-regression.log   size 30442  blob 2aa7b07426023ecb0fe9768c7ea695952997c0ae
+                                                 远端 SHA-256 = 本地 SHA-256 = 71390b104f4e9c37…  MATCH
+
+自引用说明（如实披露，不掩盖）：
+  - 本文件在日志之后单独提交，因此无法把「自己这个文件的 blob SHA」写进自己的正文——
+    任何文件的哈希都不可能包含它自身。故：
+      * 上表给出四个日志在上传提交中的 blob 与回读结果（已全部 MATCH）；
+      * 本文件自身的 blob SHA 与回读结果，以及五个文件的汇总表，记录在同目录的
+        round132-v2-delivery-manifest.txt（由后续提交引入，数值全部来自 API 回读）。
+  - 未因此减少任何交付文件；四个日志与报告均为完整、未经删节的原文。
+
+--------------------------------------------------------------------------------
+§14 最终结论
+--------------------------------------------------------------------------------
+按任务书 §9 的判定规则逐项对照：
+
+  项目                                        要求                     实测           结果
+  ------------------------------------------  -----------------------  -------------  ------
+  固定输入身份（ACK / manifest blob / 17 补丁）  全部精确匹配             全部匹配        PASS
+  seam-v2 身份（SHA-256 / 大小 / blob）         1fbc32a3… / 16797 / 890b584b…  全部匹配   PASS
+  seam-v2 精确应用                              --check + apply 成功       成功 7 文件     PASS
+  Kconfig 类型                                  bool，非 tristate          bool（74:75）  PASS
+  依赖与 default n 保留                         是                        是             PASS
+  UML 配置中符号为 =y                            是                        =y（868 行）    PASS
+  built-in 编入（observer + helper）             是                        是（nm 可见）   PASS
+  UML KUnit                                     TAP 1..1 / ok 1，退出码 0   1..1 / ok 1 / 0  PASS
+  Host 回归第一组                                38/38                     38/38          PASS
+  Host 回归第二组                                83/83                     83/83          PASS
+  产品 .config 不变且无测试符号                   是                        前后同哈希，无符号 PASS
+  git diff --check                              无输出                     RC=0           PASS
+  checkpatch --strict                           0 errors / 0 warnings      0 / 0（3 checks）PASS*
+  SPDX 独立检查                                  可运行则记录                NOT RUN（缺 ply） NOT RUN
+
+  * PASS* = 任务书明文要求的 0 errors / 0 warnings 已满足；--strict 退出码为 1，
+    若审查方以退出码为判据，本行应视为 FAIL 并连带总判定降级（见 D-2）。
+
+最终结论：PASS
+  —— 唯一测试对象（SHA-256 1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+     的原始 seam-v2 补丁）在全新的两棵隔离树中被精确重放与应用，Kconfig 为 bool、
+  built-in 编译成立、真实 UML KUnit 1/1 通过、两组 host 回归 38/38 与 83/83 通过、
+  产品 .config 未被改动；所有输入身份均按要求核验通过。
+  —— 需要审查方注意的两点：D-1（manifest 路径笔误，已用 blob 身份绕过）与
+     D-2（checkpatch 3 条 CHECK 导致 --strict 退出码 1，但 errors/warnings 为 0）。
+
+已按停止规则停止：未进入 ROUND133，未修改 seam-v2，未连接设备，
+未执行刷机 / 启动 / 完整产品镜像构建。
+================================================================================

@@ -1,0 +1,318 @@
+================================================================================
+AI2-ROUND31 — STAGE A: REAL PROXY-CONSUMER LIFECYCLE PORT AND FULL
+               //common:dby_w09 IMAGE REBUILD
+================================================================================
+task ID        : AI2-ROUND31 (2号 AI 专属任务书)
+taskbook       : firmware-analysis/round31/AI2_ROUND31_TASKBOOK.md (firmware-audit-v1)
+executor       : user's local Agent (2号 AI execution path)
+round          : 31 — the round the taskbook names as "继续二号ai任务"
+pinned ACK     : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (android17-6.18.33_r00)
+this report    : firmware-analysis/round31/AI2_ROUND31_STAGEA_PROXY_CONSUMER_IMPLEMENTATION_REPORT.txt
+                 (the single prescribed report path; no other round is touched)
+stop rule      : this report is the last action of the round; ROUND32 is NOT started
+
+--------------------------------------------------------------------------------
+0. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+The round did real work, not a review plan:
+
+  * The Qualcomm downstream proxy-consumer lifecycle (probe-time proxy vote,
+    revoked once at late_initcall_sync, one enable + one regulator_set_load
+    vote per consumer, per-regulator unregister) was implemented from scratch
+    against the pinned ACK as three new patches appended after the unchanged
+    9-patch ROUND30 series.
+  * All 12 patches apply in order in a fresh disposable worktree:
+    git apply --check / git apply / git diff --check = 36/36 exit codes 0.
+  * checkpatch.pl --strict on the three new patches: 0 errors / 0 checks
+    (one generic new-file reminder on 0001; no fake MAINTAINERS entry invented).
+  * Binding schema gate: 13/13 PASS across dtschema 2023.9 and 2026.9 plus a
+    dtc-level negative control; undeclared-property / wrong-type / wrong-cell-
+    count / bad-phandle all REJECTED as designed, without ever loosening
+    additionalProperties.
+  * An executable host unit test (gcc against the REAL proxy-consumer.c with a
+    mock kernel API layer) passes 38/38 assertions including error paths.
+  * Full //common:dby_w09 Image build: BUILD_RC=0. The proxy-consumer code is
+    provably inside the artifact (10 proxy_consumer symbols in System.map and
+    the vmlinux symtab, including the initcall entry at the 7s = sync level;
+    8 new string literals in vmlinux; CONFIG_REGULATOR_PROXY_CONSUMER=y).
+  * ROUND58 config regression on the actually produced .config: PASS, 33/33
+    required symbols =y; ROUND58 helper unit tests 11/11 OK.
+  * One REAL compile error was produced and fixed along the way (a local
+    variable named `current` colliding with the kernel `current` macro) —
+    exactly the class of defect only a real build exposes.
+
+Independent blockers are NOT closed by this round. Phase E/F remain BLOCKED.
+
+--------------------------------------------------------------------------------
+1. AUTHORITY AND INPUTS
+--------------------------------------------------------------------------------
+Pinned ACK worktree : commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a,
+                      git status clean before work began.
+Reference lineage    : Qualcomm msm-4.19/5.4 proxy-consumer.c (KONA-era file),
+                      fetched read-only from the public aosp-mirror for
+                      semantic comparison only. The pinned ACK does NOT
+                      contain the file (confirmed: zero hits for
+                      proxy-consumer in Kconfig/Makefile/bindings/DTS/drivers,
+                      and git log shows the historical driver exists only on
+                      a deprecated ACK 4.19 ref that is not an ancestor of
+                      HEAD). mainline has never carried it either.
+Existing series      : the 9-patch ROUND30 Stage A series (patch blobs and
+                      sha256 listed in round31-stagea-series.txt rows 1–9) is
+                      UNCHANGED by this round; rows 10–12 are the new patches.
+ROUND13 authority    : firmware-analysis/round13/round13_pm8150_mode_drms_findings.txt
+                      blob c3dd45dac71ee45e34697b1fb78abccc40f94b26 — the
+                      local copy matches byte-for-byte; its reading of the
+                      stock DTS (proxy-supply at group level,
+                      qcom,proxy-consumer-* at child level) is the target DTS
+                      shape.
+
+--------------------------------------------------------------------------------
+2. TOPOLOGY SEMANTICS PROVEN BEFORE IMPLEMENTATION
+--------------------------------------------------------------------------------
+Decision question of this round: where does `proxy-supply` live, and which
+of_node does regulator_get() consult?
+
+  (a) ACK's qcom-rpmh-regulator registers ONE platform device per PMIC group
+      node (e.g. rpmh-regulator-ldoa5-style group nodes under
+      /soc/rsc@18200000); every child regulator shares that one `dev`.
+      Verified in probe: the child loop calls devm_regulator_register with
+      the same parent dev for every regulator_bulk entry of the group.
+  (b) The regulator core's registration hook sees
+      (dev = GROUP device, config->of_node = CHILD node).
+  (c) Therefore `proxy-supply` on the group node and `qcom,proxy-consumer-*`
+      on child nodes is the DESIGNED shape, matching ROUND13's stock-DTS
+      reading; a naive "self-reference" reading (proxy-supply pointing at the
+      child that carries the consumer flags) is wrong for the core hook and
+      is NOT what the stock DTS does.
+  (d) Resolution at helper time: regulator_get(dev, "proxy") →
+      of_parse_phandle(dev->of_node, "proxy-supply", 0) → the child node
+      registered moments earlier in the same probe → rdev found by
+      class_find_device_by_of_node over the regulator_class list. In-register
+      lookup during probe works because device_register + class list add
+      happen inside regulator_register() before the helper runs.
+  (e) Whole-PM8150-as-one-device consequence: there is at most ONE
+      proxy-supply per PMIC group device, so multiple children of the same
+      group necessarily SHARE one proxy consumer object. The schema cannot
+      reject that shape (both children are individually schema-valid); it is
+      recorded as a designed, documented property of this port instead.
+
+--------------------------------------------------------------------------------
+3. SEMANTIC CORRECTION APPLIED: NO sync_state ON THIS ACK
+--------------------------------------------------------------------------------
+The KONA-lineage file carries an optional revoke path keyed on device sync
+state (fw_devlink sync_state). The pinned ACK 8ad08f75 has NO regulator-side
+sync_state support (zero hits for sync_state in qcom-rpmh-regulator.c and
+core.c). The port therefore uses the classic teardown only:
+
+      late_initcall_sync(regulator_proxy_consumer_remove_all)
+
+dropping every outstanding vote exactly once when all built-in drivers have
+had their probe chance, and making removal permanent
+(regulator_proxy_consumer_register after removal returns -EPERM). This
+matches the pinned ACK's actual capabilities rather than transplanting a
+mechanism whose trigger would never fire here.
+
+--------------------------------------------------------------------------------
+4. IMPLEMENTATION (3 NEW PATCHES, ROWS 10–12 OF THE SERIES)
+--------------------------------------------------------------------------------
+patch 10  round31-0001-regulator-add-proxy-consumer.patch
+          git-blob c7438eb8772c0b90a319ba5a37d5fa71b9342964
+          sha256  38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003
+          6 files, +402/-1:
+            drivers/regulator/proxy-consumer.c        new (8378 B)
+            include/linux/regulator/proxy-consumer.h  new (860 B)
+            drivers/regulator/Kconfig                 +12 (REGULATOR_PROXY_CONSUMER)
+            drivers/regulator/Makefile                +1
+            drivers/regulator/core.c                  hook + ANDROID_KABI_USE(1)
+            include/linux/regulator/driver.h          proxy_consumer pointer
+          KABI discipline: state hangs off struct regulator_dev via
+          ANDROID_KABI_USE(1); NO struct layout change.
+
+patch 11  round31-0002-regulator-proxy-consumer-binding.patch
+          git-blob d810e771bc16e531bc01082af0e9feea157aeb7a
+          sha256  1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6
+          Documents on qcom,rpmh-regulator.yaml:
+            proxy-supply                    (group node, phandle to child)
+            qcom,proxy-consumer-enable      (child, boolean)
+            qcom,proxy-consumer-current     (child, u32, uA)
+            qcom,proxy-consumer-voltage     (child, u32[2], min/max uV)
+          The binding stays additionalProperties: false. ROUND63's
+          vdda-phy-always-on is untouched.
+
+patch 12  round31-0003-dby-w09-enable-proxy-consumer.patch
+          git-blob 2a486d066b8eeb914665730feb9d42b21e847fd6
+          sha256  c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435
+          Adds CONFIG_REGULATOR_PROXY_CONSUMER=y to
+          arch/arm64/configs/dby_w09_storage_first.fragment.
+
+Lifecycle semantics implemented (identical to the KONA file where the pinned
+ACK can support it):
+  register:  per child with qcom,proxy-consumer-* — one regulator_get, one
+             regulator_enable, one regulator_set_load(init load), optional
+             voltage range applied via regulator_set_voltage on registration
+             flags; state recorded on the rdev.
+  unregister: reverse in one shot — disable once, drop load vote to 0, put;
+             idempotent and NULL-safe.
+  remove_all (late_initcall_sync): walks the list once, permanent shutdown;
+             later registrations refused with -EPERM.
+  error paths: every allocation/get failure unwinds what was taken before
+             returning; the unit test asserts no leaked votes.
+
+--------------------------------------------------------------------------------
+5. REAL BUILD ERROR FOUND AND FIXED
+--------------------------------------------------------------------------------
+The first //common:dby_w09 build FAILED. Root cause: a local variable declared
+as `u32 current` inside proxy-consumer.c collided with the kernel-wide
+`current` macro (current = get_current(), type struct task_struct *), which
+clang rejects at the point of use. Fixed by renaming the variable to `ua`;
+no other error existed. The failing build log was overwritten by the rerun in
+the working log file (only the final PASS log is retained), so the exact
+clang diagnostic text is reported by kind, not verbatim; the fix is visible
+in the patch content (no `current` identifier remains, verified by grep).
+
+This is a faithful example of the taskbook's premise: checks alone did not
+catch it — only the real build did.
+
+--------------------------------------------------------------------------------
+6. CHECK MATRIX (ALL RE-RUN THIS ROUND, NONE INHERITED)
+--------------------------------------------------------------------------------
+apply       : fresh disposable worktree at 8ad08f75; 12 patches in series
+              order; per patch: git apply --check (rc 0) → git apply (rc 0)
+              → git diff --check (rc 0) → 36/36 exit codes 0.
+checkpatch  : scripts/checkpatch.pl --strict on the three new patches:
+              0001: 0 errors, 1 warnings, 0 checks, 414 lines — the single
+                    warning is checkpatch's generic "new file → add to
+                    MAINTAINERS" reminder; no fake entry was invented.
+              0002: 0 errors, 0 warnings, 0 checks, 39 lines.
+              0003: 0 errors, 0 warnings, 0 checks, 9 lines.
+              (A commit-message Change-Id injected by a repo hook was removed
+              from the patch files after checkpatch flagged it; the removed
+              line is not part of any code or binding content.)
+schema gate : dtschema v2023.9 and v2026.9, dt-validate on the binding plus
+              7 fixtures, judged by an explicit content-assertion gate
+              (dt-validate returns 0 even when it prints errors — recorded
+              trap from ROUND30, honored here):
+              PASS valid (proxy-supply + enable + current + voltage accepted)
+              PASS absent (no proxy properties accepted)
+              PASS undeclared child property REJECTED (diagnostic names
+                   qcom,proxy-consumer-bogus)
+              PASS enable given a value REJECTED (diagnostic names
+                   qcom,proxy-consumer-enable)
+              PASS voltage without 2 cells REJECTED (diagnostic names
+                   qcom,proxy-consumer-voltage)
+              PASS two children in one group ACCEPTED (schema cannot reject
+                   the shared-proxy shape; documented in §2(e), not hidden)
+              PASS bad proxy-supply phandle REJECTED at dtc compile time
+              TOTAL_FAILURES=0, SCHEMA_GATE=PASS.
+              additionalProperties was NEVER loosened; no filtering was used
+              to manufacture a PASS.
+unit test   : gcc -std=gnu11 host build of the REAL drivers/regulator/
+              proxy-consumer.c against a mock kernel API layer
+              (-DCONFIG_REGULATOR_PROXY_CONSUMER=1). 38 checks, 0 failures:
+              late_initcall_sync drops both enables, both load votes, puts
+              both regulators, clears both back-pointers; second teardown is
+              a no-op; register-after-removal → -EPERM; refused registration
+              casts no vote; per-regulator unregister balances every vote;
+              error paths unwind without leaks. RESULT: PASS (rc 0).
+
+--------------------------------------------------------------------------------
+7. BUILD OF RECORD
+--------------------------------------------------------------------------------
+command     : tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+result      : BUILD_RC=0 (first run after the `current` fix; the rerun was an
+              incremental build — 780 cached actions + 1 executed — over the
+              already-warm ROUND30 workspace; Elapsed 341.706 s, Critical
+              Path 321.23 s)
+toolchain    : Android clang 22.0.1 (r584948c-based), read back from the
+              Image's embedded banner, not assumed.
+
+Artifacts (sizes and SHA-256 only; artifacts NOT uploaded):
+
+  Image      44,820,992 B  2b902902dd0c676506d625a7009cf653fb49bb7a56797107ba4e008c004d9bb0
+  System.map  7,611,344 B  03589e1bf06ea151cbf1aac01814d8eb9f2f7486bb981d13b6a9cf2a3a9eeddb
+  vmlinux   230,250,576 B  359fef6e098f04c3d02d41be5a780f5572ab0075ef9dd7739f5520f1f0a21f05
+  .config       238,410 B  0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+
+Image header check: magic 0x4d5a40fa, arm64 boot executable Image
+(little-endian, 4K pages) per `file`.
+
+--------------------------------------------------------------------------------
+8. THE PROXY-CONSUMER CODE IS PROVABLY INSIDE THE ARTIFACT
+--------------------------------------------------------------------------------
+  * .config: CONFIG_REGULATOR_PROXY_CONSUMER=y (line 3878 of the built .config).
+  * System.map contains 10 proxy_consumer symbols, including:
+      T regulator_proxy_consumer_register
+      T regulator_proxy_consumer_unregister
+      t regulator_proxy_consumer_remove
+      t regulator_proxy_consumer_remove_all
+      d __initcall__kmod_proxy_consumer__885_316_regulator_proxy_consumer_remove_all7s
+    The trailing `7s` on the initcall entry is the late_initcall_sync level —
+    the symbol table itself records the teardown timing that §3 claims.
+  * The vmlinux symtab contains the same 10 symbols at matching addresses.
+  * vmlinux strings contain 8 occurrences of the new literals, e.g.
+      "qcom,proxy-consumer-voltage", "qcom,proxy-consumer-enable",
+      "%pOF: qcom,proxy-consumer-current %u uA is out of range",
+      "%pOF: qcom,proxy-consumer-enable must be an empty property".
+  * ROUND30 is not regressed: qmp_ufs_vdda_phy_cleanup is still present in
+    System.map (1 hit) and CONFIG_PHY_QCOM_QMP_UFS remains =y.
+
+--------------------------------------------------------------------------------
+9. CONFIG REGRESSION (ROUND58)
+--------------------------------------------------------------------------------
+  * check_dby_w09_config.py run on the ACTUAL .config produced by this
+    round's build: RESULT: PASS — all 33 required storage-first symbols =y,
+    no duplicate assignments (rc 0).
+  * ROUND58 helper unit tests: 11/11 OK (unittest discover, rc 0).
+  * The only .config delta vs ROUND30 is the REGULATOR_PROXY_CONSUMER=y line
+    added by patch 12 (33/33 required-symbol set unchanged).
+
+--------------------------------------------------------------------------------
+10. PERSISTENCE (Stage A branch, ai-parallel/stagea-port-until-boot)
+--------------------------------------------------------------------------------
+commit       : 0d7baf5 (single commit, 13 files, +1014 lines)
+parent       : 5ecf5f6 — the branch moved during this round (the platform
+               published CI evidence, an independent ROUND30 review, and this
+               round's taskbook on the same branch). The local commit was
+               rebased onto that tip; the only conflict was PROGRESS.md
+               (both sides appended a section) and was resolved by keeping
+               BOTH appends byte-complete — verified as zero deleted lines
+               against the remote tip. Push: 5ecf5f6..0d7baf5, remote ref
+               re-checked = 0d7baf5a55c34e7670452bf1247699431b6c82ff.
+contents     :
+  kernel-baseline/round61/patches/round31-0001..0003 (the three patches)
+  kernel-baseline/round61/fixtures/round31-proxy-*.dts   (7 fixtures)
+  kernel-baseline/round61/round31-proxy-consumer-implementation.md
+  kernel-baseline/round61/round31-stagea-series.txt      (12-row series table)
+  kernel-baseline/round61/PROGRESS.md                    (ROUND31 entry)
+
+--------------------------------------------------------------------------------
+11. BLOCKERS NOT CLOSED — HONEST DISPOSITION
+--------------------------------------------------------------------------------
+  * PM8150 L5 physical parent supply: still unproven; unchanged by this round.
+  * This port implements the KERNEL-SIDE lifecycle mechanism only. Whether the
+    stock DTBO proxy votes are actually exercised, and what they do at boot,
+    remains unverified — no device run is authorized.
+  * The DTS/board draft with proxy-supply properties is NOT applied in this
+    round: patch 12 enables the CONFIG only; no DTS source was modified
+    (the board draft blob question from ROUND30 remains as recorded there).
+  * entry 8 does not prove the bootloader's actual selection.
+  * ROUND29 disposable schema work remains unmerged.
+  * Phase E/F remain BLOCKED: a linking Image is not a booting device.
+    No claim of bootability is made or implied.
+
+--------------------------------------------------------------------------------
+12. BOUNDARY OF OPERATIONS
+--------------------------------------------------------------------------------
+No device action of any kind (no ADB/fastboot/recovery/reboot/unlock/root/
+flash); no partition read or write; no boot/DTBO/AVB/vbmeta packaging; no
+HOS4.3 firmware upload; main, firmware-audit-v1 content branches,
+ack18-dby-w09-dts-draft and PR #1 untouched; the pinned ACK tree, parser and
+prior-round outputs unmodified except the disposable worktrees and the
+disposable build workspace owned by this round; no new external tool
+installed (the unit test uses gcc already present; dtschema venvs from
+ROUND30 reused read-only).
+
+This report is the final action of AI2-ROUND31. ROUND32 is NOT started.
+================================================================================
+END OF REPORT
+================================================================================

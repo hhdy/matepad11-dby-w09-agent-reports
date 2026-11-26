@@ -1,0 +1,125 @@
+{
+  "task": "AGENT_TASK_ROUND9.md",
+  "status": "COMPLETE",
+  "analysis_date": "2026-11-24",
+  "inputs": {
+    "base_fdt": "boot_fdt_candidate_0.dtb",
+    "overlay": "dtbo_entry_8.dtbo",
+    "both_exist": true,
+    "base_validation": "VALID",
+    "overlay_validation": "VALID",
+    "base_totalsize": 556524,
+    "overlay_totalsize": 329352,
+    "reextracted_from_firmware": false,
+    "parser": "ROUND3 Analyze-DBY-W09-DeviceTree.py (reused via importlib; not rewritten)"
+  },
+  "parser_reuse": {
+    "decode_structure": "ROUND3 reused",
+    "fixup_symbol_resolution": "ROUND8 approach reused",
+    "local_fixup_domain": "applied (overlay phandles resolved in overlay domain)",
+    "new_binary_parser_written": false,
+    "tools_installed": false
+  },
+  "indices": {
+    "base_phandles": 1693,
+    "overlay_local_phandles": 354,
+    "base_symbols": 1753,
+    "external_fixup_entries": 451,
+    "local_fixup_nodes": 151
+  },
+  "subitems": {
+    "A_ufs": {
+      "total": 8,
+      "resolved": 8,
+      "unknown": 0,
+      "partial": 0
+    },
+    "A_ufs_base": {
+      "total": 6,
+      "resolved": 5,
+      "unknown": 1,
+      "partial": 0
+    },
+    "B_thp": {
+      "total": 11,
+      "resolved": 11,
+      "unknown": 0,
+      "partial": 0
+    },
+    "C_panel": {
+      "total": 9,
+      "resolved": 9,
+      "unknown": 0,
+      "partial": 0
+    },
+    "D_wlan_bt": {
+      "total": 19,
+      "resolved": 19,
+      "unknown": 0,
+      "partial": 0
+    },
+    "F_usbc": {
+      "total": 12,
+      "resolved": 8,
+      "unknown": 1,
+      "partial": 3
+    }
+  },
+  "camera": {
+    "inventory_rows": 68,
+    "resolved": 62,
+    "unknown": 6,
+    "sensor_model": "UNKNOWN",
+    "i2c_address": "UNKNOWN",
+    "endpoint_remote": "UNKNOWN"
+  },
+  "active_profile": {
+    "default_panel_pointer": "fragment@82 csot_nt36523_10p9_1080p_video_default",
+    "ACTIVE_PROFILE": "UNKNOWN",
+    "reason": "multiple profiles present; no runtime/bootloader selection evidence"
+  },
+  "blocked_unknown": [
+    "camera sensor model / I2C address / endpoint remote: not exported in FDT work copy",
+    "active panel profile: no runtime selection evidence",
+    "redriver exact model: HOS only 'onnn,redriver'",
+    "USB extcon targets: partial closure with existing parser",
+    "EROFS vendor/odm content: still BLOCKED from ROUND5 (unchanged)"
+  ],
+  "redaction": {
+    "mmio_reg_values": "not emitted",
+    "mac_bd_serial_imei": "not emitted",
+    "panel_init_payload": "not emitted",
+    "eeprom_calibration": "not emitted",
+    "firmware_blobs": "not emitted",
+    "full_local_sha256": "not emitted",
+    "user_host_full_path": "not emitted",
+    "token_pat_cookie": "not emitted",
+    "fdt_dtbo_binary_uploaded": false
+  },
+  "boundary_flags": {
+    "device_connected": false,
+    "adb_invoked": false,
+    "fastboot_invoked": false,
+    "flashed": false,
+    "unlocked": false,
+    "rooted": false,
+    "wrote_partitions": false,
+    "wsl_invoked": false,
+    "kernel_compiled": false,
+    "erofs_unpacked": false,
+    "firmware_reextracted": false,
+    "new_binary_parser": false,
+    "work_copies_modified": false
+  },
+  "outputs": [
+    "round9_pin_gpio_phandle_map.csv",
+    "round9_camera_public_node_inventory.csv",
+    "round9_panel_ufs_resolution.txt",
+    "round9_summary.json"
+  ],
+  "upload": {
+    "branch": "firmware-audit-v1",
+    "dir": "firmware-analysis/round9/",
+    "files": 4
+  }
+}

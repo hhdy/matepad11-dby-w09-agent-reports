@@ -1,0 +1,3 @@
+﻿partition,image_file,filesystem,magic_evidence,signature_detection,content_listing
+vendor,vendor.img,EROFS,0xE0F5E1E2 @ offset 1024,PASS,BLOCKED: no trusted read-only EROFS tool on host
+odm,odm.img,EROFS,0xE0F5E1E2 @ offset 1024,PASS,BLOCKED: no trusted read-only EROFS tool on host

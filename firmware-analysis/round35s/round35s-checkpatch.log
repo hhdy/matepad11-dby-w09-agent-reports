@@ -1,0 +1,16 @@
+=== checkpatch.pl --strict on round35s-kunit-seam.patch ===
+CMD: perl scripts/checkpatch.pl --strict --no-signoff --ignore FILE_PATH_CHANGES /home/kerneldev/work/matepad11/round35s-agent/round35s-kunit-seam.patch
+Traceback (most recent call last):
+  File "/home/kerneldev/work/matepad11/round35s-agent/tree-a/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+Traceback (most recent call last):
+  File "/home/kerneldev/work/matepad11/round35s-agent/tree-a/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+total: 0 errors, 0 warnings, 0 checks, 434 lines checked
+
+/home/kerneldev/work/matepad11/round35s-agent/round35s-kunit-seam.patch has no obvious style problems and is ready for submission.
+
+NOTE: Ignored message types: FILE_PATH_CHANGES
+CHECKPATCH_RC=0

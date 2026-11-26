@@ -1,0 +1,265 @@
+AI2-ROUND33 REVALIDATION REPORT (ADDENDUM) — 17-PATCH SERIES
+=============================================================
+Task ID:    TEST/VALIDATION round for AI2-ROUND33 (2号 AI), addendum run
+Executor:   user-local validation agent (read-only verification; no code changes)
+Date:       2026-11-25 (UTC+8)
+Context:    The first ROUND33 validation report
+            (AI2_ROUND33_TARGET_UNREGISTER_LIFECYCLE_REPORT.txt) recorded that the
+            originally published patch 16 was corrupt (4 of 5 hunks had header
+            counts not matching hunk bodies; git apply RC=128). Per the addendum
+            taskbook, 2号 AI re-exported patch 16 and split the binding change into
+            a new patch 17. This addendum reports the revalidation of the full
+            17-patch series.
+
+HEADLINE VERDICT: PATCHES APPLY, BUT THE COMMITTED HOST TEST HARNESS FAILS.
+  - 17/17 patches apply on the pristine pinned ACK (patches 16/17 with recorded
+    non-zero offsets, zero fuzz).
+  - checkpatch --strict: patch 16 and patch 17 both clean (0E/0W/0C).
+  - Committed tests/run_tests.sh FAILS:
+      * legacy ROUND31 suite: checks=38, failures=12  → FAIL
+      * ROUND32 suite: segfaults (SIGSEGV, exit 139) after 43 printed lines
+        (42 ok + 1 FAIL) at the ghost-target scenario → FAIL
+    Root cause (evidence below): the committed test suites still encode the
+    pre-ROUND33 semantics, while patch 16 v2 (self-target-only) and the updated
+    mock changed those semantics. Driver, mock, and tests are mutually
+    inconsistent in the committed branch state.
+  - Schema gates, fresh full build, ROUND58 config regression: NOT RUN.
+    Stopped per addendum taskbook step 9 ("If a defect is found, stop and
+    report exact evidence") — the harness defect is decisive and downstream
+    gates would not change it. No file was modified anywhere.
+
+--------------------------------------------------------------------
+1. STAGE A BRANCH / PATCH IDENTITY (addendum step 1) — PASS
+--------------------------------------------------------------------
+Stage A branch: ai-parallel/stagea-port-until-boot
+Branch HEAD at fetch: c4ee77184e2bf4e4eadf6280e67a510be5e729e5
+  ("ROUND61: publish hosted UFS and PHY validation evidence")
+  98fda4151bea7b4a7a717054c431f59a7ff23bb6 (ROUND32 Stage A commit) is an
+  ancestor of HEAD: merge-base --is-ancestor → YES.
+
+patch 16: kernel-baseline/round61/patches/round33-0001-regulator-proxy-self-target-only.patch
+  bytes    = 3375
+  git blob = 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe   expected MATCH
+  sha256   = 7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4
+             expected MATCH (taskbook addendum and series record carry the same
+             64-char value; the corrupted 63-char rendering seen in one raw
+             fetch was a display artifact, verified against the decoded text)
+patch 17: kernel-baseline/round61/patches/round33-0002-regulator-proxy-self-target-binding.patch
+  bytes    = 2848
+  git blob = d2e818296118672bd708db34ed08d817fcd3895b   expected MATCH
+  sha256   = d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05
+             expected MATCH
+
+Series record kernel-baseline/round61/round32-stagea-series.txt (at HEAD
+c4ee7718) contains 17 ordered entries; entries #16 and #17 record blob
+3899e2b7 / d2e81829 and sha256 7b4858f5… / d19fb3b6… respectively, status
+"pending-local-apply-check". All 17 patch files in the checkout were
+re-hashed: 17/17 MATCH (blob via git hash-object, sha256 via sha256sum).
+
+IDENTITY: PASS. Patch 16 is a fresh re-export (old corrupt blob 262ab30f no
+longer referenced anywhere in the series); hunk header counts were verified
+by 2号 AI per the addendum and are additionally confirmed here by the actual
+apply results in §2.
+
+--------------------------------------------------------------------
+2. 17-PATCH SEQUENTIAL APPLY ON PRISTINE PINNED ACK (step 2) — PASS
+--------------------------------------------------------------------
+Disposable detached worktree at exact ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a.
+For each patch: git apply --check --verbose → git apply → git diff --check.
+
+Patches 1-15 (unchanged ROUND31/32 series): all CHECK_RC=0, APPLY_RC=0,
+DIFFCHECK_RC=0, zero offset, zero fuzz (verbose output shows plain
+"Checking patch …" lines only).
+
+Patch 16: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0, but with recorded offsets:
+  Hunk #1 succeeded at 187 (offset -25 lines).
+  Hunk #2 succeeded at 244 (offset -2 lines).
+  Hunk #3 succeeded at 274 (offset 2 lines).
+Patch 17: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0, with recorded offsets:
+  Hunk #1 succeeded at 119 (offset 1 line).
+  Hunk #2 succeeded at 149 (offset -2 lines).
+applied=17 fail=0.
+
+NOTE ON OFFSETS: the addendum taskbook requires recording exact return codes
+and offsets/fuzz; unlike the ROUND124 taskbook it does not set a zero-offset
+PASS bar, and no fuzz occurred (context lines matched exactly at shifted
+positions). Judged PASS with offsets recorded. 2号 AI may still want to
+regenerate patches 16/17 against the exact 15-patch tree to eliminate the
+offsets (cosmetic, semantics unaffected).
+
+Post-apply tree: 16 dirty path entries (12 modified + 4 new files), 12 files
+changed / 546 insertions / 8 deletions tracked + 4 new files
+(proxy-consumer.c now 14,470 B = 13,012 + patch 16 v2 content).
+
+--------------------------------------------------------------------
+3. CHECKPATCH (step 3) — PASS
+--------------------------------------------------------------------
+scripts/checkpatch.pl --strict, run separately:
+  patch 16 (driver):  total: 0 errors, 0 warnings, 0 checks, 62 lines checked.
+                      "no obvious style problems and is ready for submission."
+                      CHECKPATCH16_RC=0
+  patch 17 (binding): total: 0 errors, 0 warnings, 0 checks, 30 lines checked.
+                      CHECKPATCH17_RC=0
+Both clean — the v1 corruption and the v1 "binding doc should be separate
+patch" warning are both resolved by the re-export + split.
+
+--------------------------------------------------------------------
+4. COMMITTED HOST TESTS (step 4) — FAIL (blocking defect)
+--------------------------------------------------------------------
+Command: bash tests/run_tests.sh <17-patch worktree>   (committed version at
+HEAD c4ee7718; compiles the REAL drivers/regulator/proxy-consumer.c from the
+17-patch tree against the committed mock tree; driver source sha256
+dc24fa52ec12d2bdedf97696b894ac1446b6ba8f23cb6525bcde7597237fbf9c)
+
+--- suite 1: test_proxy_consumer_r31 (legacy) ---
+  COMPILE_RC=0
+  Result: checks=38  failures=12   RESULT: FAIL   TEST_RC=1
+  The 12 failures (exact lines from test output):
+    :101  FAIL single 100000 uA load vote
+    :103  FAIL single enable, balance 1
+    :114  FAIL unregister disables once, balance 0
+    :117  FAIL unregister puts the regulator once
+    :165  FAIL set_load failure propagates
+    :168  FAIL set_load failure -> regulator_put once
+    :175  FAIL enable failure propagates
+    :177  FAIL enable failure -> regulator_put once
+    :190  FAIL two rails -> enable balance 2
+    :199  FAIL late_initcall_sync drops both enables
+    :201  FAIL late_initcall_sync drops both load votes
+    :203  FAIL late_initcall_sync drops both puts
+  Failure signature: every legacy registration parks as deferred. Test output
+  shows "[pr_info] proxy target for pm8150-rpmh-regulators deferred, will
+  retry before late_initcall_sync" on the legacy registration scenarios, and
+  "[pr_info] dropping deferred proxy consumer … without voting" on teardown.
+
+  ROOT CAUSE (exact evidence): the committed mock/mock_core.h regulator_get()
+  (lines ~304-322) was updated for ROUND33 to resolve the target through
+  of_parse_phandle(dev->of_node, "proxy-supply", 0) and returns
+  ERR_PTR(-EPROBE_DEFER) when the provider node has no proxy-supply property
+  (or the target is unregistered):
+      target = of_parse_phandle(dev ? dev->of_node : NULL, "proxy-supply", 0);
+      if (!target || !mock_find_target(target)) {
+              mock_record(target, MOCK_GET_DEFER, 0, 0, 0);
+              return ERR_PTR(-EPROBE_DEFER);
+      }
+  The legacy suite test_proxy_consumer_r31.c was NOT updated: its group nodes
+  carry no proxy-supply property (they predate the ROUND33 self-target-only
+  design, where even the provider-level legacy mapping must carry proxy-supply
+  pointing at the owning child). Therefore every legacy registration parks as
+  deferred, no votes are ever applied, and all vote/put-count assertions fail.
+  The committed 38-check suite is incompatible with the committed mock — a
+  test-harness coherence defect in the branch state, not an environment issue
+  (same failure reproduces on the pristine 17-patch tree).
+
+--- suite 2: test_proxy_consumer_round32 (+ ROUND33 assertions) ---
+  COMPILE_RC=0
+  Suite source contains 83 CHECK( occurrences.
+  Result: SEGMENTATION FAULT, exit 139 (SIGSEGV), after 43 printed result
+  lines (42 ok + 1 FAIL). Progress before the crash: independent
+  child-scoped voting, ambiguity -EINVAL, deferred parking/retry/drop,
+  bulk revoke — all passing up to scenario 8 (ghost target).
+
+  Exact crash sequence (scenario 8, "target that never registers"):
+    [dev_err] …: proxy-supply must target the regulator child owning this
+                 proxy request            ← self-target-only validation
+    FAIL ghost target -> consumer parked   (test_proxy_consumer_round32.c:270)
+    SIGSEGV                                ← next statement, :274
+           rdev9.proxy_consumer->deferred == true
+    dereferences rdev9.proxy_consumer which holds ERR_PTR(-EINVAL)
+    (register returned the error pointer; the test assumed a parked consumer).
+
+  ROOT CAUSE (exact evidence): the committed ROUND32/33 suite still encodes
+  the pre-ROUND33 semantics for a non-self target: scenario 8/9 add
+  add_supply(&l9_node, "proxy-supply", &ghost_node) and expect
+  "ghost target -> consumer parked" followed by a deferred lifecycle.
+  Patch 16 v2 implements self-target-only: a proxy-supply that does not
+  target the owning regulator node is rejected with -EINVAL at registration
+  (driver: proxy_consumer_validate_self_target, dev_err
+  "proxy-supply must target the regulator child owning this proxy request").
+  The test expectation and the driver semantics are mutually inconsistent;
+  the mismatch produces both the FAIL and the ERR_PTR dereference crash.
+  (The "deferred target -> parked / retry" scenarios just above still pass
+  because a phandle to an unregistered node is deferral, not a ghost.)
+
+CONCLUSION §4: FAIL — blocking. The branch's own reproducible harness (the
+ROUND31-referenced deliverable "tests must stay in-repo and pass") does not
+pass on the exact 17-patch tree. Lifecycle behavior therefore cannot be
+claimed verified; in fact the committed suites contradict the implemented
+self-target-only semantics in two places (legacy provider-level resolution
+input, and ghost-target handling).
+
+--------------------------------------------------------------------
+5. SCHEMA GATES / FULL BUILD / CONFIG REGRESSION (steps 5-7) — NOT RUN
+--------------------------------------------------------------------
+NOT RUN (blocked by the §4 defect, stopped per addendum step 9):
+  - dt_binding_check / dt-doc-validate / DTS fixtures / positive-negative
+    schema gates on the 17-patch tree: NOT RUN.
+  - Fresh full tools/bazel build //common:dby_w09 on the 17-patch tree: NOT RUN.
+  - ROUND58 config helper 33/33 and helper tests 11/11 regression: NOT RUN.
+These gates are independent of the harness failure, but the addendum's
+step 9 mandates stop-and-report on a discovered defect; burning a fresh
+build on a tree whose committed harness fails would not change the verdict
+and risks a misleading partial-green signal. They remain ready to re-run
+once 2号 AI fixes the two suite inconsistencies (see §7).
+
+--------------------------------------------------------------------
+6. CLEANUP AND SAFETY (steps 8-10) — PASS
+--------------------------------------------------------------------
+- Disposable worktrees removed: r33-apply (pinned ACK apply tree) and
+  r33-repo (branch checkout). git worktree list back to the 3 pre-existing
+  entries. Scratch test binaries and temp logs deleted.
+- The manifest-pinned Stage A build workspace was never touched in this run:
+  it remains at pinned ACK HEAD with the 15-patch Stage A dirty state
+  (16 entries, tracked-diff 613e7ea4bcd826b7… — unchanged).
+- No source, patch, binding, fixture, test, series or PROGRESS file was
+  modified anywhere. No branch checkout/commit/mutation.
+- No device connection, ADB, fastboot, root, reboot, flash, partition access,
+  boot/DTBO/AVB/vbmeta operation, firmware upload, or HOS4.3 evidence upload.
+- ROUND34 not started.
+
+--------------------------------------------------------------------
+7. HANDOFF TO 2号 AI (exact defect summary)
+--------------------------------------------------------------------
+Defect 1 (legacy suite): tests/test_proxy_consumer_r31.c expects provider-level
+  regulator_get() to resolve without proxy-supply, but the committed mock now
+  requires a resolvable "proxy-supply" phandle on the provider node and defers
+  otherwise. Fix direction (2号 AI's decision): either give the r31 scenarios
+  provider nodes with proxy-supply targeting the owning child (matching
+  self-target-only legacy mapping) and update assertions accordingly, or keep
+  a mock legacy resolution path — but the current committed pair is
+  inconsistent: 38 checks / 12 failures.
+Defect 2 (round32/33 suite): scenario 8 and 9 expect a ghost (non-self) target
+  to park with -EPROBE_DEFER; patch 16 v2 rejects non-self targets with
+  -EINVAL at registration. The stale expectation first FAILs at
+  test_proxy_consumer_round32.c:270 and then segfaults at :274 by
+  dereferencing ERR_PTR(-EINVAL) (rdev9.proxy_consumer->deferred).
+  The suite needs the ghost scenarios rewritten to the reject-with-.-EINVAL
+  semantics (assert IS_ERR and -EINVAL, never dereference), or the driver
+  semantics reverted — currently impossible to tell which from the branch.
+
+Summary table:
+| Check                                        | Result | Evidence (abridged) |
+|----------------------------------------------|--------|---------------------|
+| Stage A HEAD c4ee7718, 98fda41 ancestor      | PASS   | merge-base YES      |
+| patch 16 blob/sha256 identity                | PASS   | 3899e2b7 / 7b4858f5 |
+| patch 17 blob/sha256 identity                | PASS   | d2e81829 / d19fb3b6 |
+| series 17 entries, #16/#17 recorded identity | PASS   | 17/17 files MATCH   |
+| patches 1-15 apply (zero offset/fuzz)        | PASS   | 45/45 rc=0          |
+| patch 16 apply                               | PASS   | RC=0, offsets -25/-2/+2, 0 fuzz |
+| patch 17 apply                               | PASS   | RC=0, offsets +1/-2, 0 fuzz |
+| checkpatch 16                                | PASS   | 0E/0W/0C, RC=0      |
+| checkpatch 17                                | PASS   | 0E/0W/0C, RC=0      |
+| tests/run_tests.sh legacy suite              | FAIL   | checks=38 failures=12 |
+| tests/run_tests.sh ROUND32/33 suite          | FAIL   | SIGSEGV 139 @ ghost :270/:274 |
+| schema gates (binding check, fixtures, neg)  | NOT RUN | stopped per step 9 |
+| fresh full Kleaf build                       | NOT RUN | stopped per step 9 |
+| ROUND58 config 33/33 + helper 11/11          | NOT RUN | stopped per step 9 |
+| cleanup / no file modified                   | PASS   | worktrees removed, a30 dirty=16 unchanged |
+
+VERDICT: identity/apply/checkpatch all PASS; committed host harness FAILS in
+both suites with root causes pinned to committed-file inconsistencies (mock vs
+r31 tests; self-target-only semantics vs ghost-scenario expectations). Schema,
+build and config gates NOT RUN by the stop rule. No FAIL was repaired; exact
+evidence handed to 2号 AI.
+
+— end of addendum report —

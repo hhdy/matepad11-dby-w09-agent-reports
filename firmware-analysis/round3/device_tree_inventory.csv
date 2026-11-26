@@ -1,0 +1,14 @@
+source_image,entry_index,offset,size_bytes,fdt_validation,model,compatible,dtbo_id,dtbo_rev
+dtbo.img,0,320,329044,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,1,329364,329352,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,2,658716,329240,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,3,987956,329098,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,4,1317054,329340,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,5,1646394,329356,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,6,1975750,329356,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,7,2305106,329352,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+dtbo.img,8,2634458,329352,VALID,"Huawei Technologies, Inc. DBY-W09","qcom,kona-qrd",0x00000000,0x00000000
+boot.img,0,22790144,556524,VALID (candidate),"Qualcomm Technologies, Inc. kona v2.1 SoC","qcom,kona",,
+boot.img,1,23346668,556520,VALID (candidate),"Qualcomm Technologies, Inc. kona v2 SoC","qcom,kona",,
+boot.img,2,23903188,551026,VALID (candidate),"Qualcomm Technologies, Inc. kona v1 SoC","qcom,kona",,
+boot.img,3,24454214,173,VALID (candidate),,,,

@@ -1,0 +1,614 @@
+round135-r1-identity-and-apply.log
+generated: 2026-11-26T04:10:02Z by WorkBuddy test agent (ROUND135 Revision-1 rerun executor)
+
+================================================================
+SECTION A - R1 input identity summary
+================================================================
+
+Revision-1 addendum identities (from TEST_AGENT_ROUND135_TASKBOOK.md rev 1 @ ai1/round130-...):
+  updated manifest blob  ffcb225b4a28974350bd1cc8588fdb95df9372d0 -> actual MATCH (manifest_r1.md)
+  corrected patch 22     ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f -> actual MATCH (22-...-v2.patch), sha256=22bd58231b3791e3f2093aaa4dd8cdb6894300f7bb469a73c420dd7e23167123
+  patch 23 unchanged     2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5 -> actual MATCH
+  frozen 17 manifest     9a93b7e3a500d807533517a92b98fe244b2ea456 -> actual MATCH
+  patches 18-21          blobs f604c867/64dd2ad9/22ccec1c/c180dbf4 -> actual MATCH (sha256 in SECTION C)
+  corrected patch 22 TAB verification (cat -A): all six Makefile context rows and the
+  inserted huawei-dby-w09.dtb row carry literal ^I (TAB) before += -> FIXED as claimed
+
+================================================================
+SECTION B - hunk offsets (verbatim from SECTION D apply log)
+================================================================
+
+patches 1-15, 18, 19, 21, 22: applied cleanly, no offset lines emitted
+patch 16: H1 -25, H2 -2, H3 +2   (matches ROUND130/132 history)
+patch 17: H1 +1, H2 -2           (matches history)
+patch 20: H3 -19                 (matches history)
+patch 23: APPLY FAILED (see SECTION E) - not an offset issue
+
+================================================================
+SECTION C - R1 staging prep log (verbatim)
+================================================================
+
+### ROUND135 R1 staging prep 2026-11-26T04:04:06Z
+first_run_tree_preserved: round135-agent exists and will NOT be touched
+r135_first_run_dirty=18 files (expect 18, preserved)
+
+=== create NEW independent staging (hardlink read-only top, fresh common clone + fresh out) ===
+cp_al_ok
+common_HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (expect 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a) dirty=0 (expect 0)
+own_output_base=/home/kerneldev/work/matepad11/round135r1-agent/a30/out/bazel/output_user_root
+
+=== export fixed-commit round61 + round36 trees ===
+export_files=72
+
+=== frozen manifest identity re-check ===
+frozen_manifest MISMATCH
+
+=== R1 patch identities (18-21 local ROUND130-verified copies; 22 v2; 23 unchanged) ===
+18-round120-ufs-per-hba-async-join.patch       blob=f604c8672fcbc98f3e9645f5e8888c8a34b1c11e sha256=12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7
+19-round122-ufs-regulator-load-first.patch     blob=64dd2ad9022251e2411a1a745aeb920a0badfa85 sha256=2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66
+20-round128-qmp-ufs-dual-rail-v2.patch         blob=22ccec1cabf2d78e61442d19219985135f8341e7 sha256=53ef42bb997a46e776f65c256039b13285047f784fed506ab8b22ab7f76e3bfb
+21-round126-proxy-consumer-load-first.patch    blob=c180dbf458403d68b2c32c1d54776a7559e7e5db sha256=eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80
+22-round135-huawei-dby-w09-real-dts-v2.patch   blob=ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f sha256=22bd58231b3791e3f2093aaa4dd8cdb6894300f7bb469a73c420dd7e23167123
+23-round135-ufs-dual-genpd-driver.patch        blob=2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5 sha256=fe52bf2353943f3413ffaf5dffce7a2d371459352e7bd1ec9479ba534249a418
+expect: 18=f604c867... 19=64dd2ad9... 20=22ccec1c... 21=c180dbf4... 22v2=ea15a051... 23=2bf34810...
+
+=== original a30 still untouched ===
+a30_HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a dirty=16
+### end 2026-11-26T04:04:56Z
+
+================================================================
+SECTION D - ordered 23-patch apply log (verbatim, stopped at patch 23)
+================================================================
+
+### ROUND135 R1 ordered 23-patch apply 2026-11-26T04:05:33Z
+worktree=/home/kerneldev/work/matepad11/round135r1-agent/a30/common HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (expect 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a) dirty_start=0
+protocol: git apply --check --verbose -> git apply --verbose -> git diff --check; offsets recorded verbatim
+
+=== patch 1: 0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 2: round52-0001-context-corrected.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 3: round36-corrected-power-domain-range.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 4: round32-corrected-sc7180-clock-names.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 5: round33-checkpatch-clean.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 6: round52-0002-checkpatch-clean.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 7: round63-0002-qmp-ufs-phy-binding.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 8: round63-0001-phy-qcom-qmp-ufs-always-on.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 9: round58-kleaf-target.patch ===
+--- git apply --check --verbose ---
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 10: round31-0001-regulator-add-proxy-consumer.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 11: round31-0002-regulator-proxy-consumer-binding.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 12: round31-0003-dby-w09-enable-proxy-consumer.patch ===
+--- git apply --check --verbose ---
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 13: round32-0001-regulator-child-scoped-proxy-consumer.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 14: round32-0002-regulator-child-scoped-proxy-binding.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 15: round32-0003-dby-w09-child-scoped-proxy-review-dts.patch ===
+--- git apply --check --verbose ---
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 16: round33-0001-regulator-proxy-self-target-only.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 17: round33-0002-regulator-proxy-self-target-binding.patch ===
+--- git apply --check --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== 17-patch stage content tree: 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 (ROUND132 cross-check 77e2b2b1515b3813f7538aedffe4c5a4e90edb57) ===
+tree17_match_77e2b2b1=YES
+=== patch 18: 18-round120-ufs-per-hba-async-join.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/ufs/core/ufshcd-priv.h...
+Checking patch drivers/ufs/core/ufshcd.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/ufs/core/ufshcd-priv.h...
+Checking patch drivers/ufs/core/ufshcd.c...
+Applied patch drivers/ufs/core/ufshcd-priv.h cleanly.
+Applied patch drivers/ufs/core/ufshcd.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 19: 19-round122-ufs-regulator-load-first.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/ufs/core/ufshcd.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/ufs/core/ufshcd.c...
+Applied patch drivers/ufs/core/ufshcd.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 20: 20-round128-qmp-ufs-dual-rail-v2.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 21: 21-round126-proxy-consumer-load-first.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 22: 22-round135-huawei-dby-w09-real-dts-v2.patch ===
+--- git apply --check --verbose ---
+Checking patch arch/arm64/boot/dts/qcom/Makefile...
+Checking patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts...
+CHECK_RC=0
+--- git apply --verbose ---
+Checking patch arch/arm64/boot/dts/qcom/Makefile...
+Checking patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts...
+Applied patch arch/arm64/boot/dts/qcom/Makefile cleanly.
+Applied patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts cleanly.
+APPLY_RC=0
+--- git diff --check ---
+DIFFCHECK_RC=0
+=== patch 23: 23-round135-ufs-dual-genpd-driver.patch ===
+--- git apply --check --verbose ---
+Checking patch drivers/ufs/host/ufs-qcom.c...
+error: while searching for:
+#include <linux/gpio/consumer.h>
+#include <linux/interconnect.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/time.h>
+#include <linux/unaligned.h>
+#include <linux/units.h>
+
+#include <soc/qcom/ice.h>
+
+error: patch failed: drivers/ufs/host/ufs-qcom.c:11
+error: drivers/ufs/host/ufs-qcom.c: patch does not apply
+CHECK_RC=nonzero STOP
+
+================================================================
+SECTION E - patch 23 failure: root-cause evidence (verbatim)
+================================================================
+
+### ROUND135 R1 patch-23 apply failure diagnostics 2026-11-26T04:06:12Z
+
+=== A. actual ufs-qcom.c header (lines 1-25, cat -A) ===
+// SPDX-License-Identifier: GPL-2.0-only$
+/*$
+ * Copyright (c) 2013-2016, Linux Foundation. All rights reserved.$
+ */$
+$
+#include <linux/acpi.h>$
+#include <linux/clk.h>$
+#include <linux/cleanup.h>$
+#include <linux/delay.h>$
+#include <linux/devfreq.h>$
+#include <linux/gpio/consumer.h>$
+#include <linux/interconnect.h>$
+#include <linux/module.h>$
+#include <linux/errno.h>$
+#include <linux/of.h>$
+#include <linux/phy/phy.h>$
+#include <linux/platform_device.h>$
+#include <linux/pm_domain.h>$
+#include <linux/pm_opp.h>$
+#include <linux/regulator/consumer.h>$
+#include <linux/reset-controller.h>$
+#include <linux/time.h>$
+#include <linux/unaligned.h>$
+#include <linux/units.h>$
+$
+
+=== B. patch 23 first hunk (verbatim, cat -A first 30 lines) ===
+From: DBY-W09 kernel-port draft$
+Subject: [PATCH DRAFT] scsi: ufs: qcom: route SM8250 UFS OPP to RPMhPD$
+$
+For an SM8250 UFS host with the supported two-domain topology, attach MMCX$
+as power-domains index 0 and keep GCC UFS_PHY_GDSC as index 1. The generic$
+device-core GenPD attach path intentionally skips consumers with multiple$
+power-domains, so the Qualcomm UFS probe owns the attach-list operation.$
+$
+Before attaching the domains, validate every available UFS OPP entry:$
+each entry must have exactly one required-opps reference to the SM8250$
+RPMhPD provider's exact operating-points-v2 table. Then map required_dev$
+slot 0 to the MMCX virtual GenPD device before ufshcd_pltfrm_init() adds$
+the UFS OPP table.$
+$
+The one-domain generic path is unchanged. Unsupported multi-domain$
+arrangements fail closed because the generic GenPD core skips them rather$
+than attaching any one of their domains. This defines the currently$
+supported two-domain contract for SM8250 UFS hosts; DBY-W09 is the board$
+currently adding this topology.$
+$
+The code uses PD_FLAG_DEV_LINK_ON so the attached suppliers are$
+runtime-active while the UFS consumer is active. It deliberately does not$
+use PD_FLAG_REQUIRED_OPP, because this OPP table has one required-OPP slot,$
+not one slot for each attached domain.$
+$
+This patch does not implement MMCX-to-MX parent propagation. ROUND30 records$
+that this remains a separate unresolved HOS4.3 corner-equivalence gate.$
+$
+Draft only: not applied to a full kernel tree, compiled, checkpatched,$
+schema-validated or tested on hardware.$
+
+=== C. patch 23 all hunks headers ===
+38:@@ -11,12 +11,18 @@
+57:@@ -2802,15 +2808,214 @@
+
+=== D. which patches touched ufs-qcom.c in 1-21? ===
+TOUCHED: round33-checkpatch-clean.patch
+TOUCHED: round52-0002-checkpatch-clean.patch
+
+=== E. actual ufs-qcom.c include block sorted context ===
+6:#include <linux/acpi.h>
+7:#include <linux/clk.h>
+8:#include <linux/cleanup.h>
+9:#include <linux/delay.h>
+10:#include <linux/devfreq.h>
+11:#include <linux/gpio/consumer.h>
+12:#include <linux/interconnect.h>
+13:#include <linux/module.h>
+14:#include <linux/errno.h>
+15:#include <linux/of.h>
+16:#include <linux/phy/phy.h>
+17:#include <linux/platform_device.h>
+18:#include <linux/pm_domain.h>
+19:#include <linux/pm_opp.h>
+20:#include <linux/regulator/consumer.h>
+21:#include <linux/reset-controller.h>
+22:#include <linux/time.h>
+23:#include <linux/unaligned.h>
+24:#include <linux/units.h>
+26:#include <dt-bindings/clock/qcom,gcc-sm8250.h>
+27:#include <dt-bindings/power/qcom,rpmhpd.h>
+29:#include <soc/qcom/ice.h>
+31:#include <ufs/ufshcd.h>
+32:#include <ufs/ufshci.h>
+33:#include <ufs/ufs_quirks.h>
+34:#include <ufs/unipro.h>
+35:#include "ufshcd-pltfrm.h"
+36:#include "ufs-qcom.h"
+
+=== F. state check ===
+dirty=20 files (22 applied OK; 23 not applied)
+-rw-r--r-- 1 kerneldev kerneldev 15437 Nov 26 12:05 /home/kerneldev/work/matepad11/round135r1-agent/a30/common/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+DTS file EXISTS from patch 22
+282:dtb-$(CONFIG_ARCH_QCOM)	+= huawei-dby-w09.dtb
+### end 2026-11-26T04:06:12Z
+
+### ROUND135 R1 patch-23 root-cause evidence 2026-11-26T04:07:13Z
+
+=== A. ACK HEAD (unpatched) ufs-qcom.c include block ===
+6:#include <linux/acpi.h>
+7:#include <linux/clk.h>
+8:#include <linux/cleanup.h>
+9:#include <linux/delay.h>
+10:#include <linux/devfreq.h>
+11:#include <linux/gpio/consumer.h>
+12:#include <linux/interconnect.h>
+13:#include <linux/module.h>
+14:#include <linux/of.h>
+15:#include <linux/phy/phy.h>
+16:#include <linux/platform_device.h>
+17:#include <linux/reset-controller.h>
+18:#include <linux/time.h>
+19:#include <linux/unaligned.h>
+20:#include <linux/units.h>
+22:#include <soc/qcom/ice.h>
+24:#include <ufs/ufshcd.h>
+25:#include <ufs/ufshci.h>
+26:#include <ufs/ufs_quirks.h>
+27:#include <ufs/unipro.h>
+28:#include "ufshcd-pltfrm.h"
+29:#include "ufs-qcom.h"
+
+=== B. which frozen patch added errno.h / pm_domain.h / pm_opp.h / dt-bindings lines? ===
+--- round33-checkpatch-clean.patch ufs-qcom.c hunk headers ---
+39:@@ -11,12 +11,18 @@
+58:@@ -2802,15 +2808,214 @@
+  include-add lines touching ufs-qcom.c:
++#include <linux/errno.h>
++#include <linux/pm_domain.h>
++#include <linux/pm_opp.h>
++#include <dt-bindings/clock/qcom,gcc-sm8250.h>
++#include <dt-bindings/power/qcom,rpmhpd.h>
+--- round52-0002-checkpatch-clean.patch ufs-qcom.c hunk headers ---
+33:@@ -316,9 +316,13 @@
+51:@@ -17,4 +17,5 @@
+57:@@ -1497,6 +1498,77 @@
+135:@@ -1584,5 +1656,9 @@
+  include-add lines touching ufs-qcom.c:
++#include <linux/regulator/consumer.h>
+
+=== C. patch 23 hunk1 target: lines it expects to exist (context) ===
+#include <linux/gpio/consumer.h>
+#include <linux/interconnect.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/time.h>
+#include <linux/unaligned.h>
+#include <linux/units.h>
+
+#include <soc/qcom/ice.h>
+
+=== D. actual 22-patch tree same region (lines 11-30) ===
+#include <linux/gpio/consumer.h>
+#include <linux/interconnect.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_opp.h>
+#include <linux/regulator/consumer.h>
+#include <linux/reset-controller.h>
+#include <linux/time.h>
+#include <linux/unaligned.h>
+#include <linux/units.h>
+
+#include <dt-bindings/clock/qcom,gcc-sm8250.h>
+#include <dt-bindings/power/qcom,rpmhpd.h>
+
+#include <soc/qcom/ice.h>
+
+
+=== E. exact mismatch probe ===
+EXPECTED-CONTIGUITY-BROKEN at: gpio/consumer.h (previous matched line 0 )
+  next lines: ['// SPDX-License-Identifier: GPL-2.0-only', '/*', ' * Copyright (c) 2013-2016, Linux Foundation. All rights reserved.']
+patch23_hunk1_context_contiguous= False
+line14_actual= '#include <linux/errno.h>'
+line14_actual_is_errno= True
+### end 2026-11-26T04:07:14Z
+
+=== byte compare: frozen patch 5 (round33-checkpatch-clean) vs patch 23 ===
+DIFFERENT
+frozen5  blob=f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 size=8481
+patch23  blob=2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5 size=8490
+
+=== content diff (first 60 lines) ===
+26,28c26,27
+< This patch does not implement MMCX-to-MX parent propagation.
+< ROUND30 records this as a separate unresolved HOS4.3
+< corner-equivalence gate.
+---
+> This patch does not implement MMCX-to-MX parent propagation. ROUND30 records
+> that this remains a separate unresolved HOS4.3 corner-equivalence gate.
+67c66
+< +					  struct device_node *opp)
+---
+> +					 struct device_node *opp)
+
+=== similarity: strip headers and compare patch bodies ===
+bodies differ:
+32c32
+< +					  struct device_node *opp)
+---
+> +					 struct device_node *opp)
+
+================================================================
+SECTION F - final R1 state (verbatim)
+================================================================
+
+### ROUND135 R1 final state snapshot 2026-11-26T04:09:23Z
+tree22_final=afe9517f8062b96bfeb5b4dd5714942861e6a44b
+--- status ---
+M  BUILD.bazel
+M  Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+M  Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+M  Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+M  Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+M  arch/arm64/boot/dts/qcom/Makefile
+A  arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+A  arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+A  arch/arm64/configs/dby_w09_storage_first.fragment
+M  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+M  drivers/regulator/Kconfig
+M  drivers/regulator/Makefile
+M  drivers/regulator/core.c
+A  drivers/regulator/proxy-consumer.c
+M  drivers/ufs/core/ufshcd-priv.h
+M  drivers/ufs/core/ufshcd.c
+M  drivers/ufs/host/ufs-qcom.c
+M  drivers/ufs/host/ufs-qcom.h
+M  include/linux/regulator/driver.h
+A  include/linux/regulator/proxy-consumer.h
+--- diff HEAD --stat tail ---
+ drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++
+ drivers/ufs/host/ufs-qcom.h                        |   4 +
+ include/linux/regulator/driver.h                   |   3 +-
+ include/linux/regulator/proxy-consumer.h           |  41 ++
+ 20 files changed, 1748 insertions(+), 16 deletions(-)
+--- binary diff hash ---
+diff_binary_sha256=2a784c2007cdbb468f59d8ab0cdcc7a00d7bd35bb9c7a7cd8d97dce75371fdae
+--- patch22 DTS sanity: file exists, Makefile entry present ---
+-rw-r--r-- 1 kerneldev kerneldev 15437 Nov 26 12:05 /home/kerneldev/work/matepad11/round135r1-agent/a30/common/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+282:dtb-$(CONFIG_ARCH_QCOM)	+= huawei-dby-w09.dtb
+### end 2026-11-26T04:09:25Z
+### end of log

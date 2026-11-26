@@ -1,0 +1,11 @@
+slot,partition_name,attributes,group_index,group_name,first_extent_index,num_extents,total_size_bytes,extent_details
+0,cust,0x00000001,1,qti_dynamic_partitions,0,1,8024064,idx=0 type=LINEAR sectors=15672 target_data=2048 target_source=0
+0,hw_product,0x00000001,1,qti_dynamic_partitions,1,1,2826309632,idx=1 type=LINEAR sectors=5520136 target_data=18432 target_source=0
+0,odm,0x00000001,1,qti_dynamic_partitions,2,1,51593216,idx=2 type=LINEAR sectors=100768 target_data=5539840 target_source=0
+0,system,0x00000001,1,qti_dynamic_partitions,3,1,3206561792,idx=3 type=LINEAR sectors=6262816 target_data=5642240 target_source=0
+0,vendor,0x00000001,1,qti_dynamic_partitions,4,1,1022038016,idx=4 type=LINEAR sectors=1996168 target_data=11907072 target_source=0
+1,cust,0x00000001,1,qti_dynamic_partitions,0,1,8024064,idx=0 type=LINEAR sectors=15672 target_data=2048 target_source=0
+1,hw_product,0x00000001,1,qti_dynamic_partitions,1,1,2826309632,idx=1 type=LINEAR sectors=5520136 target_data=18432 target_source=0
+1,odm,0x00000001,1,qti_dynamic_partitions,2,1,51593216,idx=2 type=LINEAR sectors=100768 target_data=5539840 target_source=0
+1,system,0x00000001,1,qti_dynamic_partitions,3,1,3206561792,idx=3 type=LINEAR sectors=6262816 target_data=5642240 target_source=0
+1,vendor,0x00000001,1,qti_dynamic_partitions,4,1,1022038016,idx=4 type=LINEAR sectors=1996168 target_data=11907072 target_source=0

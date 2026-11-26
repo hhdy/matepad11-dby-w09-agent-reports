@@ -1,0 +1,15 @@
+round135-r1-schema-and-dtb.log
+generated: 2026-11-26T04:10:02Z by WorkBuddy test agent (Revision-1 rerun)
+
+STATUS: NOT RUN - BLOCKED UPSTREAM
+
+Taskbook Revision-1 step 4: 'Do not proceed on any error, fuzz, reject or unreviewed
+offset'; step 5: 'If both patches apply, proceed with §4-§7'. Patch 23 failed to apply
+(duplicate of frozen patch 5 content; see round135-r1-identity-and-apply.log SECTION E),
+so the 23-patch tree was never completed. Therefore §4.1 source assertions (including
+the Revision-1 DTS items), §4.2 four-binding dt_binding_check, §4.3 real DTB build,
+dtbs_check and decompile were NOT RUN. No synthetic output was produced.
+
+Note: the corrected patch 22 DID apply cleanly (tree22 = afe9517f8062b96bfeb5b4dd5714942861e6a44b,
+huawei-dby-w09.dts present, Makefile entry at line 282), but a 22-patch tree is not the
+taskbook's §4 input and no partial validation was attempted.

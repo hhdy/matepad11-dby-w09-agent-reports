@@ -1,0 +1,11 @@
+﻿DTBO regression test - Windows PowerShell 5.1
+PowerShell version: 5.1.26100.6899
+Command: powershell.exe -NoProfile -ExecutionPolicy Bypass -File Test-DTBO-Header.ps1 -AnalyzerPath <Analyze-DBY-W09-Firmware.ps1>
+
+Analysis complete.
+Output directory: <USERPROFILE>\AppData\Local\Temp\DBY-W09-DTBO-Test-1fb95081e03d4c73a9ffee2b35cfe399\output
+Inventory rows: 3
+Extracted local boot-related images: 3
+Upload only text/CSV/JSON reports to the public repository. Do NOT upload payloads/.
+PASS: Windows PowerShell DTBO high-bit magic and one-entry header test.
+EXIT=0

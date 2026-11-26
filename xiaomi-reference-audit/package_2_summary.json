@@ -1,0 +1,11 @@
+{
+  "package_id": 2,
+  "status": "NOT_FOUND_IN_LOCAL_DIRECTORY",
+  "searched_scope": [
+    "D:/123pan/Downloads (task-specified input; contains only package 1 volumes)",
+    "D:/123云盘 (application installation; no firmware volumes)",
+    "D:/光鸭云盘下载 (empty)"
+  ],
+  "note": "The task book states two packages exist. Only one complete volume set was found. No second package was moved, renamed, or inferred from file names. A D-wide filename search was attempted but blocked by command safety policy; no further scanning was performed.",
+  "action": "Awaiting user confirmation of the second package location/name. No extraction attempted."
+}

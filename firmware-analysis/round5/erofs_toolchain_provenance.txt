@@ -1,0 +1,102 @@
+EROFS TOOLCHAIN PROVENANCE — AGENT_TASK_ROUND5.md
+==================================================
+Result: NO TRUSTED READABLE EROFS TOOLCHAIN AVAILABLE -> STOP CONDITION E (BLOCKED)
+Host: Windows (native shell), analysis date 2026-11-24 (GMT+8).
+Scope: read-only detection and public-source verification only. No install, no
+download/execute of unknown binaries, no WSL, no policy/defender changes,
+no writable mount, no image repair, no kernel build.
+
+This file documents SECTION 2 (highest priority) of the task book. Because the
+tool-source gate failed, filesystem content enumeration was NOT performed; all
+content-layer items are BLOCKED in round5_summary.json.
+
+--- 1. Windows environment detection (task-book command, read-only) ---
+Command run:
+  Get-Command dump.erofs,fsck.erofs,erofsfuse,docker,git,gcc,clang,cmake,
+              ninja,make,mingw32-make,7z -ErrorAction SilentlyContinue
+Result: NONE FOUND (empty command set).
+
+Independent PATH cross-check via where.exe, each verified separately:
+  dump.erofs    -> NOT_FOUND
+  fsck.erofs    -> NOT_FOUND
+  erofsfuse     -> NOT_FOUND
+  docker        -> NOT_FOUND
+  git           -> NOT_FOUND
+  gcc           -> NOT_FOUND
+  clang         -> NOT_FOUND
+  cmake         -> NOT_FOUND
+  ninja         -> NOT_FOUND
+  make          -> NOT_FOUND
+  mingw32-make  -> NOT_FOUND
+  7z            -> NOT_FOUND
+
+--- 2. Common Windows install-location scan (directories only, read-only) ---
+Docker:
+  Program Files\Docker\Docker\resources\bin\docker.exe   -> absent
+  Program Files\Docker\Docker\Docker Desktop.exe          -> absent
+  ProgramData\DockerDesktop                               -> absent
+  LocalAppData\Docker                                     -> absent
+MSYS2 / MinGW-w64 / Cygwin:
+  C:\msys64, C:\msys2, C:\MinGW, Program Files\mingw-w64,
+  C:\cygwin64, C:\cygwin, D:\msys64                       -> all absent
+Git-for-Windows bundled helpers:
+  usr\bin\gcc.exe / make.exe / strings.exe / file.exe     -> absent
+Archivers:
+  Program Files\7-Zip\7z.exe, (x86)\7-Zip\7z.exe          -> absent
+  Program Files\WinRAR\rar.exe                            -> PRESENT (WinRAR 5.50)
+    NOTE: WinRAR is a general archiver, NOT a trusted EROFS reader. It cannot
+    interpret EROFS metadata; not used for image content.
+Local erofs-utils source copies (name-only search, capped): none found.
+Local dump.erofs / fsck.erofs / erofsfuse anywhere in scanned roots: none found.
+
+No executable encountered during detection was run. No EROFS tool with a
+verifiable provenance exists on this host, so no path/version/SHA/signature/
+dependency record could be produced (Section 2 item 2 is vacuously satisfied).
+
+--- 3. Upstream status verification (public sources, read-only) ---
+Official sources referenced by the task book:
+  upstream: https://git.kernel.org/pub/scm/linux/kernel/git/xiang/erofs-utils.git
+  mirror:   https://kernel.googlesource.com/pub/scm/linux/kernel/git/xiang/erofs-utils/
+  AOSP:     https://android.googlesource.com/platform/external/erofs-utils/
+  docs:     https://erofs.docs.kernel.org/en/latest/install.html
+
+3a. GitHub erofs/erofs-utils Releases page (checked 2026-11-24):
+    "There aren't any releases here." -> ZERO releases, no official Windows
+    binary assets, no release SHA-256/signature/provenance to verify.
+    Per task book, this page showing no releases is NOT an official release.
+
+3b. Official kernel.org upstream log (checked 2026-11-24):
+    HEAD = v1.9.4, commit f36cadb5c563995ab3aa8572a60ed6b721b9557d,
+    dated 2026-08-19 ("erofs-utils: release 1.9.4").
+    Last ~20 commits (2026-06 .. 2026-08) contain NO subject mentioning
+    Windows / MinGW / Win32 / CRLF / Windows binary / release artifacts.
+    The latest official stable tag observed is v1.9.4.
+
+3c. AOSP googlesource mirror: direct fetch failed (same network limitation
+    seen in round3); GitHub aosp-mirror path returned 404. Not treated as
+    evidence either way; kernel.org upstream (3b) is the authoritative tree.
+
+3d. Task-book-listed mailing-list patches (2026-11-02 native Windows/MinGW
+    I/O layer + docker cross-build; 2026-11-04 tempfile/CRLF fixes;
+    2026-11-22 proposal to add Windows binaries to release artifacts):
+    These are email/list proposals, NOT merged upstream commits and NOT
+    published binaries. Verified against 3a (no releases) and 3b (upstream
+    HEAD still 2026-08-19, no Windows commits). Therefore they do not satisfy
+    the "officially merged / officially released with provenance" gate.
+    Per task book, no binary was fetched from email attachments, net disks,
+    or personal forks.
+
+--- 4. Priority path evaluation (Section 2 order A..E) ---
+A. Local verifiable official dump.erofs / fsck.erofs ............... FAIL (none)
+B. Official-released Windows binaries with SHA/signature/provenance ... FAIL
+   (zero releases; no official Windows artifacts; 11-22 item is a proposal)
+C. Docker installed + daemon up + trusted cached image ............. FAIL
+   (docker binary absent; no daemon/image inspection possible)
+D. Upstream native Windows support merged + local MinGW toolchain ... FAIL
+   (upstream HEAD 2026-08-19 has no Windows merge; no MinGW/compiler)
+E. None satisfied -> STOP at tool-source verification, mark BLOCKED .... SELECTED
+
+Per the stop condition: no self-written EROFS decoder, no unknown EXE, no WSL
+touch, no security-policy change. Filesystem content / modules / firmware /
+VINTF are all reported BLOCKED; see round5_summary.json. No EROFS image,
+module, firmware, manifest original, or full local SHA-256 value is uploaded.

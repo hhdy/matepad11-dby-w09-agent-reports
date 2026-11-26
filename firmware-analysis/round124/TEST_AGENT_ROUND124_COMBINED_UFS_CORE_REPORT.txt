@@ -1,0 +1,362 @@
+TEST-AGENT-ROUND124 REPORT — COMBINED UFS CORE CANDIDATE VALIDATION
+====================================================================
+Task ID:      TEST-AGENT-ROUND124 (1号 AI taskbook, round124)
+Executor:     user-local read-only validation / build agent
+Date:         2026-11-25 (UTC+8)
+Verdict:      ALL REQUIRED CHECKS PASS — both candidates applied sequentially with
+              zero offset/fuzz, all §4 source gates verified, checkpatch has zero
+              errors on both patches, full Kleaf build succeeded with candidates
+              in the artifact, .config byte-identical to Stage A-only build,
+              workspace restored to byte-verified pre-overlay state.
+No device connection, no prohibited action, no branch mutation occurred.
+
+--------------------------------------------------------------------
+1. CANDIDATE IDENTITY (§1)
+--------------------------------------------------------------------
+Source branch: ai1/round124-ufs-core-combined-candidates
+             (hhdy/matepad11-dby-w09-agent-reports)
+
+Order 1: kernel-baseline/round124/0001-ufs-core-per-hba-async-domain.patch
+  bytes    = 3242
+  git blob = f604c8672fcbc98f3e9645f5e8888c8a34b1c11e   (expected: MATCH)
+  sha256   = 12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7
+             (expected: MATCH)
+
+Order 2: kernel-baseline/round124/0002-ufs-core-vreg-load-first.patch
+  bytes    = 2339
+  git blob = 64dd2ad9022251e2411a1a745aeb920a0badfa85   (expected: MATCH)
+  sha256   = 2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66
+             (expected: MATCH)
+
+Both hashes recomputed locally from the fetched bytes (blob via
+sha1("blob <len>\0" + content)). Patch 0002 is byte-identical to the
+previously validated ROUND122 candidate (blob 64dd2ad9, sha256 2f335f51).
+IDENTITY: PASS (both exact matches; no repair/regeneration performed).
+
+Patch 0001 diff --git file list:
+  drivers/ufs/core/ufshcd-priv.h
+  drivers/ufs/core/ufshcd.c
+Patch 0002 diff --git file list:
+  drivers/ufs/core/ufshcd.c
+
+--------------------------------------------------------------------
+2. SOURCE / WORKSPACE IDENTITY AND STAGE A BASELINE (§2, §3.2)
+--------------------------------------------------------------------
+Pinned ACK:    aosp-mirror/kernel_common @ 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Stage A ref:   ai-parallel/stagea-port-until-boot @ 5f587aaa40853cf3ec754f7455930aa404bf9b9a
+               (branch head recorded for this round — confirmed via GitHub API)
+Stage A series kernel-baseline/round61/round32-stagea-series.txt
+               = ordered 15-patch series (patches 1..15, ROUND32 state).
+               Patch 16 (round33-0001-regulator-proxy-self-target-only.patch)
+               was deliberately NOT included, per taskbook §2.
+
+Build workspace used as the disposable Stage A copy:
+  - manifest-pinned Kleaf workspace, common/ at detached HEAD =
+    8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  - Stage A series present as working-tree changes only (no commits made);
+    this is the validated Stage A ROUND32 state (same workspace validated in
+    ROUND32 / ROUND120 / ROUND122 rounds; NOT the AI2 worktree, and it never
+    had patch 16 applied — no in-place removal needed).
+
+PRE-OVERLAY SNAPSHOT (recorded before touching anything):
+  HEAD                    = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  dirty entries           = 16 (12 modified tracked + 4 untracked Stage A files:
+    M BUILD.bazel
+    M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+    M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+    M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+    M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+    M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+    M drivers/regulator/Kconfig
+    M drivers/regulator/Makefile
+    M drivers/regulator/core.c
+    M drivers/ufs/host/ufs-qcom.c
+    M drivers/ufs/host/ufs-qcom.h
+    M include/linux/regulator/driver.h
+    ?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+    ?? arch/arm64/configs/dby_w09_storage_first.fragment
+    ?? drivers/regulator/proxy-consumer.c
+    ?? include/linux/regulator/proxy-consumer.h)
+  tracked-diff sha256     = 613e7ea4bcd826b732cb13ed27f7374f7e114a8e527232f02336be4a636f2aed
+  drivers/ufs/core/ufshcd.c / ufshcd-priv.h: NOT dirty (clean vs pinned ACK)
+  drivers/regulator/proxy-consumer.c: contains 0 occurrences of
+    "round33"/"self-target-only" → confirms patch 16 absent. PASS.
+
+This snapshot matches the Stage A state validated in the ROUND32 report
+(Image b6efb34769316a6f…, .config 0850213dc3e2c8ed…).
+
+--------------------------------------------------------------------
+3. SEQUENTIAL APPLY (§3.3, §3.4) — exact order 0001 then 0002
+--------------------------------------------------------------------
+All commands run in the Stage A workspace (common/ at pinned HEAD).
+
+# 3.1  git apply --check --verbose 0001-ufs-core-per-hba-async-domain.patch
+  Output:
+    Checking patch drivers/ufs/core/ufshcd-priv.h...
+    Checking patch drivers/ufs/core/ufshcd.c...
+  CHECK1_RC=0            — zero offset, zero fuzz. PASS
+
+# 3.2  git apply 0001-ufs-core-per-hba-async-domain.patch
+  APPLY1_RC=0
+
+# 3.3  git diff --check
+  DIFFCHECK1_RC=0        — no whitespace errors introduced.
+
+# 3.4  git apply --check --verbose 0002-ufs-core-vreg-load-first.patch
+  Output:
+    Checking patch drivers/ufs/core/ufshcd.c...
+  CHECK2_RC=0            — zero offset, zero fuzz. PASS
+
+# 3.5  git apply 0002-ufs-core-vreg-load-first.patch
+  APPLY2_RC=0
+
+# 3.6  git diff --check
+  DIFFCHECK2_RC=0        — PASS
+
+OVERLAY SCOPE (§3.5):
+  git status vs pre-overlay snapshot — exactly two new dirty entries:
+      M drivers/ufs/core/ufshcd-priv.h
+      M drivers/ufs/core/ufshcd.c
+  Overlay diff stat: ufshcd-priv.h | 4 ++ ; ufshcd.c | 52 lines changed
+  (combined: 47 insertions, 9 deletions).
+  Stage A's own pre-existing changes remain intact: all 16 pre-overlay
+  entries still present, dirty total 16 → 18, all Stage A regulator/
+  binding/DTS files untouched by the candidates. PASS
+  (exactly two changed source paths relative to Stage A baseline).
+
+--------------------------------------------------------------------
+4. SOURCE GATES (§4)
+--------------------------------------------------------------------
+GATE A — ROUND120 async lifecycle: PASS (all six items)
+
+  A1. ufshcd-priv.h (combined tree) contains:
+      - '#include <linux/async.h>' (line 6)
+      - struct ufs_hba_priv { struct ufs_hba hba; bool zwor_sup;
+        struct async_domain async_domain;          (line 13)
+        async_cookie_t async_scan_cookie;          (line 14)
+        bool async_scan_scheduled;                 (line 15) }
+      The async_domain / async_cookie_t / scheduled flag exist ONLY in
+      struct ufs_hba_priv (grep over ufshcd-priv.h: no other occurrence).
+      PASS
+
+  A2. Public struct ufs_hba and public headers unchanged:
+      the overlay touches only drivers/ufs/core/ufshcd.c and
+      drivers/ufs/core/ufshcd-priv.h (private header); include/ufs/ufshcd.h
+      and every other public header is not in the overlay diff. PASS
+
+  A3. ufshcd_alloc_host() init block (combined tree line 10846, body shown
+      at ~10875):
+          priv = to_hba_priv(hba);
+          INIT_LIST_HEAD(&priv->async_domain.pending);
+          priv->async_domain.registered = 1;
+          priv->async_scan_scheduled = false;
+      This runs at allocation time (hba memory is shost_priv allocated with
+      sizeof(struct ufs_hba_priv) inside ufshcd_alloc_host), which strictly
+      precedes any ufshcd_init() call by construction of the three call
+      flows (probe: alloc_host -> init). PASS
+
+  A4. Only scan schedule site:
+      grep 'async_schedule_domain\|async_schedule(' drivers/ufs/core/ufshcd.c
+      → single site, line 11222 (inside ufshcd_init):
+          priv->async_scan_cookie =
+              async_schedule_domain(ufshcd_async_scan, hba,
+                                    &priv->async_domain);
+          priv->async_scan_scheduled = true;
+      The returned cookie is stored. PASS
+
+  A5. ufshcd_remove() join (combined tree, ufshcd_remove at line 10731;
+      join block 10733-10740, first statement of the function, before
+      ufshcd_rpm_get_sync / ufs_hwmon_remove / any WLUN read or teardown):
+          struct ufs_hba_priv *priv = to_hba_priv(hba);
+          if (priv->async_scan_scheduled) {
+              async_synchronize_cookie_domain(priv->async_scan_cookie + 1,
+                                              &priv->async_domain);
+              priv->async_scan_scheduled = false;
+          }
+      Join is cookie + 1 in that HBA's own domain; guarded by
+      async_scan_scheduled, so when no scan was scheduled remove does not
+      wait on an uninitialized cookie. PASS
+
+  A6. In-tree ufshcd_alloc_host() call sites (pinned ACK tree) and their
+      remove callers:
+      - drivers/ufs/host/ufshcd-pltfrm.c:660  (remove: ufshcd_pltfrm_remove,
+        ufshcd_remove at :714)
+      - drivers/ufs/host/tc-dwc-g210-pci.c:89 (remove at :46)
+      - drivers/ufs/host/ufshcd-pci.c:648     (remove at :617)
+      (ufs-qcom.c:1552 is a comment, not a call site.)
+      None of the three remove callers holds host_sem before entering the
+      join: grep 'host_sem' over drivers/ufs/host/ → no matches (host_sem
+      is used only inside drivers/ufs/core/* and include-side core code;
+      the three remove callers only do pm_runtime_* calls then
+      ufshcd_remove()). PASS
+
+GATE B — ROUND122 regulator load ordering: PASS (all four items)
+  Combined tree line references (ufshcd.c):
+
+  B1. ufshcd_disable_vreg (line 9528): checked
+      ufshcd_config_vreg(dev, vreg, false) at :9540 runs BEFORE
+      regulator_disable() at :9544; on config failure
+      'if (ret) goto out;' exits before the decrement attempt. PASS
+  B2. vreg->enabled = false only in the success branch after
+      regulator_disable() (:9547); on disable failure an error is logged
+      and enabled stays set. PASS
+  B3. ufshcd_enable_vreg (line 9499): active load configuration
+      (ufshcd_config_vreg(dev, vreg, true) at :9510) is attempted BEFORE
+      the already-enabled early exit ('if (vreg->enabled) goto out;' at
+      :9514); regulator_enable(vreg->reg) at :9517 is NOT called for an
+      already-enabled handle. PASS
+  B4. Known limitation preserved (statement, unchanged from ROUND122):
+      the patch does not solve every post-decrement regulator error or the
+      devm release / nonzero enable_count lifetime boundary. This report
+      does not claim it does. PASS (limitation retained, not weakened)
+
+GATE C — combined blast radius: PASS
+  C1. The two candidate patches touch exactly:
+      drivers/ufs/core/ufshcd.c and drivers/ufs/core/ufshcd-priv.h.
+      No public UFS struct layout change (struct ufs_hba untouched),
+      no Kconfig change, no DTS change, no regulator core change, no
+      binding change, no arch config / fragment change, no AVB /
+      boot packaging / firmware change — proven by the overlay scope diff
+      (two paths only) and by the patch file lists.
+  C2. No Stage A patch was edited: tracked-diff baseline was snapshotted
+      before overlay and byte-restored after build (see §7).
+
+--------------------------------------------------------------------
+5. CHECKPATCH (§3.7) — per patch, --strict --no-signoff, ACK scripts
+--------------------------------------------------------------------
+Patch 0001 (scripts/checkpatch.pl --strict --no-signoff):
+  total: 0 errors, 4 warnings, 1 checks, 99 lines checked
+  Exit code: 1 (style problems present, zero errors)
+  Warnings: 4 × "WARNING: Commit log lines starting with '#' are dropped
+    by git as comments" (#2..#5 — the candidate's own header block).
+  Check: 1 × "CHECK: Alignment should match open parenthesis"
+    (ufshcd.c:11208, async_schedule_domain continuation line).
+Patch 0002:
+  total: 0 errors, 0 warnings, 2 checks, 101 lines checked
+  Exit code: 1 (style problems present, zero errors)
+  Checks: 2 × "CHECK: Alignment should match open parenthesis"
+    (ufshcd.c:9523 and :9550 dev_err continuation lines — inherited from
+    the ROUND122-validated candidate, unchanged).
+Per the taskbook, no style or candidate contents were fixed. Both patches:
+  ZERO ERRORS. Recorded exactly as produced.
+
+--------------------------------------------------------------------
+6. OBJECT COMPILE + FULL BUILD (§3.8, §3.9, §3.10)
+--------------------------------------------------------------------
+Toolchain (manifest-pinned Kleaf prebuilts):
+  clang = Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+          clang version 22.0.1
+  config = bazel-bin/common/dby_w09_config/out_dir/.config (Stage A build
+  config; GENDWARFKSYMS disabled for the standalone object pass, matching
+  the ROUND120/122 object-compile procedure; ARCH=arm64 LLVM=1 LLVM_IAS=1)
+
+§3.8 Object compile — ALL UFS core objects (drivers/ufs/core/), because
+ufshcd-priv.h is a shared private header (ufshcd.c plus the other core
+objects compile against it; ufs-qcom.c also includes it and is covered by
+the full build below). make -j8 drivers/ufs/core/ RC=0:
+  ufs-debugfs.o    217,744 B  sha256 cae00d97e2bdecb3b950ec69fccfca499e6da48deed2ba09a507df64be804a25
+  ufs-mcq.o        217,456 B  sha256 59de315f7bf992a1fa55e03cfede53f77bbb9cbd7755917692d17c15bf1c147a
+  ufs-sysfs.o      435,608 B  sha256 58b9bf9cb4cf6ea61b2bbb66ca9dfba792a562838678aefb882319015e47ef8b
+  ufs-txeq.o       227,080 B  sha256 976ece3c5f6122f12ec241f55180ed690d11aa92e6baf43545ee611d64ab0c14
+  ufs_bsg.o        184,880 B  sha256 4d99b7690240989b68315d7a9f9ebbc582d1bb6b93a610c10f0068634c4b294b
+  ufshcd-crypto.o  191,608 B  sha256 896cd7bd3f5ec65b0016fd374662329b8c63aaecb0efd10207d38d7f3568e19b
+  ufshcd.o         953,040 B  sha256 d776f4cc3404cbfe89e35c38fe74c3b92b50bd1c78ed4830cff158c88308d61b
+  ufshcd.o: 232 ufshcd_ symbols; undefined reference
+  'async_synchronize_cookie_domain' present in the object → the remove-side
+  join is compiled in. (async_schedule_domain is a static inline in
+  linux/async.h and does not surface as a named undefined symbol.)
+
+§3.9 Full build (combined tree: Stage A + 0001 + 0002):
+  tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  BUILD_RC=0  ELAPSED=643s  (2 linux-sandbox actions rebuilt; 780 cache hit)
+
+§3.10 Artifacts (bazel-bin/common/dby_w09/):
+  Image      size=44,820,992  sha256=903164d7f1c78dc80435e569e6037abe7c38ab582fbb21263f0211d79c35d6bc
+  System.map size= 7,611,626  sha256=af847d632b7a301fd98669c0e90ef4e781b4ef5e773bdd412f3d7b564061c906
+  vmlinux    size=230,263,296 sha256=37aec9ae5fcbb18dc8e58854d295f81d573732791c017ba770471286ee42ffb5
+  .config    size=   238,410  sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+
+  .config byte-identity check (taskbook §3.10): 0850213dc3e2c8ed… is
+  byte-identical to the Stage A-only build result (ROUND32 report value).
+  No config delta found. PASS
+
+  Image identity reasoning: Stage-A-only Image = b6efb34769316a6f…;
+  ROUND122 (Stage A + 0002 only) Image = 453a46a2…; this round
+  (Stage A + 0001 + 0002) Image = 903164d7… — three distinct values
+  prove the combined candidates are in the artifact.
+
+--------------------------------------------------------------------
+7. WORKSPACE RESTORATION EVIDENCE (§3.11)
+--------------------------------------------------------------------
+After the build, both candidate paths were reverted:
+  git checkout -- drivers/ufs/core/ufshcd.c drivers/ufs/core/ufshcd-priv.h
+  revert rc=0
+
+Post-restore verification:
+  dirty entries        = 16 (identical path list to the pre-overlay snapshot)
+  tracked-diff sha256  = 613e7ea4bcd826b732cb13ed27f7374f7e114a8e527232f02336be4a636f2aed
+  matches pre-overlay  = YES (byte-verified, exact hash equality)
+  temporary object dir removed; no branch checkout/commit/mutation in any
+  shared workspace; git worktree list unchanged (3 pre-existing worktrees).
+
+Cleanup disclosure: all temporary staging (object output dir, make/bazel
+logs) was deleted; the workspace restoration is proven by the hash
+comparison above, so cleanup is fully accounted for.
+
+--------------------------------------------------------------------
+8. PROHIBITED-ACTION STATEMENT (§5)
+--------------------------------------------------------------------
+- No kernel patch was authored, edited, reformatted, regenerated, or
+  repaired; both candidates were used byte-for-byte as fetched.
+- No kernel code, DTS, bindings, tests, config or firmware was authored.
+- No modification to main, ack18-dby-w09-dts-draft, PR #1,
+  ai-parallel/stagea-port-until-boot, firmware-audit-v1 (other than this
+  single report upload), or any AI2 branch.
+- No device connection, ADB, fastboot, root, reboot, boot, flash,
+  partition access, DTBO/AVB/vbmeta operation or firmware upload occurred.
+- Neither candidate was integrated or merged into AI2 Stage A; the overlay
+  was applied to a disposable working copy and reverted (hash-verified).
+- ROUND125 was not started.
+
+--------------------------------------------------------------------
+9. SUMMARY TABLE
+--------------------------------------------------------------------
+| Check                                   | Result | Evidence (abridged)          |
+|-----------------------------------------|--------|------------------------------|
+| 0001 identity blob/sha256               | PASS   | f604c867 / 12efbe8a… MATCH   |
+| 0002 identity blob/sha256               | PASS   | 64dd2ad9 / 2f335f51… MATCH   |
+| Stage A baseline identity, no patch 16  | PASS   | HEAD 8ad08f75…, dirty 16,    |
+|                                         |        | tracked-diff 613e7ea4…       |
+| 0001 apply --check (zero offset/fuzz)   | PASS   | CHECK1_RC=0                  |
+| 0001 apply + git diff --check           | PASS   | APPLY1_RC=0, DIFFCHECK1_RC=0 |
+| 0002 apply --check (zero offset/fuzz)   | PASS   | CHECK2_RC=0                  |
+| 0002 apply + git diff --check           | PASS   | APPLY2_RC=0, DIFFCHECK2_RC=0 |
+| Overlay scope = exactly 2 paths         | PASS   | status diff: +ufshcd.c       |
+|                                         |        | +ufshcd-priv.h only          |
+| Gate A1 priv-struct-only async fields   | PASS   | ufshcd-priv.h:6,13-15        |
+| Gate A2 public headers unchanged        | PASS   | overlay file list            |
+| Gate A3 alloc_host init block           | PASS   | ufshcd.c ~10875              |
+| Gate A4 single schedule site + cookie   | PASS   | ufshcd.c:11222               |
+| Gate A5 join cookie+1, guarded          | PASS   | ufshcd.c:10733-10740         |
+| Gate A6 3 call sites, no host_sem held  | PASS   | pltfrm/pci/tc-dwc; grep=none |
+| Gate B1 disable: config before disable  | PASS   | ufshcd.c:9540→9544           |
+| Gate B2 enabled cleared on success only | PASS   | ufshcd.c:9547                |
+| Gate B3 enable: load before early exit  | PASS   | ufshcd.c:9510→9514→9517      |
+| Gate B4 managed-put limitation retained | PASS   | statement preserved          |
+| Gate C blast radius (no public/Kconfig/ | PASS   | patch file lists + overlay   |
+| DTS/regcore/binding/config/AVB changes) |        | scope diff                   |
+| checkpatch 0001                         | PASS*  | 0E/4W/1C, RC=1 (style only)  |
+| checkpatch 0002                         | PASS*  | 0E/0W/2C, RC=1 (style only)  |
+| UFS core objects compile                | PASS   | make RC=0, 7 objects         |
+| Full build //common:dby_w09             | PASS   | BUILD_RC=0, 643s             |
+| .config byte-identical to Stage A-only  | PASS   | 0850213dc3e2c8ed…            |
+| Workspace restore (hash-verified)       | PASS   | 613e7ea4… exact match, YES   |
+
+* RC=1 is checkpatch's "style problems present" exit with ZERO errors;
+  the warnings/CHECKs are recorded verbatim above and were not fixed per
+  the no-repair rule.
+
+VERDICT: ROUND124 combined UFS core candidates — all required gates PASS.
+No FAIL, no BLOCKED.
+
+— end of report —

@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/kerneldev/work/matepad11/round35-agent/kernel-17/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+Traceback (most recent call last):
+  File "/home/kerneldev/work/matepad11/round35-agent/kernel-17/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+total: 0 errors, 0 warnings, 0 checks, 415 lines checked
+
+/home/kerneldev/work/matepad11/round35-agent/patches/round35-kunit-seam.patch has no obvious style problems and is ready for submission.
+
+NOTE: Ignored message types: FILE_PATH_CHANGES

@@ -26,3 +26,13 @@
 ## 隐私
 
 设备序列号、MAC 地址已在共享副本中脱敏。固件哈希属于公开镜像的校验值。
+
+
+## Local firmware analysis tool
+
+A read-only PowerShell inventory and boot-image header analyzer is available at:
+
+- tools/Analyze-DBY-W09-Firmware.ps1
+- tools/README-FIRMWARE-ANALYSIS.md
+
+It inventories a local extracted firmware folder or ZIP, locally copies selected boot-related images for inspection, reads Android boot / DTBO headers, and computes hashes for the local copies. It never connects to the tablet or writes to device partitions. Do not upload the payloads/ directory or proprietary firmware binaries to this public repository.

@@ -1,0 +1,276 @@
+ROUND26 — SM8250 (ACK) vs HOS4.3 reserved-memory interval audit
+======================================================================
+Device   : Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250
+Kernel   : ACK android17-6.18.33_r00 / common 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Scope    : local-only, read-only interval comparison. All physical reg tuples
+           were parsed and compared in LOCAL MEMORY ONLY. No start/end/base/reg
+           number, no hash of a coordinate, no address-like token is published.
+Date     : 2026-11-25
+
+----------------------------------------------------------------------
+0. INPUTS, METHOD AND REDACTION
+----------------------------------------------------------------------
+Inputs (existing local files only, reused unchanged):
+  - pinned ACK source arch/arm64/boot/dts/qcom/sm8250.dtsi
+    (ROUND18 work tree; reserved-memory block at lines 771-845;
+     top-level memory node at lines 683-687).
+  - ROUND19 decompiled HOS4.3 base_2.dts work copy (26546 lines;
+     reserved-memory block at lines 24385-24662; top-level memory at 74-77).
+  - ROUND24 report firmware-analysis/round24/round24-hos43-reserved-memory-
+     and-consumer-map.txt and its 37-node sanitized inventory.
+  - main dts/dby-w09-ack18-board.dts.rev2.candidate (read-only; include at
+     line 45; memory/reserved-memory deliberately not reconstructed, comment
+     at lines 334-349).
+
+Method: a local-only parser extracted each reserved-memory child's reg tuples
+(#address-cells=2, #size-cells=2) into process memory, classified every ACK
+child against every HOS fixed-reg child by exact base/size, same-base/different-
+size, overlap, or no match, then emitted ONLY class names and coarse size
+classes. Dynamic size/alloc-ranges pools were parsed separately and NEVER
+treated as equal to a fixed reg tuple. No raw coordinate left the local host.
+
+Size classes used: KiB-class / low-MiB / tens-of-MiB / hundreds-of-MiB / zero.
+
+Redaction: every node unit-address suffix is written @[redacted]. No numeric
+base, size, end or byte count appears below. This statement is the explicit
+satisfaction of the task's "all coordinates compared locally and redacted from
+upload" requirement.
+
+----------------------------------------------------------------------
+1. WORK PACKAGE A — ACK SM8250 reserved-memory enumeration
+----------------------------------------------------------------------
+Status: PASS.
+
+ACK sm8250.dtsi /reserved-memory has 18 immediate children (not merely five).
+All 18 carry a fixed reg tuple (18 tuples total) and `no-map`. None is a CMA /
+shared-dma-pool / reusable dynamic pool in the ACK DTSI. Sanitized list
+(label = node label, name shown without address; size = coarse class only):
+
+  #   label / name                     compatible        map      tuples  size class
+  1   hyp_mem                          -                 no-map   1       low-MiB
+  2   xbl_aop_mem                      -                 no-map   1       low-MiB
+  3   cmd_db                           qcom,cmd-db       no-map   1       KiB-class
+  4   smem_mem                         -                 no-map   1       low-MiB
+  5   removed_mem                      -                 no-map   1       tens-of-MiB
+  6   camera_mem                       -                 no-map   1       low-MiB
+  7   wlan_mem                         -                 no-map   1       low-MiB
+  8   ipa_fw_mem                       -                 no-map   1       KiB-class
+  9   ipa_gsi_mem                      -                 no-map   1       KiB-class
+  10  gpu_mem                          -                 no-map   1       KiB-class
+  11  npu_mem                          -                 no-map   1       low-MiB
+  12  video_mem                        -                 no-map   1       low-MiB
+  13  cvp_mem                          -                 no-map   1       low-MiB
+  14  cdsp_mem                         -                 no-map   1       tens-of-MiB
+  15  slpi_mem                         -                 no-map   1       tens-of-MiB
+  16  adsp_mem                         -                 no-map   1       tens-of-MiB
+  17  spss_mem                         -                 no-map   1       low-MiB
+  18  cdsp_secure_heap                 -                 no-map   1       tens-of-MiB
+
+Consumers present in sm8250.dtsi via `memory-region` (exact phandle refs):
+  smem_mem  <- /smem
+  gpu_mem   <- GPU node
+  slpi_mem  <- SLPI
+  cdsp_mem  <- CDSP
+  video_mem <- video
+  adsp_mem  <- ADSP
+(6 consumers; node paths shown by function; unit addresses suppressed.)
+
+----------------------------------------------------------------------
+2. WORK PACKAGE B — interval comparison against HOS4.3
+----------------------------------------------------------------------
+Status: PASS.
+
+Counts compared (local):
+  ACK reserved-memory immediate children        : 18
+  ACK fixed-reg children / tuples                : 18 / 18
+  HOS reserved-memory immediate children         : 37   (ROUND24 reconciled count)
+  HOS fixed-reg children / tuples                 : 24 / 24
+  HOS dynamic / no-fixed-reg children             : 13
+  ACK tuples with an exact HOS fixed counterpart  : 17
+  HOS fixed nodes with an exact ACK counterpart   : 17
+  HOS fixed nodes that are HOS_ONLY               : 7
+
+Classification per ACK child (only class + size class; no coordinates):
+
+  ACK child                class                              note
+  hyp_mem                  EXACT_MATCH                        ==
+  xbl_aop_mem              EXACT_MATCH                        ==
+  cmd_db                   EXACT_MATCH                        qcom,cmd-db keeps compatible
+  smem_mem                 EXACT_MATCH                        ==
+  removed_mem              EXACT_MATCH                        ==
+  camera_mem               EXACT_MATCH                        ==
+  wlan_mem                 EXACT_MATCH                        ==
+  ipa_fw_mem               EXACT_MATCH                        ==
+  ipa_gsi_mem              EXACT_MATCH                        ==
+  gpu_mem                  EXACT_MATCH                        ==
+  npu_mem                  EXACT_MATCH                        ==
+  video_mem                EXACT_MATCH                        ==
+  cvp_mem                  EXACT_MATCH                        ==
+  cdsp_mem                 EXACT_MATCH                        ==
+  slpi_mem                 EXACT_MATCH                        ==
+  adsp_mem                 EXACT_MATCH                        ==
+  spss_mem                 EXACT_MATCH                        ==
+  cdsp_secure_heap         ACK_ONLY (fixed vs HOS dynamic)    HOS has same-name node with NO fixed reg
+
+Notes on classification integrity:
+  - Each of the 17 EXACT_MATCH ACK nodes resolved to exactly ONE HOS
+    counterpart; no EXACT_MATCH masked a same-base/different-size or overlap
+    case (verified by per-ACK relationship multiplicity check).
+  - cdsp_secure_heap: ACK has a fixed reg; the HOS same-name child is a
+    `no-map` node with NO fixed reg tuple. It is therefore NOT claimed equal
+    (dynamic/no-reg cannot be proven equal to a fixed interval). Locally the
+    ACK fixed tuple was a tens-of-MiB range; the HOS report records this node's
+    size as UNKNOWN — consistent with no fixed reg being present.
+  - No ACK child was classified SAME_BASE_DIFFERENT_SIZE or OVERLAP against a
+    HOS fixed node; those classes had zero members in this comparison.
+
+HOS fixed nodes with NO exact ACK counterpart (HOS_ONLY, 7; names address-free):
+  res_xbl_uefi_log_region, cont_splash_region, disp_rdump_region,
+  dfps_data_region, rainbow_mem, bootfail_mem, kerneldump.
+
+HOS dynamic / no-fixed-reg nodes (13; cannot equal a fixed ACK interval):
+  cdsp_secure_heap, adsp_region, sdsp_region, cdsp_region, mem_dump_region,
+  sp_region, user_contig_region, qseecom_region, qseecom_ta_region,
+  secure_display_region, cnss_wlan_region, linux,cma, mailbox_region.
+  Of these, linux,cma and the *_region reusable pools are CMA-style shared
+  pools (HOS side only); ACK sm8250.dtsi declares none.
+
+Internal HOS duplicate/nested case (local observation, no coordinates):
+  cont_splash_region and disp_rdump_region share the SAME base with DIFFERENT
+  sizes (SAME_BASE_DIFFERENT_SIZE between two HOS fixed nodes). This is an
+  HOS-internal nesting/overlap pattern; it is not an ACK-vs-HOS mismatch and is
+  reported as an observation only, with no address published.
+
+Parser limitations stated honestly:
+  - Only immediate children of each /reserved-memory block were compared;
+    nested subnodes (if any) were not separately classified.
+  - A fixed tuple is compared by base and size; `no-map`/`reusable` flags are
+    recorded but are not part of interval equality.
+  - Unit-address text was stripped for reporting; equality was computed from
+    parsed cell values in local memory, not from node names.
+
+----------------------------------------------------------------------
+3. WORK PACKAGE C — what rev2 actually inherits
+----------------------------------------------------------------------
+Status: PARTIAL (inheritance is certain; safety of one node is unresolved).
+
+rev2 candidate includes sm8250.dtsi at line 45 and does NOT declare its own
+/memory or /reserved-memory (comment lines 334-349). Therefore, if built from
+this source, the board DTB inherits:
+  - all 18 ACK no-map fixed carveouts listed in section 1;
+  - the top-level memory@[redacted] node (section 6);
+  - the 6 SoC-level consumers (smem/gpu/slpi/cdsp/video/adsp) that reference
+    those reservations via memory-region.
+It does NOT inherit any HOS4.3 dynamic CMA/shared-dma-pool node, because those
+exist only in the HOS base FDT, not in sm8250.dtsi.
+
+Distinguish presence from probe: a reserved node being present in the DTB does
+not mean its consumer driver probes. The minimal rev2 board file leaves most
+top-level devices disabled, so e.g. gpu/video/adsp consumers may not bind at
+first boot; reservation presence is nonetheless real and consumes address
+space in the compiled DTB.
+
+Overlap against ordinary HOS4.3 RAM: the usable RAM range is supplied by ABL at
+boot and is NOT present as a fixed value in the HOS base FDT (both /memory
+placeholders have zero size, section 6). Therefore whether any inherited ACK
+fixed interval overlaps a real HOS RAM region is UNKNOWN until the final
+post-ABL FDT is known.
+
+----------------------------------------------------------------------
+4. WORK PACKAGE D — safe recommendation (design-only, no edits made)
+----------------------------------------------------------------------
+Status: PARTIAL / BLOCKED on final ABL FDT.
+
+Per-node safety classification of the 18 inherited ACK nodes:
+  - exact same interval as HOS4.3 (17 nodes) : hyp, xbl_aop, cmd_db, smem,
+    removed, camera, wlan, ipa_fw, ipa_gsi, gpu, npu, video, cvp, cdsp, slpi,
+    adsp, spss — safe on interval evidence (name differs, interval identical).
+  - unmatched / potentially unsafe (1 node) : cdsp_secure_heap — ACK fixed
+    interval vs HOS dynamic no-reg same-name node; cannot be shown equal.
+    Whether the ACK fixed range collides with an HOS dynamic allocation or
+    ABL/secure firmware memory is UNKNOWN; resolve only with the post-ABL FDT.
+  - no fixed interval because dynamic pool : none on the ACK side (all 18 are
+    fixed); HOS-only dynamic pools are listed in section 2.
+  - unresolved without final ABL FDT : all overlap-with-RAM questions, and the
+    cdsp_secure_heap fixed-vs-dynamic case.
+
+Answers to the four required questions:
+  1. Is inheriting pinned sm8250.dtsi reserved-memory safer than omitting all
+     37 HOS4.3 reservations? On interval evidence, inheriting is the MORE
+     defensible baseline: 17 of 18 ACK fixed reservations exactly match HOS
+     fixed reservations, so it preserves real carveouts that omission would
+     drop. It is safer on that narrow criterion, NOT proven safe overall.
+  2. Does it risk reserving wrong ranges or overlapping ABL/secure memory?
+     One node (cdsp_secure_heap) is a fixed-vs-dynamic mismatch and could be
+     wrong; any overlap with ABL/secure memory or real RAM is UNKNOWN because
+     no final post-ABL FDT is available. Risk is not zero and is not quantified.
+  3. Can a minimal UFS-only candidate safely keep those generic nodes? The 17
+     exact-match nodes can be kept on interval evidence. cdsp_secure_heap must
+     NOT be asserted safe; keep it only as an inherited upstream node and treat
+     it as an open item, not as an HOS-matching reservation. No node was
+     deleted, replaced, or overridden in this round.
+  4. What must remain blocked until the final post-ABL FDT is known? Any claim
+     about usable RAM overlap, about cdsp_secure_heap equivalence, about
+     ABL/secure-firmware reservation handoff, and any decision to add/remove/
+     resize a reservation. The final memory gate stays BLOCKED.
+
+No design change is authorized by this report; any future override must name
+the exact node and its evidence, with no invented addresses.
+
+----------------------------------------------------------------------
+5. STATUS SUMMARY
+----------------------------------------------------------------------
+  Work package A : PASS — 18 ACK children enumerated (all fixed no-map),
+                   consumers listed.
+  Work package B : PASS — 17 EXACT_MATCH, 1 ACK_ONLY (fixed-vs-dynamic),
+                   HOS 24 fixed / 13 dynamic, 7 HOS_ONLY fixed; one HOS-internal
+                   same-base/different-size pair noted; counts and limits stated.
+  Work package C : PARTIAL — inheritance certain (include at rev2 line 45,
+                   no board override); overlap-with-RAM UNKNOWN without ABL FDT.
+  Work package D : PARTIAL/BLOCKED — 17 nodes safe on interval evidence,
+                   cdsp_secure_heap unresolved, final memory gate BLOCKED.
+
+----------------------------------------------------------------------
+6. ADDENDUM — top-level /memory node structural comparison
+----------------------------------------------------------------------
+Status: PASS (structural only; no base or size value published).
+
+  Property / structure    ACK sm8250.dtsi        HOS4.3 base_2.dts
+  ----------------------  ---------------------  ------------------------
+  node path (redacted)    memory@[redacted]      memory
+  unit-address present    yes (@[redacted])      no
+  device_type             "memory"               "memory"
+  #address-cells (root)   2                      2
+  #size-cells (root)      2                      2
+  reg tuple count         1                      1
+  base cell zero/nonzero  NONZERO                ZERO
+  size cell zero/nonzero  ZERO                   ZERO
+  initial placeholder     yes (bootloader to     yes (all-zero placeholder)
+                          fill size, per source
+                          comment)
+
+  Structurally identical? NO. Both are zero-size single-tuple placeholders
+  with device_type="memory", but the ACK node carries a nonzero base and a
+  unit-address suffix while the HOS node has a zero base and no unit address.
+  The two initial placeholders are therefore NOT structurally identical.
+
+  rev2 inheritance: confirmed. rev2 includes sm8250.dtsi (line 45) and declares
+  no /memory of its own (comment lines 334-349), so building this source yields
+  the ACK memory@[redacted] placeholder, NOT the HOS zero-base form. No memory
+  node was added or modified in this round; this is evidence collection only.
+  Note for downstream: this matches ROUND20/22/23 findings that the board file
+  itself has no /memory and that ABL is expected to populate usable memory —
+  but ABL actually doing so for HOS4.3 remains UNKNOWN without a live FDT.
+
+----------------------------------------------------------------------
+7. BOUNDARY AND REDACTION STATEMENT
+----------------------------------------------------------------------
+  - No re-extraction, download, install, WSL redeploy, repo sync, Kconfig,
+    Kleaf/Bazel, kernel build, dtc, boot packing, AVB or signing was performed.
+  - No ADB/fastboot/recovery, reboot, unlock, root, flash or partition write.
+  - No source, DTS, config, firmware, patch, report or branch was modified.
+  - Every physical start/end/base/reg coordinate was compared in local memory
+    only and is redacted from this upload; no coordinate hash, serial, MAC,
+    IMEI, key or device-unique identifier is present.
+  - Findings are static local DTS facts plus the ROUND24 inventory; no claim is
+    made about runtime RAM layout, ABL behavior, or which DTBO is selected.

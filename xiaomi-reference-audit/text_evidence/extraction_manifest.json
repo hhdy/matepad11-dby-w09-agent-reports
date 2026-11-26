@@ -1,0 +1,48 @@
+{
+  "extracted_count": 6,
+  "files": [
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.bat",
+      "local_path": "entry_09_flash_all.bat",
+      "uncompressed_size": 4162,
+      "sha256": "ee63053360e3d9e97f56bac126370abd285bc86d82acd6f9e81b02b1f5501344",
+      "note": "flash script - read as text only, NEVER executed"
+    },
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.sh",
+      "local_path": "entry_10_flash_all.sh",
+      "uncompressed_size": 4716,
+      "sha256": "f2b6d284b7db587ca973a8208322494777c7b923d36e6f9de8aeae20414c4bb8",
+      "note": "flash script - read as text only, NEVER executed"
+    },
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.bat",
+      "local_path": "entry_11_flash_all_except_storage.bat",
+      "uncompressed_size": 3995,
+      "sha256": "e0ea787da126e57c135c2c2779ed3c61903bd0fea8a73071b3127dc4b31cedb2",
+      "note": "flash script - read as text only, NEVER executed"
+    },
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.sh",
+      "local_path": "entry_12_flash_all_except_storage.sh",
+      "uncompressed_size": 4509,
+      "sha256": "fedbe0972e137457b66199c0386dbcdd13d9b33d24662e18e5d5d59e353575fd",
+      "note": "flash script - read as text only, NEVER executed"
+    },
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images.sha256",
+      "local_path": "entry_13_images.sha256",
+      "uncompressed_size": 3091,
+      "sha256": "debdfaef1e7591459643f6491c5835c90a271e22fc9a3fffe9d942aca3a7b547",
+      "note": "text document"
+    },
+    {
+      "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/README.txt",
+      "local_path": "entry_51_README.txt",
+      "uncompressed_size": 3998,
+      "sha256": "50be49106dc804318a6f377fd2a0254f1ac7f881ac94454107dec8ab5ae08fd7",
+      "note": "text document"
+    }
+  ],
+  "policy": "allowlisted plain text only; no binaries; no execution"
+}

@@ -1,0 +1,334 @@
+ROUND22 — DBY-W09 board-DTS compile readiness and UFS/regulator contract audit
+================================================================================
+Owner: local WorkBuddy Agent (offline, read-only)
+Device: Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250
+Kernel: ACK android17-6.18.33_r00, common 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Taskbook: firmware-analysis/round22/{START_PROMPT.md,AGENT_TASK.md}
+          START blob a2699a97 (1617 B), AGENT blob 3b9e52c7 (7693 B)
+Date: 2026-11-25 (GMT+8)
+
+0. Scope and boundaries (explicit)
+--------------------------------------------------------------------------------
+This round is strictly offline and read-only against project inputs. Per the
+taskbook:
+- No source, Kconfig, .config, fragment, DTS/DTBO, firmware or existing report
+  was edited. No olddefconfig/menuconfig, no Kleaf/Bazel, no kernel build.
+- No boot image/package/signing/AVB operation, no deployment.
+- No device connection, ADB/fastboot/recovery, reboot, unlock, root, flash or
+  partition write.
+- main source files, ack18-dby-w09-dts-draft, ai-parallel/stagea-port-until-boot
+  and PR #1 were not modified.
+- A DTB was produced ONLY inside a ROUND22 temp dir, from a byte-identical copy
+  of the unmodified draft, for syntax/label validation. No binary is uploaded.
+- The runtime DTBO was not inferred from board-id candidates.
+- No tool was installed or downloaded; only pre-installed cpp + dtc 1.7.0 in the
+  existing WSL Ubuntu-24.04 environment were used.
+
+1. Inputs used (exact copies)
+--------------------------------------------------------------------------------
+- board DTS draft: firmware-analysis/round22 source of
+  dts/dby-w09-ack18-board.dts.draft, blob c209d5196 (14588 B),
+  local sha256 58496508b09509dd4fece4eab75c5794f6d2f607cdb39e36ea0d3d9c22d01e98.
+- HOS4.3 decompiled base DTB: ROUND19 work copy
+  .../round19/tmp/dts/base_2.dts (26546 lines).
+- ACK source tree (ROUND18, used verbatim): 
+  /home/kerneldev/work/matepad11/ack-6.18.33-round18/common
+- Final .config: .../common/dby_w09/.config in bazel-out (238376 B,
+  sha256 5f7fd8b3..., matches ROUND18).
+- ROUND18 patch series: local _r18/artifacts_r2/*.patch (final/revised set).
+- ROUND19/20/21 reports (read-only cross-reference).
+
+2. Work package A — reconcile HOS base /memory documentation
+--------------------------------------------------------------------------------
+Verdict: RESOLVED. The draft comment is WRONG and needs a precise correction.
+
+Evidence (base_2.dts, dtc-decompiled stock HOS4.3 base FDT):
+- Line 74: "memory {"  -> the /memory node EXISTS.
+- Line 75: device_type = "memory";
+- Line 76: reg = <0x00 0x00 0x00 0x00>;   (all-zero placeholder)
+- Root (lines 4-9): #address-cells = <0x02>; #size-cells = <0x02>;
+  model "Qualcomm Technologies, Inc. kona v1 SoC"; compatible "qcom,kona".
+- Only ONE memory node named "memory" exists in the whole tree (grep of
+  /^\s*(memory|dram|ddr|ram)[ {]/ returns only line 74). No "memory@" variant.
+- aliases block (line 90+) has NO memory alias (entry list covers ufshc1,
+  sdhc2, pci-domain*, serial0, swr*, mhi-netdev0, i2c0/2) — no "memory" alias,
+  no duplicate memory node.
+- A separate /reserved-memory node exists at line 24385 with 34 children and a
+  "reserved_memory" alias at line 26494; this is a DIFFERENT node from /memory.
+
+The draft's memory comment (draft lines 299-314) currently states:
+  "ROUND7's HOS4.3 base-FDT inventory has no /memory node or device_type
+   property, but does contain 34 reserved-memory child nodes ..."
+This conflates the absent "no usable RAM" content with an absent node. Both
+ROUND19 (report lines 46, 622-623, 636) and ROUND20 independently recorded:
+  /memory exists, device_type = "memory", but reg = 0x0 0x0 0x0 0x0 (empty
+  placeholder). That is exactly what base_2.dts shows.
+
+Exact correction needed in the draft comment (recommendation only, NOT applied):
+Replace the claim "has no /memory node or device_type property" with:
+  "The stock HOS4.3 base FDT contains /memory with device_type = \"memory\"
+   and an all-zero reg placeholder <0 0 0 0>; there is no memory alias and
+   only one such node. It carries no usable RAM range. ROUND7's inventory
+   observation of 'no memory content' reflects the empty reg, not a missing
+   node." 
+Keep the rest of the comment (reserved-memory children, ABL-population
+inference, no copying of HOS4.2 splash/DFPS addresses, separate gate) intact.
+
+Inference only (NOT proven): ABL/UEFI may populate the usable-memory node at
+runtime. ROUND20 showed the ACK kernel has EFI-stub capability to discard DT
+memory and rebuild from the UEFI map, and that the stock kernel payload is
+gzip (so ABL must handle decompression). Neither proves HOS4.3 ABL actually
+takes the EFI path. The stock base FDT's reg=0 is a template value, not a
+captured post-ABL handoff (ROUND64 Phase E already marked this BLOCKED). Keep
+this as an unresolved runtime gate; do not invent RAM sizes/addresses.
+
+3. Work package B — board DTS syntax / label / include readiness
+--------------------------------------------------------------------------------
+Verdict: PASS (syntax only; label resolution confirmed; no draft-local warnings).
+
+3.1 Include resolution
+- draft line 24: #include "sm8250.dtsi" resolves to
+  common/arch/arm64/boot/dts/qcom/sm8250.dtsi (177641 B), present.
+- draft lines 21-22: dt-bindings/arm/qcom,ids.h and
+  dt-bindings/regulator/qcom,rpmh-regulator.h present under common/include.
+- Macro values used by draft: QCOM_ID_SM8250=356, RPMH_REGULATOR_MODE_RET=0,
+  LPM=1, AUTO=2, HPM=3 (consistent with draft comment's "ACK fixed binding
+  uses RET=0/LPM=1/AUTO=2/HPM=3").
+
+3.2 Label resolution (all present in pinned sm8250.dtsi)
+- apps_rsc  -> sm8250.dtsi:6170 (rsc@18200000)
+- ufs_mem_hc -> sm8250.dtsi:2507 (ufshc@1d84000)
+- ufs_mem_phy -> sm8250.dtsi:2579 (phy@1d87000)
+No missing label. No duplicate node/property or malformed construct was
+visible statically in the draft.
+
+3.3 dtc syntax compile (temp copy, byte-identical source)
+Pre-installed tools: cpp (gcc), dtc Version: DTC 1.7.0 (WSL Ubuntu-24.04).
+Source copy: base64 round-trip into /home/kerneldev/work/round22_tmp/board.dts,
+wc 14588 bytes, sha256 58496508... — IDENTICAL to the local draft sha256.
+Because the draft uses C-preprocessor #include (kernel DTS convention), the
+standard two-step kernel flow was used; compiling the .draft directly with dtc
+alone fails at line 21 (#include) with "syntax error" — that is expected and is
+NOT a draft defect.
+
+Command 1 (preprocess):
+  cpp -nostdinc -undef -D__DTS__ -x assembler-with-cpp \
+    -I <src>/arch/arm64/boot/dts -I <src>/arch/arm64/boot/dts/qcom \
+    -I <src>/include -I <src>/scripts/dtc/include-prefixes \
+    -o board.dtc board.dts
+  CPP_EXIT: 0, preprocessed output 160956 bytes.
+Command 2 (dtc):
+  dtc -@ -I dts -O dtb \
+    -I(include paths: arch/arm64/boot/dts, .../dts/qcom, include,
+       scripts/dtc/include-prefixes) \
+    -o board.dtb board.dtc
+  DTC_EXIT: 0, board.dtb 145841 bytes. No FATAL, no ERROR.
+
+Warnings: 32 total, ALL from sm8250.dtsi (pinned upstream DTSI), ZERO from the
+draft/temp source. Breakdown: 2x avoid_unnecessary_addr_size (dsi@ae94000 /
+dsi@ae96000) and 30x unique_unit_address (geniqup i2c/spi/serial unit-address
+collisions). These are pre-existing upstream warnings unrelated to this board
+draft. Syntax validation therefore PASSES; this does NOT validate schema or
+runtime hardware.
+
+3.4 rootparam overlay
+No separate rootparam overlay draft (.dtso/.overlay) exists in the local work
+copies; only a CSV inventory (_r7_upload/dtbo_board_rootparam_matrix.csv,
+1472 B) is present, and main dts/ contains only README.md and this board draft.
+Per taskbook, a missing separate overlay draft does NOT fail the base check.
+rootparam DTBO readiness: BLOCKED (no compile-able draft available locally) —
+reported, not manufactured. The draft correctly keeps a `rootparam: rootparam
+{}` label (draft line 45) for a future overlay, but the overlay itself is not
+part of this round's inputs.
+
+4. Work package C — UFS host/PHY DT contract vs. actually patched ACK source
+--------------------------------------------------------------------------------
+All checks use the ROUND18 tree, not memory/old drafts. Driver files:
+- host: common/drivers/ufs/host/ufs-qcom.c (87704 B)
+- generic: common/drivers/ufs/host/ufshcd-pltfrm.c
+- PHY: common/drivers/phy/qualcomm/phy-qcom-qmp-ufs.c (86515 B)
+- schemas: common/Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml,
+  qcom,sc7180-ufshc.yaml, phy/qcom,sc8280xp-qmp-ufs-phy.yaml.
+ROUND18 patches (final set _r18/artifacts_r2): 01 dual_pd_schema,
+02 vddp_vccq_parent (shared schema), 03 corrected_pd_range, 04 clock_names,
+05 dual_genpd, 06 vddp_lifecycle, 07 qmp_vdda_binding, 08 qmp_vdda_lifecycle,
+09 kleaf_target. Verification below is against COMPILED source (the patches
+were integrated into the ROUND18 tree), not just patch text.
+
+SoC DTSI baseline (sm8250.dtsi):
+- ufs_mem_hc (2507): compatible "qcom,sm8250-ufshc","qcom,ufshc","jedec,ufs-2.0";
+  power-domains = <UFS_PHY_GDSC> (single, line ~2521); 8 clocks;
+  operating-points-v2 = <&ufs_opp_table> with required-opps to rpmhpd_opp
+  low_svs/nom; 2 interconnects; status disabled.
+- ufs_mem_phy (2579): compatible "qcom,sm8250-qmp-ufs-phy";
+  power-domains = <UFS_PHY_GDSC>; resets = <&ufs_mem_hc 0>; status disabled.
+- driver match (ufs-qcom.c:3126-3130): "qcom,ufshc" (generic), plus sm8550/
+  sm8650 drvdata. "qcom,sm8250-ufshc" is NOT a separate match entry but the
+  generic "qcom,ufshc" match binds; SoC-first compatible is retained by DTSI.
+
+Board DTS compatible override: NOT NEEDED and NOT PRESENT — the host inherits
+"qcom,sm8250-ufshc"+"qcom,ufshc" from the DTSI; the qcom driver binds via
+"qcom,ufshc". Vendor-property code paths additionally gate on
+of_device_is_compatible(np, "qcom,sm8250-ufshc") (ufs-qcom.c:1532, 3023,
+3052), which the inherited compatible satisfies.
+
+Property-to-consumer matrix (host = &ufs_mem_hc, PHY = &ufs_mem_phy):
++------------------------------------------+--------------------------------+--------------------------------------------------+------------------------------------------+----------+
+| Property (draft)                         | Provider node                  | Consumer (exact source)                          | Patch / schema dependency                    | Status   |
++------------------------------------------+--------------------------------+--------------------------------------------------+------------------------------------------+----------+
+| compatible "qcom,sm8250-ufshc"          | sm8250.dtsi ufs_mem_hc         | ufs_qcom_of_match "qcom,ufshc" (ufs-qcom.c:3127) | none (inherited from DTSI)                    | PASS     |
+| vcc-supply / vcc-voltage-level          | vreg_l17a_3p0 (PM8150 L17)     | ufshcd_populate_vreg "vcc" (ufshcd-pltfrm.c:185) | ufs-common.yaml; generic UFS vreg            | PASS     |
+| vccq-supply / vccq-max-microamp         | vreg_l6a_1p2 (PM8150 L6)        | ufshcd_populate_vreg "vccq" (:189)               | ufs-common.yaml                               | PASS     |
+| vccq2-supply / vccq2-max-microamp       | vreg_s4a_1p8 (PM8150 S4)        | ufshcd_populate_vreg "vccq2" (:193)              | ufs-common.yaml                               | PASS     |
+| vdd-hba (NOT in draft as supply)        | — (GDSC, not a regulator)       | ufshcd_populate_vreg "vdd-hba" (:181, skip_current=true); absent => "assuming enabled" | draft maps it to power-domains, correct | PASS (absence OK) |
+| power-domains (1x UFS_PHY_GDSC)         | &gcc UFS_PHY_GDSC (DTSI)        | ufs_qcom_attach_sm8250_domains (ufs-qcom.c:3012); num_domains==1 -> returns 0 (generic path) | dual-GenPD patch 03/05 schema minItems:1 maxItems:2 | PASS (1 domain allowed) |
+| required-opps (opp-table -> rpmhpd)     | rpmhpd_opp_* (DTSI)             | ufs_qcom_attach_sm8250_domains maps required_dev only in the 2-domain path (:3080) | patch 05 dual_genpd                           | PARTIAL: OPP->MMCX mapping NOT active until a 2nd domain is added |
+| qcom,vddp-ref-clk-supply                | vreg_l6a_1p2 (PM8150 L6)        | ufs_qcom_init_vddp_ref_clk (ufs-qcom.c:1525-1572); regulator_set_load + enable | patch 02 (schema) + 06 (lifecycle); gated on sm8250-ufshc compatible | PASS |
+| qcom,vddp-ref-clk-max-microamp          | host property                   | read at :1537-1541; missing/zero => error          | patch 02 requires it when supply present    | PASS (draft has 100) |
+| qcom,vccq-parent-supply                 | vreg_s8c_1p2_1p4 (PM8150L S8)   | NO compiled consumer: grep "vccq_parent"/"qcom,vccq-parent" in ufs-qcom.c => 0 hits | patch 02 declares schema only; patch text states "VCCQ-parent remains source-topology metadata and is not acquired by the initial ACK driver" | PARTIAL (topology metadata only, no runtime vote/enable) |
+| qcom,vccq-parent-max-microamp           | host property                   | schema required when supply present (qcom,ufs-common.yaml:112-115) | patch 02                                      | PASS (draft has 210000) |
+| vdda-phy-supply / vdda-pll-supply       | vreg_l5a_0p88 / vreg_l9a_1p2    | qmp_ufs_regulators_enable (phy-qcom-qmp-ufs.c:1853+), vreg_list order vdda-phy then vdda-pll | patch 07/08 binding+lifecycle              | PASS |
+| vdda-phy-always-on                      | PHY boolean                     | qmp_ufs_parse_dt :2239 sets flag; regulators_enable/disable :1853-1910 keep vdda-phy enabled across power-off and drop its load vote | patch 07 (schema) + 08 (driver); requires vreg_list[0]=="vdda-phy" | PASS (SM8250 cfg satisfies ordering) |
++------------------------------------------+--------------------------------+--------------------------------------------------+------------------------------------------+----------+
+
+Notes:
+- vdd-hba: draft line 250-251 comment is correct — HOS maps it to UFS_PHY_GDSC,
+  expressed by power-domains, not a regulator. The generic layer populates
+  "vdd-hba-supply" optionally and assumes enabled when absent; the GDSC is
+  attached through the power-domains phandle. No fake vdd-hba regulator needed.
+- vccq-parent: draft lines 252-257 are accurate — retained as topology
+  metadata, load vote is a no-op in this ACK (PMIC5 HFSMPS510 ops lack
+  set_load), and no enable policy is justified by the base FDT. The dual-genpd
+  OPP mapping (patch 05) is present in source but only activates with a 2nd
+  power-domain; the compiled DTB has exactly one (UFS_PHY_GDSC). That mapping
+  is therefore present-but-dormant, not a probe blocker. Adding MMCX as domain
+  index 0 would be a source/DTS change reserved for a later round and is NOT
+  made here.
+- qcom,vddp-ref-clk is the UFS device REF_CLK pad supply, not a QMP PHY analog
+  rail (draft line 274 comment correct); it is consumed by ufs-qcom.c, not the
+  PHY driver.
+
+5. Work package D — PM8150 VRM input parents and electrical assumption
+--------------------------------------------------------------------------------
+Source: common/Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml,
+common/drivers/regulator/qcom-rpmh-regulator.c,
+common/drivers/regulator/core.c, final .config.
+
+Binding definitions:
+- pm8150-rpmh-regulators branch (yaml:282-294) lists grouped LDO input
+  properties (vdd-l1-l8-l11-supply, vdd-l2-l10-supply, ... vdd-l13-l16-l17-supply)
+  and patternProperties "^vdd-s([1-9]|10)-supply$": true.
+- pm8150l-rpmh-regulators branch (yaml:159-175) lists vdd-bob-supply, grouped
+  LDO supplies and patternProperties "^vdd-s[1-8]-supply$": true (covers S8).
+- The top-level required: list (yaml:136-139) contains ONLY "compatible" and
+  "qcom,pmic-id". All input-parent supply properties are optional schema
+  properties. -> Missing vdd-s4/vdd-s8/... does NOT violate the binding.
+
+Driver behavior:
+- qcom-rpmh-regulator.c: RPMH_VREG(...) sets rdesc.supply_name to "vdd-sX"
+  (e.g. :919 smps4 -> "vdd-s4", :988/:1020 smps8 -> "vdd-s8"). The driver does
+  not itself require the parent; it hands supply_name to the regulator core.
+
+Regulator core behavior:
+- core.c:114-116: have_full_constraints() = has_full_constraints ||
+  of_have_populated_dt(). On an arm64 DT boot the DT is populated, so this is
+  true.
+- core.c:2054-2096: when rdev->supply_name cannot be resolved, if
+  have_full_constraints() the core substitutes dummy_regulator_rdev (a dummy
+  parent); otherwise it defers/fails. No arm64 board calls
+  regulator_has_full_constraints() explicitly (only legacy arm/x86 mach files
+  and ACPI do), but of_have_populated_dt() already satisfies the condition.
+- Final .config: CONFIG_REGULATOR=y, CONFIG_REGULATOR_FIXED_VOLTAGE=y,
+  CONFIG_REGULATOR_QCOM_RPMH=y. (No REGULATOR_ALWAYS_DUMMY symbol in this tree.)
+
+Answers to the five sub-questions:
+1. Schema validity: NO — input parent properties are optional; omission is
+   schema-valid for pm8150/pm8150l rpmh regulator nodes.
+2. Driver registration/operation: NO hard requirement — the rpmh driver only
+   declares supply_name; core resolves it. Registration succeeds with a dummy.
+3. Dummy parent: YES — core.c:2079-2086 substitutes dummy_regulator_rdev when
+   DT is populated and the supply is unresolved (dev_warn "...using dummy
+   regulator").
+4. Unresolved electrical assumption: a dummy parent means the physical input
+   is assumed already present and enabled externally. It does NOT establish
+   the board's real power tree, does not prove S4/S8 input rail identity,
+   voltage headroom, or that the rail is powered at the right time. Any load
+   vote or enable on such a rail is effectively unmanaged. This is exactly the
+   pre-boot power-tree validation gate the draft flags (draft lines 137-143).
+5. HOS4.3 data: ROUND11/14 found no vdd-s1..s10-supply, vin-supply or
+   vph-pwr-supply in the inspected base-FDT scope; the five parent edges found
+   are ARC virtual voltage-level / proxy links, not VRM electrical inputs.
+   No safe physical rail mapping can be established -> keep UNKNOWN. Do NOT
+   create vph_pwr=3.7V, fake fixed regulators, vdd-s*-supply or ARC-to-VRM
+   translations. Data needed: a schematics/PMIC power-tree or an authorized
+   post-ABL FDT capture that actually contains the VRM input supplies.
+
+The draft's existing comments (lines 101-158, 218-241) already encode these
+constraints correctly; no change is required to the regulator nodes for schema
+or registration, only the electrical gate stays open.
+
+6. Work package E — build-readiness decision and minimal recommendations
+--------------------------------------------------------------------------------
++------------------------------------------+---------------------------------------------------------------------------+
+| Gate                                     | Status / basis                                                            |
++------------------------------------------+---------------------------------------------------------------------------+
+| board DTS syntax & label resolution      | PASS — cpp+dtc 1.7.0 exit 0, DTB 145841 B; 0 draft-local warnings; 3 labels + macros resolved |
+| UFS host & PHY driver binding            | PASS — inherited sm8250-ufshc/ufshc binds qcom UFS driver; PHY compatible sm8250-qmp-ufs binds | 
+| qcom,vddp-ref-clk contract               | PASS — exact consumer ufs-qcom.c:1525-1572 + schema patch 02               |
+| qcom,vdda-phy-always-on contract          | PASS — exact consumer phy-qcom-qmp-ufs.c:1853-1910/2239 + patches 07/08     |
+| qcom,vccq-parent-supply consumer          | PARTIAL — schema present, no compiled runtime consumer (metadata only)     |
+| vdd-hba / GDSC contract                  | PASS — optional generic vreg; GDSC via power-domains; draft comment correct|
+| dual-GenPD required-opps->MMCX mapping   | PARTIAL — code present but dormant with 1 power-domain; not a probe blocker|
+| PM8150 regulator-parent electrical path  | UNRESOLVED — schema/driver OK via dummy, physical input rail UNKNOWN       |
+| memory node handoff                      | UNRESOLVED — /memory present but reg all-zero; ABL population not proven   |
+| rootparam DTBO readiness                 | BLOCKED — no compile-able overlay draft in local inputs                    |
+| Safe to proceed to DTB-only compile?     | YES — already demonstrated (syntax only) on byte-identical copy            |
+| Safe to proceed to DTBO compile?          | NO — no overlay draft; separate gate                                        |
+| Safe to proceed to boot / packaging?      | NO — memory handoff, PM8150 power tree, DTBO, schema validation all open    |
++------------------------------------------+---------------------------------------------------------------------------+
+
+Separation of concerns (per taskbook §6):
+- Draft-fixable WITHOUT any guessed hardware data:
+  * Correct the /memory comment (Work package A) to say the node exists with
+    all-zero reg, rather than "no /memory node".
+  * (Optional clarity, no DTS edit this round) Note that dual-GenPD OPP->MMCX
+    mapping requires a 2nd power-domain; leave the single-GDSC probe path as-is.
+- Software contract gaps needing a driver/schema patch:
+  * qcom,vccq-parent-supply has schema but no runtime consumer in this ACK;
+    treat as metadata unless a dedicated driver patch is ported and reviewed.
+  * MMCX-to-MX parent propagation remains an unresolved HOS4.3 corner case
+    (ROUND30/14); do not alter the shared SM8250 rpmhpd table by corner-number
+    overlap.
+- Electrical / ABL / runtime facts that MUST remain unknown:
+  * PM8150 S4/S8 (and grouped LDO) physical input rails — no vdd-s*/vin/vph-pwr
+    in HOS4.3 data; dummy parent is a software assumption only.
+  * Whether ABL fills /memory at runtime or the kernel takes the EFI path.
+  * The selected runtime DTBO (board-id candidates are not sufficient).
+  * VCCQ-parent S8 runtime enable state and any set-load effectiveness.
+
+7. Tools, versions and reproducibility
+--------------------------------------------------------------------------------
+- cpp: system gcc preprocessor in WSL Ubuntu-24.04 (flags -nostdinc -undef
+  -D__DTS__ -x assembler-with-cpp).
+- dtc: Version: DTC 1.7.0 (pre-installed at /usr/bin/dtc).
+- Source tree: /home/kerneldev/work/matepad11/ack-6.18.33-round18/common
+  (unmodified; temp artifacts confined to /home/kerneldev/work/round22_tmp).
+- Temp files (NOT uploaded): board.dts (14588 B, sha256 58496508...),
+  board.dtc (160956 B), board.dtb (145841 B), dtc.stderr (32 warnings),
+  board_roundtrip.dts.
+- All line numbers reference the exact files named in §1 and §2/§3/§4.
+
+8. Bottom line
+--------------------------------------------------------------------------------
+The board DTS draft is syntactically compilable now (proven), and its UFS host
+and PHY regulator properties have real, traceable consumers in the ROUND18
+compiled ACK source for vcc/vccq/vccq2, vddp-ref-clk and vdda-phy-always-on.
+The three items that must NOT be mistaken for "done":
+  (a) the /memory comment is factually wrong and should be corrected;
+  (b) qcom,vccq-parent-supply is schema-only metadata in this ACK, not a working
+      runtime rail, and dual-GenPD OPP mapping is dormant with one power-domain;
+  (c) PM8150 VRM input parents and the ABL memory handoff remain electrically /
+      runtime unresolved — a dummy regulator and an all-zero reg are not
+      evidence of a safe power or memory path.
+Proceed to DTB-only syntax compile (done). Do NOT proceed to DTBO, packaging,
+signing or any device boot from this round's evidence alone.

@@ -1,0 +1,155 @@
+{
+  "task": "AGENT_TASK_ROUND3.md - DBY-W09 logical partition metadata and device tree analysis",
+  "generated": "2026-11-24",
+  "scope": "Local read-only analysis only. No device connection, no flashing, no partition writes, no kernel build, no partition extraction, no binary upload.",
+
+  "python_environment": {
+    "version": "3.13.14",
+    "source": "WorkBuddy bundled CPython (callable from Windows command shell)",
+    "third_party_packages": "NONE (standard library only)"
+  },
+
+  "aosp_reference": {
+    "source": "official AOSP read-only mirror aosp-mirror/platform_system_core",
+    "files": ["metadata_format.h", "reader.cpp", "utility.cpp", "writer.cpp", "sparse_format.h", "sparse_defs.h", "sparse_read.cpp", "sparse_crc32.cpp", "output_file.cpp"],
+    "offsets_confirmed_not_guessed": {
+      "primary_geometry": 4096,
+      "backup_geometry": 8192,
+      "primary_metadata": "12288 + metadata_max_size * slot",
+      "backup_metadata": "12288 + metadata_max_size * slot_count + metadata_max_size * slot"
+    }
+  },
+
+  "synthetic_tests": {
+    "status": "PASS",
+    "total": 22,
+    "passed": 22,
+    "failed": 0,
+    "coverage": "sparse RAW/FILL/DONT_CARE/CRC32, bad magic, block total mismatch, RAW size mismatch, geometry/header/tables checksum, table bounds, entry_size, extent block-device index, two-slot canonical identity",
+    "report": "super_parser_test.txt"
+  },
+
+  "super_sparse_validation": {
+    "status": "PASS",
+    "source_size_bytes": 7114729004,
+    "magic": "0xED26FF3A",
+    "block_size_bytes": 4096,
+    "total_blocks": 1835008,
+    "total_chunks": 127,
+    "expanded_logical_size_bytes": 7516192768,
+    "chunk_types": {"RAW": 114, "FILL": 7, "DONT_CARE": 6, "CRC32": 0},
+    "all_chunk_bounds_and_sizes": "PASS",
+    "sum_chunk_blocks": "PASS",
+    "full_expansion": "NOT PERFORMED",
+    "full_image_hash": "NOT COMPUTED"
+  },
+
+  "lp_metadata": {
+    "geometry": {
+      "source": "primary @ 4096",
+      "magic": "0x616C4467",
+      "struct_size": 52,
+      "checksum_sha256": "4E31CF64275442F40E25C772A18D1FCCD8B1291232E593F65E522FC7AC07DF03",
+      "checksum": "PASS",
+      "metadata_max_size": 65536,
+      "metadata_slot_count": 2,
+      "logical_block_size": 4096
+    },
+    "slots": {
+      "slot0": {
+        "primary_offset": 12288,
+        "backup_offset": 143360,
+        "primary": "VALID",
+        "backup": "VALID",
+        "chosen": "primary/slot0",
+        "partitions": 5,
+        "extents": 5,
+        "groups": 2,
+        "block_devices": 1,
+        "checksums": "geometry/header/tables all PASS"
+      },
+      "slot1": {
+        "primary_offset": 77824,
+        "backup_offset": 208896,
+        "primary": "VALID",
+        "backup": "VALID",
+        "chosen": "primary/slot1",
+        "partitions": 5,
+        "extents": 5,
+        "groups": 2,
+        "block_devices": 1,
+        "checksums": "geometry/header/tables all PASS"
+      }
+    },
+    "slots_content_identical": true,
+    "slots_content_sha256": "746EBF7AA5CD431C77BCB05CD63855689F1B110E256895C969462D58B44CE7C8",
+    "groups": ["default", "qti_dynamic_partitions"],
+    "partitions": ["cust", "hw_product", "odm", "system", "vendor"],
+    "vendor_odm_logical_partitions_found": true,
+    "vendor_odm_note": "vendor (1022038016 bytes) and odm (51593216 bytes) exist in metadata as LINEAR extents; NOT extracted this round.",
+    "block_device": {
+      "partition_name": "super",
+      "size_bytes": 7516192768,
+      "first_logical_sector": 2048,
+      "alignment": 1048576,
+      "alignment_offset": 0
+    },
+    "all_validation_items": "PASS",
+    "partition_extraction": "NOT PERFORMED"
+  },
+
+  "device_tree": {
+    "dtbo": {
+      "entry_source": "round2 firmware_analysis.txt (offsets/sizes read, not hand-typed)",
+      "total_size_bytes": 2963810,
+      "entry_count": 9,
+      "all_bounds_checks": "PASS",
+      "all_fdt_validation": "VALID",
+      "model": "Huawei Technologies, Inc. DBY-W09",
+      "compatible": "qcom,kona-qrd",
+      "id_rev": "all 0x00000000 (parsed from DTBO entry table)",
+      "board_ids": [8200, 8296, 8206, 8208, 8202, 8238, 8302, 8240, 8298],
+      "overlay_meta": "__symbols__/__fixups__/__local_fixups__ recorded where present",
+      "key_evidence": ["qcom,pm8150 PMIC", "power-on", "pinctrl/gpio", "regulator", "clock-controller", "adc_tm thermal", "usb2_vbus", "key_home/vol_up/confirm"]
+    },
+    "boot_img": {
+      "dtb_region_offset": 22790144,
+      "dtb_region_offset_evidence": "Android boot header v2: page_size + align_up(page_size+kernel_size) + align_up(ramdisk_start+ramdisk_size); magic d00dfeed verified at computed offset",
+      "round2_dtb_region_size_bytes": 1664243,
+      "fdt_candidates": [
+        {"index": 0, "offset": 22790144, "fdt_totalsize": 556524, "validation": "VALID", "model": "Qualcomm Technologies, Inc. kona v2.1 SoC", "compatible": "qcom,kona", "定位": "deterministic (boot header layout)", "qcom_msm_id": [356, 131073]},
+        {"index": 1, "offset": 23346668, "fdt_totalsize": 556520, "validation": "VALID", "model": "Qualcomm Technologies, Inc. kona v2 SoC", "compatible": "qcom,kona", "定位": "scan candidate (adjacent FDT magic)", "qcom_msm_id": [356, 131072]},
+        {"index": 2, "offset": 23903188, "fdt_totalsize": 551026, "validation": "VALID", "model": "Qualcomm Technologies, Inc. kona v1 SoC", "compatible": "qcom,kona", "定位": "scan candidate (adjacent FDT magic)", "qcom_msm_id": [356, 65536]},
+        {"index": 3, "offset": 24454214, "fdt_totalsize": 173, "validation": "VALID (header only)", "model": "", "compatible": "", "定位": "scan candidate; no model/compatible; provenance undetermined"}
+      ],
+      "valid_fdt_count": 4,
+      "deterministic_dtb_count": 1,
+      "scan_candidate_count": 3,
+      "note": "Multiple valid FDTs are recorded individually; none silently selected. boot DTB region is a multi-DTB container (kona v2.1/v2/v1 for different SoC revisions)."
+    },
+    "local_binary_work_copies": {
+      "created": true,
+      "count": 13,
+      "location": "D:/DBY-W09_FirmwareAnalysis_round3/dtb_work (local only)",
+      "uploaded": false
+    }
+  },
+
+  "source_firmware_integrity": {
+    "file_count": 43,
+    "super_img_size_match": true,
+    "boot_img_size_match": true,
+    "dtbo_img_size_match": true,
+    "modified": false
+  },
+
+  "not_done": [
+    "No vendor/odm/system/product/preload partition extraction",
+    "No kernel or ramdisk unpacking",
+    "No sparse-to-raw expansion",
+    "No image/DTB/DTBO/partition binary uploaded to GitHub",
+    "No device connection, ADB/fastboot, flashing or partition writes",
+    "No PR merge, no main branch modification",
+    "No Xiaomi DTS merged into Huawei device tree"
+  ]
+}

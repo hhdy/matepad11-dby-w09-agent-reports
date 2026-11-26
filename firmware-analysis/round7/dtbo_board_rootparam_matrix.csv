@@ -1,0 +1,10 @@
+﻿entry_index,file,model,compatible,msm_id,board_id,rootparam_present,rootparam_fields,__symbols__,__fixups__,__local_fixups__,validation
+0,dtbo_entry_0.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8200,0",False,,False,False,False,VALID
+1,dtbo_entry_1.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8296,0",False,,False,False,False,VALID
+2,dtbo_entry_2.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8206,0",False,,False,False,False,VALID
+3,dtbo_entry_3.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8208,0",False,,False,False,False,VALID
+4,dtbo_entry_4.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8202,0",False,,False,False,False,VALID
+5,dtbo_entry_5.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8238,0",False,,False,False,False,VALID
+6,dtbo_entry_6.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8302,0",False,,False,False,False,VALID
+7,dtbo_entry_7.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8240,0",False,,False,False,False,VALID
+8,dtbo_entry_8.dtbo,"str:Huawei Technologies, Inc. DBY-W09","strlist[qcom,kona-qrd; qcom,kona; qcom,qrd]",,"8298,0",False,,False,False,False,VALID

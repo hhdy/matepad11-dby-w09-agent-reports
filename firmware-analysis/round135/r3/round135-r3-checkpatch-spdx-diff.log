@@ -1,0 +1,119 @@
+################################################################################
+# ROUND135 R3 - static checks evidence (§7)
+################################################################################
+
+### ROUND135 R3 s6: static checks 2026-11-26T07:54:20Z
+
+=== final git diff --check ===
+FINAL_DIFFCHECK_RC=0
+
+=== checkpatch --strict --no-signoff ===
+checkpatch identity: 12fcb133151dd34ce9e2213a7fbd1cde9edd26585865ab3bdf2fa03c0a3bfad3
+--- 22-round135-huawei-dby-w09-real-dts.patch ---
+RC=1
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+WARNING: DT compatible string "huawei,dby-w09" appears un-documented -- check ./Documentation/devicetree/bindings/
+WARNING: line length of 130 exceeds 100 columns
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+--- 23-round135-huawei-dby-w09-dtb-makefile.patch ---
+RC=0
+
+/mnt/d/workbuddy/2026-11-23-22-29-12/_r135/r3/patches/23-round135-huawei-dby-w09-dtb-makefile.patch has no obvious style problems and is ready for submission.
+
+--- board DTS file (arch/arm64/boot/dts/qcom/huawei-dby-w09.dts, patched tree) ---
+RC=1
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+ERROR: Does not appear to be a unified-diff format patch
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+=== patches 18-21: historic ROUND130 checkpatch results (quoted, not re-run) ===
+source: TEST_AGENT_ROUND130_COMBINED_REPORT.txt blob def62019b5760d991f41d674e227b9e1af0761df section 4.2:
+  ROUND120 async-domain: RC=1 0E 4W 1C
+  ROUND122 vreg-load-first: RC=1 0E 0W 2C
+  ROUND128 V2 QMP: RC=1 0E 1W 0C
+  ROUND126 proxy-load-first: RC=0 0E 0W 0C
+
+=== SPDX validation (dependency-dependent) ===
+SPDX_RC=NOT_RUN-BLOCKED: python3 ply module missing (taskbook forbids package installation)
+ModuleNotFoundError: No module named 'ply'
+
+### s6 end 2026-11-26T07:54:22Z
+
+=== checkpatch 22 (raw) ===
+Traceback (most recent call last):
+  File "/home/kerneldev/work/matepad11/round135-r3-agent/a30/common/scripts/spdxcheck.py", line 6, in <module>
+    from ply import lex, yacc
+ModuleNotFoundError: No module named 'ply'
+WARNING: added, moved or deleted file(s), does MAINTAINERS need updating?
+#2: 
+new file mode 100644
+
+WARNING: DT compatible string "huawei,dby-w09" appears un-documented -- check ./Documentation/devicetree/bindings/
+#35: FILE: arch/arm64/boot/dts/qcom/huawei-dby-w09.dts:30:
++	compatible = "huawei,dby-w09", "qcom,sm8250";
+
+WARNING: line length of 130 exceeds 100 columns
+#325: FILE: arch/arm64/boot/dts/qcom/huawei-dby-w09.dts:320:
++ * is an all-zero placeholder, not a usable RAM map. ROUND24's direct child enumeration corrects the historical count: it contains
+
+total: 0 errors, 3 warnings, 0 checks, 343 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/mnt/d/workbuddy/2026-11-23-22-29-12/_r135/r3/patches/22-round135-huawei-dby-w09-real-dts.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+
+=== checkpatch 23 (raw) ===
+total: 0 errors, 0 warnings, 0 checks, 7 lines checked
+
+/mnt/d/workbuddy/2026-11-23-22-29-12/_r135/r3/patches/23-round135-huawei-dby-w09-dtb-makefile.patch has no obvious style problems and is ready for submission.
+
+=== checkpatch board DTS file (raw; checkpatch expects a diff -- bare .dts yields the unified-diff ERROR, recorded as diagnostic) ===
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+#3: 
+ * Huawei MatePad 11 (2021), DBY-W09 — ACK android17-6.18 board DTS draft.
+
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+#21: 
+#include <dt-bindings/arm/qcom,ids.h>
+
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+#22: 
+#include <dt-bindings/clock/qcom,gcc-sm8250.h>
+
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+#23: 
+#include <dt-bindings/power/qcom,rpmhpd.h>
+
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+#24: 
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+
+WARNING: Commit log lines starting with '#' are dropped by git as comments
+#26: 
+#include "sm8250.dtsi"
+
+ERROR: Does not appear to be a unified-diff format patch
+
+total: 1 errors, 6 warnings, 0 checks, 0 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+arch/arm64/boot/dts/qcom/huawei-dby-w09.dts has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

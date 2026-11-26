@@ -1,0 +1,237 @@
+AI2-ROUND33 FINAL REVALIDATION REPORT (THIRD VALIDATION) — 17-PATCH SERIES
+===========================================================================
+Task ID:    AI2-ROUND33 third validation (2号 AI, after host-harness repair)
+Executor:   user-local validation agent (read-only; no code changes)
+Date:       2026-11-25 (UTC+8)
+Context:    Validation history within ROUND33:
+              1st run: original patch 16 corrupt (git apply RC=128) — reported.
+              2nd run: patch 16 v2 + patch 17 applied and checkpatch-clean, but
+                the committed host harness failed (legacy suite 12/38 failures;
+                ROUND32/33 suite SIGSEGV) because the suites still encoded
+                pre-ROUND33 semantics — reported in
+                AI2_ROUND33_REVALIDATION_REPORT.txt.
+              3rd run (this report): 2号 AI repaired the test fixtures only
+                (no driver/patch/binding changes). Full chain re-executed.
+
+HEADLINE VERDICT: ALL GATES PASS.
+  17/17 patches apply on pristine pinned ACK (patch 16/17 with recorded
+  offsets, zero fuzz); checkpatch 16/17 clean; committed host harness now
+  passes 38/38 (legacy) and 83/83 (ROUND32/33 suite, no crash, with the nine
+  ROUND33 assertions); strict schema gates 14/14 PASS on two dtschema
+  versions; fresh full Kleaf build BUILD_RC=0 with the 17-patch tree
+  hash-verified in the artifact and .config byte-identical to Stage A-only;
+  ROUND58 config regression 33/33 + helper tests 11/11 PASS; workspace
+  restored hash-verified. No file was modified anywhere.
+  Note: lifecycle behavior is verified at mock level only (host harness);
+  hardware remains untouched and unverified.
+
+--------------------------------------------------------------------
+1. STAGE A HEAD / REPAIRED TESTS / PATCH IDENTITY (step 1) — PASS
+--------------------------------------------------------------------
+Stage A branch: ai-parallel/stagea-port-until-boot
+HEAD at fetch: 2f21233148a04afdd61e44b1be7688399967d9d0
+  ("ROUND61: publish hosted UFS and PHY validation evidence")
+  98fda4151bea7b4a7a717054c431f59a7ff23bb6 is an ancestor: YES.
+New commits since the 2nd validation (test-fixture repair chain):
+  66d25d00f0 tests: align ROUND31 legacy fixtures with self-target mapping
+  7d688f37de tests: reject non-self ghost targets under ROUND33
+  fed8ffc6ad tests: register mock regulator targets for legacy lookups
+  366dd8042c tests: use provider nodes for legacy self-target fixtures
+  7b515b983e docs: record ROUND33 host harness alignment
+  676edc5e66 progress: record ROUND33 harness repair and pending validation
+  964710b025 / 5529515ef2 / cc31e103f8 / c385db20c9 / 528e3debf0 / a7e75516f7
+  (harness count updates, series note, doc, fixture phandle reset)
+Committed blobs at HEAD:
+  tests/test_proxy_consumer_r31.c      blob 14515c62… size 9287 (updated)
+  tests/test_proxy_consumer_round32.c  blob aff9ec3c… size 17728 (updated)
+  tests/run_tests.sh                   blob e29f8a23… size 2013
+  tests/mock/mock_core.h               blob 98820fc6… size 10691 (unchanged
+                                       from 2nd-validation state)
+Patches unchanged from the 2nd validation (re-verified byte-for-byte):
+  patch 16 round33-0001-regulator-proxy-self-target-only.patch
+    blob 3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe (MATCH)
+    sha256 7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 (MATCH)
+  patch 17 round33-0002-regulator-proxy-self-target-binding.patch
+    blob d2e818296118672bd708db34ed08d817fcd3895b (MATCH)
+    sha256 d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 (MATCH)
+Series record round32-stagea-series.txt: 17 ordered entries; all 17 patch
+files re-hashed from the checkout: 17/17 MATCH (blob + sha256).
+Implementation note and PROGRESS ROUND33 sections present at HEAD.
+
+--------------------------------------------------------------------
+2. 17-PATCH SEQUENTIAL APPLY ON PRISTINE PINNED ACK (step 2) — PASS
+--------------------------------------------------------------------
+Fresh disposable detached worktree at exact ACK 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a.
+Patches 1-15: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0 each — zero offset, zero fuzz.
+Patch 16: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0
+  Hunk #1 succeeded at 187 (offset -25 lines); Hunk #2 at 244 (offset -2);
+  Hunk #3 at 274 (offset +2).
+Patch 17: CHECK_RC=0, APPLY_RC=0, DIFFCHECK_RC=0
+  Hunk #1 succeeded at 119 (offset +1); Hunk #2 at 149 (offset -2).
+applied=17 fail=0. All offsets recorded; zero fuzz (context matched exactly at
+shifted positions). Same offsets as the 2nd validation — patches unchanged.
+Post-apply: 16 dirty path entries (12 modified + 4 new), 546 insertions /
+8 deletions tracked; proxy-consumer.c 14,470 B.
+
+--------------------------------------------------------------------
+3. CHECKPATCH (step 3) — PASS
+--------------------------------------------------------------------
+scripts/checkpatch.pl --strict, separately:
+  patch 16 (driver):  0 errors, 0 warnings, 0 checks, 62 lines. RC=0.
+  patch 17 (binding): 0 errors, 0 warnings, 0 checks, 30 lines. RC=0.
+
+--------------------------------------------------------------------
+4. COMMITTED HOST TESTS (step 4) — PASS (defect from 2nd run resolved)
+--------------------------------------------------------------------
+bash tests/run_tests.sh <17-patch worktree> (committed version at HEAD;
+compiles the real drivers/regulator/proxy-consumer.c, source sha256
+dc24fa52ec12d2bdedf97696b894ac1446b6ba8f23cb6525bcde7597237fbf9c)
+
+Suite 1  test_proxy_consumer_r31 (legacy):  COMPILE_RC=0
+  checks=38  failures=0   RESULT: PASS   TEST_RC=0
+  All legacy scenarios now resolve through provider nodes carrying an
+  explicit proxy-supply phandle to the owner child (self-target mapping):
+  vote/enable/put counting, failure paths (-5/-6), two-rail bulk revoke all
+  verified. The dual-provider bulk-revoke scenario uses separate
+  provider/target pairs per the self-target-only constraint.
+
+Suite 2  test_proxy_consumer_round32 (+ ROUND33 assertions): COMPILE_RC=0
+  checks=83  failures=0   RESULT: PASS   TEST_RC=0   (no crash)
+  Newly covered semantics, all exercised at runtime (not just counted):
+  - non-self ghost target -> -EINVAL BEFORE regulator lookup, owner
+    back-pointer stays empty ("non-self ghost rejected before regulator
+    lookup", dev_err "proxy-supply must target the regulator child owning
+    this proxy request")
+  - child-scoped cross-target -> -EINVAL before lookup; legacy group
+    cross-target -> -EINVAL before lookup; both leave back-pointer empty
+  - deferred self-target: parked at registration, individual unregister
+    drops it without touching regulators
+  - deferred retry: retry enables exactly once, applies the 100000 uA load
+    vote; failed retry (set_load -7) does not enable and frees the consumer
+  - group+child proxy-supply mix -> -EINVAL ("mutually exclusive")
+  - legacy group self-target still registers via regulator_get("proxy"),
+    owner teardown withdraws once
+  HARNESS_RESULT: PASS, RUNTESTS_RC=0.
+
+--------------------------------------------------------------------
+5. SCHEMA / BINDING GATES (step 5) — PASS
+--------------------------------------------------------------------
+Ran against the 17-patch tree's binding
+Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+(sha256 1255ae6a06a33b969983c6aaefe7b15702d32f0f460404beda089ebb96fbd71a)
+with the committed fixtures (round61/fixtures/, 6 files). dt-validate
+returns 0 even on errors, so every verdict below is a CONTENT assertion on
+its output.
+
+dt_binding_check: RC=0 under dtschema 2023.9 AND 2026.9
+dt-doc-validate : RC=0 (zero output) under both versions
+Fixture dtc compile: 5 valid fixtures RC=0; dangling-phandle negative fixture
+  RC!=0 with "FATAL ERROR …" (compile-time rejection) — PASS
+dt-validate + content assertions (both dtschema versions):
+  child-scoped-valid (L5+L9 self targets)          -> accepted   PASS
+  mixed-decl (runtime -EINVAL, schema cannot see)  -> accepted   PASS
+  undeclared child property                        -> REJECTED, diagnostic
+      names 'qcom,proxy-consumer-bogus'                          PASS
+  bad-phandle-type (plain u32 in proxy-supply)     -> accepted (meta-schema
+      forbids $ref on *-supply; documented ROUND32 limitation)   PASS
+  legacy-group provider-level declaration          -> accepted   PASS
+  review DTS (dby-w09-proxy-review.dts, -@)        -> compiles; exactly the
+      known ROUND29 F1 root-compatible diagnostic ('huawei,dby-w09' is not
+      one of arm/qcom.yaml enum); regulator/proxy nodes produce ZERO
+      diagnostics (both versions)                              PASS
+TOTAL_FAILURES=0  SCHEMA_GATE=PASS.
+(Procedural note: the first schema run showed 2 false FAILs caused by a
+wrong fixture directory in the agent's own runner script — fixtures live in
+round61/fixtures/, not round61/tests/fixtures/. Runner corrected and re-run;
+no repo content was touched. Recorded for transparency.)
+
+--------------------------------------------------------------------
+6. FRESH FULL BUILD (step 6) — PASS
+--------------------------------------------------------------------
+The 17-patch result was synced into the manifest-pinned Stage A build
+workspace with hash-verified identity:
+  pre-sync snapshot: dirty 16, tracked-diff sha256
+    613e7ea4bcd826b732cb13ed27f7374f7e114a8e527232f02336be4a636f2aed
+  workspace cleaned to pristine ACK (dirty 0)
+  17-patch tracked diff (sha256
+    3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf) +
+    untracked files applied; overlay identity diff-hash: YES
+  tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  BUILD_RC=0  ELAPSED=337s  (2 linux-sandbox actions; 780 cache hits)
+Artifacts (bazel-bin/common/dby_w09/):
+  Image      size=44,820,992  sha256=a59c22f7f5f124c1f125edaa53c9125d3e56f8bf6c21fd8fe0fe85bbf0a3d50e
+  System.map size= 7,611,691  sha256=13a86fa6a7b32e69b6701293463492d97f00398d15bea642d1f7359f323b96ae
+  vmlinux    size=230,251,048 sha256=8532dbbd4735433d978384c4f2f4f9162fe7e1dd69be1c5502541f6eaec60c78
+  .config    size=   238,410  sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+  proxy_consumer symbols in System.map: 13
+Config identity: .config byte-identical to the Stage A-only build result
+(0850213d…) — no config delta introduced by patches 16/17.
+Image identity: distinct from Stage-A-only (b6efb347…), from ROUND124
+(903164d7…) and from every prior round — the 17-patch content is in the
+artifact (further corroborated by the 13 proxy_consumer symbols).
+Workspace restoration: 15-patch baseline re-applied after the build; dirty
+16 with identical path list; tracked-diff sha256 restored to
+613e7ea4… — RESTORE_MATCHES_PRE_OVERLAY=YES (byte-verified).
+
+--------------------------------------------------------------------
+7. ROUND58 CONFIG REGRESSION (step 7) — PASS
+--------------------------------------------------------------------
+Against the current build config (0850213d…):
+  check_dby_w09_config.py: "PASS: all 33 required storage-first symbols are
+  present as =y; no duplicate assignments found." RESULT: PASS, rc=0
+  → 33/33
+  helper unit tests: "Ran 11 tests … OK" → 11/11
+
+--------------------------------------------------------------------
+8. CLEANUP AND SAFETY (steps 8-10) — PASS
+--------------------------------------------------------------------
+- Disposable worktrees removed (r33-apply, r33-repo); git worktree list back
+  to the 3 pre-existing entries; scratch binaries, patch snapshots and logs
+  deleted.
+- Manifest-pinned build workspace left in its validated Stage A 15-patch
+  state (dirty 16, tracked-diff 613e7ea4… — byte-verified, see §6).
+- No source, patch, binding, fixture, test harness, series, implementation
+  note or PROGRESS file modified anywhere. No branch checkout/commit/mutation.
+- No device connection, ADB, fastboot, root, reboot, flash, partition access,
+  boot/DTBO/AVB/vbmeta operation, firmware upload or HOS4.3 evidence upload.
+- Build artifacts NOT uploaded. ROUND34 not started.
+
+--------------------------------------------------------------------
+9. SUMMARY TABLE
+--------------------------------------------------------------------
+| Check                                        | Result | Evidence (abridged) |
+|----------------------------------------------|--------|---------------------|
+| Stage A HEAD 2f212331, 98fda41 ancestor      | PASS   | merge-base YES      |
+| Test-fixture repair commits present          | PASS   | 6+ commits at HEAD  |
+| patch 16 blob/sha256 identity                | PASS   | 3899e2b7 / 7b4858f5 |
+| patch 17 blob/sha256 identity                | PASS   | d2e81829 / d19fb3b6 |
+| series 17 entries, files re-hashed           | PASS   | 17/17 MATCH         |
+| patches 1-15 apply (zero offset/fuzz)        | PASS   | 45/45 rc=0          |
+| patch 16 apply                               | PASS   | RC=0, off -25/-2/+2 |
+| patch 17 apply                               | PASS   | RC=0, off +1/-2     |
+| checkpatch 16                                | PASS   | 0E/0W/0C RC=0       |
+| checkpatch 17                                | PASS   | 0E/0W/0C RC=0       |
+| legacy suite (38-check ROUND31)              | PASS   | checks=38 failures=0 |
+| ROUND32/33 suite incl. nine assertions       | PASS   | checks=83 failures=0, no crash |
+| dt_binding_check (2023.9 + 2026.9)           | PASS   | RC=0 both           |
+| dt-doc-validate (both versions)              | PASS   | RC=0, 0 output      |
+| fixture dtc phase (5 valid + 1 dangling)     | PASS   | valid rc=0; dangling rejected |
+| dt-validate content assertions (12)          | PASS   | incl. undeclared-prop rejection |
+| fresh full Kleaf build                       | PASS   | BUILD_RC=0, 337s    |
+| .config byte-identical to Stage A-only       | PASS   | 0850213dc3e2c8ed…   |
+| 17-patch content in artifact                 | PASS   | Image a59c22f7…, 13 proxy symbols |
+| workspace restore (hash-verified)            | PASS   | 613e7ea4… exact, YES |
+| ROUND58 config 33/33                         | PASS   | validator rc=0      |
+| helper tests 11/11                           | PASS   | Ran 11, OK          |
+| cleanup / no file modified                   | PASS   | worktrees removed   |
+
+VERDICT: ROUND33 third validation — ALL GATES PASS. The v1 corruption and the
+v2 harness inconsistency are both resolved. What is verified: patch identity,
+applicability, style, committed-host-harness lifecycle semantics at mock
+level (83 + 38 checks), binding/schema conformance, full buildability with
+candidates in the artifact, and config regression. What is NOT verified:
+hardware behavior (device untouched; no boot/flash/DTBO/AVB operation),
+permanent-vote semantics, L5 parent-supply provenance — unchanged scope
+limits carried over from the ROUND32 report.
+
+— end of final revalidation report —

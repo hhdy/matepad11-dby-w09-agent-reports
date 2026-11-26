@@ -1,0 +1,598 @@
+AI2-ROUND29 - HUAWEI ROOT COMPATIBLE FORMAL SCHEMA ARCHITECTURE VALIDATION
+================================================================================
+
+接受任务 AI2-ROUND29；下发方 2号 AI；执行方本地 Agent
+
+Task identity
+-------------
+  Task ID          : AI2-ROUND29
+  Issued by        : AI 2 (2号 AI) - this is NOT an AI 1 task and NOT a shared task.
+  Executed by      : local Agent (WorkBuddy, user's local execution proxy)
+  Working branch   : firmware-audit-v1
+  Report path      : firmware-analysis/round29/AI2_ROUND29_HUAWEI_BOARD_BINDING_SCHEMA_REPORT.txt
+  Conflict check   : no conflicting task was running. AI2-ROUND27 and AI2-ROUND28
+                     were both closed (report uploaded, work stopped). Nothing was
+                     merged, overwritten or re-run from them.
+  Stop rule        : report uploaded once, then stop. ROUND30 NOT started.
+
+--------------------------------------------------------------------------------
+1. PREREQUISITES (all read back and byte-verified before any work)
+--------------------------------------------------------------------------------
+Read from firmware-audit-v1 via the GitHub contents API; each file was decoded and
+its git blob SHA-1 recomputed from the raw bytes (git-sha1 = sha1("blob <len>\0"+data)).
+
+  input                                                              blob        size   verify
+  ----------------------------------------------------------------------------------------------
+  round27/AI2_ROUND27_KLEAF_DTB_DTBO_SCHEMA_REPORT.txt               ee573f75    17493  MATCH
+  round28/AI2_ROUND28_PINNED_UFS_AND_HUAWEI_SCHEMA_REPORT.txt        9d8f33bf    22021  MATCH
+  round28/AI2_ROUND28_TASKBOOK.md                                    ab5ec3ab     8973  MATCH
+  round29/AI2_ROUND29_TASKBOOK.md                                    64daf7ad     8690  MATCH
+
+All four inputs were readable -> prerequisite gate PASSED, no BLOCKED condition.
+
+Fixed ACK checkout (read-only) and its dtschema:
+  common HEAD            : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a   (= fixed commit, MATCH)
+  git describe / tag     : android17-6.18.33_r00
+  dtschema version       : 2026.9 (both dtschema.__version__ and dt-validate -V)
+  processed-schema.json  : present, 25084938 bytes (not modified)
+  yaml files in bindings : 5186
+  ROUND27 composite DTB  : present, 146045 bytes, unchanged (mtime 13:42, before this task)
+
+--------------------------------------------------------------------------------
+2. WORK PACKAGE A - FIXED ACK BOARD SCHEMA ARCHITECTURE
+--------------------------------------------------------------------------------
+All paths below are relative to the fixed commit's common/ tree; line numbers are
+from that exact commit.
+
+2.1 Documentation/devicetree/bindings/arm/qcom.yaml - the canonical root node schema
+  lines total           : 1226
+  $id                   : http://devicetree.org/schemas/arm/qcom.yaml#      (line 4)
+  $schema               : http://devicetree.org/meta-schemas/core.yaml#     (line 5)
+  select key            : ABSENT  (verified by grep and by runtime introspection)
+  properties.$nodename  : const "/"                                        (lines 19-20)
+  properties.compatible : oneOf                                            (lines 21-22)
+                          85 "- items:" branches; each branch is
+                            - items:
+                                - enum:  <board compatible strings>
+                                - const: <SoC compatible string>
+  sm8250 branch         : lines 988-999 (original), enum members are
+                          qcom,qrb5165-rb5, qcom,sm8250-hdk, qcom,sm8250-mtp,
+                          samsung,r8q, samsung,x1q, sony,pdx203-generic,
+                          sony,pdx206-generic, xiaomi,elish, xiaomi,pipa
+                          terminated by "- const: qcom,sm8250"  (line 999)
+  qcom,board-id         : lines 1119-1156
+                          $ref /schemas/types.yaml#/definitions/uint32-matrix
+                          minItems 1, maxItems 8, oneOf with two row shapes
+                          (3-bitfield row, or OnePlus 4-element row)
+                          deprecated: true
+  qcom,msm-id           : declared in the same properties block, deprecated: true
+  allOf[0]              : lines 1161-1200 - explicit allow-list of older SoCs
+                          (includes qcom,sm8250 at line 1192):
+                            then: qcom,board-id: true ; qcom,msm-id: true
+                            else: qcom,board-id: false; qcom,msm-id: false
+  allOf[1]              : lines 1202-1222 - non-OnePlus boards:
+                            else: qcom,board-id: items: maxItems: 2
+  top-level policy      : additionalProperties: true   (line 1224, upstream pre-existing)
+
+  Consequence for this device: qcom,sm8250 is inside the legacy allow-list, so
+  root qcom,board-id and qcom,msm-id are permitted and structurally validated by
+  the upstream schema itself. Observed locked-DTB values:
+    qcom,board-id = <0x0 0x0>        (1 row, 2 cells)
+    qcom,msm-id   = <0x164 0x20001>  (1 row, 2 cells)
+  Both are upstream-declared and upstream-deprecated; their meaning for this
+  product is UNKNOWN, therefore recorded as opaque. No declaration was added or
+  altered by this task.
+
+2.2 Two+ real board binding examples in the same fixed commit
+  file                      lines   $nodename        compatible     top-level policy
+  ------------------------------------------------------------------------------------------
+  arm/qcom.yaml              1226   const "/"       oneOf(85 items)  additionalProperties: true (1224)
+  arm/rockchip.yaml          1282   const '/'       oneOf(1)         additionalProperties: true (1280)
+  arm/mediatek.yaml           458   const '/'       oneOf(35 items)  additionalProperties: true (456)
+  arm/fsl.yaml               1784   const '/'       oneOf(1)         additionalProperties: true (1782)
+  arm/amlogic.yaml            277   const '/'       oneOf(1)         additionalProperties: true (275)
+
+  Across all 85 files in bindings/arm/*.yaml:
+    additionalProperties: true   : 52 files
+    additionalProperties: false  : 21 files
+    unevaluatedProperties: false : 12 files
+    no top-level policy at all   :  0 files  (meta-schema forbids it)
+
+  Findings:
+  (a) For an SoC family, the root compatible registration location is the enum
+      inside the "- items:" branch of properties.compatible in the family file.
+      There is no per-board file and no second registration site.
+  (b) These board files are NOT registered through a `select` key; they are
+      registered by their properties.compatible content (see 2.3).
+  (c) The upstream top-level policy of all five examples is additionalProperties:
+      true. That is a pre-existing property of the shipped files, not something
+      this task introduced (see 4.4 for why this matters).
+
+2.3 How schema selection actually works in the fixed dtschema 2026.9
+  Source: dtschema 2026.9, validator.py (installed site-packages)
+
+    line 411-428  build two tables:
+                    self.always_schemas  - schemas that carry a `select` key
+                                           (select is not False)
+                    self.compat_map      - for schemas WITHOUT a `select` key but
+                                           WITH properties.compatible: every
+                                           compatible string extracted from that
+                                           property is mapped to the schema $id
+    line 462-468  _filter_match(schema_id, filter): the -l LIMIT filter keeps a
+                  schema only if a filter substring is inside its $id
+    line 470-479  iter_errors(): for a node with `compatible`, iterate the
+                  instance compatible strings IN ORDER, use the FIRST one present
+                  in compat_map, validate with that single schema, then `break`
+    line 481-489  unless -c/--compatible-match is given, the always_schemas are
+                  applied afterwards, each guarded by its own `select` (if/then)
+
+  Runtime introspection of the unmodified fixed corpus (processed-schema.json):
+    schemas loaded                     : 5254
+    always_schemas                     : 227
+    compat_map entries                 : 22769
+    qcom.yaml in always_schemas        : False
+    qcom.yaml has `select` key         : False
+    compat_map entries -> qcom.yaml    : 508  (includes qcom,sm8250 and huawei,sturgeon)
+    compat_map['qcom,sm8250']          : http://devicetree.org/schemas/arm/qcom.yaml
+    compat_map['huawei,dby-w09']       : NOT PRESENT
+    simulated root selection for
+      ['huawei,dby-w09','qcom,sm8250'] : qcom.yaml (via qcom,sm8250), because
+                                       huawei,dby-w09 is unknown to every schema
+
+  => F1 is produced by arm/qcom.yaml, and only by arm/qcom.yaml. It is produced
+     because the first compatible string is not in ANY enum of the oneOf, so no
+     branch of the oneOf can match the two-element list.
+
+2.4 Huawei board compatibles already registered in the fixed qcom.yaml
+  line  32 : huawei,sturgeon   (apq8026 branch)
+  line  91 : huawei,kiwi       (msm8939 branch)
+  line 157 : huawei,g7         (msm8916 branch)
+  line 219 : huawei,angler     (msm8996 branch)
+  line 779 : huawei,gaokun3    (sm8250/sm8450 class branch group)
+  => a vendor-prefixed board compatible in this file is an established, five-times
+     used upstream pattern; registering huawei,dby-w09 is not a novel construct.
+
+2.5 Why the ROUND28 v3 draft could not resolve F1, and what -l really selects
+  ROUND28 v3 was run as (quoted from the ROUND28 report, section 3.3):
+
+      dt-validate -s <v3 schema json> -l 'huawei,dby-w09' <composite.dtb>
+
+  dt-validate --help, verbatim:
+      -l LIMIT, --limit LIMIT
+                        limit validation to schemas with $id matching LIMIT
+                        substring. Multiple substrings separated by ':' can be
+                        listed (e.g. foo:bar:baz).
+
+  With -l 'huawei,dby-w09', every schema whose $id does not contain that substring
+  is dropped by _filter_match() before validation (validator.py 462-468, and the
+  filter is applied to compat_map selection at 475 and to always_schemas at 485).
+  arm/qcom.yaml does not contain 'huawei,dby-w09' in its $id, so it was never
+  loaded into the run. F1 could therefore neither be observed nor fixed by that
+  command - the run only ever evaluated the draft against /rootparam.
+
+  The v3 top-level `additionalProperties: true` cannot compensate: that key governs
+  how the DRAFT evaluates the node it is applied to. F1 is emitted by a different
+  schema (arm/qcom.yaml) which the -l filter had removed. The flag was also exactly
+  what ROUND29 section 5 forbids, so v3 is correctly not treated as mergeable.
+
+--------------------------------------------------------------------------------
+3. WORK PACKAGE B - TWO COMPLIANT ARCHITECTURES, COMPARED
+--------------------------------------------------------------------------------
+Both were built only inside a disposable copy of the bindings tree; the tracked
+tree was never written to (proof in section 6).
+
+3.1 Scheme 1 - register the exact pair inside the existing Qualcomm root schema
+  File  : Documentation/devicetree/bindings/arm/qcom.yaml (copy)
+  Patch : one inserted line, in the sm8250 branch enum, alphabetically first:
+
+      @@ -987,6 +987,7 @@
+             - items:
+                 - enum:
+      +              - huawei,dby-w09
+                     - qcom,qrb5165-rb5
+                     - qcom,sm8250-hdk
+
+  Line numbers after the patch (disposable copy):
+      988       - items:
+      989           - enum:
+      990               - huawei,dby-w09        <-- inserted
+      991               - qcom,qrb5165-rb5
+      ...
+      1000          - const: qcom,sm8250         (was line 999 before the patch)
+
+  Root compatible is therefore expressed exactly as the real DTB has it:
+      compatible = "huawei,dby-w09", "qcom,sm8250"
+  i.e. board string first, SoC string second, no extra or substituted compatible.
+
+  No top-level policy was added or relaxed. The file keeps its own pre-existing
+  additionalProperties: true at line 1224, and the SoC-family rules (nodename,
+  board-id/msm-id allow-list, deprecated flags) continue to apply unchanged.
+
+3.2 Scheme 2 - an independent Huawei board binding, joined to root selection
+  Two joining mechanisms exist in the fixed validator; both were built and tested.
+
+  2a) declare properties.compatible (the "ordinary board binding" shape):
+        properties:
+          $nodename: { const: '/' }
+          compatible:
+            items:
+              - const: huawei,dby-w09
+              - const: qcom,sm8250
+        additionalProperties: true
+      dt-doc-validate RC=0. But because the schema then contains
+      properties.compatible, it is registered in compat_map under huawei,dby-w09
+      (validator.py 418-428) and, being the FIRST compatible string of the node,
+      it wins the first-match loop and `break`s (validator.py 470-479). arm/qcom.yaml
+      is then never applied to the root node at all. F1 disappears by precedence,
+      not by resolution. The fixed validator also emits a hard warning:
+        Warning: Duplicate compatible "qcom,sm8250" found in schemas matching "$id":
+            http://devicetree.org/schemas/arm/huawei,dby-w09.yaml
+            http://devicetree.org/schemas/arm/qcom.yaml#
+      => rejected: it hides the diagnostic instead of resolving it, which is
+         exactly what ROUND29 section 6.6/5 forbids.
+
+  2b) use a `select` key instead of properties.compatible (so the schema lands in
+      always_schemas and does not shadow anything):
+        select:
+          properties: { $nodename: { const: '/' } }
+          required: [ compatible ]
+          allOf:
+            - properties: { compatible: { contains: { const: huawei,dby-w09 } } }
+      dt-doc-validate RC=0, and F1 is untouched because qcom.yaml is still applied
+      (proved in 4.3 canary). => cannot be the sole solution; at most a supplement.
+
+3.3 Comparison
+
+  criterion                       Scheme 1 (enum)      Scheme 2a (own file)   Scheme 2b (select)
+  ------------------------------------------------------------------------------------------------
+  F1 resolved                     YES (real)           NO (hidden)            NO (unchanged)
+  arm/qcom.yaml still applied      YES                  NO (shadowed)          YES
+  SoC-family root rules retained   YES                  NO                     YES
+  new top-level broad policy       none added           additionalProperties   additionalProperties
+                                                        true (own file)        true (own file)
+  duplicate-compatible warning     none                 YES                    none
+  files touched (upstream view)    1 line in 1 file     1 new file + gaps      1 new file
+  upstream precedent               huawei,* x5 in same  many board files       thermal-zones.yaml etc
+                                   file                 (but they are the only  (node-name keyed)
+                                                        schema for that node)
+  ROUND29 section 5 compliant      YES                  NO                     YES but insufficient
+
+3.4 Chosen architecture: Scheme 1, plus a node-name-keyed schema for /rootparam
+  /rootparam has no compatible property and none may be fabricated. In the fixed
+  dtschema, a schema whose only selector is properties.$nodename.const gets an
+  auto-generated `select` (verified at runtime; thermal/thermal-zones.yaml and
+  thermal/thermal-idle.yaml are the in-tree precedents, both in always_schemas with
+  select {'properties': {'$nodename': {'items': [{'const': '<name>'}], ...}}}).
+  The /rootparam schema therefore:
+
+    $id    : http://devicetree.org/schemas/arm/huawei,rootparam.yaml#   (line 4)
+    file   : 61 lines, in the disposable copy only
+    selector: properties.$nodename: const: rootparam   (no compatible anywhere)
+    declared properties, names and shapes kept exactly as observed:
+        qcom,boardid      uint32-array, minItems 4, maxItems 4   (opaque)
+        huawei,modem_id   uint32-array, minItems 2, maxItems 2   (opaque)
+        qcom,board_name   string                                 (opaque)
+        qcom,product_name string                                 (opaque)
+        hardware_version  string                                 (opaque)
+    required          : all five                                        (line 53)
+    additionalProperties: false                                         (line 60)
+    No hardware meaning, voltage, rail or calibration semantics is asserted for
+    any value; every description says the value is opaque vendor metadata.
+    The string properties use $ref /schemas/types.yaml#/definitions/string because
+    the core meta-schema rejects a bare `type: string` in a binding (verified:
+    dt-doc-validate reported "'string' is not one of ['boolean','object']" until
+    the $ref form was used).
+
+  Note on scope: this schema is a node binding, not a board binding. It does not
+  participate in root compatible selection at all, so it cannot and does not
+  substitute for the root compatible validation - that job stays with qcom.yaml.
+
+--------------------------------------------------------------------------------
+4. WORK PACKAGE C - POSITIVE AND NEGATIVE VERIFICATION
+--------------------------------------------------------------------------------
+All runs used the fixed ACK dtschema 2026.9 CLI against the fixed-commit schema
+directory copy, i.e. the whole 5186-file corpus was loaded and selection ran for
+real. One full run takes ~33 s.
+
+4.1 Schema self-checks (disposable copy)
+  PyYAML safe_load (system python3)                    : PARSE OK
+      keys = $id,$schema,additionalProperties,description,maintainers,properties,
+             required,title ; additionalProperties=False ; required=5
+  dt-doc-validate <huawei,rootparam.yaml>              : RC=0
+  dt-mk-schema -o <json> <huawei,rootparam.yaml>       : RC=0  (89160 bytes generated)
+  yamllint                                             : NOT AVAILABLE in the local
+      venv (ModuleNotFoundError). Disclosed; PyYAML parse used instead.
+  dt_binding_check make target                         : exists, but it writes
+      generated files into the tracked tree, which section 3 forbids; the
+      equivalent local processing (dt-doc-validate + dt-mk-schema + a full
+      dt-validate run) was used instead. Disclosed, not hidden.
+
+4.2 Diagnostic counts, real ROUND27 composite DTB (JSON output is authoritative;
+    dt-validate returns RC=0 even when diagnostics exist, so counts are the evidence)
+
+  configuration                                  RC   diagnostics  breakdown
+  ------------------------------------------------------------------------------------------
+  (a) unmodified fixed corpus (baseline)         0        8        qcom.yaml 1 (F1)
+                                                                   dt-core 6 (vcc 1 + rootparam 5)
+                                                                   sc7180-ufshc 1 (vcc)
+  (b) Scheme 1 only (enum line added)            0        7        dt-core 6 + sc7180 1
+                                                                   F1 = 0  (resolved for real)
+  (c) Scheme 1 + rootparam schema                0        2        sc7180 1 (vcc unexpected)
+                                                                   dt-core 1 (vcc type)
+                                                                   F1 = 0 ; rootparam = 0
+
+  Baseline (a) reproduces the ROUND27 full-run result exactly: 8 diagnostics.
+  Remaining diagnostics in (c) are the two UFS vcc-voltage-level ones, retained
+  verbatim and out of scope for this task (section 5).
+
+  Positive verdict, precisely bounded: the Huawei root-compatible part and the
+  /rootparam part both PASS (0 diagnostics) under a full-corpus run that actually
+  selects arm/qcom.yaml and huawei,rootparam.yaml. The run as a whole is NOT a
+  global clean pass - 2 vcc diagnostics remain.
+
+4.3 Selection proof (so the claim is not a self-referential single-schema run)
+  Introspection of the disposable corpus after Scheme 1 + rootparam schema:
+      schemas loaded                 : 5255 (5254 + rootparam)
+      huawei,rootparam.yaml in always: True
+      its select                     : {'required': ['$nodename'],
+                                        'properties': {'$nodename':
+                                          {'items': [{'const': 'rootparam'}],
+                                           'type': 'array', 'minItems': 1, 'maxItems': 1}}}
+      qcom.yaml in always_schemas    : False
+      compat_map['huawei,dby-w09']   : arm/qcom.yaml     <-- qcom.yaml is what the root selects
+      compat_map['qcom,sm8250']      : arm/qcom.yaml
+
+  Canary experiment that distinguishes "resolved" from "shadowed". A synthetic
+  root instance (same validator code path, not a DTB) is fed twice: once with the
+  correct pair and $nodename '/', once with $nodename 'not-the-root' so that only
+  qcom.yaml's $nodename rule can fire. qcom.yaml error count:
+
+    tree                          case A (name OK)      case B (name BAD)
+    ----------------------------------------------------------------------
+    unmodified fixed corpus        1  (F1)               2  ($nodename + F1)
+    Scheme 1                       0  (F1 resolved)      1  ($nodename)  <-- still applied
+    Scheme 2a                      0                     0               <-- NOT applied
+    Scheme 2b                      1  (F1 persists)      2               <-- still applied
+
+  Reading: under Scheme 1 the SoC-family schema is still doing its job (it still
+  reports the $nodename violation) while F1 is gone - that is a real resolution.
+  Under Scheme 2a, qcom.yaml produces no error at all even for an input it must
+  reject, i.e. it was displaced by the Huawei binding. That is the empirical proof
+  that 2a hides F1 rather than fixing it.
+
+4.4 Why no broad top-level policy was needed
+  - Scheme 1 adds no top-level key at all; the additionalProperties: true at
+    qcom.yaml line 1224 is the shipped upstream content, untouched by this task.
+  - The /rootparam schema uses additionalProperties: false (line 60) because it is
+    selected by node name and thus only ever evaluates the one node it fully
+    enumerates. Nothing is left open to make the meta-schema accept it.
+  - Meta-schema constraint that forces a top-level key (core.yaml: oneOf required
+    [unevaluatedProperties] / [additionalProperties]) is satisfied by the strict
+    `false`, not by an open `true`.
+
+4.5 Negative fixtures (all built from pristine copies of the real composite DTB
+    with fdtput; read back with fdtget; validated with the Scheme 1 corpus)
+
+  fixture                     mutation (read back)                       diagnostics  error content
+  ----------------------------------------------------------------------------------------------------------
+  neg1 compat SoC wrong       compatible = huawei,dby-w09, qcom,sm8150           3      arm/qcom.yaml:
+                                                                                        "['huawei,dby-w09',
+                                                                                         'qcom,sm8150'] is not
+                                                                                         valid under any of the
+                                                                                         given schemas"
+  neg2 compat order swapped   compatible = qcom,sm8250, huawei,dby-w09           3      arm/qcom.yaml:
+                                                                                        "['qcom,sm8250',
+                                                                                         'huawei,dby-w09'] is
+                                                                                         not valid under any of
+                                                                                         the given schemas"
+  neg3 board string unknown   compatible = huawei,unknown-board, qcom,sm8250      3      arm/qcom.yaml:
+                                                                                        "['huawei,unknown-board',
+                                                                                         'qcom,sm8250'] is not
+                                                                                         valid under any ..."
+  neg4 boardid 3 cells        qcom,boardid = <8 2 9>                             3      huawei,rootparam.yaml
+                                                                                        node /rootparam:
+                                                                                        "[8, 2, 9] is too
+                                                                                         short"
+  neg5 board_name wrong type  qcom,board_name = <0x1234>                          4      huawei,rootparam.yaml
+                                                                                        node /rootparam:
+                                                                                        "<u32 blob> is not of
+                                                                                         type 'array'"
+  neg6 undeclared prop        added qcom,undeclared-prop = "x" to /rootparam      4      huawei,rootparam.yaml
+                                                                                        node /rootparam:
+                                                                                        "'qcom,undeclared-prop'
+                                                                                         does not match any of
+                                                                                         the regexes:
+                                                                                         '^pinctrl-[0-9]+$'"
+  neg7 modem_id 1 cell        huawei,modem_id = <0xffffffff>                     3      huawei,rootparam.yaml
+                                                                                        node /rootparam:
+                                                                                        "[4294967295] is too
+                                                                                         short"
+
+  Extra variant neg6-orig: an undeclared property with a non-existent vendor
+  prefix ("foo,bar") was rejected by three schemas at once (vendor-prefixes.yaml,
+  huawei,rootparam.yaml, dt-core.yaml; 5 diagnostics). neg6 was then rebuilt with
+  a legitimate qcom, prefix to isolate the additionalProperties: false rejection
+  to a single cause.
+
+  Every negative fixture also still carries the 2 baseline vcc diagnostics, which
+  is why the totals start at 2+1 rather than 1. neg5 and the foo,bar variant carry
+  one additional dt-core "byte blob" diagnostic because dt-core keeps evaluating
+  the same property; those are listed, not filtered out.
+
+  RC for all seven fixtures: 0 (dt-validate behaviour), evidence is the JSON counts
+  and messages above.
+
+4.6 Diagnostics retained verbatim (out of scope, not filtered)
+  node /soc@0/ufshc (qcom,sm8250-ufshc), unit-address omitted:
+    [1] schema ufs/qcom,sc7180-ufshc.yaml
+        "Unevaluated properties are not allowed ('vcc-voltage-level' was unexpected)"
+    [2] schema dt-core.yaml
+        "vcc-voltage-level: <blob> is not of type 'object','integer','array','boolean','null'"
+  These are the ROUND27 F2/F3 pair, unchanged by this work. ROUND29 section 1
+  excludes them: the fixed ACK generic UFS driver does not read vcc-voltage-level
+  and the hardware/PMIC constraint is still unknown. Nothing was deleted from the
+  DTS and no consumer was invented to make them disappear.
+
+4.7 Other diagnostics in a full run
+  - One pre-existing, task-unrelated loader message appears in every run of this
+    tree, including the untouched baseline:
+        <bindings>/firmware/gunyah-cma-mem.yaml: ignoring, error parsing file
+    It is a property of the shipped corpus at the fixed commit, is not caused by
+    anything in this task, and is reported here rather than suppressed.
+  - No other diagnostic was observed on the positive fixture.
+
+--------------------------------------------------------------------------------
+5. WORK PACKAGE D - RECOMMENDATION AND LIMITS
+--------------------------------------------------------------------------------
+5.1 Recommendation
+  Adopt Scheme 1 + the node-name-keyed /rootparam schema.
+
+  Reasons, in evidence order:
+  (a) It is the only mechanism in the fixed validator that resolves F1 while
+      keeping arm/qcom.yaml applied to the root node (canary, 4.3).
+  (b) It expresses the real pair exactly, in the order the DTB has it, with no
+      fabricated compatible and no vendor substitution.
+  (c) It requires no new top-level additionalProperties/unevaluatedProperties
+      policy: one enum line, and the shipped file's own policy is left alone.
+  (d) Registering a vendor board string in this file is the existing upstream
+      pattern - huawei appears five times in the same file already (2.4).
+  (e) It is one line against one file, which is reviewable and revertible.
+
+  /rootparam handling: keep it out of the shared Qualcomm file. A separate schema
+  selected by node name (no compatible) is the compliant way to constrain a vendor
+  node that has no compatible; it keeps additionalProperties: false without opening
+  anything, and it does not claim to validate the root node.
+
+5.2 Can root compatible be expressed in the fixed dtschema without a broad
+    top-level policy?  YES - via Scheme 1. The broad policy is never needed for
+    the root node, because the root node is governed by arm/qcom.yaml, whose
+    compatible oneOf is the intended registration point. A top-level `true` only
+    ever appeared in drafts that tried to own the root node from a separate file.
+
+5.3 Compliant handling of a compatible-less /rootparam  YES - node-name selection
+    with a closed property set (3.4). Alternative reviewed and rejected: attaching
+    the five properties to arm/qcom.yaml itself, which would put Huawei-specific
+    vendor data into a shared Qualcomm board file and is not an acceptable
+    upstream shape.
+
+5.4 Evidence still missing before this can be merged upstream
+  1. Huawei provenance for the exact string "huawei,dby-w09": vendor documentation
+     or an accepted submission establishing it as the board compatible (the name
+     currently exists only in the local draft DTS; it is not in any upstream file).
+  2. Maintainer agreement for arm/qcom.yaml: that file is a Qualcomm board binding
+     maintained upstream by its listed maintainer; a one-line addition still needs
+     that review, and the submission must be a separate patch with a commit message
+     naming the product.
+  3. Upstream acceptability of a `rootparam` node binding at all: a vendor node
+     with no compatible and a name that collides with no standard node is unusual;
+     it may need either a huawei-prefixed node name in the DTS or an explicit
+     documented rationale, and that decision affects the schema's selector.
+  4. Provenance of the five rootparam values themselves (boardid, modem_id,
+     board_name, product_name, hardware_version) - this task asserts only shape,
+     so any semantic documentation needs a vendor source.
+  5. A regression check that the enum insertion does not disturb the other
+     sm8250 boards; the fixed corpus run shows no change for them, but an upstream
+     submission would still need the full dt_binding_check/tree run.
+  6. A decision on qcom,board-id/msm-id: both are upstream-deprecated yet present
+     in this product's DTB, so their retention needs an explicit note rather than
+     a silent pass.
+
+5.5 What this task does NOT claim
+  - It does not claim a globally clean schema pass. 2 vcc diagnostics remain.
+  - It does not claim the draft is mergeable as-is; 5.4 lists the gaps.
+  - It does not claim any hardware meaning for any vendor value.
+  - It does not modify, stage, commit or submit any formal binding or DTS.
+
+--------------------------------------------------------------------------------
+6. CLEANUP AND INTEGRITY
+--------------------------------------------------------------------------------
+6.1 Disposable copy removed
+  The entire disposable working area was deleted; a post-delete existence test
+  returned REMOVED and no leftover files matching the working prefix remain in
+  the temp area. Deleted content: the copied 5186-file schema corpus (three
+  hardlink trees), the two draft YAML schemas, the generated processed JSON, all
+  seven+ negative DTB fixtures, the synthetic probe fixtures and all run logs.
+
+6.2 Fixed ACK tracked tree unchanged
+  HEAD after the task : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (identical to before)
+  git status --short  : identical, line for line, to the pre-task baseline - the
+                        same 7 modified files and the same 1 untracked fragment:
+      M BUILD.bazel
+      M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+      M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+      M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+      M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+      M drivers/ufs/host/ufs-qcom.c
+      M drivers/ufs/host/ufs-qcom.h
+      ?? arch/arm64/configs/dby_w09_storage_first.fragment
+  Entry count: 8 before, 8 after. These eight are pre-existing ROUND18-era changes
+  and were not touched, staged or reverted; they are explicitly distinguished from
+  this task's work, of which zero entries appear.
+
+  Formal board bindings: `git status --porcelain -- Documentation/devicetree/
+  bindings/arm/` is empty and `git diff --stat` for that directory is empty.
+  arm/qcom.yaml is therefore byte-identical to the fixed commit.
+
+  Stray-file check: no untracked file exists anywhere under
+  Documentation/devicetree/bindings/ (the only entries there are the three
+  pre-existing modified files listed above). `git grep -l 'huawei,dby-w09'` over
+  the whole tracked tree returns 0 files, confirming no draft leaked into tracked
+  content.
+
+6.3 ROUND18 workspace artifacts unchanged
+  find round18-artifacts -newermt "2026-11-25 16:10" -type f  ->  0 files.
+  The artifact directory still holds the same 01..10 patch/script set (mtimes
+  01:26-01:29), untouched.
+  The ROUND27 composite DTB is unchanged (146045 bytes, mtime 13:42, before this
+  task started).
+  common/.config and common/arch/arm64/boot/Image do not exist in this checkout
+  (no kernel was ever built here); that is the pre-existing state, not a deletion
+  by this task. The untracked fragment dby_w09_storage_first.fragment is present
+  and unmodified (6506 bytes, mtime 01:48).
+
+--------------------------------------------------------------------------------
+7. WHAT WAS NOT DONE (explicit)
+--------------------------------------------------------------------------------
+  - No kernel or Image build; no Kleaf/Bazel invocation; no dtbo_image, boot.img,
+    dtbo.img, AVB, footer, signing or repack of any kind.
+  - No device interaction of any kind: no ADB, fastboot, recovery, reboot,
+    unlock, root, flash, live boot or partition read/write.
+  - No tracked DTS, formal binding, kernel source, Kconfig, config fragment,
+    .config, patch or Image was modified.
+  - The ROUND27 candidate DTS, rootparam overlay and composite DTB originals were
+    not modified; every fixture was a copy.
+  - No tool download, install or update; no repo init/sync; no new source pulled.
+  - No compatible string, property name or property value was changed or invented.
+  - No formal binding was submitted, and no branch other than firmware-audit-v1
+    was written to. Only this one report file was uploaded.
+  - ROUND30 was not started.
+
+--------------------------------------------------------------------------------
+8. SUMMARY OF THE ANSWER TO THE THREE QUESTIONS
+--------------------------------------------------------------------------------
+  Q1 How to express root compatible "huawei,dby-w09" + "qcom,sm8250" correctly?
+     Register the board string in the sm8250 enum of
+     Documentation/devicetree/bindings/arm/qcom.yaml (line 988-999 branch, insert
+     above line 990). F1 then disappears while qcom.yaml remains the schema that
+     validates the root node. Proven by count 8 -> 7 (F1 gone) and by the canary
+     test where qcom.yaml still reports its own $nodename rule.
+
+  Q2 How to declare root board properties and the five /rootparam properties
+     without a broad top-level additionalProperties/unevaluatedProperties: true?
+     For the root: nothing needs declaring - the properties that matter
+     (qcom,board-id, qcom,msm-id) are already upstream-declared and validated,
+     and the shipped file's own top-level policy is left untouched.
+     For /rootparam: a node-name-selected schema with the five properties in their
+     observed names/types and additionalProperties: false. No compatible invented,
+     no broad policy, nothing opened.
+
+  Q3 Is it validated for real, with error cases rejected?
+     Yes. Full-corpus runs over the fixed schema set: positive 8 -> 2 diagnostics
+     (only the out-of-scope vcc pair remains); seven negative fixtures rejected
+     with the exact schema ids, node paths and messages in 4.5, covering wrong
+     SoC string, wrong order, unknown board string, wrong boardid cell count,
+     wrong board_name type, undeclared property, and wrong modem_id cell count.
+
+================================================================================
+END OF REPORT - AI2-ROUND29
+================================================================================

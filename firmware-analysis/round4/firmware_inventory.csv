@@ -1,0 +1,2 @@
+﻿partition,firmware_path,file_name,size_bytes,candidate_category,note
+<BLOCKED>,,,,,,EROFS content listing unavailable: no trusted dump.erofs/fsck.erofs/debugfs; no module/firmware enumerated

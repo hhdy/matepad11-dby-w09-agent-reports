@@ -1,0 +1,1273 @@
+ROUND20 - ACK Image EFI-stub capability and boot-v2 payload compatibility
+Read-only, offline audit of an already-built Image against an already-extracted
+stock boot image. No image was created, packed, signed or deployed. No device.
+
+Generated: 2026-11-25
+Task source: firmware-analysis/round20/AGENT_TASK.md on main
+             (blob 915e36e5376a66abe15a078eef4e25005a98aba9, 8 182 B, 122 lines)
+Start prompt: firmware-analysis/round20/START_PROMPT.md on main
+             (blob 11d46a72a5f18281a779142359079c5d531149c0, 1 604 B, 17 lines)
+Reused artefacts: ROUND18 bazel output tree (Image / vmlinux / .config / System.map),
+                  ROUND2 payload extraction (boot.img), ROUND19 header + ramdisk results.
+Not performed this round: WSL deployment, repo init/sync, source or toolchain
+download, ROUND18 patch application, Kconfig edits, Image rebuild, firmware repack,
+AVB work of any kind.
+
+Path shorthand used throughout:
+  $ACK  = the pinned ROUND18 work tree root
+          .../work/matepad11/ack-6.18.33-round18
+  $OUT  = $ACK/bazel-bin/common/dby_w09      (the ROUND18 bazel output directory)
+  $SRC  = $ACK/common                        (the pinned ACK source checkout)
+
+================================================================================
+0. STATUS PER WORK PACKAGE
+================================================================================
+
+A  exact Image EFI / PE-COFF capability ................ PASS
+B  memory handoff route logic .......................... PASS
+C  stock boot kernel payload format .................... PASS
+D  deterministic compression + boot-v2 capacity ........ PASS
+E  first-stage storage prerequisites cross-check ....... PARTIAL
+                                                         (two built-in gates are
+                                                          demonstrably unset; see
+                                                          section 6.2)
+
+Headline findings, each backed by a byte-level or source-line observation below:
+
+1. This exact Image contains a real PE/COFF EFI application. The DOS "MZ" stub is
+   at file offset 0, e_lfanew is 0x40, the PE signature is present, Machine is
+   0xAA64 (IMAGE_FILE_MACHINE_ARM64), and Subsystem is 10 (IMAGE_SUBSYSTEM_
+   EFI_APPLICATION). This is not an inference from config: it is header bytes.
+
+2. The PE AddressOfEntryPoint is 0x23D7C40 and the symbol at that exact address is
+   __efistub_efi_pe_entry. Three independent arithmetic routes agree: the PE field,
+   the vmlinux symbol table, and the linker expression in arch/arm64/kernel/
+   efi-header.S:49 which literally writes AddressOfEntryPoint = __efistub_efi_pe_entry
+   - .L_head. The entry instruction bytes are a valid AArch64 prologue (paciasp,
+   sub sp, sp, #0x60, stp x29/x30).
+
+3. Verdict is deliberately layered. Established offline: (1) EFI stub is compiled
+   into this Image and (2) the Image has a valid PE/COFF EFI entry. NOT established:
+   (3) that Huawei ABL invokes that entry, and (4) that the final FDT receives
+   linux,uefi-* metadata. Items 3 and 4 are bootloader behaviour and cannot be read
+   out of an Image or a source tree.
+
+4. The EFI path really does bypass a zeroed /memory node - this is source-proven,
+   not assumed. drivers/firmware/efi/efi-init.c:186-193 executes
+   memblock_remove(0, PHYS_ADDR_MAX) with a comment stating that memblocks at that
+   point "originate from memory nodes in the DT, and UEFI uses its own memory map
+   instead", then rebuilds memory from the UEFI descriptors at :221. Separately,
+   drivers/of/fdt.c:1072 skips a /memory reg whose size is 0. So the zeroed reg is
+   fatal on the plain arm64 route and harmless on the EFI route.
+
+5. The stock kernel payload is gzip, not a raw arm64 Image. Its first bytes are
+   1f 8b 08 00 00 00 00 00 02 03 - an mtime-0, XFL=2, OS=3 gzip stream - and it
+   decompresses to 57 470 992 bytes whose offset 0x38 holds the ARM64 magic
+   0x644D5241. The decompressed stock header has text_offset 0x80000, image_size
+   0x433D000 and - this matters - res5 = 0, i.e. the stock kernel has NO PE header.
+   The stock kernel is not EFI-stub capable; the ROUND18 Image is.
+
+6. Our own gzip -n -9 of the ROUND18 Image produces a gzip header byte-identical to
+   the stock kernel's first ten bytes. The stock packaging tool used the same
+   deterministic settings. Output is reproducible: two runs are byte-identical.
+
+7. Payload arithmetic, page-aligning exactly the way the stock header does (verified
+   by reproducing all four stock offsets from the header values):
+     raw Image  + stock ramdisk + stock DTB -> payload_end 47 013 888
+     gzip Image + stock ramdisk + stock DTB -> payload_end 19 996 672
+   Both fit the 96 MiB partition. Only the gzip scenario is smaller than the stock
+   footer original_image_size (24 457 216); raw is 92.2 % larger. Physical fit does
+   not preserve AVB validity and does not imply ABL acceptance.
+
+8. Work package E is PARTIAL, not PASS, because two built-in gates that a first
+   stage plausibly needs are demonstrably unset in the ROUND18 .config:
+   CONFIG_DEVTMPFS is not set (System.map contains zero devtmpfs symbols) and
+   CONFIG_PINCTRL_MSM is not set (no Qualcomm TLMM driver at all). Everything else
+   in the storage chain - UFS host, QMP UFS PHY, RPMh clock/pd, interconnect,
+   SMMU, DM/verity/FEC, EROFS, loop, sha1/sha256 - is built in. This is recorded
+   as a finding, not silently smoothed over.
+
+================================================================================
+1. ENVIRONMENT, SOURCE PIN, AND ARTEFACT FINGERPRINTS
+================================================================================
+
+1.1 Host and tool versions actually used
+
+  WSL distribution       Ubuntu-24.04
+  kernel                 Linux 6.6.114.1-microsoft-standard-WSL2 x86_64
+  file                   5.45
+  objdump / readelf      GNU binutils 2.42
+  gzip                   1.12
+  python3                3.12.3
+  lz4                    1.9.4
+  xz                     5.4.5
+  zstd                   ABSENT  (not installed; not needed - no zstd container was
+                                 found on either side)
+  dtc                    1.7.0    (used in ROUND19, not needed here)
+
+1.2 Source pin, re-verified rather than assumed
+
+  $SRC git HEAD          8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  git describe           android17-6.18.33_r00
+  HEAD commit date       Wed Oct 14 19:10:07 2026 +0000
+  HEAD subject           Merge android17-6.18 into android17-6.18-lts
+  Makefile               6.18.33
+
+  This matches the fixed kernel named in the task (ACK android17-6.18.33_r00,
+  common 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a). No checkout, fetch or reset was
+  performed; the tree was read where it already sat.
+
+1.3 ROUND18 artefacts, size and integrity
+
+  file         size (bytes)   sha256 (first 16 hex)
+  Image           44 820 992   983b342ea5f0b48d
+  vmlinux        230 254 408   f063aac462042c74
+  .config            238 376   5f7fd8b32a4127b7
+  System.map       7 610 772   fdcd61215cffffec
+
+  The Image SHA-256 is quoted in full where it matters for identification in
+  section 2, because the ROUND18 report already records it. The other three are
+  truncated here; they were computed only to prove the files were not touched.
+
+  Image sha256, full:
+    983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884
+
+  Re-computed after every operation that touched the output directory: unchanged.
+  See section 5.1 for the before/after comparison.
+
+================================================================================
+2. WORK PACKAGE A - EFI / PE-COFF CAPABILITY OF THE EXACT IMAGE
+================================================================================
+
+2.1 Configuration gates, read from $OUT/.config as built
+
+  CONFIG_EFI=y
+  CONFIG_EFI_STUB=y
+  CONFIG_EFI_GENERIC_STUB=y
+  CONFIG_EFI_PARAMS_FROM_FDT=y
+  CONFIG_EFI_EARLYCON=y
+  CONFIG_EFI_ESRT=y
+  CONFIG_EFI_PARTITION=y
+  CONFIG_EFI_RUNTIME_WRAPPERS=y
+  CONFIG_EFI_VARS_PSTORE=y
+  CONFIG_ARM64=y
+  CONFIG_ARM64_VA_BITS=39
+  CONFIG_OF=y
+  CONFIG_OF_EARLY_FLATTREE=y
+  CONFIG_OF_FLATTREE=y
+  CONFIG_OF_RESERVED_MEM=y
+  CONFIG_BLK_DEV_INITRD=y
+  CONFIG_RANDOMIZE_BASE=y
+  CONFIG_RELR=y
+
+  Disabled, and each one matters for a different reason:
+  CONFIG_EFI_ZBOOT is not set          - so this is not a compressed EFI zboot
+                                         payload; the PE image is the kernel proper.
+  CONFIG_EFI_ARMSTUB_DTB_LOADER is not set
+                                       - so the stub will refuse a dtb= command-line
+                                         DTB (see 3.4).
+  CONFIG_EFI_BOOTLOADER_CONTROL is not set
+  CONFIG_EFI_CAPSULE_LOADER is not set
+
+  The presence of CONFIG_EFI_GENERIC_STUB alongside CONFIG_EFI_STUB is the 6.18
+  arrangement: arm64 no longer has its own arch/arm64/kernel/efi-entry.S. That file
+  does not exist in this tree - verified by direct stat, not assumed.
+
+2.2 Raw arm64 Image header, decoded from $OUT/Image offset 0
+
+  code0                0xfa405a4d   -> bytes 4d 5a 40 fa, i.e. "MZ" + the tail of a
+                                       ccmp encoding; this is the dual-purpose
+                                       signature trick, not a corrupt field
+  code1                0x148da019   -> AArch64 B instruction (branch to primary_entry)
+  text_offset          0x0
+  image_size           45 547 520  (0x2B70000)
+  flags                0xA
+  reserved (res2..4)   0, 0, 0
+  magic @0x38          0x644D5241  = "ARMd"  -> ARM64_IMAGE_MAGIC, correct
+  res5 @0x3c           0x40        -> PE header offset, correct
+
+  flags 0xA decoded against arch/arm64/include/asm/image.h:8-21, which defines
+  BE at bit 0, PAGE_SIZE as a 2-bit field at bit 1, and PHYS_BASE at bit 3:
+      bits 3..3 = 1 -> ARM64_IMAGE_FLAG_PHYS_BASE
+      bits 2..1 = 01 -> ARM64_IMAGE_FLAG_PAGE_SIZE_4K
+      bit 0 = 0 -> little-endian
+  So: little-endian, 4 KiB granule, and the kernel declares itself loadable at any
+  physical address with text_offset not meaningful. This is worth stating because
+  the stock kernel has text_offset 0x80000 while this Image has 0x0 - and both set
+  the PHYS_BASE bit, so the difference is not a load-address disagreement (see 4.4).
+
+  image_size (45 547 520) is larger than the file (44 820 992) by 726 528 bytes.
+  That is BSS: SizeOfImage covers the zero-filled tail that does not exist in the
+  file. This delta is the same class of number the stock kernel shows (13 033 456
+  bytes) and is expected, not an error.
+
+2.3 PE/COFF header, decoded field by field
+
+  file(1) reports: "Linux kernel ARM64 boot executable Image, little-endian,
+  4K pages". It does NOT report PE, because it stops at the arm64 Image identity.
+
+  objdump -h and readelf -h both refuse the file:
+      objdump: file format not recognized
+      readelf: Error: Not an ELF file - it has the wrong magic bytes at the start
+  This is expected: the object is simultaneously a raw arm64 Image and a PE/COFF
+  file, and BFD's default target is x86 with an ELF expectation. Because the task
+  explicitly allows a small bounded PE header reader when the installed tools do
+  not expose a field, the header was decoded directly with an 84-line reader that
+  prints header fields and section geometry only and never dumps payload.
+
+  DOS stub
+    bytes[0:2]         4D 5A                     "MZ"
+    e_lfanew @0x3c     0x40
+
+  COFF file header (at 0x40 + 4)
+    signature          "PE\0\0"                   present
+    Machine            0xAA64                     IMAGE_FILE_MACHINE_ARM64
+    NumberOfSections   2
+    TimeDateStamp      0x00000000                 zero -> reproducible link
+    PtrToSymbolTable   0
+    NumberOfSymbols    0
+    SizeOfOptionalHdr  168 (0xA8)                 exactly the PE32+ size
+    Characteristics    0x0206                     EXECUTABLE_IMAGE |
+                                                   LINE_NUMS_STRIPPED |
+                                                   DEBUG_STRIPPED
+
+  PE32+ optional header
+    Magic              0x20B                      PE32+
+    AddressOfEntry    0x23D7C40
+    BaseOfCode         0x10000
+    ImageBase          0x0                        -> the RVA is the link address
+    SectionAlignment   0x10000
+    FileAlignment      0x200
+    SizeOfImage        0x2B70000 (45 547 520)      equals raw image_size
+    SizeOfHeaders      0x10000 (65 536)
+    Subsystem          10                         IMAGE_SUBSYSTEM_EFI_APPLICATION
+    DllCharacteristics 0x0100
+    NumberOfRvaAndSizes 7
+
+  Section table
+    name     vaddr       vsize       raw_off     raw_size
+    .text    0x10000     0x27B0000   0x10000     0x27B0000
+    .data    0x27C0000   0x3B0000    0x27C0000   0x2FEA00
+
+  Two independent consistency checks on the section geometry:
+    SizeOfImage equals raw image_size at offset 0x10        -> 45 547 520 == 45 547 520
+    .text.vsize + .data.vsize + SizeOfHeaders
+       = 41 615 360 + 3 866 624 + 65 536 = 45 547 520      -> closes exactly
+
+  Section names .text and .data, and the fact that raw_off == vaddr for both, mean
+  file offset and RVA coincide in this image. That is why the entry point can be
+  checked by reading file offset 0x23D7C40 directly, which was done:
+
+    23d7c40: d503233f d10183ff a9047bfd a9054ff4
+             paciasp   sub sp,sp,#0x60  stp x29,x30,[sp,#0x40]  stp x19,x20,[sp,#0x50]
+
+  A textbook AArch64 function prologue with pointer authentication. The 128 bytes
+  preceding it end the previous function cleanly (ret / paciasp patterns), so the
+  entry is a genuine function start and not a misaligned read.
+
+2.4 Entry point arithmetic, verified three ways
+
+  Route 1 - the PE field itself:      AddressOfEntryPoint = 0x23D7C40
+  Route 2 - vmlinux symbol table:     __efistub_efi_pe_entry @ 0xFFFFFFC0823D7C40
+                                      minus kernel base 0xFFFFFFC080000000
+                                      = 0x23D7C40
+  Route 3 - the linker expression:    arch/arm64/kernel/efi-header.S:49 writes
+                                      .long __efistub_efi_pe_entry - .L_head
+                                      and .L_head is the first byte of _text, whose
+                                      VA is 0xFFFFFFC080000000 (System.map: _text)
+
+  All three agree to the byte. The address translation also explains why a naive
+  System.map lookup of "0x23D7C40" fails: System.map carries kernel VAs, not RVAs,
+  and it additionally contains absolute-type linker symbols (type 'A') such as
+  __pecoff_data_size = 0x3B0000 which must be excluded from any address search.
+  Doing that exclusion is what makes the lookup land on __efistub_efi_pe_entry.
+
+  Note also where the entry lives: 0x23D7C40 sits above __init_begin (VA
+  0xFFFFFFC082370000), i.e. inside .init.text. That is not an anomaly - it is the
+  direct consequence of the objcopy invocation discussed in 2.6.
+
+2.5 Symbol namespace proof (this is the strongest single piece of evidence)
+
+  drivers/firmware/efi/libstub/Makefile:139-141 contains, for arm64:
+
+      STUBCOPY_FLAGS-$(CONFIG_ARM64) += --prefix-alloc-sections=.init \
+                                       --prefix-symbols=__efistub_
+      STUBCOPY_RELOC-$(CONFIG_ARM64) := R_AARCH64_ABS
+
+  Two predictions follow, and both were tested against vmlinux rather than assumed:
+
+  Prediction 1 - every stub symbol carries the __efistub_ prefix, and the
+  unprefixed names must be absent. Measured:
+      unprefixed efi_pe_entry      : 0 occurrences
+      unprefixed efi_stub_entry    : 0 occurrences
+      unprefixed efi_enter_kernel  : 0 occurrences
+
+  Prediction 2 - the stub body sits in .init.* because of --prefix-alloc-sections.
+  Measured: __efistub_efi_pe_entry is at 0xFFFFFFC0823D7C40, above __init_begin.
+  Confirmed.
+
+  The stub-side call chain, all present in vmlinux:
+      __efistub_efi_pe_entry           0xFFFFFFC0823D7C40
+      __efistub_handle_kernel_image    0xFFFFFFC0823D7D74
+      __efistub_efi_stub_common        0xFFFFFFC0823D7F38
+      __efistub_efi_boot_kernel        0xFFFFFFC0823D9064
+      __efistub_efi_enter_kernel       0xFFFFFFC0823D9030
+      __efistub_primary_entry          0xFFFFFFC082368068
+      __efistub_primary_entry_offset   0xFFFFFFC0823D7E4C
+      __efistub_efi_exit_boot_services 0xFFFFFFC0823D891C
+      __efistub_efi_kaslr_relocate_kernel 0xFFFFFFC0823DAB08
+      __efistub_efi_parse_options      0xFFFFFFC0823D826C
+      __efistub_efi_load_initrd        0xFFFFFFC0823D8AC4
+
+  Two of these are worth calling out. __efistub_primary_entry is at exactly the
+  same address as the kernel's own primary_entry (0xFFFFFFC082368068), which is
+  what arch/arm64/kernel/image-vars.h:23 arranges with
+      PROVIDE(__efistub_primary_entry = primary_entry);
+  so the stub and the kernel agree on where the real entry is. And
+  __efistub_efi_enter_kernel is present, which is the function that hands control
+  from stub to kernel.
+
+  Kernel-side (non-stub) EFI symbols also present:
+      efi_init                    0xFFFFFFC0823C4724  T
+      efi_config_parse_tables     0xFFFFFFC0823C2A90  T
+      efi_get_fdt_params          0xFFFFFFC0823C3EE4  T
+      efi_memmap_init_early       0xFFFFFFC0823C3D70  T
+      efi_mem_reserve             0xFFFFFFC0823C2A24  T
+
+2.6 Source-level definitions, by file and line
+
+  arch/arm64/Kconfig:2486-2487
+      config EFI_STUB
+          bool
+  i.e. EFI_STUB is a silent capability toggle, not a user-visible menu entry.
+
+  arch/arm64/Kconfig:2489-2499
+      config EFI
+          bool "UEFI runtime support"
+          depends on OF && !CPU_BIG_ENDIAN
+          depends on KERNEL_MODE_NEON
+          select ARCH_SUPPORTS_ACPI
+          select LIBFDT
+          select UCS2_STRING
+          select EFI_PARAMS_FROM_FDT
+          select EFI_RUNTIME_WRAPPERS
+          select EFI_STUB
+          select EFI_GENERIC_STUB
+  This is why CONFIG_EFI_STUB cannot be set independently: selecting EFI pulled it
+  in, and EFI itself requires CONFIG_OF - so an arm64 kernel with CONFIG_EFI=y is
+  necessarily a device-tree kernel that carries the stub.
+
+  arch/arm64/kernel/efi-header.S:11-25
+      .macro efi_signature_nop
+      #ifdef CONFIG_EFI
+      .L_head:
+          ccmp x18, #0, #0xd, pl
+  The comment states outright that this instruction's opcode forms the "MZ"
+  signature required by UEFI. That is the origin of the 0xfa405a4d seen in 2.2, and
+  it is also why the two code paths differ: without CONFIG_EFI the same site emits
+  an ordinary nop, as the #else branch and its comment explain.
+
+  arch/arm64/kernel/efi-header.S:26-133
+      .macro __EFI_PE_HEADER
+  This emits the entire PE header: IMAGE_NT_SIGNATURE, IMAGE_FILE_MACHINE_ARM64,
+  TimeDateStamp 0, SizeOfOptionalHeader derived from the section table, the PE32+
+  magic, and at :49 the AddressOfEntryPoint expression already quoted. Every field
+  decoded in 2.3 traces back to a line in this macro.
+
+  arch/arm64/kernel/head.S:39, :61-62, :70, :72
+      #include "efi-header.S"
+      efi_signature_nop                  // special NOP to identity as PE/COFF
+      b   primary_entry
+      .long .Lpe_header_offset           // Offset to the PE header
+      __EFI_PE_HEADER
+  So the PE header is emitted inline into the kernel's own head, immediately after
+  the arm64 Image header, at assembly time. It is not added by a post-link step.
+
+  drivers/firmware/efi/libstub/efi-stub-entry.c:25-31, :67-78
+      /*
+       * EFI entry point for the generic EFI stub used by ARM, arm64, RISC-V and
+       * LoongArch. This is the entrypoint that is described in the PE/COFF header
+       * of the core kernel.
+       */
+      efi_status_t __efiapi efi_pe_entry(efi_handle_t handle,
+                                         efi_system_table_t *systab)
+  and inside it, after validating the system table signature:
+      status = handle_kernel_image(&image_addr, &image_size, ...);
+      ...
+      status = efi_stub_common(handle, image, image_addr, cmdline_ptr);
+  This is the function the PE entry really lands in. Note that 6.18 has no
+  arch/arm64/kernel/efi-entry.S at all - the arm64 entry is now this shared C
+  function, which is why searching only arch/arm64 for "efi_pe_entry" finds nothing.
+
+  drivers/firmware/efi/libstub/arm64-stub.c:48-58
+      unsigned long primary_entry_offset(void)
+      {
+          /*
+           * When built as part of the kernel, the EFI stub cannot branch to the
+           * kernel proper via the image header, as the PE/COFF header is
+           * strictly not part of the in-memory presentation of the image, only
+           * of the file representation. ...
+           */
+          return (char *)primary_entry - _text;
+      }
+  This overrides the __weak default in libstub/arm64.c:119-129, which returns 0 for
+  the standalone-stub case. The comment is the precise reason a PE-header-based
+  branch would not work at runtime and why the stub computes an offset instead.
+
+2.7 Verdict, in the four layers the task requires
+
+  Layer 1 - EFI Stub compiled into this Image.
+    ESTABLISHED. CONFIG_EFI_STUB=y and CONFIG_EFI_GENERIC_STUB=y in the .config
+    that produced this Image; the __efistub_* kernel and stub symbols are present
+    in vmlinux with the exact prefixing the build system applies; and the absence
+    of unprefixed names matches the objcopy flags. Evidence class: config plus
+    symbol table plus build-rule.
+
+  Layer 2 - the Image has a PE/COFF EFI entry.
+    ESTABLISHED. The header is in the file: MZ, PE signature, Machine 0xAA64,
+    Subsystem 10, AddressOfEntryPoint pointing at executable prologue bytes, and
+    SizeOfImage consistent with the arm64 header. Evidence class: bytes in the
+    artefact, corroborated by the linker macro that emits them.
+
+  Layer 3 - ABL invokes that entry.
+    UNKNOWN. Nothing in this Image, this source tree, or the ROUND19 artefact set
+    proves it. ROUND19 already established that there is no abl.img in the
+    extraction, so ABL's boot policy was not readable this round either. The
+    existence of a PE entry is a capability of the payload, not a decision by the
+    loader.
+
+  Layer 4 - the final FDT receives complete linux,uefi-* metadata.
+    UNKNOWN, and conditional on layer 3. The metadata is written by the stub at
+    runtime (libstub/fdt.c:95-121), so it only appears if the stub ran. Whether the
+    loader passes a DTB at all is a further precondition - see U-2.
+
+  Practical reading: the payload is EFI-ready; the device's willingness to boot it
+  as EFI is not something this round can see.
+
+================================================================================
+3. WORK PACKAGE B - MEMORY HANDOFF ROUTE
+================================================================================
+
+The question this package answers: given ROUND19's finding that the stock base DTB
+/memory reg is an all-zero placeholder, does an EFI-capable Image give a real
+conditional workaround? Yes - and the reason is a single explicit function.
+
+3.1 Normal arm64 route (no EFI): /memory is the only source, and zero size is fatal
+
+  arch/arm64/kernel/head.S:45-51 states the entry contract:
+      /*
+       * The requirements are:
+       *   MMU = off, D-cache = off, I-cache = on or off,
+       *   x0 = physical address to the FDT blob.
+       */
+
+  arch/arm64/kernel/head.S:170-185 (preserve_boot_args) takes x0 into x21 and
+  stores all four arguments:
+      mov  x21, x0                 // x21=FDT
+      adr_l x0, boot_args
+      stp  x21, x1, [x0]
+      stp  x2, x3, [x0, #16]
+
+  arch/arm64/kernel/head.S:231, inside __primary_switched:
+      str_l x21, __fdt_pointer, x5   // Save FDT pointer
+
+  arch/arm64/kernel/setup.c:61      phys_addr_t __fdt_pointer __initdata;
+  arch/arm64/kernel/setup.c:88      u64 __cacheline_aligned boot_args[4];
+  arch/arm64/kernel/setup.c:293     setup_machine_fdt(__fdt_pointer);
+  arch/arm64/kernel/setup.c:373-377 warns if boot_args[1..3] are non-zero, i.e. it
+  expects a bootloader to pass a zeroed x1..x3.
+
+  setup_machine_fdt (setup.c:170-208) remaps the FDT and calls early_init_dt_scan at
+  :183. If that returns false the kernel does not panic in any civilised way - it
+  prints a pr_crit and spins:
+      while (true)
+          cpu_relax();
+  Note the distinction: this failure is "invalid DTB", not "no memory in DTB". An
+  all-zero /memory reg is a perfectly valid DTB, so this path is taken normally.
+
+  drivers/of/fdt.c:1041-1088 (early_init_dt_scan_memory) then walks subnodes:
+      :1048   if (type == NULL || strcmp(type, "memory") != 0) continue;
+      :1054   reg = "linux,usable-memory" if present, else "reg"
+      :1069   base = dt_mem_next_cell(dt_root_addr_cells, &reg);
+      :1070   size = dt_mem_next_cell(dt_root_size_cells, &reg);
+      :1072   if (size == 0) continue;            <-- the zeroed-reg case
+      :1076   early_init_dt_add_memory_arch(base, size);
+      :1078   found_memory = 1;
+
+  So a /memory node whose reg is 0/0/0/0 is skipped silently, found_memory stays 0,
+  and nothing enters memblock. early_init_dt_add_memory_arch itself is the generic
+  weak definition at drivers/of/fdt.c:1177, which pages the range and adds it to
+  memblock.
+
+  Then arch/arm64/mm/init.c:205-310 arm64_memblock_init runs, and it is important
+  what it does NOT do: it contains no memblock_add of discovered RAM. Every call in
+  it is a remove, a limit, or a reserve - :224 memblock_remove above the PA size,
+  :240 memblock_remove beyond the linear map, :246 memblock_remove below
+  memstart_addr, :265 memblock_mem_limit_remove_map, :302 memblock_reserve for the
+  kernel image. The only adds are repairs (:266 the kernel itself, :292 the initrd)
+  so that the kernel and initrd stay reachable after clipping.
+
+  Consequence for the plain route: with an all-zero /memory and no EFI, memblock has
+  no memory. bootmem_init (init.c:312-317) then derives min/max purely from
+  memblock_start_of_DRAM()/memblock_end_of_DRAM() of an empty set. Nothing in the
+  arm64 source inspected here invents memory from anywhere else on that route. That
+  is why ROUND19's finding is blocking rather than cosmetic.
+
+3.2 EFI route: memblock is wiped and rebuilt from the UEFI memory map
+
+  setup_arch (arch/arm64/kernel/setup.c:282-345) orders the calls as:
+      :293  setup_machine_fdt(__fdt_pointer)     -> scans DT, memblock may stay empty
+      :324  efi_init()
+      :333  arm64_memblock_init()
+      :345  bootmem_init()
+  The ordering is the whole argument: efi_init() runs BEFORE arm64_memblock_init(),
+  so whatever efi_init() puts into memblock is what arm64_memblock_init() then
+  clips.
+
+  drivers/firmware/efi/efi-init.c:159-231 reserve_regions() is the decisive code:
+
+      :167-173  /*
+                * Discard memblocks discovered so far except for KHO scratch
+                * regions. Most memblocks at this point originate from memory nodes
+                * in the DT and UEFI uses its own memory map instead. ...
+                */
+      :186-193  } else {
+                    /*
+                     * KHO is disabled. Discard memblocks discovered so far:
+                     * if there are any at this point, they originate from memory
+                     * nodes in the DT, and UEFI uses its own memory map instead.
+                     */
+                    memblock_remove(0, PHYS_ADDR_MAX);
+                }
+      :195-230  for_each_efi_memory_desc(md) {
+                    ...
+                    if (is_memory(md)) {
+                        if (efi_soft_reserve_enabled() &&
+                            (md->attribute & EFI_MEMORY_SP))
+                                continue;
+      :221              early_init_dt_add_memory_arch(paddr, size);
+                        if (!is_usable_memory(md))
+      :224                  memblock_mark_nomap(paddr, size);
+                        if (md->type == EFI_ACPI_RECLAIM_MEMORY)
+      :228                  memblock_reserve(paddr, size);
+                    }
+                }
+
+  Three things follow, all from the same function:
+    (a) Any DT-derived memory is explicitly thrown away (:192), with a comment that
+        names the DT memory nodes as the thing being thrown away.
+    (b) Memory is rebuilt from the UEFI descriptors (:221) using the very same
+        helper that early_init_dt_scan_memory uses, so it lands in memblock the same
+        way and is indistinguishable downstream.
+    (c) The zeroed /memory reg therefore cannot hurt on this route, because the DT
+        values are discarded before they could matter.
+
+  This is the answer to "does EFI-stub boot proceed without a usable /memory/reg":
+  yes, provided EFI is actually in play, and it is not a lucky side effect but an
+  explicit design statement in the source.
+
+3.3 What efi_init() requires before any of that happens
+
+  drivers/firmware/efi/efi-init.c:233-278
+      :239  efi_system_table = efi_get_fdt_params(&data);
+      :240-241  if (!efi_system_table) return;      <-- silent fall back to DT path
+      :243-250  if (efi_memmap_init_early(&data) < 0) panic("Unable to map EFI
+                                                          memory map.\n");
+      :261  reserve_regions();
+      :271  memblock_reserve(data.phys_map & PAGE_MASK, ...);
+
+  The comment at :244-248 is unambiguous: "If we are booting via UEFI, the UEFI
+  memory map is the only description of memory we have, so there is little point in
+  proceeding if we cannot access it." That panic is the only hard failure in the
+  path, and it triggers on an unmappable map, not on a missing /memory node.
+
+  drivers/firmware/efi/fdtparams.c:84-133 efi_get_fdt_params is where the
+  metal meets the FDT:
+      :49    .path = "/chosen",
+      :51-55 "linux,uefi-system-table", "linux,uefi-mmap-start",
+             "linux,uefi-mmap-size", "linux,uefi-mmap-desc-size",
+             "linux,uefi-mmap-desc-ver"
+      :103-104 if (!fdt) return 0;
+      :115-125 walk the five names; the first one (system table) is mandatory,
+               the rest are required if the first is present
+      :130-132 notfound: pr_info("UEFI not found.\n"); return 0;
+
+  So the entire EFI route hinges on five properties in /chosen. Without them the
+  kernel prints "UEFI not found." and behaves as a plain DT kernel - which, with a
+  zeroed /memory, is exactly the failing case. This is the fork in the road.
+
+3.4 Who writes those five properties, and what happens if nobody does
+
+  Two producers exist in this tree.
+
+  Producer 1 - the bootloader, directly. fdtparams.c is only a consumer; ARCH code
+  must have put the values there. This is the route a stock HOS bootloader could
+  take without ever entering the PE entry.
+
+  Producer 2 - the EFI stub itself, at drivers/firmware/efi/libstub/fdt.c:30-145
+  update_fdt(). It writes, and only writes:
+      :88-93    bootargs
+      :99       linux,uefi-system-table
+      :105      linux,uefi-mmap-start     (placeholder U64_MAX)
+      :111      linux,uefi-mmap-size      (placeholder U32_MAX)
+      :115      linux,uefi-mmap-desc-size (placeholder U32_MAX)
+      :119      linux,uefi-mmap-desc-ver  (placeholder U32_MAX)
+      :123-133  kaslr-seed
+  and later :147-182 update_fdt_memmap() patches the four mmap placeholders in place
+  with the real values once boot services are being exited.
+
+  Critically, update_fdt() writes NO /memory node. It cannot: an EFI application has
+  no business editing the platform's memory description when the kernel will read
+  the UEFI map instead. What it does do is delete the reserve map:
+      :70-76  /*
+               * Delete all memory reserve map entries. When booting via UEFI,
+               * kernel will use the UEFI memory map to find reserved regions.
+               */
+              while (num_rsv-- > 0) fdt_del_mem_rsv(fdt, num_rsv);
+  which is the same statement in a different form: on this route the UEFI map
+  supersedes the FDT's memory information.
+
+  Where does the stub get its DTB? libstub/fdt.c:222-288
+      :235-241  allocate a virtmap (needs the UEFI map)
+      :249-260  the dtb= command line is honoured ONLY if
+                CONFIG_EFI_ARMSTUB_DTB_LOADER is enabled AND secure boot is
+                disabled. This tree has that option off (2.1), so dtb= is ignored
+                and an "Ignoring DTB from command line." message is printed.
+      :262-269  otherwise ask the firmware: get_fdt() reads the DEVICE_TREE_GUID
+                configuration table, and prints "Using DTB from configuration table"
+      :271-272  if there is still no DTB: "Generating empty DTB"
+      :276-283  allocate MAX_FDT_SIZE and update_fdt() into it
+
+  The "Generating empty DTB" branch matters a great deal for this device. If ABL
+  enters the PE entry but does not publish a DEVICE_TREE_GUID table, the stub will
+  hand the kernel a syntactically valid but EMPTY tree. That tree has no
+  /firmware/android/fstab, no /firmware/android/vbmeta, no /rootparam, no /memory,
+  and none of the nine board variants' properties. The kernel would then fall back
+  to the UEFI map for memory (fine) but would have lost the entire DT fstab that
+  ROUND19 established is the only first-stage mount description in this firmware.
+  An empty DTB is therefore not a neutral outcome; it is a different failure mode.
+
+3.5 How control actually passes, and the DTB pointer contract
+
+  libstub/arm64.c:131-139
+      void __noreturn efi_enter_kernel(unsigned long entrypoint,
+                                       unsigned long fdt_addr,
+                                       unsigned long fdt_size)
+      {
+          void (* __noreturn enter_kernel)(u64, u64, u64, u64);
+          enter_kernel = (void *)entrypoint + primary_entry_offset();
+          enter_kernel(fdt_addr, 0, 0, 0);
+      }
+
+  So the stub jumps to primary_entry (via the offset from arm64-stub.c:48) with
+  x0 = fdt_addr and x1..x3 = 0 - which is precisely the contract in head.S:45-51
+  and precisely what setup.c:373-377 expects to be zero. The EFI route and the
+  plain route converge on the same kernel entry; they differ only in what the FDT
+  contains and in whether boot services were exited.
+
+  This is worth stating plainly because it is a natural misconception: entering via
+  EFI does not put the kernel on some separate "EFI-only" code path. It arrives at
+  primary_entry identically. The difference is entirely in memblock's provenance.
+
+3.6 Decision tree
+
+  Does the loader jump to .L_head (file offset 0, the "MZ" trick)?
+  |
+  +-- NO. It jumps to primary_entry with x0 = DTB. This is the plain arm64 route,
+  |   and it is the route the stock kernel must use, because the stock kernel has
+  |   no PE header (section 4.4).
+  |     |
+  |     +-- /memory reg usable (size != 0)
+  |     |     -> memblock populated from the DT -> proceeds
+  |     |
+  |     +-- /memory reg all zero (ROUND19's finding)
+  |           -> of/fdt.c:1072 skips it, so memblock gets nothing from the DT
+  |           -> arm64_memblock_init (init.c:205-310) adds nothing of its own
+  |           |
+  |           +-- /chosen HAS linux,uefi-mmap-*
+  |           |     -> efi_init() still runs and REPLACES memblock from the UEFI
+  |           |        map (efi-init.c:192 then :221) -> may proceed after all
+  |           |
+  |           +-- /chosen has NO such properties
+  |                 -> "UEFI not found." (fdtparams.c:130-132), efi_init returns
+  |                    early (efi-init.c:240-241), memblock stays empty, and no
+  |                    remaining source can supply memory -> blocking
+  |
+  +-- YES. The firmware loads this Image as an EFI application. Possible only for a
+      payload that has a PE header, i.e. the ROUND18 Image and not the stock kernel.
+        |
+        +-- UEFI system table invalid -> efi_pe_entry returns EFI_INVALID_PARAMETER
+        |   (efi-stub-entry.c:46-47) and nothing boots
+        |
+        +-- system table valid, then three questions in order:
+              (1) CONFIG_EFI_ARMSTUB_DTB_LOADER is off here (2.1), so any dtb= on
+                  the command line is ignored (libstub/fdt.c:249-253)
+              (2) is a DEVICE_TREE_GUID configuration table published?
+                    yes -> that DTB is used and /firmware/android/* survives
+                    no  -> "Generating empty DTB" (libstub/fdt.c:271-272), which is
+                           a NEW failure mode: /memory is covered by the UEFI map,
+                           but /firmware/android/fstab is gone, so the first stage
+                           has no mount description at all
+              (3) regardless of (1) and (2), reserve_regions() discards whatever the
+                  DT said about memory and rebuilds it from the UEFI map
+                  (efi-init.c:192, :221) -> the zeroed /memory reg stops mattering
+
+3.7 Exact ABL-side proof still missing
+
+  Everything above is kernel-side. To convert layer 3 of the verdict from UNKNOWN to
+  known, one of the following would be needed, and none is available offline:
+    - abl.img, or its EFI loader module, showing whether the kernel partition is
+      dispatched through an EFI application path or a raw jump;
+    - a UART/XBL log from a boot attempt showing "Booting Linux Kernel..." or
+      "UEFI not found." - the stub prints the first, efi_get_fdt_params prints the
+      second, and their presence or absence is a direct observation of the route;
+    - the device's own device-tree handoff dump showing whether a
+      DEVICE_TREE_GUID table exists before the kernel runs;
+    - the ABL's decompression path, which section 4 shows must exist for stock.
+
+  Until then the honest statement is: the Image is EFI-capable; whether the platform
+  uses that capability is unproven either way.
+
+================================================================================
+4. WORK PACKAGE C - STOCK BOOT KERNEL PAYLOAD FORMAT
+================================================================================
+
+4.1 Slice taken, using the ROUND19 header values (nothing re-derived by guessing)
+
+  Source, from the ROUND2 work copy (read only):
+    boot.img, 100 663 296 bytes, sha256 first16 027f88fd6f318523
+
+  Header values used, all from the ROUND19 v2 decode:
+    header_version 2, page_size 4096
+    kernel offset 4096      kernel size 22 264 379
+    ramdisk offset 22 269 952   ramdisk size 519 986
+    dtb offset 22 790 144       dtb size 1 664 243
+    payload_end 24 457 216, which equals the AVB footer original_image_size
+
+  Slicing at [4096, 4096+22 264 379) gives:
+    size      22 264 379 bytes
+    sha256    first16 5c034b66ef6878b4
+    first 32  bytes: 1f 8b 08 00 00 00 00 00 02 03 ec 5b 0d 74 14 55 96 be
+                     55 d5 9d 54 27 60 c8 4f 27 21 01 3b 09 02
+    last  16  bytes: 8d 66 f4 a8 ff 8b fc 3f 88 89 29 ad 10 f0 6c 03
+
+4.2 Classification
+
+  Magic 1f 8b 08 matches the gzip family. file(1) agrees, independently:
+    "gzip compressed data, max compression, from Unix,
+     original size modulo 2^32 57470992"
+
+  The ten-byte header decodes as:
+    1f 8b    magic
+    08       CM = deflate
+    00       FLG = 0        -> no FNAME, no FEXTRA, no FCOMMENT, no FHCRC
+    00000000 MTIME = 0      -> no timestamp, i.e. reproducible
+    02       XFL = 2        -> maximum compression
+    03       OS = 3         -> Unix
+
+  A raw arm64 Image would instead begin with the "MZ"-style code0 bytes. This
+  payload does not; an in-place probe for the ARM64 magic at offset 0x38 returns
+  no. So the stock kernel payload is a compressed container, not a bare Image.
+
+  Therefore: gzip. Not LZ4 (would be 04 22 4d 18), not XZ (fd 37 7a 58 5a 00), not
+  zstd (28 b5 2f fd), not lzma alone (5d 00 00), not bzip2 (BZh).
+
+4.3 Decompression and re-probe
+
+  Decompresses cleanly with the installed gzip to 57 470 992 bytes
+  (sha256 first16 cf21f9d22c45752a). The decompressed buffer is a valid arm64
+  Image:
+
+    magic @0x38    0x644D5241  ("ARMd")            -> valid
+    text_offset    0x80000     (524 288)
+    image_size     0x433D000   (70 504 448)
+    flags          0xA         -> little-endian, 4 KiB, PHYS_BASE set
+    res5 @0x3c     0x0         -> NO PE header
+
+  file(1) on the decompressed buffer confirms independently:
+    "Linux kernel ARM64 boot executable Image, little-endian, 4K pages"
+
+  The 13 033 456-byte gap between the 57 470 992-byte file and the 70 504 448-byte
+  image_size is BSS, the same phenomenon as in 2.2 and not an anomaly.
+
+4.4 The single most important field in this comparison
+
+  res5 at offset 0x3c is the PE header offset. In the ROUND18 Image it is 0x40, and
+  a complete PE/COFF EFI application follows. In the decompressed STOCK kernel it is
+  0x0, meaning no PE header was emitted at all.
+
+  arch/arm64/kernel/efi-header.S:11-25 explains why: the whole PE header block is
+  inside #ifdef CONFIG_EFI, and the "MZ" code0 only appears in that case; otherwise
+  the same site emits an ordinary nop. The stock kernel therefore was built without
+  CONFIG_EFI, and - this is the operational consequence - the stock kernel CANNOT
+  be entered as an EFI application. Whatever route the stock device takes, it is the
+  plain arm64 route of section 3.1, not the EFI route of 3.2.
+
+  That is a genuinely new result for this project: ROUND19 showed the stock DTB has a
+  zeroed /memory and no DTBO fixes it; section 4 now shows the stock kernel could not
+  have taken the EFI escape hatch even if the platform offered it. The stock kernel
+  must therefore be getting memory from somewhere this audit has not found, or the
+  /memory node seen in the base DTB is not the one the bootloader finally passes.
+  That is recorded as U-3, and it is a sharper form of the ROUND19 question than
+  "who fills /memory" - it is "who fills /memory, given that the escape hatch is
+  provably absent on stock".
+
+  Also worth noting, and it constrains the loader: text_offset is 0x80000 here and
+  0x0 in the ROUND18 Image, but both set the PHYS_BASE flag bit (flags 0xA in both
+  cases, decoded against image.h:8-21). PHYS_BASE means the image is loadable at any
+  physical address and text_offset is not the load contract. The two images do not
+  disagree about load address; they both opt out of a fixed one. Whether the loader
+  honours that bit is U-6.
+
+4.5 Sibling payloads in the same container, sizes only
+
+  Boot ramdisk @22 269 952, 519 986 bytes, first four bytes 1f 8b 08 00 - also gzip.
+  DTB @22 790 144, 1 664 243 bytes, magic d0 0d fe ed with fdt_totalsize 556 524,
+  i.e. the real tree occupies 556 524 of the 1 664 243 bytes reserved for it; the
+  remainder is padding to the slot, consistent with ROUND19.
+  payload_end 24 457 216, dtb_end 24 454 387, so 2 829 bytes of alignment tail.
+
+  No kernel binary was uploaded, embedded or reproduced in this report; only header
+  bytes, sizes and digests appear, as the task requires.
+
+================================================================================
+5. WORK PACKAGE D - DETERMINISTIC COMPRESSION AND BOOT-V2 CAPACITY
+================================================================================
+
+5.1 Compression of the existing Image, with a no-touch guarantee
+
+  Input, unchanged throughout:
+    $OUT/Image, 44 820 992 bytes
+    sha256 before  983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884
+    sha256 after   983b342ea5f0b48d5b9a808f37ba8405d92d283d1f9303a7c5054e26fbd8d884
+    unchanged      YES
+
+  Output written only into the ROUND20 temp directory, never over the Image:
+    gzip -n -9   17 802 671 bytes  (39.7 % of raw)   3.18 s
+    gzip -n -6   17 858 309 bytes  (39.8 % of raw)   1.27 s
+    gzip -n -1   19 293 656 bytes  (43.0 % of raw)   0.54 s
+
+  Determinism verified rather than claimed: a second gzip -n -9 run produced a
+  byte-identical file (cmp --silent YES, same sha256).
+
+  The output header is 1f 8b 08 00 00 00 00 00 02 03. The stock kernel payload's
+  first ten bytes are 1f 8b 08 00 00 00 00 00 02 03. They are identical, field for
+  field: no filename, no timestamp, maximum compression, Unix. So the stock
+  packaging tool used these same settings - which is why the two compression ratios
+  are close (39.7 % here, 38.7 % for stock) despite the very different kernel sizes.
+  This is a useful sanity result: it means a gzip payload built the same way is not
+  anomalous in kind, only in size.
+
+5.2 Arithmetic rules, validated against the stock header before being used
+
+  boot v2 layout rule: kernel at page 1; ramdisk at the next page boundary after the
+  kernel; second (empty here) and dtb at the next page boundary after the ramdisk;
+  payload ends page-aligned.
+
+  Before applying this rule to new numbers it was run on the stock values, and it
+  reproduced the header exactly:
+
+    computed kernel end      22 268 475   header 22 268 475   match
+    computed ramdisk offset  22 269 952   header 22 269 952   match
+    computed dtb offset      22 790 144   header 22 790 144   match
+    computed payload_end     24 457 216   footer 24 457 216   match
+
+  Four for four. The arithmetic below is therefore the same arithmetic the vendor's
+  packer used, not an approximation of it.
+
+5.3 Inputs
+
+  partition capacity (96 MiB)      100 663 296
+  stock footer original_image_size  24 457 216
+  stock embedded ramdisk               519 986
+  stock DTB slot                     1 664 243
+  ROUND18 Image, raw                44 820 992
+  ROUND18 Image, gzip -n -9         17 802 671
+
+5.4 Scenario (i) - raw Image + stock ramdisk + stock DTB
+
+    kernel      @4096   size 44 820 992   end 44 825 088
+    ramdisk     @44 826 624 (page-aligned)  size 519 986   end 45 346 610
+    dtb/second  @45 346 816 (page-aligned)  size 1 664 243  end 47 011 059
+    payload_end 47 013 888 (page-aligned)
+
+    vs 96 MiB partition : 53 649 408 bytes free, fits
+    vs stock footer     : +22 556 672 bytes, i.e. +92.2 %
+
+5.5 Scenario (ii) - gzip -n -9 Image + stock ramdisk + stock DTB
+
+    kernel      @4096   size 17 802 671   end 17 806 767
+    ramdisk     @17 809 408 (page-aligned)  size 519 986   end 18 329 394
+    dtb/second  @18 329 600 (page-aligned)  size 1 664 243  end 19 993 843
+    payload_end 19 996 672 (page-aligned)
+
+    vs 96 MiB partition : 80 666 624 bytes free, fits
+    vs stock footer     : -4 460 544 bytes, i.e. -18.2 %
+
+  Worst-case sensitivity, gzip -n -1: payload_end 21 487 616, still fits, and still
+  -12.1 % against the stock footer. So the conclusion is not sensitive to the
+  compression level chosen.
+
+5.6 Kernel-slot-only comparison, for readers who want the plain numbers
+
+    stock gzip kernel    22 264 379   baseline
+    raw Image            44 820 992   +101.3 %
+    gzip -n -9 Image     17 802 671   -20.0 %
+
+5.7 What this arithmetic does and does not prove
+
+  It proves: both candidate payloads fit inside a 96 MiB partition with room to
+  spare, and the gzip variant is smaller than the stock image the vendor ships, so
+  size is not a reason the gzip variant would be rejected on capacity grounds.
+
+  It does NOT prove any of the following, and none of them should be read into the
+  numbers above:
+    - that the resulting container would be AVB-valid. It would not be: the stock
+      footer signs original_image_size 24 457 216 over a specific hash of the
+      specific bytes. Changing the payload invalidates it. No footer or vbmeta was
+      copied, re-signed or even opened during this calculation.
+    - that ABL would accept a payload of a different size or a different kernel.
+      Acceptance policy is ABL behaviour, and ROUND19 established there is no ABL
+      binary in the extraction to inspect.
+    - that raw would work. A raw payload is a legitimate arm64 Image, but this
+      loader is known to be fed gzip on stock (section 4), so whether it also
+      accepts raw is unverified. A loader that blindly gunzips would fail on raw; a
+      loader that sniffs would accept both. Nothing here distinguishes them.
+    - that gzip is required. The stock payload being gzip establishes that the
+      loader CAN handle gzip. It does not establish that the loader requires gzip.
+      Per the task instruction, the gzip requirement is therefore labelled
+      "compatibility unverified", not "required".
+
+  One additional inference is safe and worth stating: an arm64 Image has no
+  self-decompression. CONFIG_EFI_ZBOOT is off in this tree (2.1), and the classic
+  arm64 boot contract in head.S:45-51 assumes an already-decompressed image at the
+  entry point. Since the stock kernel sits in the partition as gzip and cannot
+  decompress itself, the stock loader must be doing the decompression. That is a
+  positive, if indirect, statement about ABL capability - and it is the closest this
+  round gets to evidence about ABL behaviour from a purely offline artefact.
+
+================================================================================
+6. WORK PACKAGE E - FIRST-STAGE STORAGE PREREQUISITES
+================================================================================
+
+6.1 Gates already satisfied by the ROUND18 build (all =y, therefore built in)
+
+  Block/SCSI/UFS chain
+    CONFIG_SCSI=y
+    CONFIG_BLK_DEV_SD=y
+    CONFIG_SCSI_UFSHCD=y
+    CONFIG_SCSI_UFSHCD_PLATFORM=y
+    CONFIG_SCSI_UFS_QCOM=y
+    CONFIG_SCSI_UFS_CRYPTO=y
+    CONFIG_SCSI_UFS_BSG=y
+    CONFIG_PHY_QCOM_QMP_UFS=y
+    CONFIG_PHY_QCOM_QMP=y
+
+  Qualcomm clock / power / interconnect
+    CONFIG_QCOM_CLK_RPMH=y
+    CONFIG_QCOM_RPMH=y
+    CONFIG_QCOM_RPMHPD=y
+    CONFIG_QCOM_SMEM_STATE=y
+    CONFIG_QCOM_COMMAND_DB=y
+    CONFIG_QCOM_GENI_SE=y
+    CONFIG_INTERCONNECT=y
+    CONFIG_INTERCONNECT_QCOM=y
+    CONFIG_INTERCONNECT_QCOM_SM8250=y
+    CONFIG_INTERCONNECT_QCOM_RPMH=y
+    CONFIG_INTERCONNECT_QCOM_RPMH_POSSIBLE=y
+
+  IOMMU
+    CONFIG_IOMMU_SUPPORT=y
+    CONFIG_ARM_SMMU=y
+
+  Regulator / pinctrl framework
+    CONFIG_REGULATOR=y
+    CONFIG_REGULATOR_QCOM_RPMH=y
+    CONFIG_PINCTRL=y
+
+  dm-verity / erofs / ext4
+    CONFIG_MD=y
+    CONFIG_BLK_DEV_DM=y
+    CONFIG_BLK_DEV_DM_BUILTIN=y
+    CONFIG_DM_BUFIO=y
+    CONFIG_DM_VERITY=y
+    CONFIG_DM_VERITY_FEC=y
+    CONFIG_BLK_DEV_LOOP=y
+    CONFIG_BLK_DEV_LOOP_MIN_COUNT=16
+    CONFIG_CRYPTO_SHA1=y
+    CONFIG_CRYPTO_SHA256=y
+    CONFIG_EROFS_FS=y
+    CONFIG_EROFS_FS_ZIP=y
+    CONFIG_EXT4_FS=y
+
+  Android platform minimum
+    CONFIG_ANDROID_BINDER_IPC=y
+    CONFIG_ANDROID_BINDERFS=y
+    CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
+
+  Cross-checked against the linked symbol table, so this is not config-reading
+  alone:
+    ufshcd_*      269 symbols
+    ufs_qcom_*     69 symbols
+    qmp_ufs_*      16 symbols (qmp_ufs_probe, qmp_ufs_phy_init, qmp_ufs_power_on,
+                               qmp_ufs_register_clocks, qmp_ufs_phy_calibrate, ...)
+    erofs_*       172 symbols
+    dm_bufio_client_create, verity_ctr, dm_verity_init  all present
+
+6.2 Gates NOT satisfied - two findings, stated as findings
+
+  Finding E-1: CONFIG_DEVTMPFS is not set.
+
+    $OUT/.config:1952   # CONFIG_DEVTMPFS is not set
+    $OUT/.config:7702   CONFIG_TMPFS=y
+    $OUT/.config:289    CONFIG_SHMEM=y
+    System.map          devtmpfs symbol count: 0
+
+    The kernel has no devtmpfs at all - not as a module, not as a built-in. Only
+    tmpfs/shmem are present.
+
+    Why this matters for a first stage: the ROUND19 ramdisk contains an empty "dev"
+    directory and nothing else that could populate it. The blocks the first stage
+    needs (by-name entries under /dev/block) come from userspace, and the usual
+    kernel-side source of a populated /dev is devtmpfs. With the option off, the
+    kernel will not create device nodes and will not accept "devtmpfs" as a mount
+    type. Whether Android's first stage tolerates that (e.g. by mknod into a tmpfs)
+    is userspace behaviour I did not audit and cannot assert offline. What I can
+    assert is that a kernel-side prerequisite that the stock kernel almost certainly
+    had is absent here.
+
+    Note the exact scope of the claim: this is a gap between ROUND18's config and
+    what a first stage may need. It is not a demonstration that boot would fail.
+
+  Finding E-2: Qualcomm TLMM pinctrl is not built.
+
+    $OUT/.config:3434   # CONFIG_PINCTRL_MSM is not set
+    $OUT/.config:3435   # CONFIG_PINCTRL_QCOM_SPMI_PMIC is not set
+    $OUT/.config:3436   # CONFIG_PINCTRL_QCOM_SSBI_PMIC is not set
+    $OUT/.config:3417   CONFIG_PINCTRL=y          (framework only)
+    $OUT/.config:3430   CONFIG_PINCTRL_SINGLE=y   (trivial single-node driver only)
+
+    drivers/pinctrl/qcom/Kconfig:4 declares the driver as "config PINCTRL_MSM", and
+    that symbol is explicitly unset. So the tree has the pinctrl core and one
+    generic stub driver, but no Qualcomm TLMM driver. Any pinmux/pinconf state
+    described in the board DTS for SM8250 pins has no consumer.
+
+    Whether UFS actually needs pinctrl at runtime depends on whether the stock
+    bootloader leaves the UFS pins in a usable state and on what the DTS asks for.
+    I did not audit the DTS pin states this round (work package E explicitly says
+    not to touch board DTS). So this is recorded as a gap with an open dependency,
+    not as a proven blocker.
+
+  Two lesser items, recorded for completeness rather than alarm:
+    CONFIG_QCOM_SMEM is not set, and CONFIG_QCOM_SMD_RPM is not set, while
+    CONFIG_QCOM_SMEM_STATE=y. SMEM is the shared-memory transport used by some
+    Qualcomm subsystems; UFS does not go through it on this platform, and RPMh-based
+    clock/pd/interconnect are all present, so the storage path does not appear to
+    depend on it. Worth confirming before any boot attempt, not worth calling a
+    blocker.
+    CONFIG_ARM_SMMU_V3 is not set. SM8250 uses SMMU-500 (v2), which is covered by
+    CONFIG_ARM_SMMU=y. Consistent.
+    CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG is not set. Signature-checked verity
+    root hashes are an Android verified-boot hardening feature; the DT fstab uses
+    fsmgr_flags "wait,logical,avb", which is the AVB path, not the roothash-sig
+    path. Not expected to be needed.
+
+6.3 Monolithic, proven without rebuilding
+
+  The task asks to verify that the Image is built-in for these drivers rather than
+  relying on .ko modules, without rebuilding. Four independent observations:
+
+    $OUT/.config:919                CONFIG_MODULES=y  (module support compiled in)
+    $OUT/Module.symvers             0 bytes - no exported symbols at all
+    $OUT/modules_staging_dir.tar.gz 67 bytes, containing exactly one entry: ./
+    find $ACK/bazel-bin -name '*.ko'  0 results
+
+  A build with CONFIG_MODULES=y that produces zero modules, an empty staging tar and
+  an empty Module.symvers can only have everything linked into the Image. Combined
+  with the symbol counts in 6.1, this is conclusive: UFS, QMP UFS PHY, RPMh
+  clock/pd, interconnect, SMMU, dm-verity, EROFS and ext4 are all in the monolithic
+  kernel.
+
+  (CONFIG_ANDROID_BINDER_IPC_RUST=m appears in .config as a module request but no
+  .ko exists, so it too did not materialise; it is irrelevant to the storage path.)
+
+6.4 Cross-check against the ROUND19 ramdisk inventory
+
+  ROUND19 established, and the inventory re-read this round confirms:
+    ramdisk.img payload  gzip, 1 322 962 bytes on disk, 2 884 352 decompressed
+    CPIO format          newc, 17 entries
+    contents             AArch64 ELF /init (2 880 584 B), /patch_avb_key (520 B),
+                         system/etc/ramdisk/build.prop (942 B), 13 empty dirs
+    key_hits.modules_load   0
+    key_hits.kernel_module  0
+    key_hits.fstab          0
+    key_hits.ueventd        0
+    key_hits.init_rc        0
+    key_hits.first_stage_rc 0
+    key_hits.selinux_policy 0
+
+  The cross-check is consistent in both directions:
+    - No modules.load and no modules directory means the first stage cannot load any
+      .ko. That is only survivable if the drivers are built in - which 6.3 proves
+      they are, for the storage chain.
+    - No text fstab in the ramdisk matches ROUND19's finding that the fstab lives in
+      the base DTB at /firmware/android/fstab with system/vendor/odm entries, each
+      in ext4 and erofs flavour, fsmgr_flags "wait,logical,avb". Every flag there is
+      served by a built-in driver in 6.1 (dm-verity, logical partitions, erofs/ext4).
+    - No ueventd, no *.rc and no sepolicy in the ramdisk means all of that is
+      userspace-side and comes from the system image, not from the boot chain. It
+      also means the boot chain contributes nothing that could create /dev, which is
+      exactly why Finding E-1 deserves attention.
+
+  One asymmetry worth naming: the DT fstab is only reachable if the DTB survives to
+  the kernel. On the plain route that is automatic. On the EFI route it depends on
+  the loader publishing a DEVICE_TREE_GUID table, else the stub generates an empty
+  tree and the fstab is gone (section 3.4). So Finding E-1 and the empty-DTB branch
+  are two different ways to arrive at "first stage has no block devices", and they
+  compound rather than overlap.
+
+6.5 Remaining boot-critical unknowns (unchanged by this round unless noted)
+
+    - effective DTB / UFS node state at runtime. ROUND19 showed the base DTB's UFS
+      node exists; what the nine DTBO variants do to it per board-id was not
+      re-audited (and must not be, this round).
+    - PMIC parent-supply chain for the UFS rails. REGULATOR_QCOM_RPMH is in, but the
+      actual supply tree is DTS data and was not inspected.
+    - ARC / proxy handoff for the UFS PHY. qmp_ufs_* is linked, but whether the
+      firmware hands over the PHY in a state this driver accepts is a runtime fact.
+    - which rootparam overlay the loader selects (ROUND19: nine variants VA..VI,
+      board-id 0x2008..0x206e, each writing five properties into /rootparam).
+    - memory handoff, i.e. section 3 - now sharper: see U-3.
+    - AVB. Any payload change invalidates the footer, and no signing was performed
+      or possible this round.
+    - NEW this round: CONFIG_DEVTMPFS (E-1) and CONFIG_PINCTRL_MSM (E-2).
+
+================================================================================
+7. UNKNOWNS
+================================================================================
+
+Each entry states what is unknown, why it is unknown, and exactly what would settle
+it. None of them is papered over elsewhere in this report.
+
+U-1  Whether Huawei ABL reaches the PE/COFF entry at all.
+     This is the gap between verdict layer 2 (established) and layer 3 (not).
+     Needed: abl.img or the EFI loader module from the boot chain; or a UART/XBL log
+     from a boot attempt. The stub prints "Booting Linux Kernel..." on entry, which
+     would settle it in one line if such a log existed. ROUND19 confirmed there is
+     no abl.img in the extraction, so this round had nothing to read.
+
+U-2  Whether ABL publishes a DEVICE_TREE_GUID configuration table.
+     Only relevant if U-1 resolves to "yes", but the consequence is severe either
+     way: per libstub/fdt.c:271-272, a loader that enters the stub without a DTB
+     gets an empty tree, and an empty tree has no /firmware/android/fstab, so the
+     first stage loses its only mount description. Also note that
+     CONFIG_EFI_ARMSTUB_DTB_LOADER is off here, so the dtb= command line is not an
+     available workaround.
+     Needed: a DT dump taken by the stub, or the device's UEFI configuration table
+     list before kernel entry.
+
+U-3  How the stock kernel obtains memory, given that it cannot be an EFI application.
+     New this round and it sharpens ROUND19's U-1 considerably. ROUND19 asked "who
+     fills the zeroed /memory". Section 4.4 now shows the stock kernel has res5 = 0,
+     i.e. no PE header, so the EFI escape hatch of section 3.2 was never available to
+     it. Therefore either (a) something else fills memory on the plain route, or (b)
+     the /memory node present in the extracted base DTB is not the node the
+     bootloader finally hands over - the extracted DTB may be the template, with the
+     loader patching reg before entry. Option (b) would make ROUND19's zeroed reg a
+     property of the file rather than of the running system.
+     Needed: a runtime FDT dump from the device, or the loader's DT fixup code.
+     This is now the highest-value open item in the memory question, because it
+     decides whether the whole /memory problem is real or an artefact of extracting
+     a template.
+
+U-4  Whether ABL decompresses, and whether it requires gzip specifically.
+     Established indirectly: stock ships gzip and an arm64 Image cannot decompress
+     itself (CONFIG_EFI_ZBOOT off), so the loader must decompress. Not established:
+     whether the loader insists on gzip. A sniffer would also accept raw; a blind
+     gunzip would not.
+     Needed: the loader's image-loading code, or a boot log showing the handover.
+
+U-5  Whether the CONFIG_DEVTMPFS gap (E-1) actually blocks the first stage.
+     The kernel side is proven absent (0 devtmpfs symbols). The userspace side was
+     not audited: Android's first stage may cope by creating nodes in a tmpfs, or it
+     may not. I am not asserting failure.
+     Needed: read the first-stage logic inside the stock /init ELF, or test with a
+     kernel that differs only in this option. The former is a static-analysis job
+     on an already-extracted binary and is the cheaper next step.
+
+U-6  Whether the loader honours the PHYS_BASE flag and ignores text_offset.
+     Both the stock kernel (text_offset 0x80000) and the ROUND18 Image (text_offset
+     0x0) set PHYS_BASE in flags 0xA, so per image.h:8-21 neither declares a fixed
+     load offset. If the loader instead honours text_offset literally, the two
+     images would disagree about where to place the kernel.
+     Needed: the loader's Image-header handling, or a runtime observation of the
+     load address.
+
+U-7  Whether the missing PINCTRL_MSM driver (E-2) blocks UFS.
+     Depends on whether the UFS node's pinctrl states are actually needed and on
+     what state the bootloader leaves the pins in. The board DTS was deliberately
+     not inspected this round.
+     Needed: a DTS-side check of the UFS node's pinctrl-0/-1 states, in a round that
+     is allowed to read the DTS.
+
+U-8  The provenance of the 96 MiB partition capacity used in section 5.
+     The figure is taken from the task and used as given. It was not re-derived from
+     a partition table this round, and the earlier rounds' GPT/LP work was not
+     repeated by instruction.
+     Needed: nothing new if the task's figure is authoritative; otherwise the GPT
+     entry for the boot partition.
+
+7.1 Summary of what changed in the project's picture this round
+
+  Turned from assumption into measurement:
+    - the Image is EFI-stub capable and carries a real EFI application PE header,
+      with the entry point provable three ways;
+    - the stock kernel is NOT EFI-stub capable (no PE header);
+    - the stock kernel payload is deterministic max-compression gzip;
+    - the EFI route provably discards DT-derived memory and rebuilds from the UEFI
+      map, which is the exact mechanism that would neutralise the zeroed /memory.
+
+  Newly visible gaps:
+    - CONFIG_DEVTMPFS off and CONFIG_PINCTRL_MSM off in the ROUND18 build;
+    - an empty-DTB branch in the stub that would silently cost the DT fstab;
+    - U-3, which questions whether the zeroed /memory is a runtime fact at all.
+
+  Explicitly NOT claimed: no boot, no DTB, no boot package, no AVB result, no
+  device interaction, no milestone of any kind.
+
+================================================================================
+8. BOUNDARY STATEMENT
+================================================================================
+
+No device was connected. No ADB, fastboot, recovery, bootloader, reboot, unlock,
+root, flash, partition write, AVB disable, vbmeta modification, signing, packing or
+deployment was performed. No boot image was created, not even a candidate: work
+package D computed numbers and wrote gzip streams into a temp directory, and nothing
+else.
+
+No input was modified. The ROUND2 payload extraction was read only; the ROUND18
+bazel output tree was read only, and the Image SHA-256 was re-verified after the
+compression work to prove it stayed byte-identical. Every derived artefact -
+compressed probes, the sliced kernel payload, the decompressed buffer, the source
+copies used for line-number citation, the JSON and text logs - stayed inside the
+ROUND20 work directory.
+
+Nothing was installed, downloaded, fetched or updated. No WSL distribution was
+deployed or altered. No repo init/sync, no patch application, no Kconfig edit, no
+Image rebuild. The ROUND18 schema/Kconfig/Image work and the ROUND19 firmware/AVB/
+DTBO parsing were not repeated; ROUND19's recorded results were consumed as inputs.
+
+No source, binary, Image, vmlinux, System.map, .config, firmware content or parser
+is included in this report or was uploaded with it. Kernel and firmware payloads are
+never reproduced; only header fields, sizes, symbol names, source line references
+and truncated digests appear. No serial, MAC, IMEI, key material, salt, signature or
+full digest of a payload is present. The one full SHA-256 quoted (the Image) is
+already published in the ROUND18 report and is repeated only to identify which
+binary was audited.
+
+main, the protected DTS branch, the second-AI branch and PR #1 were not modified.
+Only this text report is uploaded, to firmware-audit-v1.
+
+End of report.
+
+

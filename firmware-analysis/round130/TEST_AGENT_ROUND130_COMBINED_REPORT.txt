@@ -1,0 +1,374 @@
+TEST-AGENT-AI1-ROUND130 COMBINED INTEGRATION VERIFICATION REPORT
+Task ID: TEST-AGENT-AI1-ROUND130
+执行方: 用户本地 WorkBuddy 测试 Agent（只测试、构建、报告）
+下发方/代码所有者/审核方: 1号 AI（ChatGPT）
+2号 AI Stage A 分支: 未修改
+报告路径（唯一）: firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_REPORT.txt
+目标分支: firmware-audit-v1
+执行时间: 2026-11-25T15:59:20Z ~ 2026-11-25T16:11:17Z（全部离线）
+
+======================================================================
+0. 总判定
+======================================================================
+FINAL RESULT: PASS
+FAIL / BLOCKED: 0 / 0
+结论: 在固定 ACK 与固定 17-patch Stage A 基线上，ROUND120、ROUND122、ROUND128 V2、
+      ROUND126 四份 1号 AI 候选按指定顺序叠加后，21-patch 工作树通过全部源码闸门、
+      host 测试、checkpatch 记录、9 个对象编译、完整 Kleaf Image 构建和 ROUND58 配置回归。
+      四份候选撤销后精确回到 17-patch baseline，本任务 staging/Bazel/object/tmp 输出已清除。
+本轮未连接任何设备，未执行 USB / ADB / fastboot / recovery / serial / 分区 / 启动 / 刷机
+命令；未上传任何二进制；未修改任何源码、补丁、DTS、binding、测试、config、候选分支、
+AI2 Stage A 分支、main、PR #1 或其他工作区；未启动 ROUND131。
+
+注意: 本报告中两处脚本自身注释标注错误已在相应章节如实说明，均不影响判定：
+  (1) apply 脚本把 final untracked_lines=4 写成 "expect 0"，实际 baseline17 与 final21
+      都合法地有 4 个 untracked 路径，且集合完全相同；
+  (2) restore 脚本把 ufshcd-priv.h revert 后 "exists=YES" 标成 "expect NO"，实际该头在
+      ACK 中本就存在，正确判据是状态集无残留且 tracked diff hash 精确还原，二者均 PASS。
+
+======================================================================
+1. 固定输入与身份核验
+======================================================================
+设备目标（仅范围说明，未连接）: Huawei MatePad 11 DBY-W09 / KONA / SM8250
+Stage A 固定基线: ai-parallel/stagea-port-until-boot@2f21233148a04afdd61e44b1be7688399967d9d0
+ACK: aosp-mirror/kernel_common@8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (android17-6.18.33_r00)
+基础 series: kernel-baseline/round61/round32-stagea-series.txt，严格 17/17 个补丁
+未使用 ROUND124 15-patch 旧基线；未跟踪移动 ACK HEAD；未使用 ROUND125 原始 QMP 补丁。
+
+1.1 17-patch 身份
+  series_identity MATCH=17 MISMATCH=0
+  17 条逐项 MATCH（blob 第 3 列 / sha256 第 4 列），涵盖 round36 draft、
+  round52/round36/round32/round33/round63/round58/round31/round32/round33 各基础补丁。
+
+1.2 四份候选身份（从指定 origin 分支经 GitHub Contents API raw 重新获取）
+  #18 ROUND120 per-HBA async scan join
+      origin: ai1/round124-ufs-core-combined-candidates
+      path:   kernel-baseline/round124/0001-ufs-core-per-hba-async-domain.patch
+      size=3242 blob=f604c8672fcbc98f3e9645f5e8888c8a34b1c11e
+      sha256=12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7
+      result=MATCH；paths=ufshcd-priv.h, ufshcd.c
+  #19 ROUND122 UFS regulator load-first
+      origin: ai1/round124-ufs-core-combined-candidates
+      path:   kernel-baseline/round124/0002-ufs-core-vreg-load-first.patch
+      size=2339 blob=64dd2ad9022251e2411a1a745aeb920a0badfa85
+      sha256=2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66
+      result=MATCH；path=ufshcd.c
+  #20 ROUND128 V2 QMP UFS dual-rail state
+      origin: ai1/round128-qmp-ufs-rail-state-v2
+      path:   kernel-baseline/round128/0001-qmp-ufs-rail-state-v2.patch
+      size=11114 blob=22ccec1cabf2d78e61442d19219985135f8341e7
+      sha256=53ef42bb997a46e776f65c256039b13285047f784fed506ab8b22ab7f76e3bfb
+      result=MATCH；path=phy-qcom-qmp-ufs.c
+  #21 ROUND126 proxy-consumer load-first
+      origin: ai1/round126-proxy-consumer-load-first
+      path:   kernel-baseline/round126/0001-proxy-consumer-load-first.patch
+      size=2252 blob=c180dbf458403d68b2c32c1d54776a7559e7e5db
+      sha256=eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80
+      result=MATCH；path=proxy-consumer.c
+
+1.3 包装分支对照
+  包装分支 ai1/round130-stagea-ufs-lifecycle-integration 的 kernel-baseline/round130/ 副本：
+  0001-r120.patch == origin#18 BYTE_IDENTICAL
+  0002-r122.patch == origin#19 BYTE_IDENTICAL
+  0003-r128-v2.patch == origin#20 BYTE_IDENTICAL
+  0004-r126.patch == origin#21 BYTE_IDENTICAL
+  包装分支 round130-ai1-series.txt sha256=0b6eb1f4d9549ebb27581a56d4b76d0e82aaddf9193dd6645f7a895581f3952e
+  ROUND130_INTEGRATION_REVIEW.md sha256=f476cd5fc601ac89b0bed696456fa8b7559038f929b22bb63818cb38cbf89a05
+  以上仅作对照读取，未修改包装分支。
+
+======================================================================
+2. 独立 staging 与补丁应用
+======================================================================
+2.1 工作区隔离
+  新建 /home/kerneldev/work/matepad11/round130-agent（本任务专用，未复用 ROUND127/129）。
+  顶层通过 cp -al 共享只读 prebuilts，common 为独立 git clone --shared 并 checkout 精确 ACK，
+  out/ 与 out-obj/ 全新，Bazel output_user_root 独立。
+  prep: common_HEAD=8ad08f75... dirty=0；series_lines=17；export_files=72。
+  原 a30 全程保持 HEAD=8ad08f75... / dirty=16，未被写入。
+
+2.2 apply/offset/fuzz（全部真实输出保存于 apply130_log.txt）
+  21/21 个补丁：git apply --check --verbose RC=0、git apply --verbose RC=0、
+  git diff --check RC=0；无冲突、无失败。
+  git apply 不做 fuzz 匹配，本轮未使用 --3way/--reject，故 fuzz=0（逐补丁记录）。
+  offset 实测：
+    series #1-#15: 无 offset。
+    series #16 (patch33 self-target-only driver):
+      Hunk #1 offset -25 lines；Hunk #2 offset -2 lines；Hunk #3 offset +2 lines。
+    series #17 (patch33 binding):
+      Hunk #1 offset +1 line；Hunk #2 offset -2 lines。
+    #18 ROUND120: 无 offset/fuzz。
+    #19 ROUND122: 无 offset/fuzz；紧随 ROUND120 后 apply，ufshcd.c 不同区段无冲突。
+    #20 ROUND128 V2: Hunk #3 offset -19 lines，零 fuzz（与 ROUND129 实测一致）。
+    #21 ROUND126: 无 offset/fuzz。
+
+2.3 diff hash / changed paths / untracked set
+  baseline17_tracked_diff_sha=3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+  baseline17 dirty=16；baseline17 untracked=4（Stage A series 自带：review DTS、storage-first
+  fragment、proxy-consumer.c、proxy-consumer.h）。
+  final21 overlay_tracked_diff_sha=c8427704b8f9258bcad773389c2f47d87f6bc70f4ee3006760327817d919a744
+  final21 dirty=18。
+  候选触碰路径恰为四条：
+    M drivers/ufs/core/ufshcd-priv.h
+    M drivers/ufs/core/ufshcd.c
+    M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+    ?? drivers/regulator/proxy-consumer.c（baseline17 已为 untracked，内容被 R126 修改）
+  相对 baseline17 新增状态条目仅 ufshcd-priv.h 与 ufshcd.c；qmp/proxy 路径本来就在 baseline17。
+  untracked set final21 与 baseline17 完全相同（4/4，UNTRACKED_SET_UNCHANGED=YES）。
+
+======================================================================
+3. §4 源码闸门（实际行号与 grep/源码证据）
+======================================================================
+所有下列行号均来自本轮 21-patch 树（tracked diff c8427704...），不是历史报告复制。
+完整输出: gates130_log.txt、gates_supplement130_log.txt。
+
+3.1 ROUND120 async lifecycle —— PASS
+  A1 私有化：
+    drivers/ufs/core/ufshcd-priv.h:6  #include <linux/async.h>
+    ufshcd-priv.h:13 struct async_domain async_domain;
+    ufshcd-priv.h:14 async_cookie_t async_scan_cookie;
+    ufshcd-priv.h:15 bool async_scan_scheduled;
+    struct ufs_hba_priv 位于 ufshcd-priv.h:10-16。
+    include/ufs/ufs.h 与 include/ufs/ufshcd.h 对 async_domain/async_cookie_t/
+    async_scan_scheduled 的 grep 结果：NO_MATCH_IN_PUBLIC_HEADERS。public struct ufs_hba 未改。
+  A2 初始化：
+    ufshcd_alloc_host() at ufshcd.c:10846；
+    ufshcd.c:10876 INIT_LIST_HEAD(&priv->async_domain.pending);
+    ufshcd.c:10877 priv->async_domain.registered = 1;
+    ufshcd.c:10878 priv->async_scan_scheduled = false;
+  A3 唯一调度点并保存 cookie：
+    ufshcd.c:11222 async_schedule_domain(ufshcd_async_scan, hba, &priv->async_domain);
+    赋值 priv->async_scan_cookie 位于 11221，priv->async_scan_scheduled=true 紧随其后。
+    async_schedule_domain_count=1；bare async_schedule(...) count=0。
+  A4 remove join 先于任何 HBA 状态读取/拆除：
+    ufshcd_remove() at ufshcd.c:10731；
+    :10736 if (priv->async_scan_scheduled)
+    :10737 async_synchronize_cookie_domain(priv->async_scan_cookie + 1,
+                                            &priv->async_domain);
+    :10739 priv->async_scan_scheduled = false;
+    :10742 if (hba->ufs_device_wlun)
+    :10743 ufshcd_rpm_get_sync(hba);
+    :10744 ufs_hwmon_remove(hba); :10745 ufs_bsg_remove(hba);
+    :10746 ufs_sysfs_remove_nodes(hba->dev);
+    未 schedule 时不等待（由 if 守卫）。
+  A5 调用方与死锁风险：
+    alloc_host 调用方: ufshcd-pltfrm.c:660, tc-dwc-g210-pci.c:89, ufshcd-pci.c:648。
+    remove 调用方: ufshcd-pltfrm.c:714, tc-dwc-g210-pci.c:46, ufshcd-pci.c:617。
+    三个 remove 调用文件 host_sem_count=0；调用点上下文仅有 pm_runtime_* 调用，
+    没有 down(&hba->host_sem)/mutex_lock 等持锁路径。core 内 host_sem 使用存在于
+    sysfs/hwmon/debugfs 等独立路径，不在上述 remove 调用者 held-lock 链上。
+  A6 边界：源码闸门与编译只能证明结构/调用顺序，不声称 runtime race 已被实测；
+    报告中明确标记 RUNTIME_RACE_CLAIM=NOT_VERIFIED_BY_SOURCE_GATES_OR_COMPILE。
+
+3.2 ROUND122 UFS regulator load-first —— PASS
+  B1 disable 顺序（ufshcd.c:9528 起）：
+    :9540 ret = ufshcd_config_vreg(dev, vreg, false);
+    :9541 if (ret) goto out;（load-zero 失败不继续 disable、不 decrement）
+    :9544 ret = regulator_disable(vreg->reg);
+    :9547 vreg->enabled = false;（仅 disable 成功后清除）
+  B2 enable 顺序（ufshcd.c:9499 起）：
+    :9510 ret = ufshcd_config_vreg(dev, vreg, true);
+    :9514 if (vreg->enabled) goto out;（fast path 前已恢复 load，且不会重复 enable）
+    :9517 ret = regulator_enable(vreg->reg);
+    :9520 vreg->enabled = true;（仅成功后置位）
+  B3 通用 regulator 限制保留：
+    本候选 patch scope 仅 ufshcd.c（grep '^diff --git' 只有一条），未改 core.c。
+    core.c:2890 regulator->enable_count--；core.c:2892 return drms_uA_update(rdev)，
+    证明 post-decrement 可失败 DRMS 的 generic 行为仍在；
+    core.c:2958 与 :3158 的 _regulator_disable(rdev->supply) parent-coupling 也仍在。
+    已知局限保留：真正 disable 失败时的 enable_count 记账歧义与 devm/managed put warning
+    不在本候选修复范围；本轮只验证 load 时序，不声称解决 core 记账问题。
+
+3.3 ROUND128 V2 QMP UFS dual-rail state —— PASS
+  C1 power_off 唯一且复用 ROUND63：
+    def_count=1；定义 phy-qcom-qmp-ufs.c:2065；callback 赋值 :2131。
+    V2 patch 中 '^+static int qmp_ufs_power_off'=0、'^-static int qmp_ufs_power_off'=0，
+    即 V2 完全不新增/删除该定义，复用既有 ROUND63 函数。ROUND125 重复定义未使用。
+  C2 独立状态：
+    phy-qcom-qmp-ufs.c:1138 bool vreg_enabled[2];
+    phy-qcom-qmp-ufs.c:1139 bool vreg_load_active[2];
+    旧 vdda_phy_enabled 单 bit 已移除。
+  C3 严格两轨 / fail closed / absent-property bulk path：
+    qmp_ufs_vreg_layout_valid() at :1836-1843，要求 cfg->num_vregs==2 且
+    vreg_list[0]=="vdda-phy"、vreg_list[1]=="vdda-pll"。
+    property at :2315 of_property_read_bool(np, "vdda-phy-always-on")；
+    :2317 if (!qmp_ufs_vreg_layout_valid(qmp)) -> :2318 ret=-EINVAL（fail closed）。
+    bulk 保留：enable :1944 regulator_bulk_enable(cfg->num_vregs,...)；
+    disable :1983 regulator_bulk_disable(cfg->num_vregs,...)（property absent 时走原路径）。
+  C4 API 成功后才更新状态：
+    qmp_ufs_vreg_set_load(): regulator_set_load 失败直接 return，成功后才写
+      vreg_load_active[index]；load-zero 失败不触发后续 disable。
+    qmp_ufs_vreg_enable(): 先 set_load，成功且未 enabled 才 regulator_enable，
+      成功后才写 vreg_enabled[index]。
+    qmp_ufs_vreg_disable(): 先 set_load(...,false)，失败即返回；之后才 regulator_disable，
+      成功后才清 vreg_enabled[index]。
+  C5 顺序与 idle 策略：
+    qmp_ufs_regulators_disable()（layout check :1985）先 qmp_ufs_vreg_disable(qmp,1)
+    （L9/vdda-pll 完整 disable），再 qmp_ufs_vreg_set_load(qmp,0,false)（L5/vdda-phy
+    仅清 load、保留 enable）。
+    qmp_ufs_vdda_phy_cleanup() at :1918 先 qmp_ufs_vreg_disable(qmp,1) 后
+    qmp_ufs_vreg_disable(qmp,0)，最终 cleanup 才释放两条 rail。
+  C6 devm 顺序/限制：
+    devm_regulator_bulk_get_const at :2299；devm_add_action_or_reset(cleanup) at :2330，
+    LIFO 下 cleanup 先于 managed regulator_put。cleanup 返回 void，错误仅 dev_err，
+    不能 veto 后续 managed regulator_put；该限制保留并如实记录。
+
+3.4 ROUND126 proxy-consumer load-first —— PASS
+  D1 remove 函数 at proxy-consumer.c:360：
+    :368 if (!consumer->reg)（deferred 未投票 consumer 早返回，仅 list_del/kfree）
+    :384 if (consumer->current_uA > 0)
+    :385 ret = regulator_set_load(consumer->reg, 0); :388 rc = ret（保留真实失败码）
+    :392 if (consumer->enable)
+    :393 ret = regulator_disable(consumer->reg); :396 rc = ret
+    :400 if (consumer->voltage_set)
+    :401 ret = regulator_set_voltage(consumer->reg, 0, INT_MAX); :404 rc = ret
+    set_load(0) 明确在 regulator_disable 之前。
+  D2 两条 unregister 路径仍在：
+    void regulator_proxy_consumer_unregister() at :426（best-effort，调用 remove 后返回 void），
+    core.c:6056 regulator_proxy_consumer_unregister(rdev)（per-rdev unregister 路径）；
+    proxy-consumer.c:437 调用 remove；
+    late_initcall(regulator_proxy_consumer_retry_deferred) at :490；
+    late_initcall_sync(regulator_proxy_consumer_remove_all) at :514，bulk revoke 路径仍在。
+  D3 ROUND33 语义不变：
+    proxy_consumer_validate_self_target() at :197-208；self-target 拒绝信息在 :287-290；
+    多处 -EINVAL 拒绝保留。R126 patch 只有一个 hunk（patch 文件 :24，@@ -375,25 +375,29 @@），
+    未触碰校验逻辑，不存在 cross-target 授权，也未引入 regulator_force_disable
+    （force_disable_count=0）。
+
+======================================================================
+4. §5 host tests / checkpatch / 9 objects
+======================================================================
+4.1 host tests（未修改 21-patch 树，tests/run_tests.sh "$K"）
+  TESTS_RC=0
+  legacy ROUND31/32 lifecycle suite: checks=38 failures=0, RESULT: PASS, TEST_RC=0
+  ROUND32/33 suite:                  checks=83 failures=0, RESULT: PASS, TEST_RC=0
+  HARNESS_RESULT: PASS；无 crash、无 SIGSEGV。
+  完整输出: tests_full130.log（7451 B）。
+
+4.2 checkpatch --strict --no-signoff（本轮全部重新执行）
+  候选                              RC  E  W  C  实际输出摘要
+  ROUND120 async-domain             1   0  4  1  4x WARNING: commit log lines starting with '#'
+                                           1x CHECK: alignment should match open parenthesis
+  ROUND122 vreg-load-first          1   0  0  2  2x CHECK: alignment should match open parenthesis
+  ROUND128 V2 QMP                   1   0  1  0  1x WARNING: max 75 chars in commit description
+  ROUND126 proxy-load-first         0   0  0  0  无 E/W/C
+  说明：ROUND128 V2 与历史 0E/1W/0C 一致；ROUND126 历史 0E/0W/1C，本轮实测 0E/0W/0C，
+  以本轮真实输出为准；ROUND120/122 均非 clean，按实际 E/W/C/RC 记录，未自动修复。
+  每份完整输出分别保存于 checkpatch_<patch>.log。
+
+4.3 9 个对象编译（pinned Kleaf clang r584948c + Stage A .config）
+  工具链: Android clang version 22.0.1, based on r584948c
+          (https://android.googlesource.com/toolchain/llvm-project 2d65e410...)
+  命令: make ARCH=arm64 LLVM=1 LLVM_IAS=1 O=<staging>/out-obj -j8 <object>
+  source config sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+  为了避免 GENDWARFKSYMS 交互，object build 内部 .config 先 -d GENDWARFKSYMS 再 olddefconfig，
+  内部 sha=79b5cafb4c1bfa6c683a3825abce8aec1b0deff80e24f713b42d57da39a51b6b（预期差异）。
+
+  #  object                                      RC  size      sha256
+  1  drivers/ufs/core/ufs-debugfs.o              0   217712    80d2281f49d628c8f13bc05e9c98f4d88b47830846e77bb8e64be24f022dfde6
+  2  drivers/ufs/core/ufs-mcq.o                   0   217432    1bb3068007e314445b2058f7da009635ab85ab99f446a27e28afe7633557a133
+  3  drivers/ufs/core/ufs-sysfs.o                 0   435584    dc3f467305404f95939b66d2a16963244e30cebcc073350473ac34801a5d0dde
+  4  drivers/ufs/core/ufs-txeq.o                  0   227056    c925f96dc54815a88917d0be79464c01c9e0e7bbd38851b1a470f1001d697c82
+  5  drivers/ufs/core/ufs_bsg.o                   0   184856    74c37ef5c20f795999de34c35d3f20e38f07bcf3422a90597c8c08e180bcedcd
+  6  drivers/ufs/core/ufshcd-crypto.o             0   191592    c62cf614576b73a276935faff984d9790d80ab403da080e4aa8244901b3885f9
+  7  drivers/ufs/core/ufshcd.o                    0   953008    6c8a2aa6dc2a7cbe6e06489f294a62a38c6d7f0d95f1675090484c4821405e9a
+  8  drivers/phy/qualcomm/phy-qcom-qmp-ufs.o      0   283864    f5c89384935b8b748cd9b42ef8c5c2619a0601008e3630fd4b2e1643905bb8f1
+  9  drivers/regulator/proxy-consumer.o          0   176336    d1e29161e9b18b5ff709b2b6b6770f7de9e41c528d0d5d0e6e58dc0eb4701ecd
+  objects_attempted=9 objects_failed=0；OBJECT_COMPILE=PASS → 允许进入完整构建。
+
+  关键符号:
+    ufshcd.o: U async_synchronize_cookie_domain = 1（ROUND120 lifecycle 进入对象）。
+    qmp-ufs.o: qmp_ufs_power_off 符号数=1；qmp_ufs_vdda_phy_cleanup 存在（ROUND128 V2）。
+    proxy.o: 15 个 proxy_consumer 相关符号；含 remove/unregister/retry_deferred/remove_all
+             及 __initcall_...retry_deferred7、__initcall_...remove_all7s（ROUND126 + ROUND33）。
+  对象 hash 与 ROUND124/129 均不同（例如 ufshcd.o 6c8a2aa6... vs R124 d776f4cc...），
+  与 overlay hash c8427704... 共同证明四补丁进入本轮对象树。
+
+======================================================================
+5. §6 完整 Image 构建 + ROUND58 回归（9 对象全 PASS 后执行）
+======================================================================
+5.1 构建
+  命令: cd <staging>/a30 && tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  workspace: /home/kerneldev/work/matepad11/round130-agent/a30
+  Bazel output_user_root: <workspace>/out/bazel/output_user_root（本任务独立）
+  构建前 HEAD=8ad08f75... dirty=18 tracked_diff_sha=c8427704... candidate_paths_count=4
+  BUILD_RC=0；ELAPSED=368s；Bazel INFO Elapsed=363.230s，Critical Path=341.82s
+  action count: INFO: 775 processes: 523 internal, 252 linux-sandbox.
+                INFO: Build completed successfully, 775 total actions
+
+  产物（本轮独立 output base）:
+    Image      size=44820992   sha256=4ef82e03b2300fa37abc7927474d0f2357b27ca1e80ddf658b63a79f44c804f1
+    System.map size=7611571    sha256=3887cd87acc7e07dfe27abc14e5ddd54a1e767cd9043bf9b4
+    vmlinux    size=230259072  sha256=1701b18ff918d0654ff155f72cbdca09e21636e008281a9961
+    .config    size=238410     sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+  .config BYTE_IDENTICAL_TO_BASELINE=YES。
+  Image 4ef82e03... 与已知历史均不同（R32 b6efb347 / R33 a59c22f7 / R124 903164d7 /
+  R129 2cbc5218），UNIQUE_VS_PRIOR=YES。
+
+  本轮 System.map 候选符号证据:
+    proxy_consumer=13
+    qmp_ufs_power_off=1（ffffffc0809641b4 t）
+    qmp_ufs_vdda_phy_cleanup=1（ffffffc0809638d8 t）
+    async_synchronize_cookie_domain=3（含 T 与 ksymtab/flags）
+    __async_schedule=1（ffffffc080136698 t __async_schedule_node_domain）
+    proxy initcalls: ...retry_deferred7 与 ...remove_all7s 两个链接级符号均在。
+  ufshcd_enable_vreg / ufshcd_disable_vreg 在 System.map 中为 0 属静态函数内联/优化结果，
+  其候选效应由对象哈希差异与 §3.2 源码行序证据承担，不作符号级声称。
+
+5.2 provenance（仅记录本轮实际可核对值，未推测）
+    manifest repo commit = 46a1a5274ff0b40419952c861a8958bba5f28cfc
+    manifest XML sha256  = 33d794c99c197c2eb0726ff2cc8c4bcd532e0f3fcd75eaea3fbd10bd53675d25
+    Bazel 版本 = PARTIAL：tools/bazel --version 被 Kleaf wrapper 拒绝
+                 （[FATAL] Unknown startup option: '--version'，RC=120），
+                 且本次 build log 未出现可核对的 Bazel version 行；不推测。
+    Rust 版本 = PARTIAL：build log 无可核对 rustc/version 行；不推测。
+
+5.3 ROUND58 config / helper 回归
+    config = 本轮 build 生成的 .config（0850213d...）
+    check_dby_w09_config.py --json: validator_json_rc=0，ok=true，missing=[], not_y=[]
+    check_dby_w09_config.py human: PASS: all 33 required storage-first symbols are present
+      as =y; no duplicate assignments found. RESULT: PASS；validator_rc=0 → 33/33 PASS
+    python3 -m unittest discover ... test_check_dby_w09_config.py -v:
+      Ran 11 tests ... OK；unittest_rc=0 → 11/11 PASS
+
+======================================================================
+6. §7 撤销、哈希还原、清理
+======================================================================
+6.1 逆序撤销
+  git apply -R R126 / R128 V2 / R122 / R120，逐条 RC=0（4/4）。
+  restore pre_tracked_diff_sha=c8427704...（21-patch overlay）
+  restore post_tracked_diff_sha=3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+  RESTORE_MATCHES_BASELINE17=YES
+  post_dirty_lines=16（与 baseline17 相同）
+  DIRTY_PATH_SET_IDENTICAL=YES；UNTRACKED_SET_IDENTICAL=YES
+  candidate_path_residue_count=0（新出现的候选状态条目为零；qmp/proxy 是 baseline17 已有路径）
+  power_off_defs=1；vreg_enabled[2] count=0；proxy load-first marker count=0。
+  脚本中 "ufshcd_priv_header_exists=YES (expect NO)" 是标注错误：ufshcd-priv.h 在 ACK 中
+  本就存在，正确判据是 revert 后无状态残留且 diff hash 精确还原，均 PASS。
+
+6.2 清理与边界
+  已删除本任务 staging /home/kerneldev/work/matepad11/round130-agent（含独立 common、out、
+  out-obj、Bazel outputs）以及 /tmp/r130_* 临时日志。
+  原 a30 工作区: HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a dirty=16（未动）。
+  reports-a30 HEAD=98fda4151bea7b4a7a717054c431f59a7ff23bb6（只读；固定对象 2f212331 通过
+  git archive 导出，未创建 worktree、未写分支）。
+  未删除/更改其他工作区；未改 main、AI2 Stage A、ACK DTS draft、PR #1、任何候选源分支、
+  DTS/binding/test/config/firmware。
+
+======================================================================
+7. 证据文件（本地仅用于生成报告，未随报告上传二进制）
+======================================================================
+  identity130_log.txt, prep130_log.txt, apply130_log.txt, status_delta130_log.txt,
+  gates130_log.txt, gates_supplement130_log.txt, tests_full130.log,
+  checkpatch_0001-ufs-core-per-hba-async-domain.patch.log,
+  checkpatch_0002-ufs-core-vreg-load-first.patch.log,
+  checkpatch_0001-qmp-ufs-rail-state-v2.patch.log,
+  checkpatch_0001-proxy-consumer-load-first.patch.log,
+  obj130_log.txt, build130_log.txt, config130_log.txt, restore130_log.txt。
+  报告为纯文本，无 token、无设备信息、无二进制。
+
+======================================================================
+8. 交付与停止
+======================================================================
+  唯一上传文件: firmware-analysis/round130/TEST_AGENT_ROUND130_COMBINED_REPORT.txt
+  上传后执行 GET read-back 逐字节校验（结果见上传回执行，随报告脚本输出）。
+  上传并回读后立即停止；不启动 ROUND131，不进行任何设备访问。

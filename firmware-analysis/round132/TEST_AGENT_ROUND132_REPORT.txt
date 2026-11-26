@@ -1,0 +1,139 @@
+================================================================================
+TEST AGENT - ROUND132 (KUnit test option linkage correction)
+TASK ID: AI2-ROUND132
+STATUS: BLOCKED - AI2 SEAM-V2 ARTIFACT ABSENT. VALIDATION NOT EXECUTED.
+NO PASS IS CLAIMED. NO KUNIT / CHECKPATCH / CONFIG RESULT EXISTS FOR ROUND132.
+REPORT DATE: 2026-11-26 (UTC+8)
+================================================================================
+
+0. ONE-LINE CONCLUSION
+--------------------------------------------------------------------------------
+Taskbook section 3 gates all Agent work behind "After 2号 AI uploads the exact
+seam-v2 patch and its hash/source note". That precondition is NOT met: the AI2
+branch ai2/round132-kunit-option-bool still points at the implementation BASE
+commit, and no round132 seam-v2 patch or source note exists in any branch, path,
+or repository reachable under owner hhdy. Per section 5 ("Do not write PASS
+unless the new exact seam-v2 patch is the one applied and the one that produces
+the reported TAP log"), this report is BLOCKED, not PASS.
+
+1. GATE CONDITION FROM THE TASKBOOK
+--------------------------------------------------------------------------------
+Section 3: "After 2号 AI uploads the exact seam-v2 patch and its hash/source
+note, the Agent shall: ..." with steps 1-10 (worktrees, 17-patch apply,
+seam-v2 apply, Kconfig bool check, UML KUnit 1/1, host 38/38 + 83/83, product
+config SHA check, checkpatch, cleanup, upload).
+Expected AI2 deliverables (section 5, AI2 implementation branch):
+  - firmware-analysis/round132/round132-kunit-seam-v2.patch   -> ABSENT
+  - firmware-analysis/round132/AI2_ROUND132_SOURCE_NOTE.md    -> ABSENT
+
+2. EVIDENCE THAT AI2 HAS NOT DELIVERED (read-only, reproducible)
+--------------------------------------------------------------------------------
+E1. Branch pointer equals the implementation base (no implementation commit):
+    branch ai2/round132-kunit-option-bool = f0b00e38c8222be14adfb21f122db7f8cac94c14
+    branch ai-parallel/stagea-port-until-boot = f0b00e38c8222be14adfb21f122db7f8cac94c14
+    -> identical SHA; branch commit date 2026-11-25T15:56:41Z, message
+       "Record ROUND35 evidence mismatch and assign ROUND35R" (the base itself).
+    A branch created from the base but never advanced has zero seam-v2 content.
+
+E2. Full recursive tree of the AI2 branch contains no 132/seam artifact:
+    GET /git/trees/ai2/round132-kunit-option-bool?recursive=1
+    -> status 200, truncated=false, entries=268
+    -> paths matching "132", "seam", or "SOURCE_NOTE": NONE (0 hits).
+
+E3. Directory-level API checks:
+    contents/firmware-analysis/round132 @ ref=ai2/round132-kunit-option-bool -> 404
+    contents/firmware-analysis/round132 @ ref=firmware-audit-v1             -> 404
+    contents/firmware-analysis/round132 @ ref=main
+      -> only AI2_ROUND132_TASKBOOK.md (5923 B, blob 01f2e3a04106)
+    Full-tree scan of main (356 entries) for "132"/"seam":
+      -> only firmware-analysis/round132/AI2_ROUND132_TASKBOOK.md
+    Full-tree scan of firmware-audit-v1 (236 entries) for "132"/"seam":
+      -> only round35, round35r, round35s seam patches (older rounds); no round132.
+
+E4. No alternate location / repository holds it:
+    Owner hhdy has 7 repositories:
+      gxde-dby-w09, gxde-hwsupport-dby-w09, gxde-kernel-dby-w09,
+      gxde-touch-calibration, matepad11-dby-w09-agent-reports, pocket-linux,
+      UniXNU-dby_w09-gitee-mirror
+    Only matepad11-dby-w09-agent-reports has any branch matching "132": the AI2
+    branch above (at base). No other repo has a 132/seam branch.
+    All 18 branches of the reports repo were enumerated; the only round132
+    branch is ai2/round132-kunit-option-bool at f0b00e38.
+
+3. WHAT WAS VERIFIED AS READY (so the round can proceed immediately on unblock)
+--------------------------------------------------------------------------------
+R1. Fixed ACK is locally present and is a commit:
+    repo: ack-6.18.33/.repo/projects/common.git
+    git cat-file -t 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a -> commit
+    git rev-parse  8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a -> 8ad08f75... (exact)
+
+R2. Pinned 17-patch manifest blob is retrievable by exact SHA:
+    blob 9a93b7e3a500d807533517a92b98fe244b2ea456 -> status 200, size 6599 B,
+    17 numbered entries (1..17). First entry round36/0001-dt-bindings-ufs-...;
+    last entry round61/patches/round33-0002-regulator-proxy-self-target-binding.patch
+    (blob d2e818296118672bd708db34ed08d817fcd3895b).
+
+R3. Accepted ROUND35R seam is retrievable and hash-identical to the taskbook:
+    firmware-analysis/round35r/round35r-kunit-seam.patch @ firmware-audit-v1
+    size 16740 B, SHA-256 =
+      14c62ec878e701a10e6eef211704262300e2ac742286c18f1e5c7496eaeb9049
+    taskbook expected SHA-256 = 14c62ec878e701a10e6eef211704262300e2ac742286c18f1e5c7496eaeb9049
+    -> EXACT MATCH. (This is the seam that seam-v2 must contain.)
+
+R4. Environment ready (WSL Ubuntu-24.04, running):
+    /home/kerneldev/work/matepad11 exists; root fs 755G available.
+    Existing ROUND35/35R/35S workspaces were observed and will NOT be reused
+    (taskbook requires new disposable worktrees).
+
+R5. Disclosed discrepancy (not a blocker, would be handled at execution time):
+    local reports-a30 manifest copy is stale: blob f53e27092979... , 15 numbered
+    lines, while the taskbook pins blob 9a93b7e3... (17 lines). The pinned blob
+    is retrievable from GitHub by SHA (see R2), so the Agent would export the
+    pinned blob by SHA rather than trust the stale local file. Because the round
+    is blocked before worktree creation, no baseline tree was built and this did
+    not affect any result.
+
+4. WHAT WAS NOT EXECUTED (explicit)
+--------------------------------------------------------------------------------
+The following taskbook steps were NOT run, because the seam-v2 artifact that
+defines the round does not exist:
+  - no new disposable worktrees created (step 1)
+  - no 17-patch identity/apply/diff-check run (step 2)
+  - no seam-v2 apply/offset recording (step 3) - seam-v2 absent
+  - no Kconfig bool verification, no .config, no symbol presence check (step 4)
+  - no UML KUnit suite run, no TAP log, no exit code (step 5)
+  - no host regression 38/38 or 83/83 (step 6)
+  - no product .config SHA-256 check (step 7)
+  - no git diff --check / checkpatch --strict run (step 8)
+Consequently there is no round132-apply-check.log, no round132-kunit-final-TAP.log,
+no round132-checkpatch.log, and no round132-config-and-host-regression.log. None
+are fabricated here.
+
+5. SAFETY AND STOP BOUNDARY COMPLIANCE
+--------------------------------------------------------------------------------
+- No tablet connection of any kind; no USB/ADB/fastboot/recovery/serial command.
+- No HOS4.3 firmware access, extraction, upload, or editing.
+- No product Image build; no boot.img/DTB/DTBO/ramdisk/vbmeta/AVB/footer/flash.
+- No product defconfig, Kleaf target, DTS, binding, PMIC, voltage, supply-parent,
+  ARC/VRM or memory-map change.
+- No source code was edited by the Agent; frozen 17-patch production series and
+  AI1 branches untouched; no merge/cherry-pick performed.
+- Only this single report is added. No binary, token, or credential uploaded.
+- Agent stops after publishing this report. ROUND133 is NOT started.
+
+6. ACTION REQUIRED TO UNBLOCK
+--------------------------------------------------------------------------------
+2号 AI must commit and push, on ai2/round132-kunit-option-bool (or otherwise
+publish with an explicit SHA-256):
+  1) firmware-analysis/round132/round132-kunit-seam-v2.patch
+     (full accepted ROUND35R seam + Kconfig tristate->bool correction, no
+      duplication of the 17 production patches)
+  2) firmware-analysis/round132/AI2_ROUND132_SOURCE_NOTE.md
+     (why built-in bool is required: core observer is compiled into built-in
+      regulator core, so test config and observer must be built in together)
+  3) the exact SHA-256 of the seam-v2 patch
+Then re-issue ROUND132 Agent validation; this Agent will run section 3 steps
+1-10 against that exact artifact and report PASS/FAIL with real logs.
+================================================================================
+END OF REPORT
+================================================================================

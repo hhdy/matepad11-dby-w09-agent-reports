@@ -1,0 +1,205 @@
+##################################################################################
+# ROUND135 R3 FINAL REPORT
+# Pinned 23-patch source / DTB / Image validation (taskbook ROUND135_R3_AGENT_TASKBOOK.md,
+# GitHub main blob 0e8dfac9b0a6eae58a02e0fcaacff5f89dd67ff1, byte-verified locally)
+##################################################################################
+
+Executor   : WorkBuddy local test Agent (execution only; no source/patch/DTS/config edits)
+Issuer     : AI1 (ChatGPT)
+Independent review of raw evidence: AI2 (did not execute anything locally)
+Date       : 2026-11-26 (UTC timestamps inside logs)
+Scope      : offline source reconstruction, schema, DTB, Kconfig, object compile,
+             full Kleaf Image build, existing Host regressions, static checks.
+             NO tablet/USB/ADB/fastboot/recovery/serial/root/partition/firmware
+             access. No boot/DTBO/ramdisk/vbmeta/AVB packaging. No branch changes.
+
+==================================================================================
+1. RESULT
+==================================================================================
+
+R3 outcome: PARTIAL - IMAGE BUILD PASSED, KNOWN SCHEMA / DTB DIAGNOSTIC REMAINS
+
+Per the taskbook §8 rule ("Image build succeeds but dt_binding_check / dtbs_check
+has a nonzero result or a known root-compatible issue remains"), the previously
+documented root-compatible schema gap is still present in dtbs_check diagnostics,
+so full PASS is not claimed. Every other R3 gate completed successfully with raw
+evidence. The exact diagnostics are quoted in §4 below; they are the two
+previously documented items (known board-compatible binding gap F1 and
+vcc-voltage-level), not new issues.
+
+==================================================================================
+2. SOURCE TREE RECONSTRUCTION (§3) - all pinned identities matched
+==================================================================================
+
+- Fresh isolated staging: /home/kerneldev/work/matepad11/round135-r3-agent/a30
+  (hardlink top-level workspace + own common clone with OWN .git object database,
+  cloned --no-hardlinks from the verified R2 Tree A transport clone of the pinned
+  ACK; no alternates; own fresh out/out-obj/out-dtb bazel output bases).
+- HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a, HEAD^{tree}=790a68ae..., clean.
+- Frozen 17-patch manifest re-fetched from GitHub ai-parallel branch:
+  blob 9a93b7e3a500d807533517a92b98fe244b2ea456 (all 17 blob/SHA-256 verified).
+- R3 23-patch manifest re-fetched: blob 9188de2022f88c374bfcaa367c505428812608d9
+  (its §8 R2-freeze record read and honored; the local manifest snapshot annotation
+  discrepancy is disclosed there and was NOT treated as byte-identical).
+- Patches 18-23 blobs verified: f604c867 / 64dd2ad9 / 22ccec1c / c180dbf4 /
+  ab010836 / ceb72ed2. Patch 22 payload byte-identical to DTS blob 58293f7a.
+- The removed duplicate driver patch 2bf34810... was NOT applied anywhere.
+- 23/23 patches: git apply --check --verbose RC=0, git apply --verbose RC=0,
+  git diff --check RC=0; no fuzz/reject/3way/ignore-whitespace/fallback applier.
+- Controlled offsets reproduced exactly (predeclared R2 pattern):
+    patch 16: H1=-25, H2=-2, H3=+2
+    patch 17: H1=+1, H2=-2
+    patch 20: H3=-19
+  All other patches: no offset line emitted by the primary applier.
+- Stage-17 content tree  = 77e2b2b1515b3813f7538aedffe4c5a4e90edb57  (MATCH)
+- Final 23-patch content tree = afe9517f8062b96bfeb5b4dd5714942861e6a44b
+  === pinned expected value: MATCH (not altered by this run)
+- Final state: 15 modified tracked paths + 5 new files; final git diff --check RC=0;
+  binary diff sha256 83a5e06f7198a5a8b9d35c2d04ba854eca2c17708242c9b512a9aab794ac36a2;
+  tree computation via temporary index (read-tree HEAD + add -A + write-tree),
+  main index never staged, temp index removed after each computation.
+
+==================================================================================
+3. KCONFIG / OBJECT COMPILE / FULL IMAGE BUILD (§5) - all PASS
+==================================================================================
+
+Execution-order disclosure: .config is resolved by the pinned Kleaf mechanism
+itself, so the full build ran first and its resolved .config then fed §5.1 symbol
+checks, §5.2 object compiles and §4.4 DTB build. No stage skipped or altered;
+order recorded in the kconfig log.
+
+- Full build: tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  BUILD_RC=0, ELAPSED=305s, 775 actions (523 internal + 252 linux-sandbox) -
+  same action count as ROUND130.
+- Artifacts (bazel-bin/common/dby_w09):
+    Image      size=44820992   sha256=dba8fcf756a57b7995886bdcb93872555b5fee9300eadb4e9b0bdfd7f37ebea1
+    .config    size=238410     sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+                               == ROUND130 baseline: BYTE-IDENTICAL
+    System.map size=7611571    sha256=e7760acc2d928f847ad229e6bdc4855726d5e0aaa67b31da965c9a479cb56412
+    vmlinux    size=230259072  sha256=eb364b5806572e0198a63b50e7bd04ff0dbde6687307cac995aefbb039174d1f
+  Image SHA differs from all prior rounds (R130 4ef82e03 / R32 / R33 / R124 / R129)
+  as expected for the 23-patch candidate.
+- All 19 required config symbols resolved as =y (SCSI_UFSHCD, SCSI_UFSHCD_PLATFORM,
+  SCSI_UFS_QCOM, PM_DEVFREQ, PM_OPP, PM_GENERIC_DOMAINS(+OF), QCOM_GDSC, QCOM_RPMH,
+  QCOM_COMMAND_DB, QCOM_RPMHPD, OF, REGULATOR, REGULATOR_QCOM_RPMH, IOMMU_SUPPORT,
+  ARM_SMMU, ARM_SMMU_QCOM, INTERCONNECT_QCOM_SM8250, PHY_QCOM_QMP_UFS). None =m.
+- Object compiles (make ARCH=arm64 LLVM=1 LLVM_IAS=1 O=out-obj -j8, Kleaf clang
+  r584948c; GENDWARFKSYMS disabled in scratch config - transformed config sha
+  79b5cafb4c1bfa6c683a3825abce8aec1b0deff80e24f713b42d57da39a51b6b, byte-identical
+  to ROUND130's recorded transform):
+    drivers/ufs/core/ufshcd.o             RC=0 size=952992  sha256=d816ca9766118afef9fa54ca66d76f19a203006539355b98e918319bfdbf7a47
+    drivers/ufs/host/ufs-qcom.o           RC=0 size=346968  sha256=2d725fc5005601a7e9ae05c60e866b3630554c2f1b5bd35d7a8dde6bf0f4be80
+    drivers/phy/qualcomm/phy-qcom-qmp-ufs.o RC=0 size=283856 sha256=625757b489792380ee9def76d8f4266266ec05c3233fc71c6700efbdbc24207b
+    drivers/regulator/proxy-consumer.o    RC=0 size=176336  sha256=3906e3fef50f479080c68caedd0b4467897c7d34b2c0891de3f58cb9a3bef4ff
+
+==================================================================================
+4. SCHEMA / DTB VALIDATION (§4) - builds PASS; two KNOWN diagnostics remain
+==================================================================================
+
+4.1 Source/merged-tree assertions: 12/12 OK (source_assertions.log, corrected
+patterns; an earlier shell-grep quick pass in the raw s3 log printed spurious
+ASSERT_FAIL rows due to malformed patterns - superseded, raw runs preserved).
+Key confirmations: root compatible pair; Host power-domains ordered pair
+<&rpmhpd RPMHPD_MMCX>, <&gcc UFS_PHY_GDSC>; PHY retains only GCC UFS_PHY_GDSC;
+SID mapping preserved (pinned ACK encodes 0x0e0 0 / 0x4e0 0 with #iommu-cells=2);
+exactly one TAB-formatted Makefile entry; no obsolete PHY vdda-*max-microamp
+(host-side vcc*/vccq* loads are the ACK-populated vreg loads, expected);
+rpmh-regulator binding covers PM8150/PM8150L.
+
+4.2 dt_binding_check (dtschema 2026.9, Python 3.12.3, DTC 1.7.0; yamllint ABSENT
+- kernel skips yamllint with a warning, recorded): changed-schema set =
+  qcom,sc8280xp-qmp-ufs-phy.yaml / qcom,rpmh-regulator.yaml / qcom,sc7180-ufshc.yaml
+  / qcom,ufs-common.yaml  →  DT_BINDING_CHECK_RC=0, error_like_lines=0.
+
+4.3 Real board DTB: built from the final pinned tree via standard Kbuild target
+  `make ARCH=arm64 LLVM=1 LLVM_IAS=1 O=out-dtb qcom/huawei-dby-w09.dtb`
+  (DTC completed; size=108648, sha256=cab82fe3901bdb40533197eeb48b2d99b08b46e5d5497ff1a6f688e9938db77e).
+  dtbs_check targeted selector `CHECK_DTBS=y qcom/huawei-dby-w09.dtb`: RC=0 with
+  exactly these diagnostics (both previously documented, recorded not repaired):
+    (a) /: failed to match any schema with compatible: ['huawei,dby-w09','qcom,sm8250']
+        - the documented board-binding gap in the pinned Qualcomm root schema;
+    (b) ufshc@1d84000 (qcom,sm8250-ufshc): vcc-voltage-level ... is not of type ...
+        and 'Unevaluated properties are not allowed ('vcc-voltage-level' was
+        unexpected)' from qcom,sc7180-ufshc.yaml - the documented §4.2 item 3.
+  NOTE (a) also emitted an unrelated 'qcom,x1p42100 was expected' line from
+  qcom.yaml context - recorded verbatim in the log.
+
+4.4 Decompiled the exact produced DTB (scripts/dtc/dtc, 6159 lines, full text in
+the schema-dtb deliverable). Compiled-DTB assertions: 18/18 OK, including
+  - HC PD[0] = rpmhpd node (compatible qcom,sm8250-rpmhpd), cell 0x6 == RPMHPD_MMCX
+    per include/dt-bindings/power/qcom,rpmhpd.h;
+  - HC PD[1] = gcc (qcom,gcc-sm8250), cell 0x4 == UFS_PHY_GDSC per
+    include/dt-bindings/clock/qcom,gcc-sm8250.h;
+  - PHY single power-domain = gcc cell 0x4 (no MMCX added);
+  - HC iommus phandle apps_smmu with 0xe0 0x00 / 0x4e0 0x00;
+  - 5 UFS supplies + operating-points-v2 preserved; model/compatible pair.
+
+Known gaps (recorded, NOT repaired, NOT resolved by R3): vcc-voltage-level not
+parsed by ACK ufshcd_populate_vreg(); qcom,vccq-parent-supply is topology
+metadata only (no PM8150L S8 acquisition); sm8250.dtsi zero-size bootloader
+/memory placeholder (HOS4.3 37 reserved-memory children map UNKNOWN); RPMh
+provider may resolve physical input via regulator-core dummy fallback.
+
+==================================================================================
+5. HOST REGRESSIONS (§6) - PASS
+==================================================================================
+
+Harness: round132-agent/host-work/run_tests.sh (sha256 recorded in log) with the
+two original test sources; invocation `run_tests.sh <kernel worktree>` matching
+ROUND130's recorded entry (tests/run_tests.sh "$K"). Executed against the final
+23-patch tree:
+    legacy ROUND31/32 lifecycle suite: checks=38 failures=0  RESULT: PASS
+    ROUND32/33 suite:                  checks=83 failures=0  RESULT: PASS
+    TESTS_RC=0, HARNESS_RESULT: PASS, no crash/SIGSEGV.
+
+==================================================================================
+6. STATIC CHECKS (§7)
+==================================================================================
+
+- Final git diff --check: RC=0.
+- checkpatch --strict --no-signoff:
+    patch 22: RC=1, 0 errors, 3 warnings (MAINTAINERS new-file reminder;
+              "huawei,dby-w09" undocumented - known gap F1; one 130-column line)
+              - same profile as the R1 run; NOT auto-fixed.
+    patch 23: RC=0, clean.
+  Board DTS bare-file checkpatch: checkpatch requires a unified diff; the bare
+  .dts invocation yields "ERROR: Does not appear to be a unified-diff format
+  patch" (tool limitation, recorded). The DTS content diagnostics are fully
+  covered by the patch-22 run above.
+- Patches 18-21: historic ROUND130 checkpatch results quoted (source blob
+  def62019b5760d991f41d674e227b9e1af0761df §4.2): R120 RC=1 0E/4W/1C,
+  R122 RC=1 0E/0W/2C, R128V2 RC=1 0E/1W/0C, R126 RC=0.
+- SPDX: NOT_RUN/BLOCKED - python3 ply module missing; package installation is
+  forbidden by the taskbook. Raw error recorded.
+
+==================================================================================
+7. DELIVERABLES (firmware-audit-v1:firmware-analysis/round135/r3/)
+==================================================================================
+
+1. ROUND135_R3_FINAL_REPORT.txt (this file)
+2. round135-r3-identity-apply-tree.log  (input verification + staging + ordered apply + tree assertions)
+3. round135-r3-schema-dtb.log           (source assertions, dt_binding_check, DTB build, dtbs_check, decompile + assertions + full decompiled DTB)
+4. round135-r3-kconfig-object-kleaf.log (build log, artifact hashes, symbols, object compiles)
+5. round135-r3-host-regression.log      (38/38 + 83/83 full output)
+6. round135-r3-checkpatch-spdx-diff.log (diff-check, checkpatch raw logs, SPDX blocker)
+7. round135-r3-upload-readback.log      (upload commit/blob + byte-identical readbacks)
+
+Upload commit SHA, per-file Git blob and byte-identical readback results are
+recorded in deliverable 7. No kernel binaries or firmware uploaded.
+
+==================================================================================
+8. CONCLUSION SCOPE AND STOP
+==================================================================================
+
+R3 proves source-tree reproducibility against the pinned expected tree and the
+tested source/build foundation ONLY. It does NOT prove HOS4.3 memory handoff,
+PM8150 physical input wiring, ARC/MMCX behavior, AVB/DTBO/ramdisk selection, UFS
+enumeration, hardware rail behavior or tablet boot stability. Those remain
+separate hard gates.
+
+R3 outcome: PARTIAL - IMAGE BUILD PASSED, KNOWN SCHEMA / DTB DIAGNOSTIC REMAINS
+(exact diagnostics in §4.3). All other gates PASS with raw logs.
+
+Per the stop condition this Agent stops here; results go to AI2 for independent
+raw-evidence review and AI1 for final acceptance. No next round started.
+##################################################################################

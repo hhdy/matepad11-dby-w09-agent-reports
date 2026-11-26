@@ -1,0 +1,281 @@
+=== tree-b: apply 17 production patches ===
+BASE_HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+--- PATCH 01 sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+PATCH_01_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/01.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+PATCH_01_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_01_DIFFCHECK_RC=0
+--- PATCH 02 sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+PATCH_02_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/02.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+PATCH_02_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_02_DIFFCHECK_RC=0
+--- PATCH 03 sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+PATCH_03_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/03.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+PATCH_03_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_03_DIFFCHECK_RC=0
+--- PATCH 04 sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+PATCH_04_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/04.patch
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+PATCH_04_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_04_DIFFCHECK_RC=0
+--- PATCH 05 sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+PATCH_05_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/05.patch
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+PATCH_05_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_05_DIFFCHECK_RC=0
+--- PATCH 06 sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+PATCH_06_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/06.patch
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+PATCH_06_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_06_DIFFCHECK_RC=0
+--- PATCH 07 sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+PATCH_07_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/07.patch
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+PATCH_07_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_07_DIFFCHECK_RC=0
+--- PATCH 08 sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+PATCH_08_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/08.patch
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+PATCH_08_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_08_DIFFCHECK_RC=0
+--- PATCH 09 sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+PATCH_09_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/09.patch
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+PATCH_09_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_09_DIFFCHECK_RC=0
+--- PATCH 10 sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+PATCH_10_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/10.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+PATCH_10_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_10_DIFFCHECK_RC=0
+--- PATCH 11 sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+PATCH_11_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/11.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+PATCH_11_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_11_DIFFCHECK_RC=0
+--- PATCH 12 sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+PATCH_12_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/12.patch
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+PATCH_12_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_12_DIFFCHECK_RC=0
+--- PATCH 13 sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+PATCH_13_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/13.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+PATCH_13_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_13_DIFFCHECK_RC=0
+--- PATCH 14 sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+PATCH_14_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/14.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+PATCH_14_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_14_DIFFCHECK_RC=0
+--- PATCH 15 sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+PATCH_15_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/15.patch
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+PATCH_15_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_15_DIFFCHECK_RC=0
+--- PATCH 16 sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+PATCH_16_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/16.patch
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+PATCH_16_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_16_DIFFCHECK_RC=0
+--- PATCH 17 sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 ---
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+PATCH_17_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/patches/17.patch
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+PATCH_17_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+PATCH_17_DIFFCHECK_RC=0
+
+=== tree-b identity after 17 patches ===
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+DIFF17_SHA256=3e47464fadffa8663fa9560846d42a476d69bc6106482265f05a79aa8ad89bbf
+
+=== tree-b: apply ROUND35S seam patch ===
+SEAM_SHA256=3a52d9586be37c5a6b2ac79c02a5de60be3d21ab60715ae43f7850a5198c028a
+SEAM_BYTES=16804
+SEAM_LINES=472
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --check --verbose /home/kerneldev/work/matepad11/round35s-agent/round35s-kunit-seam.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+SEAM_CHECK_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b apply --verbose /home/kerneldev/work/matepad11/round35s-agent/round35s-kunit-seam.patch
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/kunit-proxy-consumer.dtso...
+Checking patch drivers/regulator/proxy-consumer-kunit.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/kunit-proxy-consumer.dtso cleanly.
+Applied patch drivers/regulator/proxy-consumer-kunit.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+SEAM_APPLY_RC=0
+CMD: git -C /home/kerneldev/work/matepad11/round35s-agent/tree-b diff --check
+SEAM_DIFFCHECK_RC=0
+
+=== tree-b identity after seam ===
+HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/kunit-proxy-consumer.dtso
+?? drivers/regulator/proxy-consumer-kunit.c
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+DIFF17_PLUS_SEAM_SHA256=cfb5691b34d8a65db715794fd00616de33516b9400b231cf7159503fc505ac6c
+FUZZ_DETECTED=NO

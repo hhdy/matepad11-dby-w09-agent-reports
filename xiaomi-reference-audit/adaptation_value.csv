@@ -1,0 +1,7 @@
+﻿item,classification,reason
+elish fastboot ROM (all 35 firmware images),NOT_DIRECTLY_REUSABLE,Prebuilt board-specific binaries; never flash to DBY-W09; no source reuse.
+APatch-patched boot.img / super.img (sfix18),NOT_DIRECTLY_REUSABLE,Contains root patch and ColorOS user-space; unrelated to GKI 6.18 kernel tree.
+flash_all*.sh / .bat preflight logic,REFERENCE_ONLY,Only as a text example of fastboot --disable-verity feature detection; never execute.
+images.sha256 manifest,REFERENCE_ONLY,Integrity-check workflow example; hashes specific to elish images.
+SM8250/KONA platform identity (text claim only),REFERENCE_ONLY,"Confirms same SoC family as DBY-W09, but 870板-level bins/OPP cannot be copied to 865 board."
+kernel source / DTS / defconfig / patches,UNKNOWN,Absent from this package; no such evidence available. Cannot claim GKI 6.18 direct merge.

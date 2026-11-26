@@ -1,0 +1,27 @@
+round135-kconfig-and-kleaf-build.log
+generated: 2026-11-26 (UTC) by WorkBuddy test agent
+
+STATUS: NOT RUN — BLOCKED UPSTREAM
+
+Reason: taskbook §5 requires the final 23-patch source as input. The series
+stopped at patch 22 (git apply --check failure on the Makefile hunk; see
+round135-23patch-identity-and-apply.log SECTION E). Therefore:
+
+  * final .config resolution and the 14 dependency symbols
+    (SCSI_UFSHCD, SCSI_UFS_QCOM, PM_DEVFREQ, PM_OPP, PM_GENERIC_DOMAINS,
+    PM_GENERIC_DOMAINS_OF, QCOM_GDSC, QCOM_RPMH, QCOM_COMMAND_DB,
+    QCOM_RPMHPD, OF, REGULATOR, IOMMU_SUPPORT, ARM_SMMU): NOT RUN.
+  * comparison with the ROUND130 product .config baseline
+    sha256 0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15:
+    NOT RUN (no new .config generated).
+  * independent target-object compile of drivers/ufs/host/ufs-qcom.o:
+    NOT RUN.
+  * full tools/bazel build --jobs=2 //common:dby_w09: NOT RUN; no BUILD_RC,
+    no Image/System.map/vmlinux hashes exist for this round.
+  * no boot image / DTBO / ramdisk / vbmeta / AVB packaging was attempted
+    (taskbook §5 prohibition honored regardless).
+
+The isolated output base
+/home/kerneldev/work/matepad11/round135-agent/a30/out/bazel/output_user_root
+was created but no build was started against it. The 21-patch state tree
+(tree21 = b6a82b03c281cc8248b44db1a03714ca3ee54dc8) is preserved untouched.

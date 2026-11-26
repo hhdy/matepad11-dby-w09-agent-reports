@@ -1,0 +1,302 @@
+================================================================================
+TEST-AGENT-ROUND116 — INDEPENDENT VALIDATION OF THE 1号 AI CANDIDATE PATCH
+                      "0001-ufs-core-per-hba-async-domain.patch"
+================================================================================
+task ID        : TEST-AGENT-ROUND116 (1号 AI taskbook)
+candidate      : kernel-baseline/round116/0001-ufs-core-per-hba-async-domain.patch
+                 on branch ai1/round116-ufs-async-domain
+pinned source  : aosp-mirror/kernel_common @ 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+                 (android17-6.18.33_r00, "Merge android17-6.18 into android17-6.18-lts")
+executor role  : independent tester; NOT the patch author. The candidate patch
+                 was not edited or rewritten in any way.
+this report    : firmware-analysis/round116/TEST_AGENT_ROUND116_UFS_ASYNC_DOMAIN_REPORT.txt
+stop rule      : this report is the last action; ROUND117 is NOT started.
+
+--------------------------------------------------------------------------------
+0. VERDICT SUMMARY
+--------------------------------------------------------------------------------
+  apply --check (zero fuzz / zero offset)   PASS
+  git apply + git diff --check              PASS (clean, +24/-1, 2 files)
+  checkpatch.pl --strict                    PASS with notes
+                                            (0 errors / 4 warnings / 1 check;
+                                             see §3 — nothing edited)
+  required checks 1..8                      8/8 PASS (see §5)
+  object compile                            PASS (see §6)
+  full //common:dby_w09 Image build         PASS (see §7)
+  restoration of the build workspace        PASS (see §7.4)
+
+Every required check is marked PASS below with concrete evidence. No check is
+BLOCKED; no check is FAIL. The "PASS with notes" on checkpatch records two
+style-level findings that the tester is prohibited from fixing.
+
+--------------------------------------------------------------------------------
+1. IDENTITIES
+--------------------------------------------------------------------------------
+patch file        : 3,242 bytes
+patch sha256      : 12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7
+patch git-blob    : f604c8672fcbc98f3e9645f5e8888c8a34b1c11e
+tested source rev : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+worktrees         : (a) disposable forensic worktree "r116-apply", detached at
+                        the pinned commit, git status clean before apply;
+                    (b) disposable build workspace (Kleaf tree used by the
+                        Stage A rounds), overlay applied ONLY to its working
+                        directory; no branch, no commit, no remote touched.
+candidate branch  : ai1/round116-ufs-async-domain — never modified; the patch
+                    was fetched read-only.
+2号 AI assets     : ai-parallel/stagea-port-until-boot — never modified.
+
+--------------------------------------------------------------------------------
+2. APPLY VERIFICATION (REQUIRED CHECK 1)
+--------------------------------------------------------------------------------
+commands and exit codes (disposable worktree at the pinned commit):
+
+  git apply --check --verbose <patch>   rc 0
+    output: "Checking patch drivers/ufs/core/ufshcd-priv.h..."
+            "Checking patch drivers/ufs/core/ufshcd.c..."
+    NO offset, NO fuzz, NO rebalance messages of any kind.
+  git apply --verbose <patch>           rc 0
+    output: "Applied ... cleanly." for both files
+  git diff --check                      rc 0
+  post-apply stat: 2 files changed, 24 insertions(+), 1 deletion(-)
+    drivers/ufs/core/ufshcd-priv.h | 4 ++++
+    drivers/ufs/core/ufshcd.c      | 21 ++++++++++++++++++++-
+
+Cross-check on the disposable BUILD workspace (which carries the Stage A
+patch series in its working directory): `git apply --check` also returned
+rc 0 with zero offset messages — the candidate composes cleanly with the
+Stage A series because that series never touched drivers/ufs/*.
+VERDICT: PASS.
+
+--------------------------------------------------------------------------------
+3. CHECKPATCH --strict
+--------------------------------------------------------------------------------
+  scripts/checkpatch.pl --strict --no-signoff <patch>
+
+  total: 0 errors, 4 warnings, 1 checks, 99 lines checked
+
+  warnings (all four are the same class): "Commit log lines starting with '#'
+  are dropped by git as comments" — caused by the patch header comments
+  ("# AI1 ROUND116 — candidate source patch...", "# Apply with: ...").
+  These are informational comments carried inside the candidate file; the
+  tester is prohibited from editing the patch, so they are recorded as-is.
+
+  check (not an error, not a warning):
+    CHECK: Alignment should match open parenthesis
+    drivers/ufs/core/ufshcd.c:11208 continuation line
+      async_schedule_domain(ufshcd_async_scan, hba,
+                           &priv->async_domain);
+    (one column short of the open paren). Same prohibition applies.
+
+  VERDICT: PASS with notes (0 errors; the 4 warnings + 1 check are recorded
+  and left untouched per the no-edit rule).
+
+--------------------------------------------------------------------------------
+4. STATIC SOURCE-FLOW FACTS (inputs to the required checks)
+--------------------------------------------------------------------------------
+All facts were read from the patched disposable worktree (apply state above),
+plus pristine-vs-patched greps where noted.
+
+  * The patch touches exactly two files. include/ufs/ufshcd.h is NOT in the
+    diff (verified: git diff --name-only | grep -c include/ufs/ufshcd.h = 0).
+  * New fields land in `struct ufs_hba_priv` (ufshcd-priv.h lines 13–15):
+      struct async_domain async_domain;
+      async_cookie_t      async_scan_cookie;
+      bool                async_scan_scheduled;
+    `to_hba_priv()` is `container_of(hba, struct ufs_hba_priv, hba)` — the
+    public `struct ufs_hba` layout is untouched.
+  * The pristine source had exactly one schedule site:
+      async_schedule(ufshcd_async_scan, hba);            (ufshcd.c:11190)
+    and ZERO async_synchronize call sites (grep over pristine ufshcd.c: none).
+    The patched source has exactly one schedule site, now via the domain API,
+    storing the cookie:
+      priv->async_scan_cookie =
+          async_schedule_domain(ufshcd_async_scan, hba, &priv->async_domain);
+      priv->async_scan_scheduled = true;                 (ufshcd.c:11207–11210)
+  * Domain initialization sits in `ufshcd_alloc_host()` (ufshcd.c:10861–10863):
+      INIT_LIST_HEAD(&priv->async_domain.pending);
+      priv->async_domain.registered = 1;
+      priv->async_scan_scheduled = false;
+    All three in-tree drivers call ufshcd_alloc_host() before ufshcd_init()
+    (ufshcd-pltfrm.c:660, ufshcd-pci.c:648, tc-dwc-g210-pci.c:89), and the
+    schedule point is at the very end of ufshcd_init() — so the domain is
+    always initialized before any possible scheduling. kernel/async.c line
+    171 confirms the schedule path consults domain->registered, i.e. setting
+    it to 1 here is required and sufficient.
+  * `ufshcd_remove()` (ufshcd.c:10716) begins with the join block:
+      struct ufs_hba_priv *priv = to_hba_priv(hba);
+      if (priv->async_scan_scheduled) {
+          async_synchronize_cookie_domain(priv->async_scan_cookie + 1,
+                                          &priv->async_domain);
+          priv->async_scan_scheduled = false;
+      }
+    The to_hba_priv line is container_of pointer arithmetic (no HBA field
+    read); the join is therefore the first teardown-relevant action and runs
+    BEFORE the first HBA field read (hba->ufs_device_wlun at 10727) and
+    before ufs_hwmon_remove/ufs_bsg_remove/... teardown.
+  * host_sem survey:
+      - ufshcd_remove() itself: no host_sem acquisition before the join.
+      - callers: ufshcd_pltfrm_remove() body is pm_runtime_get_sync →
+        ufshcd_remove → pm_runtime_disable (no host_sem); the two PCI
+        drivers' remove paths call pm_runtime_forbid + pm_runtime_get_noresume
+        then ufshcd_remove (no host_sem).
+      - supporting fact: ufshcd_async_scan() itself does
+        down(&hba->host_sem) ... up(&hba->host_sem) around ufshcd_probe_hba.
+        Since no remove path holds host_sem when it joins, and the scan does
+        not wait on anything remove holds, there is no lock-order cycle.
+  * Sync-fallback semantics (kernel/async.c, async_schedule_node_domain):
+      "If we're out of memory or if there's too much work pending already,
+       we execute synchronously."  → func(data, newcookie); return newcookie;
+    i.e. the callback has COMPLETED by the time the schedule call returns.
+    Harmlessness of the stored checkpoint in that case: the synchronous
+    branch never enqueues into domain->pending, so lowest_in_progress()
+    returns ASYNC_COOKIE_MAX (kernel/async.c: empty pending list ⇒
+    ASYNC_COOKIE_MAX), and the remove-side join
+    wait_event(async_done, lowest_in_progress(domain) >= cookie+1)
+    is trivially true → returns immediately.
+  * In ufshcd_init(), after the schedule point only non-failing statements
+    remain (trace_android_vh_ufs_update_sysfs, device_enable_async_suspend,
+    ufshcd_pm_qos_init, return 0) — there is no failure path after
+    scheduling; every earlier failure exits through out_disable/out_error
+    without touching async_scan_scheduled.
+
+--------------------------------------------------------------------------------
+5. REQUIRED CHECKS — VERDICTS
+--------------------------------------------------------------------------------
+CHECK 1  "The patch applies exactly, with zero fuzz and zero offset."
+         PASS — §2: --check rc 0 with zero offset/fuzz messages on the
+         pristine worktree AND on the Stage-A-carrying build workspace.
+
+CHECK 2  "ufshcd-priv.h owns the new fields; public struct ufs_hba unchanged."
+         PASS — §4: fields in struct ufs_hba_priv; include/ufs/ufshcd.h not
+         in the diff; struct ufs_hba layout untouched.
+
+CHECK 3  "One ufshcd_async_scan schedule site; stores the cookie returned
+          from async_schedule_domain()."
+         PASS — §4: unique site (tree-wide grep: only ufshcd.c:11207);
+         cookie stored in priv->async_scan_cookie; the pristine
+         async_schedule() call is fully replaced.
+
+CHECK 4  "async_domain.pending initialized before any possible scheduling,
+          and registered is set to 1."
+         PASS — §4: both in ufshcd_alloc_host(), which precedes ufshcd_init()
+         at every in-tree call site; kernel/async.c consults registered.
+
+CHECK 5  "ufshcd_remove() joins using the stored cookie + 1 before the first
+          HBA field read or teardown action."
+         PASS — §4: join block is the first functional statement of
+         ufshcd_remove(); cookie+1 used; precedes hba->ufs_device_wlun read
+         and all teardown calls.
+
+CHECK 6  "No path acquires host_sem before the join."
+         PASS — §4: remove itself and all three driver-level remove callers
+         acquire no host_sem before the join; the scan's own host_sem
+         bracket creates no cycle because remove holds nothing while waiting.
+
+CHECK 7  "If the callback falls back synchronously, the callback has already
+          completed when the schedule call returns; the stored checkpoint
+          must be harmless."
+         PASS — §4: synchronous branch executes func() before returning;
+         empty pending ⇒ lowest_in_progress() = ASYNC_COOKIE_MAX ⇒ the
+         remove-side join returns immediately. Verified against the actual
+         kernel/async.c source, not documentation.
+
+CHECK 8  "Probe failures before the schedule site leave
+          async_scan_scheduled == false."
+         PASS — §4: explicitly set false in alloc_host; no pre-schedule
+         failure path writes it; no in-tree probe-failure path invokes
+         ufshcd_remove (single caller is the .remove callback); and even if
+         remove ran, scheduled==false skips the join.
+
+--------------------------------------------------------------------------------
+6. OBJECT COMPILE (independent of the full build)
+--------------------------------------------------------------------------------
+Command form (pinned Kleaf toolchain, same compiler the Kleaf build uses):
+
+  clang = Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+          clang version 22.0.1
+  make ARCH=arm64 LLVM=1 LLVM_IAS=1 O=<disposable out> -j8 \
+       drivers/ufs/core/ufshcd.o            rc 0
+  (the out/.config derives from the Kleaf-built dby_w09 .config, then
+   olddefconfig; GENDWARFKSYMS disabled so the host can build standalone)
+
+  artifact : drivers/ufs/core/ufshcd.o  1,316,224 B
+             sha256 a98b5246439b70df5ec8db2a8d20ee1cc9bf8d340fb05f660b9ac78c997dece4
+             1,333 symbols
+
+A/B evidence that THIS object is the patched code (same output directory,
+same toolchain; the ONLY variable is the source state):
+
+  pristine (git stash → clean tree) : 1,314,776 B
+      sha256 6b8c9f047086a9075718da40d2dbbf0461ec822351a3716fce71bb43e84b3250
+      1,332 symbols
+      relocations to async_synchronize_cookie_domain : 0
+      relocations to async_schedule_node_domain      : 0
+  patched                            : 1,316,224 B (+1,448)
+      sha256 a98b5246...
+      1,333 symbols
+      exactly ONE R_AARCH64_CALL26 reloc to async_synchronize_cookie_domain,
+      inside <ufshcd_remove>
+      exactly ONE reloc to async_schedule_node_domain
+  reproducibility: re-applying the patch and recompiling reproduced
+      sha256 a98b5246... byte-for-byte.
+
+Methodology note recorded honestly: an earlier "pristine control" attempt
+compiled against a tree that had already been re-patched (the stash/apply
+sequence in that script left the patch applied), producing a misleading
+"identical U-ref" comparison. That comparison was discarded; the A/B above
+was redone in a single output directory with verified tree states
+(dirty=2 → patched, dirty=0 → pristine) and is the evidence of record.
+Object compile VERDICT: PASS.
+
+--------------------------------------------------------------------------------
+7. FULL //common:dby_w09 IMAGE BUILD
+--------------------------------------------------------------------------------
+7.1 Setup
+  The candidate patch was applied (rc 0, zero offset, §2 cross-check) to the
+  working directory of the disposable Kleaf build workspace whose source tree
+  already carries the Stage A patch series. No branch, no commit, no protected
+  ref was created or modified; ai-parallel/stagea-port-until-boot was never
+  touched. Pre-overlay synchronize-call count in ufshcd.c: 0; post: 1.
+
+7.2 Command and result
+  tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  BUILD_RC: 0
+  Elapsed:  332.435 s (Critical Path 311.97 s; incremental: 780 cached actions + 1 executed — only the ufshcd objects and the final link changed)
+
+7.3 Artifacts (sizes + SHA-256; artifacts not uploaded)
+  Image      44,820,992 B  f2aa719fddfddc1f20097bcf53fac5833813a92e5fadff1f6229969667c3d750
+  System.map 7,611,344 B  4f27b6fa8cf946bbc605a96b0db5bfed529f6d4a0d4e9b2e2e15e0a89edda7bd
+  vmlinux    230,248,672 B  8354c8d126c4a760aa02ba31a33e172d35133e2336501d86dea65e4d15516867
+  .config    238,410 B  0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+
+  Note: this build intentionally includes the Stage A series PLUS the
+  candidate; its Image differs from the Stage-A-only build of record
+  (AI2-ROUND31: Image 44,820,992 B, 2b902902…), which is itself evidence the
+  overlay reached the artifact. The object-level A/B in §6 is the precise
+  per-file evidence.
+
+7.4 Restoration of the build workspace
+  After the build the overlay was reverted (patched ufshcd.c/ufshcd-priv.h
+  restored from the pre-overlay pristine state); final tree state matches the
+  pre-overlay snapshot. Restoration result: PASS — ufshcd.c async_synchronize_cookie_domain count back to 0, ufshcd-priv.h async field count 0, working tree back to the pre-overlay Stage-A state (15 modified files, identical to the pre-overlay listing; candidate overlay fully removed)
+
+7.5 VERDICT: PASS — the full Image links with the candidate in place; .config is byte-identical to the Stage-A-only build (candidate touches no config), Image/System.map/vmlinux hashes all differ from that build, confirming the overlay reached the artifacts. Same Image size 44,820,992 B as the Stage-A-only build; vmlinux -1,904 B from link-layout shift.
+
+--------------------------------------------------------------------------------
+8. BOUNDARY OF OPERATIONS
+--------------------------------------------------------------------------------
+No device connection, ADB, fastboot, root, boot, flash, partition write, or
+boot/DTBO/vbmeta/AVB operation of any kind; no firmware upload. The candidate
+patch, the candidate branch ai1/round116-ufs-async-domain, main,
+ack18-dby-w09-dts-draft, PR #1, and ai-parallel/stagea-port-until-boot were
+never modified. No kernel code, DTS, binding, config, or packaging change was
+authored by this agent anywhere; the only working-tree edits were the
+candidate's own diff inside disposable workspaces, fully reverted afterwards
+(forensic worktree kept as evidence with the patch applied; build workspace
+restored). This task is not 2号 AI implementation work and makes no claim
+about bootability; Phase E/F blockers are unaffected by this round.
+
+Report uploaded to the single prescribed path; ROUND117 not started.
+================================================================================
+END OF REPORT
+================================================================================

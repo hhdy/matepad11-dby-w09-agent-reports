@@ -1,0 +1,351 @@
+{
+  "task": "AGENT_TASK_ROUND7.md",
+  "status": "COMPLETE",
+  "analysis_date": "2026-11-24",
+  "input": {
+    "dir": "ROUND3 dtb_work (local working copies)",
+    "file_count": 13,
+    "files": [
+      "boot_fdt_candidate_0.dtb",
+      "boot_fdt_candidate_1.dtb",
+      "boot_fdt_candidate_2.dtb",
+      "boot_fdt_candidate_3.dtb",
+      "dtbo_entry_0.dtbo",
+      "dtbo_entry_1.dtbo",
+      "dtbo_entry_2.dtbo",
+      "dtbo_entry_3.dtbo",
+      "dtbo_entry_4.dtbo",
+      "dtbo_entry_5.dtbo",
+      "dtbo_entry_6.dtbo",
+      "dtbo_entry_7.dtbo",
+      "dtbo_entry_8.dtbo"
+    ],
+    "reextracted_from_firmware": false
+  },
+  "parser": {
+    "source": "ROUND3 Analyze-DBY-W09-DeviceTree.py (reused via importlib)",
+    "new_parser_written": false,
+    "fail_closed": true
+  },
+  "fdt_validation": {
+    "total": 13,
+    "valid": 13,
+    "files": [
+      {
+        "file": "boot_fdt_candidate_0.dtb",
+        "source_type": "boot_FDT",
+        "index": 0,
+        "role": "deterministic",
+        "totalsize": 556524,
+        "version": 17,
+        "nodes": 3471,
+        "props": 16502,
+        "validation": "VALID",
+        "partial": true,
+        "cat_counts": {
+          "4.1_identity": 400,
+          "4.2_display": 10,
+          "4.3_touch": 299,
+          "4.4_wireless": 46,
+          "4.5_ufs": 22,
+          "4.6_pmic_gpio": 246,
+          "4.7_av_cam_sensor": 253,
+          "4.8_reserved": 111
+        }
+      },
+      {
+        "file": "boot_fdt_candidate_1.dtb",
+        "source_type": "boot_FDT",
+        "index": 1,
+        "role": "candidate",
+        "totalsize": 556520,
+        "version": 17,
+        "nodes": 3471,
+        "props": 16502,
+        "validation": "VALID",
+        "partial": true,
+        "cat_counts": {
+          "4.1_identity": 400,
+          "4.2_display": 10,
+          "4.3_touch": 299,
+          "4.4_wireless": 46,
+          "4.5_ufs": 22,
+          "4.6_pmic_gpio": 246,
+          "4.7_av_cam_sensor": 253,
+          "4.8_reserved": 111
+        }
+      },
+      {
+        "file": "boot_fdt_candidate_2.dtb",
+        "source_type": "boot_FDT",
+        "index": 2,
+        "role": "candidate",
+        "totalsize": 551026,
+        "version": 17,
+        "nodes": 3433,
+        "props": 16246,
+        "validation": "VALID",
+        "partial": true,
+        "cat_counts": {
+          "4.1_identity": 400,
+          "4.2_display": 10,
+          "4.3_touch": 299,
+          "4.4_wireless": 46,
+          "4.5_ufs": 22,
+          "4.6_pmic_gpio": 246,
+          "4.7_av_cam_sensor": 253,
+          "4.8_reserved": 111
+        }
+      },
+      {
+        "file": "boot_fdt_candidate_3.dtb",
+        "source_type": "boot_FDT",
+        "index": 3,
+        "role": "candidate",
+        "totalsize": 173,
+        "version": 17,
+        "nodes": 1,
+        "props": 2,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 0,
+          "4.2_display": 0,
+          "4.3_touch": 0,
+          "4.4_wireless": 0,
+          "4.5_ufs": 0,
+          "4.6_pmic_gpio": 0,
+          "4.7_av_cam_sensor": 0,
+          "4.8_reserved": 0
+        }
+      },
+      {
+        "file": "dtbo_entry_0.dtbo",
+        "source_type": "DTBO",
+        "index": 0,
+        "role": "overlay",
+        "totalsize": 329044,
+        "version": 17,
+        "nodes": 1687,
+        "props": 8467,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 8,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_1.dtbo",
+        "source_type": "DTBO",
+        "index": 1,
+        "role": "overlay",
+        "totalsize": 329352,
+        "version": 17,
+        "nodes": 1690,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_2.dtbo",
+        "source_type": "DTBO",
+        "index": 2,
+        "role": "overlay",
+        "totalsize": 329240,
+        "version": 17,
+        "nodes": 1688,
+        "props": 8480,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_3.dtbo",
+        "source_type": "DTBO",
+        "index": 3,
+        "role": "overlay",
+        "totalsize": 329098,
+        "version": 17,
+        "nodes": 1686,
+        "props": 8477,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_4.dtbo",
+        "source_type": "DTBO",
+        "index": 4,
+        "role": "overlay",
+        "totalsize": 329340,
+        "version": 17,
+        "nodes": 1689,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 212,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 8,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_5.dtbo",
+        "source_type": "DTBO",
+        "index": 5,
+        "role": "overlay",
+        "totalsize": 329356,
+        "version": 17,
+        "nodes": 1690,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_6.dtbo",
+        "source_type": "DTBO",
+        "index": 6,
+        "role": "overlay",
+        "totalsize": 329356,
+        "version": 17,
+        "nodes": 1690,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_7.dtbo",
+        "source_type": "DTBO",
+        "index": 7,
+        "role": "overlay",
+        "totalsize": 329352,
+        "version": 17,
+        "nodes": 1690,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      },
+      {
+        "file": "dtbo_entry_8.dtbo",
+        "source_type": "DTBO",
+        "index": 8,
+        "role": "overlay",
+        "totalsize": 329352,
+        "version": 17,
+        "nodes": 1690,
+        "props": 8482,
+        "validation": "VALID",
+        "cat_counts": {
+          "4.1_identity": 211,
+          "4.2_display": 111,
+          "4.3_touch": 23,
+          "4.4_wireless": 6,
+          "4.5_ufs": 1,
+          "4.6_pmic_gpio": 48,
+          "4.7_av_cam_sensor": 18,
+          "4.8_reserved": 1
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "dtbo_entries_with_matrix_row": 9,
+    "boot_fdt_candidates": 4,
+    "inventory_rows": 7937,
+    "partial_files": [
+      "boot_fdt_candidate_0.dtb",
+      "boot_fdt_candidate_1.dtb",
+      "boot_fdt_candidate_2.dtb"
+    ]
+  },
+  "redaction": {
+    "mac_bt_serial_imei": "not emitted",
+    "reserved_memory_addresses": "not emitted",
+    "large_init_payloads": "not emitted",
+    "full_local_sha256": "not emitted",
+    "username_hostname_full_path_token": "not emitted",
+    "fdt_binary_uploaded": false
+  },
+  "boundary": {
+    "device_connected": false,
+    "flashed": false,
+    "rooted": false,
+    "wrote_partitions": false,
+    "wsl_invoked": false,
+    "adb_invoked": false,
+    "kernel_compiled": false,
+    "erofs_unpacked": false,
+    "firmware_reextracted": false
+  },
+  "upload": {
+    "branch": "firmware-audit-v1",
+    "dir": "firmware-analysis/round7/",
+    "files": [
+      "dtb_property_inventory.csv",
+      "dtbo_board_rootparam_matrix.csv",
+      "dby_w09_hw_matrix.txt",
+      "round7_summary.json"
+    ]
+  }
+}

@@ -1,0 +1,209 @@
+
+################################################################################
+# PART 1/2 — UML KUnit: config, build, run, verbatim KTAP, .config hash, built-in symbols
+################################################################################
+
+=== ROUND132 UML KUnit run ===
+kernel_source_tree=/home/kerneldev/work/matepad11/round132-agent/tree-b
+build_dir=/home/kerneldev/work/matepad11/round132-agent/kunit-build
+kunitconfig=/home/kerneldev/work/matepad11/round132-agent/kunitconfig-round132
+kunitconfig_sha256=0824b86ee48cd2f8055bc24acc4cf08621feee0a12275048ba344a241e485980
+--- kunitconfig content ---
+CONFIG_KUNIT=y
+CONFIG_OF=y
+CONFIG_OF_EARLY_FLATTREE=y
+CONFIG_OF_OVERLAY=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_PROXY_CONSUMER=y
+CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+--- source identity under test ---
+tree_b_HEAD=f7a5839e95661ef9864df150bf6ecf103cd12450
+staged_content_tree=482e1dfbb6945ff5bce3c95279d65ebfbfebf23e
+seam_patch_sha256=1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+seam_diff_vs_HEAD_sha256_before_run=9ff44210609e57038fd455783990e7c043f955aacf0a3c6d95a72269b9851a2a
+proxy_consumer_c_sha256=bcbda30ba6cd7c48251a1c6e9665707863868d615576bac869d29e12a7efe14c
+proxy_consumer_kunit_c_sha256=6682402540af75d6f403d0936d44c7c68f2b3c0eb4a294a6449a792c6cad0a8b
+core_c_sha256=9fd663901460255c7f7eb1695de356a38d3d40d008c411c02bfc718c04c0d807
+
+CMD: cd /home/kerneldev/work/matepad11/round132-agent/tree-b && python3 tools/testing/kunit/kunit.py run --build_dir /home/kerneldev/work/matepad11/round132-agent/kunit-build --kunitconfig /home/kerneldev/work/matepad11/round132-agent/kunitconfig-round132 --jobs 8 --timeout 180 --raw_output=all
+
+stty: 'standard input': Inappropriate ioctl for device
+[01:33:51] Configuring KUnit Kernel ...
+Generating .config ...
+Populating config with:
+$ make ARCH=um O=/home/kerneldev/work/matepad11/round132-agent/kunit-build olddefconfig
+[01:33:54] Building KUnit Kernel ...
+Populating config with:
+$ make ARCH=um O=/home/kerneldev/work/matepad11/round132-agent/kunit-build olddefconfig
+Building with:
+$ make all compile_commands.json scripts_gdb ARCH=um O=/home/kerneldev/work/matepad11/round132-agent/kunit-build --jobs=8
+[01:34:29] Starting KUnit Kernel (1/1)...
+Running tests with:
+$ /home/kerneldev/work/matepad11/round132-agent/kunit-build/linux kunit.enable=1 mem=1G console=tty kunit_shutdown=halt
+Core dump limits :
+	soft - 0
+	hard - NONE
+Checking environment variables for a tempdir...none found
+Checking if /dev/shm is on tmpfs...OK
+Checking PROT_EXEC mmap in /dev/shm...OK
+Checking that ptrace can change system call numbers...OK
+Checking syscall emulation for ptrace...OK
+Linux version 6.18.33-gf7a5839e9566-dirty (kerneldev@PC-20251014WLPB) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 Thu Nov 26 01:34:28 CST 2026
+Zone ranges:
+  Normal   [mem 0x0000000000000000-0x000000009fffffff]
+Movable zone start for each node
+Early memory node ranges
+  node   0: [mem 0x0000000000000000-0x000000003fffffff]
+Initmem setup node 0 [mem 0x0000000000000000-0x000000003fffffff]
+random: crng init done
+Kernel command line: kunit.enable=1 console=tty kunit_shutdown=halt root=98:0
+printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+Sorting __ex_table...
+Built 1 zonelists, mobility grouping on.  Total pages: 262144
+mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+NR_IRQS: 128, nr_irqs: 128, preallocated irqs: 128
+clocksource: timer: mask: 0xffffffffffffffff max_cycles: 0x1cd42e205, max_idle_ns: 881590404426 ns
+Calibrating delay loop... 10554.57 BogoMIPS (lpj=52772864)
+Checking that host ptys support output SIGIO...Yes
+pid_max: default: 32768 minimum: 301
+Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+Memory: 1024660K/1048576K available (3294K kernel code, 1238K rwdata, 792K rodata, 172K init, 234K bss, 21800K reserved, 0K cma-reserved)
+clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+posixtimers hash table entries: 512 (order: 0, 4096 bytes, linear)
+futex hash table entries: 256 (8192 bytes on 1 NUMA nodes, total 8 KiB, linear).
+vgaarb: loaded
+clocksource: Switched to clocksource timer
+PCI: CLS 0 bytes, default 64
+printk: legacy console [stderr0] disabled
+mconsole (version 2) initialized on /home/kerneldev/.uml/6hGPrG/mconsole
+Checking host MADV_REMOVE support...OK
+PCI host bridge to bus 0000:00
+pci_bus 0000:00: root bus resource [mem 0xf0000000-0xffffffff]
+pci_bus 0000:00: root bus resource [bus 00]
+pci_bus 0000:00: resource 4 [mem 0xf0000000-0xffffffff]
+workingset: timestamp_bits=62 max_order=18 bucket_order=0
+io scheduler mq-deadline registered
+io scheduler kyber registered
+Initialized stdio console driver
+Using a channel type which is configured out of UML
+setup_one_line failed for device 1 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 2 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 3 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 4 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 5 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 6 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 7 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 8 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 9 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 10 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 11 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 12 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 13 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 14 : failed to parse channel pair
+Using a channel type which is configured out of UML
+setup_one_line failed for device 15 : failed to parse channel pair
+Console initialized on /dev/tty0
+printk: legacy console [tty0] enabled
+printk: legacy console [mc-1] enabled
+KTAP version 1
+1..1
+    KTAP version 1
+    # Subtest: regulator-proxy-consumer-lifecycle
+    # module: proxy_consumer_kunit_test
+    1..1
+/kunit-proxy-provider/kunit-proxy-owner@0: Fixed dependency cycle(s) with /kunit-proxy-provider/kunit-proxy-owner@0
+regulator_proxy_consumer_revoke_all: removing regulator proxy consumer requests
+    ok 1 proxy_kunit_lifecycle
+ok 1 regulator-proxy-consumer-lifecycle
+reboot: System halted
+
+[01:34:29] Elapsed time: 37.479s total, 2.862s configuring, 34.552s building, 0.065s running
+
+
+RUN_RC=0
+seam_diff_vs_HEAD_sha256_after_run=9ff44210609e57038fd455783990e7c043f955aacf0a3c6d95a72269b9851a2a
+seam_patch_sha256_after_run=1fbc32a362dc5d2f694ba45798a90c2e0efbe389bc245aa101e16d85d7ee842f
+tree_b_status_after_run:
+M  drivers/regulator/Kconfig
+M  drivers/regulator/Makefile
+M  drivers/regulator/core.c
+A  drivers/regulator/kunit-proxy-consumer.dtso
+A  drivers/regulator/proxy-consumer-kunit.c
+M  drivers/regulator/proxy-consumer.c
+M  include/linux/regulator/proxy-consumer.h
+
+=== verbatim kernel KTAP output ===
+grep: /home/kerneldev/work/matepad11/round132-agent/logs/kunit_final_TAP.log: input file is also the output
+
+=== TAP verdict ===
+TAP_PLAN_1_OF_1=YES
+TAP_OK_1=YES
+TAP_NOT_OK_PRESENT=NO
+TAP_1_OF_1_PASS=YES
+
+=== generated UML .config ===
+config_path=/home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+config_sha256=66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224
+config_bytes=36397
+--- relevant symbols ---
+CONFIG_KUNIT=y
+CONFIG_KUNIT_AUTORUN_ENABLED=y
+CONFIG_KUNIT_DEFAULT_ENABLED=y
+CONFIG_KUNIT_DEFAULT_TIMEOUT=300
+CONFIG_KUNIT_UML_PCI=y
+CONFIG_OF=y
+CONFIG_OF_ADDRESS=y
+CONFIG_OF_DYNAMIC=y
+CONFIG_OF_EARLY_FLATTREE=y
+CONFIG_OF_FLATTREE=y
+CONFIG_OF_IRQ=y
+CONFIG_OF_KOBJ=y
+CONFIG_OF_OVERLAY=y
+CONFIG_OF_RESERVED_MEM=y
+CONFIG_OF_RESOLVE=y
+CONFIG_REGULATOR=y
+CONFIG_REGULATOR_PROXY_CONSUMER=y
+CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+--- target symbol lines (verbatim) ---
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+CONFIGURED_AS_Y=YES
+CONFIGURED_AS_M=NO
+MODULE_FORM_PRESENT=0
+
+=== built-in proof from the built kernel image ===
+vmlinux=/home/kerneldev/work/matepad11/round132-agent/kunit-build/vmlinux
+vmlinux_bytes=6570328
+vmlinux_sha256=5eb684a3afac5192fdeacfc25538a0bd379094bad5ffbed3de9a8bf5823d3154
+--- nm: seam symbols inside vmlinux (built-in, not modular) ---
+000000006029af20 t regulator_proxy_consumer_kunit_removed
+000000006029b0e0 t regulator_proxy_consumer_kunit_revoke_all
+000000006029b810 t regulator_proxy_consumer_kunit_observe_unregister
+seam_symbols_in_vmlinux=4
+--- any loadable module artefacts for the seam? ---
+ko_count=0
+
+################################################################################
+# PART 2/2 — generated UML .config symbol detail (same run)
+################################################################################
+
+uml_config_path=/home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+66d2720df6db2173b2801ec715392a066425b8baad3e77f07d2284ad895fb224  /home/kerneldev/work/matepad11/round132-agent/kunit-build/.config
+868:CONFIG_REGULATOR_PROXY_CONSUMER_KUNIT_TEST=y
+1536:CONFIG_KUNIT=y

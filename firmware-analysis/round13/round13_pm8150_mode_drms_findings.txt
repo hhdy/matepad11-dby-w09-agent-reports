@@ -1,0 +1,419 @@
+ROUND13 — HOS4.3 PM8150 UFS regulator mode / DRMS metadata audit (read-only)
+================================================================================
+Task book      : firmware-analysis/round13/AGENT_TASK.md (repo main)
+Report branch  : firmware-audit-v1
+Report date    : 2026-11-24
+Scope          : static device-tree evidence only. No runtime claim of any kind.
+
+--------------------------------------------------------------------------------
+0. RESULT IN ONE PARAGRAPH
+--------------------------------------------------------------------------------
+The six target UFS rails exist in the HOS4.3 base boot FDT and are fully
+identifiable by group compatible + qcom,resource-name + child regulator-name.
+NONE of the four upstream regulator mode/DRMS property names
+(regulator-initial-mode, regulator-allowed-modes, regulator-allow-set-load,
+regulator-system-load) and NONE of the regulator-state-{standby,mem,disk} child
+nodes exist anywhere in that FDT (global scan of all 3281 property-bearing
+paths = 0 hits). HOS4.3 instead carries a vendor property set:
+group-level qcom,regulator-type / qcom,supported-modes /
+qcom,mode-threshold-currents / qcom,resource-name and child-level
+qcom,init-mode / qcom,set. Those are reported rail-by-rail below with raw
+values. No stock DTBO entry (0..8) contains any fragment that targets
+/soc/rsc@18200000 or any descendant, and no entry contains any of the vendor or
+upstream mode properties, so no stock overlay changes these rails. Symbolic
+mode names, vendor driver semantics and all runtime behaviour remain
+UNKNOWN / NOT_VERIFIED / NOT_RUN.
+
+--------------------------------------------------------------------------------
+1. INPUT / TOOL AVAILABILITY (checked before starting)
+--------------------------------------------------------------------------------
+1.1 Base boot FDT work copy    : PRESENT, VALID (prior round, not re-extracted)
+    ROUND3 dtb_work/boot_fdt_candidate_0.dtb
+    totalsize 556524 B, node entries 3471, property-bearing paths 3281,
+    structure decode errors NONE.
+1.2 Stock DTBO work copies     : PRESENT, VALID (all nine entries, 0..8)
+    ROUND3 dtb_work/dtbo_entry_0.dtbo .. dtbo_entry_8.dtbo
+    totalsize range 329044 - 329356 B; structure decode errors NONE for all.
+1.3 Reviewed parser            : PRESENT, reused unchanged
+    ROUND3 Analyze-DBY-W09-DeviceTree.py, loaded via importlib.
+    No new binary DT parser was written. Parsing is entirely that parser's
+    parse_fdt_header() + decode_structure() output.
+1.4 Indexing / resolution      : reused audited patterns only
+    - ROUND9 base-phandle index pattern (phandle -> node path).
+    - ROUND8 __fixups__ -> base __symbols__ fragment-target pattern.
+    Base /__symbols__ = 1753 entries; base phandle index = 1693 entries.
+    Entry 8 /__fixups__ = 166 symbols; fragment targets resolved 145/145.
+    No new binary utility, no external tool, no firmware re-extraction.
+1.5 Not used                   : avbtool, any AVB helper, WSL, downloads,
+    installers, device connection, ADB, fastboot, compilation.
+
+1.6 Input-consistency note (recorded, not corrected upstream)
+    ROUND7 dtbo_board_rootparam_matrix.csv records __symbols__ / __fixups__ /
+    __local_fixups__ as False for all nine entries, while ROUND8 and this round
+    both resolve entry 8 fragments through a real /__fixups__ node holding 166
+    symbols. This is treated as a ROUND7 column-scope artifact; target
+    resolution here uses the ROUND8-verified pattern, which is internally
+    consistent (145/145 targets resolved, 0 unresolved).
+
+--------------------------------------------------------------------------------
+2. EXACT LIMITED SCOPE
+--------------------------------------------------------------------------------
+2.1 Base FDT nodes inspected:
+    - /soc/rsc@18200000 subtree: 109 property-bearing paths.
+    - Regulator groups with compatible = "qcom,rpmh-vrm-regulator": 40.
+    - Regulator child rail nodes carrying regulator-name: 83 in total.
+2.2 Six target rails (each matched by regulator-name string, exactly one node
+    per name; duplicate-name check performed, no duplicates found).
+2.3 Stock DTBO: all nine entries inspected at the *whole-overlay* level for
+    (a) any node name containing "rpmh-regulator", (b) any regulator-node name,
+    (c) any of the audited mode/DRMS property names on any node, (d) any
+    fragment whose resolved target is /soc/rsc@18200000 or a descendant.
+2.4 Not inspected: unrelated regulator groups beyond the census above; EROFS
+    content; ramdisk; AVB; any live FDT; any ACK source tree.
+
+--------------------------------------------------------------------------------
+3. BASE-FDT PROPERTY CENSUS (all 3281 property-bearing paths)
+--------------------------------------------------------------------------------
+Upstream mode/DRMS property names — occurrence count in the whole base FDT:
+  regulator-initial-mode       0
+  regulator-allowed-modes      0
+  regulator-allow-set-load     0
+  regulator-system-load        0
+Suspend-state child nodes:
+  regulator-state-standby      0
+  regulator-state-mem          0
+  regulator-state-disk         0
+Hence every upstream-named item requested by the task is
+NOT_FOUND_IN_INSPECTED_SCOPE in the base FDT - reported as "not present in the
+inspected scope", not as globally absent from HOS4.3.
+
+Vendor properties that HOS4.3 actually uses (present, and the functional
+counterparts of the requested items):
+  group level : qcom,resource-name, qcom,regulator-type,
+                qcom,supported-modes, qcom,mode-threshold-currents,
+                proxy-supply (existing ROUND11 finding, unchanged)
+  child level : qcom,init-mode, qcom,init-voltage, qcom,set,
+                qcom,init-enable / qcom,proxy-consumer-* (rail dependent)
+  qcom,pmic-id: 0 nodes in the entire base FDT. Provider identity therefore
+                cannot be taken from pmic-id here; it is anchored on group
+                compatible + qcom,resource-name + child regulator-name.
+
+--------------------------------------------------------------------------------
+4. PER-RAIL RESULTS
+--------------------------------------------------------------------------------
+Legend for status: COMPLETE / NOT_FOUND_IN_INSPECTED_SCOPE / UNKNOWN /
+BLOCKED / NOT_RUN. "MODE SET" below means the vendor group properties
+qcom,regulator-type + qcom,supported-modes + qcom,mode-threshold-currents.
+Values are raw DT values exactly as decoded. Mode numbers are NOT mapped to
+symbolic names (see section 6).
+
+--------------------------------------------------------------------------------
+4.1 PM8150 S4 - UFS VCCQ2
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-smpa4
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "smpa4"
+  pmic-id      : NOT_PRESENT (no qcom,pmic-id anywhere in base FDT)
+  child node   : /soc/rsc@18200000/rpmh-regulator-smpa4/regulator-pm8150-s4
+  regulator-name: "pm8150_s4"
+Base FDT values:
+  regulator-min-microvolt = 1800000
+  regulator-max-microvolt = 1920000
+  qcom,init-voltage       = 1800000
+  qcom,set                = 3
+  qcom,init-mode          = NOT_PRESENT
+  MODE SET                = NOT_PRESENT (no qcom,regulator-type,
+                            qcom,supported-modes, qcom,mode-threshold-currents)
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity/voltage/init data; mode metadata
+        NOT_FOUND_IN_INSPECTED_SCOPE.
+
+--------------------------------------------------------------------------------
+4.2 PM8150 L5 - UFS QMP VDDA-PHY
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-ldoa5
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "ldoa5"
+  pmic-id      : NOT_PRESENT
+  child node   : /soc/rsc@18200000/rpmh-regulator-ldoa5/regulator-pm8150-l5
+  regulator-name: "pm8150_l5"
+Base FDT values (group = MODE SET):
+  qcom,regulator-type         = "pmic5-ldo"
+  qcom,supported-modes        = <2 4>          (ordered array, exactly as written)
+  qcom,mode-threshold-currents= <0 30000>      (microamps)
+  proxy-supply                = phandle 124 -> its own child node (same proxy
+                                mechanism already reported in ROUND11)
+  child: regulator-min/max-microvolt = 880000 / 880000
+  child: qcom,init-voltage = 880000
+  child: qcom,init-mode    = 4                 (raw)
+  child: qcom,set          = 3                 (raw)
+  child: qcom,proxy-consumer-current = 100000  (microamps)
+  child: qcom,proxy-consumer-enable  = present (zero-length / boolean)
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+Sibling rail copies in the same group (reported because they share the rail
+resource and are NOT covered by the requested property list):
+  regulator-pm8150-l5-ao : qcom,init-mode = 2, qcom,set = 1, 880000 uV
+  regulator-pm8150-l5-so : qcom,init-mode = 2, qcom,set = 2,
+                           qcom,init-enable = 0, 880000 uV
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity, mode set and init-mode; UNKNOWN for symbolic
+        mode names and runtime behaviour.
+
+--------------------------------------------------------------------------------
+4.3 PM8150 L6 - UFS VCCQ and VDDP REF_CLK (shared output)
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-ldoa6
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "ldoa6"
+  pmic-id      : NOT_PRESENT
+  child node   : /soc/rsc@18200000/rpmh-regulator-ldoa6/regulator-pm8150-l6
+  regulator-name: "pm8150_l6"
+Base FDT values (group = MODE SET):
+  qcom,regulator-type         = "pmic5-ldo"
+  qcom,supported-modes        = <2 4>
+  qcom,mode-threshold-currents= <0 30000>
+  proxy-supply                = NOT_PRESENT (unlike L5/L9)
+  child: regulator-min/max-microvolt = 1200000 / 1200000
+  child: qcom,init-voltage = 1200000
+  child: qcom,init-mode    = 2                 (raw; differs from L5/L9)
+  child: qcom,set          = 3
+  no -ao / -so sibling copies in this group (verified: 1 child only)
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity, mode set and init-mode; UNKNOWN for symbolic
+        mode names and runtime behaviour.
+
+--------------------------------------------------------------------------------
+4.4 PM8150 L9 - UFS QMP VDDA-PLL
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-ldoa9
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "ldoa9"
+  pmic-id      : NOT_PRESENT
+  child node   : /soc/rsc@18200000/rpmh-regulator-ldoa9/regulator-pm8150-l9
+  regulator-name: "pm8150_l9"
+Base FDT values (group = MODE SET):
+  qcom,regulator-type         = "pmic5-ldo"
+  qcom,supported-modes        = <2 4>
+  qcom,mode-threshold-currents= <0 30000>
+  proxy-supply                = phandle 125 -> its own child node
+  child: regulator-min/max-microvolt = 1200000 / 1200000
+  child: qcom,init-voltage = 1200000
+  child: qcom,init-mode    = 4                 (raw)
+  child: qcom,set          = 3
+  child: qcom,proxy-consumer-current = 100000
+  child: qcom,proxy-consumer-enable  = present (zero-length / boolean)
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity, mode set and init-mode; UNKNOWN for symbolic
+        mode names and runtime behaviour.
+
+--------------------------------------------------------------------------------
+4.5 PM8150 L17 - UFS VCC
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-ldoa17
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "ldoa17"
+  pmic-id      : NOT_PRESENT
+  child node   : /soc/rsc@18200000/rpmh-regulator-ldoa17/regulator-pm8150-l17
+  regulator-name: "pm8150_l17"
+Base FDT values (group = MODE SET):
+  qcom,regulator-type         = "pmic5-ldo"    (no pldo/nldo distinction in DT)
+  qcom,supported-modes        = <2 4>
+  qcom,mode-threshold-currents= <0 10000>      (microamps; lower than L5/L6/L9)
+  proxy-supply                = NOT_PRESENT
+  child: regulator-min-microvolt = 2496000
+  child: regulator-max-microvolt = 3008000
+  child: qcom,init-voltage = 2496000
+  child: qcom,init-mode    = 2                 (raw)
+  child: qcom,set          = 3
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity, mode set and init-mode; UNKNOWN for symbolic
+        mode names and runtime behaviour.
+
+--------------------------------------------------------------------------------
+4.6 PM8150L S8 - UFS VCCQ parent rail
+--------------------------------------------------------------------------------
+Provider identity:
+  group node   : /soc/rsc@18200000/rpmh-regulator-smpc8
+  compatible   : qcom,rpmh-vrm-regulator
+  resource-name: "smpc8"
+  pmic-id      : NOT_PRESENT
+  child node   : /soc/rsc@18200000/rpmh-regulator-smpc8/regulator-pm8150a-s8
+  regulator-name: "pm8150a_s8"
+  Identity caveat: the child node name and regulator-name use the legacy
+  "pm8150a" label. Per the task instruction this label is NOT used as the
+  provider identity; identity is taken from the group node, its compatible and
+  qcom,resource-name = "smpc8". The "pm8150a" string must not be read as
+  evidence of a distinct PM8150A provider group.
+Base FDT values (group = MODE SET):
+  qcom,regulator-type         = "pmic5-hfsmps" (SMPS type, not LDO)
+  qcom,supported-modes        = <1 3>          (disjoint from the LDO <2 4> set)
+  qcom,mode-threshold-currents= <0 200000>     (microamps)
+  proxy-supply                = NOT_PRESENT
+  child: regulator-min-microvolt = 1200000
+  child: regulator-max-microvolt = 1400000
+  child: qcom,init-voltage = 1200000
+  child: qcom,init-mode    = 1                 (raw; lowest value seen in scope)
+  child: qcom,set          = 3
+  regulator-* upstream names : NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state child nodes  : NOT_FOUND_IN_INSPECTED_SCOPE
+DTBO: entry 0..8, fragment "none"; target "none"; overlay action NONE.
+Status: COMPLETE for identity, mode set and init-mode; UNKNOWN for symbolic
+        mode names and runtime behaviour.
+
+--------------------------------------------------------------------------------
+5. DTBO / OVERLAY RESULT (all nine stock entries)
+--------------------------------------------------------------------------------
+5.1 Applicable-entry selection: NOT ESTABLISHED. ROUND7/ROUND8 facts give nine
+    entries with identical model/compatible strings differing only by board-id
+    (8200/8296/8206/8208/8202/8238/8302/8240/8298); ROUND8 analysed entry 8 as a
+    baseline with the explicit boundary "entry 8 only". Nothing in the existing
+    inventory ties one board-id to the running device. Per the task instruction
+    the final effective post-overlay value is therefore labelled UNKNOWN.
+5.2 Targeted match result (this is the substantive overlay finding):
+    - Fragments whose resolved target is /soc/rsc@18200000 or any descendant:
+      0 in every entry (0..8). Resolution verified working: entry 8 resolves
+      145/145 fragments to real base paths, and 0 of them are in the RSC
+      subtree.
+    - Overlay nodes with a name containing "rpmh-regulator": 0 in every entry.
+    - Overlay nodes with a regulator node name (prefix "regulator-"): only
+      fragment@8 of every entry (plus the two matching entries under
+      /__local_fixups__, which mirror the same two nodes as fixup metadata),
+      containing two fixed regulators:
+        regulator-dbb1          compatible "regulator-fixed",
+                                regulator-name "vdd_tof", 3600000/3600000 uV
+        regulator-haptics-boost compatible "regulator-fixed",
+                                regulator-name "vdd_hap_boost"
+      Neither is a PM8150/PM8150L RPMh rail and neither is one of the six
+      targets; they are unrelated fixed supplies and are not UFS rails.
+    - Overlay occurrences of qcom,init-mode, qcom,supported-modes,
+      qcom,mode-threshold-currents, qcom,regulator-type,
+      regulator-initial-mode, regulator-allowed-modes,
+      regulator-allow-set-load, regulator-system-load, regulator-state-*:
+      0 across all nine entries.
+5.3 Interpretation of 5.2: within the inspected scope, no stock DTBO overlay
+    adds, replaces or deletes any mode/DRMS property on any of the six target
+    rails on any of the nine entries. The overlay action is NONE and the value
+    carried into the merged tree is the base-FDT value. Because the applicable
+    entry is unestablished, the final effective post-overlay value is still
+    reported as UNKNOWN per task rule, with the invariant that all nine
+    inspected entries leave these properties untouched.
+5.4 Not established / not attempted: no merged post-overlay FDT was produced;
+    no claim is made that fragment application semantics were simulated beyond
+    target resolution. Fragment order is irrelevant here because no fragment
+    matches the targets.
+
+--------------------------------------------------------------------------------
+6. MODE NUMBER SEMANTICS - EXPLICIT NON-CLAIM
+--------------------------------------------------------------------------------
+The raw mode integers are reported, not symbolic names, because no audited
+mode enum header is available inside this task's approved scope:
+  - LDO-type rails (L5, L6, L9, L17) advertise supported-modes <2 4>.
+  - SMPS-type rail (S8) advertises supported-modes <1 3>.
+  - S4 advertises no supported-modes at all.
+The LDO and SMPS enumerations do not overlap, so a single mode-number meaning
+cannot be shared between them; any cross-type copy of a mode literal is unsafe
+on this evidence alone. Mapping of 1/2/4 to any named mode is NOT_VERIFIED.
+Structural pairing only: qcom,supported-modes and
+qcom,mode-threshold-currents are equal-length ordered arrays on every rail that
+carries them (2 entries each), so position i of the mode array corresponds to
+the current threshold at position i. This is array-structure fact, not a mode
+naming.
+
+Numerical cross-check against ROUND47 (ACK side, separate source):
+  - L5/L6/L9 threshold 30000 uA = 30 mA, equal to the ACK PMIC5 NLDO HPM
+    threshold cited in ROUND47.
+  - L17 threshold 10000 uA = 10 mA, equal to the ACK PMIC5 PLDO HPM threshold.
+  - S8 threshold 200000 uA = 200 mA, on a PMIC5 HFSMPS type group.
+These are numeric coincidences that support using the values as comparison
+anchors; they do NOT establish that HOS4.3 and ACK make the same mode decision,
+and they do NOT establish that the threshold is consumed at all on S8.
+HOS4.3 does not encode a pldo/nldo distinction in DT (L17 and L5/L6/L9 all say
+"pmic5-ldo"), so the ACK LDO sub-type assignment for L17 cannot be sourced from
+this FDT.
+
+--------------------------------------------------------------------------------
+7. WHAT THIS DOES AND DOES NOT SHOW
+--------------------------------------------------------------------------------
+Shown (static DT evidence only):
+  - The six rails exist, are uniquely named, and are located in the apps_rsc
+    (/soc/rsc@18200000) regulator groups.
+  - HOS4.3 uses vendor mode metadata, not the upstream regulator-* property set.
+  - Per-rail init-mode raw values differ: L5 = 4, L9 = 4, L6 = 2, L17 = 2,
+    S8 = 1, S4 = absent.
+  - Per-rail thresholds: 30000 / 30000 / 30000 / 10000 / 200000 uA; S4 absent.
+  - No stock DTBO entry modifies any of these rails or their properties.
+Not shown / not claimed:
+  - Runtime PMIC mode, actual voltage, regulator enable state, consumer load,
+    DRMS outcome, or any HOS ARC performance corner.
+  - Any symbol name for mode values 1/2/3/4, or any statement that a rail is
+    "in HPM" at boot. qcom,init-mode is reported as a raw initial-mode request
+    field; its vendor driver semantics are NOT_VERIFIED here.
+  - Any statement that S4 has no mode support in hardware; the FDT simply
+    carries no mode metadata for it.
+  - Any statement about the ACK post-overlay or runtime equivalence of these
+    rails with ACK PM8150 ops.
+
+--------------------------------------------------------------------------------
+8. STATUS SUMMARY
+--------------------------------------------------------------------------------
+  parser / input availability                COMPLETE
+  base FDT per-rail identity + raw values     COMPLETE (6/6 rails)
+  upstream mode/DRMS property names           NOT_FOUND_IN_INSPECTED_SCOPE
+  suspend-state sub-property set              NOT_FOUND_IN_INSPECTED_SCOPE
+  vendor mode metadata per rail               COMPLETE (5/6 present, S4 absent)
+  symbolic mode mapping                       UNKNOWN (no audited enum source)
+  DTBO targeting of the six rails             COMPLETE = no fragment touches them
+  applicable DTBO entry selection             UNKNOWN (per ROUND7/ROUND8 facts)
+  final effective post-overlay value          UNKNOWN (entry selection unestablished)
+  merged post-overlay FDT                     NOT_RUN (not attempted by design)
+  runtime mode / voltage / enable / load      NOT_RUN
+  BLOCKED subitems                            NONE
+
+--------------------------------------------------------------------------------
+9. BOUNDARY FLAGS
+--------------------------------------------------------------------------------
+  device_connected          = false
+  adb_invoked               = false
+  fastboot_invoked          = false
+  flashed                   = false
+  unlocked                  = false
+  rooted                    = false
+  wrote_partitions          = false
+  mounted_writable          = false
+  kernel_compiled           = false
+  wsl_invoked               = false
+  tools_installed           = false
+  tools_downloaded          = false
+  firmware_reextracted      = false
+  input_files_modified      = false
+  erofs_unpacked            = false
+  avb_parsed                = false
+  new_binary_parser_written = false
+  main_branch_modified      = false
+  dts_draft_branch_modified = false
+  pr1_modified              = false
+
+--------------------------------------------------------------------------------
+10. SANITIZATION
+--------------------------------------------------------------------------------
+Emitted: DT node paths, group/resource/regulator names, compatible strings,
+raw DT integers (voltages in uV, thresholds in uA, mode integers, set masks),
+phandle numbers already published in ROUND9/ROUND11.
+Not emitted: local absolute paths, firmware binaries, DT BLOB contents, full
+local hashes, keys, signatures, digests, salts, rollback data, serials, MAC,
+IMEI, tokens, MMIO/reserved-memory addresses, device-unique identifiers.
+No binary file was uploaded. No prior ROUND1-ROUND12 report was modified.

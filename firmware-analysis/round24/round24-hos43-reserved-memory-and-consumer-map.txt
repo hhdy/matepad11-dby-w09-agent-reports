@@ -1,0 +1,349 @@
+ROUND24 — HOS4.3 reserved-memory and memory-region dependency inventory
+========================================================================
+Owner: local WorkBuddy Agent
+Mode: read-only local firmware/source audit, offline
+Device: Huawei MatePad 11 (2021) DBY-W09 / KONA / SM8250
+Kernel: ACK android17-6.18.33_r00 / common 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+
+--- Redaction and boundary statement (read first) -----------------------------
+NO raw physical address, base/end coordinate, reg tuple value, serial, MAC,
+IMEI, key material or device identifier appears in this report. Every reserved
+node unit-address suffix that encodes a physical address is replaced with
+[@REDACTED]; size is reported only as an order-of-magnitude class with the
+exact byte count omitted in prose (cell counts and 2-cell address / 2-cell
+size structure are retained because they are structural, not coordinate).
+Phandle numeric IDs are used only in local analysis and are never published;
+consumer targets are named by node name. No DTS/DTB/DTBO/firmware/config/
+patch/branch/report was modified. Firmware was not re-extracted, WSL was not
+redeployed, no tool was installed. No olddefconfig/Kconfig/Kleaf/Bazel/dtc
+build/kernel build was run. No memory map or physical RAM address was written
+to any candidate DTS. No device, ADB/fastboot/recovery/reboot/unlock/root/
+flash/partition write occurred. Protected ack18-dby-w09-dts-draft branch,
+ai-parallel/stagea-port-until-boot branch and PR #1 were not touched.
+
+Inputs (reused only, no re-extraction):
+  - ROUND19 decompiled base_2.dts (existing local work copy).
+  - ROUND19 nine decompiled dtbo_entry_0.dts .. dtbo_entry_8.dts.
+  - main dts/dby-w09-ack18-board.dts.rev2.candidate (read-only input for WP C).
+  - pinned ACK <SRC>/arch/arm64/boot/dts/qcom/sm8250.dtsi (read-only).
+  - prior project knowledge: ROUND19/20/22/42/43/62, PROJECT_HANDOFF.md.
+
+--- Count reconciliation: 37 direct children, not 34 --------------------------
+RESULT: PASS (count discrepancy resolved and reported)
+
+The task text and earlier reports state "34 reserved-memory children". A
+direct child-node enumeration of the base_2.dts /reserved-memory block
+(lines 24385..24662) yields 37 immediate child nodes:
+  - 35 of the 37 have a matching /aliases entry pointing into /reserved-memory
+    (35 alias properties were counted).
+  - 2 have no alias: "kerneldump" and "linux,cma".
+The historical "34" is an earlier static-inventory figure from ROUND7/18 and
+does not match the current decompiled work copy. Per the ROUND61 taskbook
+wording ("all 34 (or actual final count)"), this report inventories the actual
+37 children and treats the exact count as an observed fact, not an assumed
+constant. All nine DTBOs were checked separately; none contains a
+/reserved-memory node or a memory-region property (0 hits), so the base tree
+is the sole source of these 37 nodes for this firmware image.
+
+--- Work package A — 37-node reserved-memory inventory -----------------------
+RESULT: PASS
+
+Structure: #address-cells=2, #size-cells=2, ranges (no phandle-id published).
+Each "reg" child uses one 4-cell tuple (2 addr + 2 size cells). Several
+shared-dma-pool children declare "size" + "alloc-ranges" instead of a fixed
+reg; these are noted as "size-declared pool" with their size class.
+"kerneldump" has a 4-cell all-zero reg and a resize string; it is a placeholder,
+not a usable reservation. "cdsp_secure_heap" has no parseable reg/size in the
+inspected text (size class UNKNOWN).
+
+Legend: [R]=removed-dma-pool, [S]=shared-dma-pool, [C]=qcom,cmd-db,
+        [V]=vendor-tagged removed pool, [P]=plain no-map, [U]=untagged/label,
+        size class is order-of-magnitude only.
+
+  #  Node (physical suffix redacted)         Compat        Flags                        Size class / kind
+  ---------------------------------------------------------------------------------------------
+  1  hyp_region[@REDACTED]                    -             no-map                       6 MiB-class, 1 reg tuple [P]
+  2  xbl_aop_region[@REDACTED]                -             no-map                       1 MiB-class (<2 MiB), 1 tuple [P]
+  3  reserved-memory[@REDACTED]               qcom,cmd-db   no-map                       128 KiB-class, 1 tuple [C]
+  4  res_xbl_uefi_log_region[@REDACTED]       removed-dma-  no-map,removed-dma-pool      80 KiB-class, 1 tuple [R]
+     pool
+  5  smem_region[@REDACTED]                   -             no-map                       2 MiB-class, 1 tuple [P]
+  6  removed_region[@REDACTED]                -             no-map                       83 MiB-class, 1 tuple [P]
+  7  pil_camera_region[@REDACTED]             removed-dma-  no-map,removed-dma-pool      5 MiB-class, 1 tuple [R]
+  8  pil_wlan_fw_region[@REDACTED]            removed-dma-  no-map,removed-dma-pool      1 MiB-class, 1 tuple [R]
+  9  pil_ipa_fw_region[@REDACTED]             removed-dma-  no-map,removed-dma-pool      64 KiB-class, 1 tuple [R]
+ 10  pil_ipa_gsi_region[@REDACTED]            removed-dma-  no-map,removed-dma-pool      40 KiB-class, 1 tuple [R]
+ 11  pil_gpu_region[@REDACTED]                removed-dma-  no-map,removed-dma-pool      8 KiB-class, 1 tuple [R]
+ 12  pil_npu_region[@REDACTED]                removed-dma-  no-map,removed-dma-pool      5 MiB-class, 1 tuple [R]
+ 13  pil_video_region[@REDACTED]              removed-dma-  no-map,removed-dma-pool      5 MiB-class, 1 tuple [R]
+ 14  pil_cvp_region[@REDACTED]                removed-dma-  no-map,removed-dma-pool      5 MiB-class, 1 tuple [R]
+ 15  pil_cdsp_region[@REDACTED]               removed-dma-  no-map,removed-dma-pool      20 MiB-class, 1 tuple [R]
+ 16  pil_slpi_region[@REDACTED]               removed-dma-  no-map,removed-dma-pool      21 MiB-class, 1 tuple [R]
+ 17  pil_adsp_region[@REDACTED]               removed-dma-  no-map,removed-dma-pool      29 MiB-class, 1 tuple [R]
+ 18  pil_spss_region[@REDACTED]               removed-dma-  no-map,removed-dma-pool      1 MiB-class, 1 tuple [R]
+ 19  cdsp_secure_heap[@REDACTED]              removed-dma-  no-map,removed-dma-pool      UNKNOWN, no reg/size parsed [R]
+ 20  adsp_region                              shared-dma-   reusable,alloc-ranges,       12 MiB-class, size-declared [S]
+                                               pool        shared-dma-pool
+ 21  sdsp_region                              shared-dma-   reusable,alloc-ranges,       8 MiB-class, size-declared [S]
+ 22  cdsp_region                              shared-dma-   reusable,alloc-ranges,       4 MiB-class, size-declared [S]
+ 23  cont_splash_region[@REDACTED]            -             (label only)                35 MiB-class, 1 tuple [U]
+ 24  disp_rdump_region[@REDACTED]             -             (label only)                8 MiB-class, 1 tuple [U]
+ 25  dfps_data_region[@REDACTED]              -             (label only)                1 MiB-class, 1 tuple [U]
+ 26  mem_dump_region                          shared-dma-   reusable,alloc-ranges,       40 MiB-class, size-declared [S]
+ 27  sp_region                                shared-dma-   reusable,alloc-ranges,       16 MiB-class, size-declared [S]
+ 28  user_contig_region                       shared-dma-   reusable,alloc-ranges,       16 MiB-class, size-declared [S]
+ 29  rainbow_mem[@REDACTED]                   removed-dma-  no-map,removed-dma-pool      4 MiB-class, 1 tuple [V]
+                                               pool + vendor tag
+ 30  bootfail_mem[@REDACTED]                  removed-dma-  no-map,removed-dma-pool      2 KiB-class, 1 tuple [V]
+ 31  kerneldump                               -             resize string               placeholder (zero reg) [U]
+ 32  qseecom_region                           shared-dma-   reusable,alloc-ranges,       20 MiB-class, size-declared [S]
+ 33  qseecom_ta_region                        shared-dma-   reusable,alloc-ranges,       16 MiB-class, size-declared [S]
+ 34  secure_display_region                    shared-dma-   reusable,alloc-ranges,       164 MiB-class, size-declared [S]
+ 35  cnss_wlan_region                         shared-dma-   reusable,alloc-ranges,       32 MiB-class, size-declared [S]
+ 36  linux,cma                                shared-dma-   reusable,linux,cma-default,  32 MiB-class, size-declared [S]
+ 37  mailbox_region                           shared-dma-   no-map,alloc-ranges,         128 KiB-class, size-declared, no-map [S]
+                                               shared-dma-pool
+
+Alignment: all size-declared shared pools that specify alignment use the same
+2-cell alignment value (4 MiB-class, cell count 2); not a physical coordinate.
+alloc-ranges on the shared pools span the full 32-bit cell range structurally
+(4 cells), not a published address.
+
+Category inference (evidence-based; UNKNOWN where unconfirmed):
+  - XBL/ABL/AOP/SMEM/hyp mailbox handoff: #1 hyp_region (hyp), #2 xbl_aop_region
+    (XBL/AOP), #3 cmd_db (qcom,cmd-db compatible), #5 smem_region (SMEM),
+    #37 mailbox_region (name + consumer). High confidence.
+  - XBL/UEFI log + removed region: #4 res_xbl_uefi_log_region (name), #6
+    removed_region (name). Medium confidence (name-derived).
+  - PIL firmware carveouts (no-map removed-dma-pool, pil_* names): #7..#18 plus
+    #19 cdsp_secure_heap. High confidence from consistent compatible + names.
+  - Display/splash: #23 cont_splash_region, #24 disp_rdump_region,
+    #25 dfps_data_region (label + MDSS/DSI consumer). High confidence.
+  - Secure / QSEE / TrustZone: #32 qseecom_region, #33 qseecom_ta_region
+    (names + qseecom/ion consumers). High confidence.
+  - DSP/Fastrpc shared pools: #20 adsp_region, #21 sdsp_region, #22 cdsp_region
+    (shared-dma-pool + DSP/ion consumers). High confidence.
+  - Crash/diagnostics: #26 mem_dump_region, #31 kerneldump, #30 bootfail_mem
+    (names). Medium-high confidence.
+  - WLAN: #35 cnss_wlan_region (cnss_pci consumer). High confidence.
+  - CMA/DMA default pool: #36 linux,cma (linux,cma-default). High confidence.
+  - Generic secure display: #34 secure_display_region (ion heap consumer).
+    Medium-high.
+  - Vendor rainbow: #29 rainbow_mem (vendor-tagged compatible). Medium.
+  - #19 cdsp_secure_heap size class UNKNOWN; category PIL/CDSP secure inferred
+    from name only — size left UNKNOWN, not guessed.
+
+--- Work package B — memory-region consumer map ------------------------------
+RESULT: PASS
+
+Method: exact cell-value comparison against the 35 published-internal reserved
+phandles (numeric IDs used locally, never output), restricted to memory-reference
+properties (memory-region, pil-mem, qcom,firmware-name, qcom,smem-state-names,
+qcom,mem*). Base tree and each of the nine DTBOs were scanned separately; no
+overlay merge was performed. A plain substring scan was rejected because it
+produced false positives from numeric address cells; only exact phandle-cell
+matches are reported below.
+
+BASE TREE consumer references (45 hits total; 31 are true reserved-region
+phandle references, the rest are firmware-name / smem-state-name strings on
+the same consumer nodes). Consumer node paths have physical unit-addresses
+redacted:
+
+  Consumer node                         Property / firmware        Reserved target
+  ---------------------------------------------------------------------------------------
+  qseecom@[REDACTED]                    memory-region              qseecom_region (#32)
+  qcom,smem                             memory-region              smem_region (#5)
+  qcom,spss_utils                       pil-mem                    pil_spss_region (#18)
+  qcom,ipa_fws                          qcom,firmware-name="ipa_fws"
+                                        memory-region              pil_ipa_gsi_region (#10)
+  qcom,ipa_uc                           qcom,firmware-name="ipa_uc"
+                                        memory-region              pil_ipa_fw_region (#9)
+  qcom,lpass@[REDACTED]                 qcom,firmware-name="adsp"
+                                        memory-region              pil_adsp_region (#17)
+  qcom,turing@[REDACTED]                qcom,firmware-name="cdsp"
+                                        memory-region              pil_cdsp_region (#15)
+  qcom,venus@[REDACTED]                 qcom,firmware-name="venus"
+                                        memory-region              pil_video_region (#13)
+  qcom,spss@[REDACTED]                  qcom,firmware-name="spss"
+                                        memory-region              pil_spss_region (#18)
+  qcom,cvpss@[REDACTED]                 qcom,firmware-name="cvpss"
+                                        memory-region              pil_cvp_region (#14)
+  qcom,npu@[REDACTED]                   qcom,firmware-name="npu"
+                                        memory-region              pil_npu_region (#12)
+  qcom,msm-adsprpc-mem                  memory-region              adsp_region (#20)
+  mem_dump                              memory-region              mem_dump_region (#26)
+  qcom,ssc@[REDACTED]                   qcom,firmware-name="slpi"
+                                        memory-region              pil_slpi_region (#16)
+  qcom,msm-ssc-sensors                  qcom,firmware-name="slpi"
+  msm_tspp@[REDACTED]                   memory-region              qseecom_region (#32)
+  qcom,ion-heap@22                      memory-region              sdsp_region (#21)
+  qcom,ion-heap@26                      memory-region              user_contig_region (#28)
+  qcom,ion-heap@27                      memory-region              qseecom_region (#32)
+  qcom,ion-heap@19                      memory-region              qseecom_ta_region (#33)
+  qcom,ion-heap@13                      memory-region              sp_region (#27)
+  qcom,ion-heap@10                      memory-region              secure_display_region (#34)
+  cnss_pci (under qcom,pcie@[REDACTED]) memory-region              cnss_wlan_region (#35)
+  qcom,mdss_dsi_pll@[REDACTED]          memory-region              dfps_data_region (#25)
+  qcom,cam_smmu/msm_cam_icp_fw          memory-region              pil_camera_region (#7)
+  qcom,msm-audio-apr/voice-mhi-audio    memory-region              mailbox_region (#37)
+  spf_core_platform/voice-mhi-audio-ar  memory-region              mailbox_region (#37)
+  qcom,cvp@[REDACTED]/msm-cvp,mem_cdsp  memory-region              cdsp_region (#22)
+  qcom,kgsl-hyp                         qcom,firmware-name="a650_zap" (no reserved phandle;
+                                        GPU zap loaded via separate path — target UNKNOWN here)
+  several qcom,smp2p_* nodes            qcom,smem-state-names      string-only (smp2p signalling,
+                                        not a reserved-memory phandle)
+
+Reverse view — reserved nodes actually consumed in the base tree (23 nodes):
+  qseecom_region, smem_region, pil_spss_region, pil_ipa_gsi_region,
+  pil_ipa_fw_region, pil_adsp_region, pil_cdsp_region, pil_video_region,
+  pil_spss_region (also via spss_utils), pil_cvp_region, pil_npu_region,
+  adsp_region, mem_dump_region, pil_slpi_region, sdsp_region, user_contig_region,
+  qseecom_ta_region, sp_region, secure_display_region, cnss_wlan_region,
+  dfps_data_region, pil_camera_region, mailbox_region, cdsp_region.
+Not referenced by any scanned memory-region/phandle property in the base tree:
+  hyp_region, xbl_aop_region, reserved-memory(cmd-db), res_xbl_uefi_log_region,
+  removed_region, pil_wlan_fw_region, pil_gpu_region, cdsp_secure_heap,
+  cont_splash_region, disp_rdump_region, bootfail_mem, kerneldump,
+  rainbow_mem, linux,cma.
+Their absence from consumer properties does NOT mean they are unused: several
+are firmware/ABL-owned carveouts consumed before Linux (see WP E).
+
+NINE DTBOs: 0 memory-region references, 0 /reserved-memory nodes,
+0 qcom,firmware-name / pil-mem references in any of dtbo_entry_0..8. The nine
+overlays do not introduce, modify or consume any reserved region; they only
+write /rootparam identity fields. This is an explicit negative result. Runtime
+selection of any entry (incl. 0x206a) remains UNKNOWN; no entry is assumed.
+
+--- Work package C — gap matrix vs rev2 candidate and pinned sm8250.dtsi -----
+RESULT: PARTIAL (gap matrix produced; memory handoff remains BLOCKED)
+
+  Question                                   rev2 candidate / sm8250.dtsi finding
+  ---------------------------------------------------------------------------------------
+  Does rev2 define /memory?                  No /memory node. Lines 334-350 explicitly
+                                              document that /memory from HOS4.3 has
+                                              device_type="memory" but an all-zero reg
+                                              placeholder and is not reconstructed.
+  Does rev2 define /reserved-memory?         No. Line 334: "Memory / reserved-memory is
+                                              deliberately not reconstructed here yet."
+                                              No carveout node or value added.
+  Generic SM8250 reserved-memory in DTSI?    YES: sm8250.dtsi:771 defines 5 early no-map
+                                              carveouts (hyp, xbl_aop, cmd_db, smem,
+                                              removed) plus dma-pool children; 6
+                                              memory-region consumers (smem:870,
+                                              gpu zap:2953, slpi:3101, cdsp:3803,
+                                              video:4338, adsp:5992). These would be
+                                              inherited if the board DTS is built, but
+                                              their addresses come from the upstream
+                                              SoC DTSI, not from HOS4.3 evidence, and
+                                              are not proof of this device's map.
+  Which memory-region consumers enabled?     In rev2: UFS host/PHY only (status="okay"),
+                                              PM8150 rpmh regulators. No DSP/GPU/display
+                                              /camera/WLAN consumer node is enabled by
+                                              the board file.
+  Deliberately deferred consumers:           rev2 lines 352-360: UART/GENI debug, SPI/THP,
+                                              panel/DSI/backlight, PCIe/WLAN+BT, ADSP/
+                                              audio/camera/USB-C/DP all deferred.
+  Does UFS host/PHY reference reserved mem?  NO. rev2 &ufs_mem_hc / &ufs_mem_phy (lines
+                                              283-331) contain no memory-region and no
+                                              reserved-memory phandle; their dependencies
+                                              are regulators + power-domains + clocks.
+  Does UFS require secure/DMA shared pool?   No local evidence of a UFS dependency on
+                                              qseecom/CMA/any HOS4.3 shared pool. The
+                                              first-stage storage path can be described
+                                              without a carveout in the candidate; whether
+                                              firmware occupies overlapping RAM pre-boot
+                                              is a separate UNKNOWN (WP E).
+  Are HOS4.3-only carveouts represented?     NO. 37 HOS4.3 children vs 5 inherited early
+                                              nodes in sm8250.dtsi; PIL/DSP/display/secure
+                                              /crash/CMA pools have no rev2 counterpart.
+
+No node or value was added to the candidate. This is a gap matrix only.
+
+--- Work package D — same-device public Linux reference (semantic only) ------
+RESULT: PARTIAL (semantic comparison; no addresses copied)
+
+Source: project-recorded pinned reference svesnav/linux-dby-w09 at commit
+116cb1fe06110543ce03217e8bd8f35c12ca89c3 (see PROJECT_HANDOFF.md ROUND62),
+a same-device (DBY-W09) Linux 7.0 tree whose board DTS is based on HOS4.2.
+Only semantic purpose is compared; no physical range from it is reproduced,
+and it is NOT treated as HOS4.3 evidence.
+
+  - It has four reserved-memory entries, including a splash_region path
+    reportedly looked up by ABL, plus HOS4.2-era DFPS/crash-derived entries.
+    Semantically this overlaps the HOS4.3 display/splash group (#23 cont_splash,
+    #24 disp_rdump, #25 dfps_data) and a crash/log entry (#31 kerneldump).
+  - Does the reference demonstrate ABL dynamically creating /memory and
+    /reserved-memory nodes? NO positive evidence is recorded. The reference
+    ships a board DTS that PREDECLARES those four nodes; nothing in the pinned
+    project knowledge shows Huawei ABL creating them at runtime. Answer:
+    UNKNOWN — the reference demonstrates consumption of a predeclared board
+    DTS, not dynamic creation, and it is HOS4.2 not HOS4.3.
+  - Separately recorded ROUND42 (a different SM8250 vendor ABL reference, not
+    Huawei) shows the standard path requires an existing /memory node and only
+    updates its reg via UEFI RAM Partition Protocol (EFI_NOT_FOUND if absent);
+    its optional carveout path consumes existing /reserved-memory no-map nodes
+    and does NOT rebuild the 37 HOS4.3 nodes. ROUND43 records the ACK EFI-stub
+    exception (memblock rebuild from UEFI map) only when the Linux EFI stub
+    entry and full /chosen linux,uefi-* metadata are present. Huawei HOS4.3's
+    actual classic-vs-EFI path and final FDT remain UNKNOWN.
+
+--- Work package E — first-boot implications and recommendation --------------
+RESULT: BLOCKED (no final ABL FDT; conservative gating required)
+
+Classification by category (omission risk is stated, not assumed safe):
+
+  1. Boot-critical before UFS/system first-stage mount / firmware-owned:
+     hyp_region, xbl_aop_region, cmd_db, smem_region, removed_region,
+     res_xbl_uefi_log_region. These are XBL/ABL/AOP/SMEM/hyp handshake and
+     command-db regions. Firmware may already occupy these physical ranges
+     before Linux boots; omitting a no-map reservation from a replacement DTB
+     can let Linux advertise overlap to a region still owned by firmware.
+     Because their HOS4.3 coordinates are redacted here and no final ABL FDT
+     proves what was handed off, they CANNOT be safely reconstructed or safely
+     dropped by this audit. GATE.
+  2. Firmware/ABL-owned PIL carveouts (no-map removed pools):
+     pil_* (#7..#18) + cdsp_secure_heap (#19). Omission is acceptable only if
+     the corresponding remoteproc/PIL consumer is never enabled; HDR/firmware
+     loading of ADSP/CDSP/SLPI/NPU/SPSS/camera would then fail or could overlap
+     memory firmware still uses. Deferred in rev2, so not first-boot critical
+     for storage-only, but NOT proven safe to permanently omit.
+  3. Required when subsystem enabled:
+     adsp/sdsp/cdsp (#20-22), qseecom/ta (#32-33), secure_display (#34),
+     cnss_wlan (#35), linux,cma (#36), mailbox (#37). Only needed when the
+     matching DSP/secure/display/WLAN/CMA/audio driver is enabled. rev2
+     defers all of these; a first storage-only boot does not require them,
+     but enabling the subsystem without restoring the pool is a defect.
+  4. Display/splash/debug:
+     cont_splash_region (#23), disp_rdump_region (#24), dfps_data_region (#25),
+     rainbow_mem (#29), bootfail_mem (#30), mem_dump_region (#26), kerneldump
+     (#31). Vendor diagnostics / splash continuity; omitting may lose splash
+     continuity or crash logs. Not required for UFS mount; #25 has an MDSS/DSI
+     consumer in the base tree, so a display-enabled kernel must restore it.
+  5. Unresolved:
+     cdsp_secure_heap size (#19), cont/disp_rdump overlap semantics (both
+     nodes in the base text share a redacted unit-address suffix but have
+     different size classes), and whether ABL injects any reservation into the
+     final FDT. All kept UNKNOWN.
+
+Recommendation: The current minimal rev2 board DTS, which reconstructs no
+reserved-memory, is NOT yet acceptable for a full first boot, but the specific
+UFS/system first-stage mount path itself shows NO reserved-memory dependency
+in the candidate. A conservative storage-only kernel boot could proceed
+WITHOUT reproducing the 37 HOS4.3 carveouts only after the final live ABL FDT
+is captured and confirms (a) the usable-memory handoff and (b) that firmware
+does not rely on Linux to re-declare its regions. Because the final ABL FDT is
+unavailable and no local evidence proves ABL adds or removes reservations,
+this gate is BLOCKED. Do not invent coordinates, do not copy HOS4.2 or upstream
+sm8250.dtsi addresses into the HOS4.3 tree, and do not claim a subsystem is
+safe to omit solely because its driver is disabled in rev2.
+
+Per-work-package verdicts:
+  WP A 37-node inventory (physical coords redacted)      : PASS
+  WP B consumer map + nine-DTBO negative result          : PASS
+  WP C rev2 / sm8250.dtsi gap matrix                     : PARTIAL
+  WP D same-device public reference semantic comparison  : PARTIAL
+  WP E first-boot reservation decision                   : BLOCKED
+
+No boot, build, package or device action is authorized by this report.
+
+--- End of report -------------------------------------------------------------

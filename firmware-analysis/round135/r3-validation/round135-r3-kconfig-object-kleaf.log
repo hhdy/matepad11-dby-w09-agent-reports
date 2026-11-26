@@ -1,0 +1,93 @@
+################################################################################
+# ROUND135 R3-validation - Kconfig / full Kleaf build evidence (Lane C part1)
+################################################################################
+
+### R3v Lane C: staging + full Kleaf //common:dby_w09 --jobs=2  2026-11-26T08:40:57Z
+staging construction: cp -al ACK top-level (pinned workspace, read-only use) + cp -al validated vtree/common (own independent .git)
+staging HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+staging HEAD_tree=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+staging dirty_overlay_files=20
+build_input_tree23=afe9517f8062b96bfeb5b4dd5714942861e6a44b (expect afe9517f8062b96bfeb5b4dd5714942861e6a44b)
+BUILD_INPUT_TREE_MATCH
+command: tools/bazel build //common:dby_w09 --jobs=2 (per R3 taskbook §6.3)
+nproc=12 mem_free_MB=6852
+BUILD_RC=0 ELAPSED=346s
+=== bazel raw log tail ===
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 161s linux-sandbox
+[774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09; 221s linux-sandbox
+[775 / 775] no actions running
+INFO: Found 1 target...
+Target //common:dby_w09 up-to-date:
+  bazel-bin/common/dby_w09/.config
+  bazel-bin/common/dby_w09/Image
+  bazel-bin/common/dby_w09/System.map
+  bazel-bin/common/dby_w09/vmlinux
+INFO: Elapsed time: 314.605s, Critical Path: 288.65s
+INFO: 775 processes: 523 internal, 252 linux-sandbox.
+INFO: Build completed successfully, 775 total actions
+
+=== artifacts ===
+Image      size=44820992   sha256=ee94c4fa0364018244d4aa467dcc4318a816b53363a25b3b717acb6a002e82c6
+.config    size=238410     sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+System.map size=7611571    sha256=a7a597bef4228c018b3f465949c8bc1327254ff8f9e06058fccf71d63e90ee2c
+vmlinux    size=230259072  sha256=efac6aed109aa1b97bfbed47962092ffa1399fe72d2c8dfd88cce3c3d2b169d8
+
+config_saved sha256=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+ROUND130_baseline_config_sha=0850213dc3e2c8ed412e950ffb8e10c758bc2efed18a2d30d8271c282f2c6b15
+CONFIG_IDENTICAL_TO_R3_RUN
+
+=== required symbol resolution (final .config) ===
+SCSI_UFSHCD                  CONFIG_SCSI_UFSHCD=y
+SCSI_UFSHCD_PLATFORM         CONFIG_SCSI_UFSHCD_PLATFORM=y
+SCSI_UFS_QCOM                CONFIG_SCSI_UFS_QCOM=y
+PM_DEVFREQ                   CONFIG_PM_DEVFREQ=y
+PM_OPP                       CONFIG_PM_OPP=y
+PM_GENERIC_DOMAINS           CONFIG_PM_GENERIC_DOMAINS=y
+PM_GENERIC_DOMAINS_OF        CONFIG_PM_GENERIC_DOMAINS_OF=y
+QCOM_GDSC                    CONFIG_QCOM_GDSC=y
+QCOM_RPMH                    CONFIG_QCOM_RPMH=y
+QCOM_COMMAND_DB              CONFIG_QCOM_COMMAND_DB=y
+QCOM_RPMHPD                  CONFIG_QCOM_RPMHPD=y
+OF                           CONFIG_OF=y
+REGULATOR                    CONFIG_REGULATOR=y
+REGULATOR_QCOM_RPMH          CONFIG_REGULATOR_QCOM_RPMH=y
+IOMMU_SUPPORT                CONFIG_IOMMU_SUPPORT=y
+ARM_SMMU                     CONFIG_ARM_SMMU=y
+ARM_SMMU_QCOM                CONFIG_ARM_SMMU_QCOM=y
+INTERCONNECT_QCOM_SM8250     CONFIG_INTERCONNECT_QCOM_SM8250=y
+PHY_QCOM_QMP_UFS             CONFIG_PHY_QCOM_QMP_UFS=y
+
+=== toolchain versions (best-effort, NOT AVAILABLE if unreadable) ===
+bazel version: NOT AVAILABLE
+Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c) clang version 22.0.1 (https://android.googlesource.com/toolchain/llvm-project 2d65e4108033380e6fe8e08b1f1826cd2bfb0c99)
+### build end 2026-11-26T08:46:43Z BUILD_RC=0
+
+=== Lane C part2: object compiles (5 objects, independent O= out-objA) ===
+=== C2 object compiles (5 objects, independent O= out-objA) ===
+olddefconfig_rc=0 transformed_config_sha256=79b5cafb4c1bfa6c683a3825abce8aec1b0deff80e24f713b42d57da39a51b6b
+delta vs Kleaf .config symbol lines: 42
+=== compile drivers/ufs/core/ufshcd.o ===
+RC=0
+  size=953032 sha256=c2330f04c4ef1826d783bfe3091f1f97b8ac4753ebdf2f9eadda87afd0a324a4
+=== compile drivers/ufs/host/ufs-qcom.o ===
+RC=0
+  size=347008 sha256=e05129d496641980deea6befc6143085962ecf723ab45ebe33cfa9b7021143d0
+=== compile drivers/phy/qualcomm/phy-qcom-qmp-ufs.o ===
+RC=0
+  size=283888 sha256=f3004f3ee7a86ccc2bca41b548e1b717cba502817fc8d1a794920e2a2ae5f934
+=== compile drivers/regulator/core.o ===
+RC=0
+  size=584264 sha256=e892ec7c62b886cff2f9836f0b35a915c3e5eec85cfaf78b03c986b5b3aec2dc
+=== compile drivers/regulator/proxy-consumer.o ===
+RC=0
+  size=176368 sha256=92d15d1f1f0f334af99d959c7a7a7bce71a334f859565d0e33a0eaba2b4ad1d1
+
+### Lane A end 2026-11-26T08:55:09Z FAIL=0
+
+=== execution-order / disclosure notes ===
+# .config resolved by pinned Kleaf mechanism during the full build (first), then fed the
+# symbol check, the 5 object compiles (GENDWARFKSYMS transform per ROUND130 procedure) and
+# the §5.3 DTB build. Host regression (Lane B) ran in parallel against the validated vtree;
+# lanes use isolated O= directories and the host harness runs outside the source tree.
+# Image sha is staging-path-specific (embedded path strings) and is NOT comparable across
+# separate staging roots; the .config is byte-identical to the ROUND130 baseline.

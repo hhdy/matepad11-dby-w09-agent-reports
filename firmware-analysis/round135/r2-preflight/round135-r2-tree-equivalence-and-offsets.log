@@ -1,0 +1,163 @@
+### ROUND135 R2 tree equivalence and controlled-offset comparison 2026-11-26T05:58:02Z
+
+=== 1. tree identity assertions ===
+TREE=tree-a
+  HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  HEAD^{tree}=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+  git-dir=.git
+  git-common-dir=.git
+  abs-git-dir=/home/kerneldev/work/matepad11/round135-r2-agent/tree-a/common/.git
+  alternates=none
+  final_status_dirty=20 (23-patch changes, expected nonzero identical between trees)
+  final_changed_paths=15
+TREE=tree-b
+  HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  HEAD^{tree}=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+  git-dir=.git
+  git-common-dir=.git
+  abs-git-dir=/home/kerneldev/work/matepad11/round135-r2-agent/tree-b/common/.git
+  alternates=none
+  final_status_dirty=20 (23-patch changes, expected nonzero identical between trees)
+  final_changed_paths=15
+initial tree equality: HEAD^{tree}=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7 vs HEAD^{tree}=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7
+
+=== 2. per-patch identity equality (blob/size across trees) ===
+PER_PATCH_IDENTITY_AND_RC_TREES_A_B_IDENTICAL=YES
+
+=== 3. offset comparison: Tree A vs Tree B (primary git apply --verbose only) ===
+--- Tree A offset/applied lines ---
+  patch 1: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 2: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 3: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 4: Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+  patch 5: Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+  patch 6: Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+  patch 6: Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+  patch 7: Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+  patch 8: Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+  patch 9: Applied patch BUILD.bazel cleanly.
+  patch 9: Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+  patch 10: Applied patch drivers/regulator/Kconfig cleanly.
+  patch 10: Applied patch drivers/regulator/Makefile cleanly.
+  patch 10: Applied patch drivers/regulator/core.c cleanly.
+  patch 10: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 10: Applied patch include/linux/regulator/driver.h cleanly.
+  patch 10: Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+  patch 11: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 12: Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+  patch 13: Applied patch drivers/regulator/Kconfig cleanly.
+  patch 13: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 14: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 15: Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+  patch 16: Hunk #1 succeeded at 187 (offset -25 lines).
+  patch 16: Hunk #2 succeeded at 244 (offset -2 lines).
+  patch 16: Hunk #3 succeeded at 274 (offset 2 lines).
+  patch 16: Hunk #1 succeeded at 187 (offset -25 lines).
+  patch 16: Hunk #2 succeeded at 244 (offset -2 lines).
+  patch 16: Hunk #3 succeeded at 274 (offset 2 lines).
+  patch 16: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 17: Hunk #1 succeeded at 119 (offset 1 line).
+  patch 17: Hunk #2 succeeded at 149 (offset -2 lines).
+  patch 17: Hunk #1 succeeded at 119 (offset 1 line).
+  patch 17: Hunk #2 succeeded at 149 (offset -2 lines).
+  patch 17: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 18: Applied patch drivers/ufs/core/ufshcd-priv.h cleanly.
+  patch 18: Applied patch drivers/ufs/core/ufshcd.c cleanly.
+  patch 19: Applied patch drivers/ufs/core/ufshcd.c cleanly.
+  patch 20: Hunk #3 succeeded at 2310 (offset -19 lines).
+  patch 20: Hunk #3 succeeded at 2310 (offset -19 lines).
+  patch 20: Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+  patch 21: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 22: Applied patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts cleanly.
+  patch 23: Applied patch arch/arm64/boot/dts/qcom/Makefile cleanly.
+--- Tree B offset/applied lines ---
+  patch 1: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 2: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 3: Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+  patch 4: Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+  patch 5: Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+  patch 6: Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+  patch 6: Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+  patch 7: Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+  patch 8: Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+  patch 9: Applied patch BUILD.bazel cleanly.
+  patch 9: Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+  patch 10: Applied patch drivers/regulator/Kconfig cleanly.
+  patch 10: Applied patch drivers/regulator/Makefile cleanly.
+  patch 10: Applied patch drivers/regulator/core.c cleanly.
+  patch 10: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 10: Applied patch include/linux/regulator/driver.h cleanly.
+  patch 10: Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+  patch 11: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 12: Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+  patch 13: Applied patch drivers/regulator/Kconfig cleanly.
+  patch 13: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 14: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 15: Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+  patch 16: Hunk #1 succeeded at 187 (offset -25 lines).
+  patch 16: Hunk #2 succeeded at 244 (offset -2 lines).
+  patch 16: Hunk #3 succeeded at 274 (offset 2 lines).
+  patch 16: Hunk #1 succeeded at 187 (offset -25 lines).
+  patch 16: Hunk #2 succeeded at 244 (offset -2 lines).
+  patch 16: Hunk #3 succeeded at 274 (offset 2 lines).
+  patch 16: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 17: Hunk #1 succeeded at 119 (offset 1 line).
+  patch 17: Hunk #2 succeeded at 149 (offset -2 lines).
+  patch 17: Hunk #1 succeeded at 119 (offset 1 line).
+  patch 17: Hunk #2 succeeded at 149 (offset -2 lines).
+  patch 17: Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+  patch 18: Applied patch drivers/ufs/core/ufshcd-priv.h cleanly.
+  patch 18: Applied patch drivers/ufs/core/ufshcd.c cleanly.
+  patch 19: Applied patch drivers/ufs/core/ufshcd.c cleanly.
+  patch 20: Hunk #3 succeeded at 2310 (offset -19 lines).
+  patch 20: Hunk #3 succeeded at 2310 (offset -19 lines).
+  patch 20: Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+  patch 21: Applied patch drivers/regulator/proxy-consumer.c cleanly.
+  patch 22: Applied patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts cleanly.
+  patch 23: Applied patch arch/arm64/boot/dts/qcom/Makefile cleanly.
+OFFSET_PATTERN_TREES_A_B_IDENTICAL=YES
+
+=== 4. historical controlled-offset recurrence check ===
+policy: kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md blob 6712f686da9940937ed87eab2f4b27d44cb29626
+expected historical: patch16 H1 -25 H2 -2 H3 +2 ; patch17 H1 +1 H2 -2 ; patch20(ROUND128 V2) H3 -19
+--- patch 16 section (Tree A) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+--- patch 17 section (Tree A) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+--- patch 20 section (Tree A) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+
+=== 5. intermediate and final tree equality ===
+tree17_A=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+tree17_B=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+expected_17_tree=77e2b2b1515b3813f7538aedffe4c5a4e90edb57
+TREE17_A_EQ_B=YES
+TREE17_MATCH_77E2B2B1=YES
+tree23_A=afe9517f8062b96bfeb5b4dd5714942861e6a44b
+tree23_B=afe9517f8062b96bfeb5b4dd5714942861e6a44b
+TREE23_A_EQ_B=YES
+
+=== 6. changed-path set equality ===
+CHANGED_PATH_SETS_IDENTICAL=YES
+=== end 2026-11-26T05:58:02Z ===

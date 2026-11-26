@@ -1,0 +1,337 @@
+ROUND27 — real Kleaf/Bazel DTB + DTBO + composite build and schema validation
+==============================================================================
+Task owner : 2号 AI (local WorkBuddy Agent)
+Commission / final review : 1号 AI (ChatGPT)
+Taskbook   : firmware-analysis/round27/AGENT_TASK.md (main), START_PROMPT.md
+Deliverable branch : firmware-audit-v1
+Deliverable path   : firmware-analysis/round27/round27_kleaf_dtb_dtbo_composite_schema_validation.txt
+Status     : COMPLETED (build-only validation; not a boot/image/schema-final PASS claim)
+Generated : 2026-11-25
+
+This is a sanitized report. It contains no raw DTB/DTBO/composite binary, no
+source file, no physical RAM/base/reg coordinates, no signing material and no
+device-unique identifiers. Numeric values below are logical devicetree
+property values or power-domain indices, not physical addresses.
+
+------------------------------------------------------------------------------
+0. START GATE AND OWNERSHIP  (taskbook section 0)
+------------------------------------------------------------------------------
+GATE Result: SATISFIED. No gate bypass, no assumption of conclusions.
+
+Verified present on branch firmware-audit-v1 before any work:
+  - firmware-analysis/round25/round25-hos43-mmcx-mx-arc-request-semantics.txt
+      size 16090  blob 8bcfd37d290fdb2ed41879d4ebca69aa7c9a6df1
+  - firmware-analysis/round26/round26-sm8250-vs-hos43-reserved-memory-interval-audit.txt
+      size 16532  blob e55ecacaf0b345971062142765fd36e46551484e
+Both blobs match the values recorded in the primary-AI review record byte for
+byte.
+
+Primary-AI review record (on main, as referenced by the taskbook; taskbook
+restricts the two reports to firmware-audit-v1 but does not constrain the
+review-record branch):
+  - firmware-analysis/round25-26/PRIMARY_AI_REVIEW_2026-11-25.md
+      size 7283  blob 3068a6d221e22a9ebac56fabc11ada3dadfc78db
+Decision text: "ACCEPTED FOR ROUND27 ONLY — ROUND27 AUTHORIZED FOR LOCAL
+AGENT EXECUTION". The updated round27 taskbook is explicitly a [2号AI任务书]
+assigned to the local WorkBuddy Agent, status AUTHORIZED / READY TO EXECUTE.
+Ownership rule honored: no local command requirement was transferred to the
+user.
+
+Note: the review record is NOT on firmware-audit-v1 (it is on main). It was
+read successfully from main; this only broadens the read location and does not
+weaken the gate — both prerequisite reports and the explicit authorization are
+present and verified.
+
+------------------------------------------------------------------------------
+1. INPUTS  (taskbook section 1)
+------------------------------------------------------------------------------
+Workspace: existing ROUND18 ACK work tree, no redeploy / repo init / sync /
+download / toolchain change / kernel rebuild.
+
+common git HEAD (unchanged): 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  git describe: android17-6.18.33_r00
+Kernel version: 6.18.33
+
+Source candidates (exact main-branch blobs, re-fetched and hash-verified
+before staging):
+  - dts/dby-w09-ack18-board.dts.rev2.candidate
+      blob f5449bac669ea71d7149ffb1fc858e39eb128572
+      size 17065  sha256 7bee988acddc5fc136453c41183afbd0c1080cd7481d959f6c8cf562bc9deeb3
+  - dts/dby-w09-ack18-rootparam.dtso.draft
+      blob c7e5b145d4308e0675ff648b4e046033c5560083
+      size 1979   sha256 b51e086aa70d02217ce7f1752e125009ec17b50b73386e451577641d08846b56
+The rev2 board candidate was staged from the CURRENT main blob (17065 B). This
+is intentionally not the older 16089 B copy used in ROUND23; the taskbook
+requires the exact main-branch candidate.
+
+Staging integrity (sha256 measured inside the work tree after staging):
+  board DTS staged  7bee988acddc5fc136453c41183afbd0c1080cd7481d959f6c8cf562bc9deeb3  (17065 B)
+  overlay staged    b51e086aa70d02217ce7f1752e125009ec17b50b73386e451577641d08846b56  (1979 B)
+Both equal the source-candidate sha256 above.
+
+------------------------------------------------------------------------------
+2. WORK PACKAGE A — exact Bzlmod / rules_devicetree pin
+------------------------------------------------------------------------------
+Result: PASS (exact version and revision obtained; no guessing, no upstream
+HEAD substitution).
+
+  Bazel launcher        : tools/bazel -> build/kernel/kleaf/bazel.sh
+  Bazel version         : 8.7.0 (Bazel server "Starting local Bazel server
+                          (8.7.0)"; matches ROUND18 environment record and
+                          WORKSPACE_STATUS.txt)
+  Root module           : symlink MODULE.bazel -> build/kernel/kleaf/bzlmod/bazel.MODULE.bazel
+  rules_devicetree      : declared bazel_dep version 0.1.4
+  rules_devicetree pin  : local_path_override -> external/bazel-contrib-rules_devicetree
+                          git HEAD 1664374016a47b392b1a16df5d460479975c3998
+                          (2026-01-26, "Backfill commit SHAs for tagged Git versions")
+  dtc toolchain         : rules_devicetree devicetree toolchain, auto-detected
+                          (@rules_devicetree//devicetree:autodetect_toolchain /
+                          resolved_toolchain); system dtc Version 1.7.0
+  Repo manifest         : Android kernel manifest branch common-android17-6.18,
+                          revision 46a1a5274ff0b40419952c861a8958bba5f28cfc;
+                          the workspace's metadata/repo-manifest-revisions.xml
+                          is the revision-pinned manifest of record.
+
+  MODULE.bazel.lock     : NOT PRESENT at workspace root nor in bzlmod/ directory.
+                          This is reported honestly as a lock-file gap. Exact
+                          pin is nonetheless available from (a) the explicit
+                          bazel_dep version 0.1.4 and (b) the local_path_override
+                          repository's resolved git HEAD, both measured locally
+                          from the already-present tree. No value guessed.
+
+API / target checks (read-only bazel query, all RC=0):
+  @rules_devicetree//devicetree:all  -> dtb, dtbo, dtb_composite,
+      devicetree_library, toolchain_type, resolved_toolchain, toolchain,
+      autodetect_toolchain (all present).
+  //common:dtc_includes_aarch64      -> present; it is a public
+      devicetree_library() in common/BUILD.bazel (line ~1908), with
+      includes=["scripts/dtc/include-prefixes"], deps=["//common:dt-bindings"].
+  Rule attributes confirmed from pinned rule source:
+      dtb(srcs, generate_symbols, out, dtcopts, deps, toolchains)
+      dtbo(srcs, out, dtcopts, deps, toolchains)
+      dtb_composite(base, overlays, out, toolchains)  -- base must carry
+      generate_symbols=True; fdtoverlay must exist in resolved toolchain.
+  Correction applied during work: in rules_devicetree 0.1.4 dtbo is exported
+      from devicetree/dtbo.bzl, NOT from devicetree/dtb.bzl. First BUILD draft
+      loaded dtbo from dtb.bzl and failed analysis; the load was corrected to
+      the actual pinned API (no source change to the pinned rule itself).
+
+------------------------------------------------------------------------------
+3. WORK PACKAGE B — temporary staging and BUILD package
+------------------------------------------------------------------------------
+Result: PASS. Staged only inside the ROUND18 source copy (common/arch/arm64/
+boot/dts/qcom/), as temporary files; all removed in section 7.
+
+Temporary files created (all under common/arch/arm64/boot/dts/qcom/):
+  huawei-dby-w09.dts                (board rev2 candidate, exact main blob)
+  huawei-dby-w09-rootparam.dtso     (rootparam overlay draft, exact main blob)
+  BUILD.bazel                       (temporary rules_devicetree package)
+
+Temporary BUILD content (semantic form; symbols loaded from the pinned API):
+  load("@rules_devicetree//devicetree:dtb.bzl", "dtb")
+  load("@rules_devicetree//devicetree:dtbo.bzl", "dtbo")
+  load("@rules_devicetree//devicetree:dtb_composite.bzl", "dtb_composite")
+  dtb(name="huawei_dby_w09",
+      srcs=["huawei-dby-w09.dts", "sm8250.dtsi"],
+      generate_symbols=True,
+      deps=["//common:dtc_includes_aarch64"])
+  dtbo(name="huawei_dby_w09_rootparam",
+       srcs=["huawei-dby-w09-rootparam.dtso"])
+  dtb_composite(name="huawei_dby_w09_composite",
+                base=":huawei_dby_w09",
+                overlays=[":huawei_dby_w09_rootparam"])
+
+Compliance: board .dts and same-directory sm8250.dtsi both listed in srcs;
+base generates symbols; overlay uses dtbo(); composite uses dtb_composite()
+over base + rootparam; dependency on //common:dtc_includes_aarch64 present.
+No dtbo_image target created; no table id/rev metadata chosen.
+
+The rev2 board DTS includes "sm8250.dtsi" and dt-bindings headers
+(qcom,ids.h, gcc-sm8250.h, rpmhpd.h, rpmh-regulator.h), resolved through the
+devicetree_library dependency. Pre-collision check confirmed none of the three
+temporary filenames existed beforehand, so no pre-existing file was
+overwritten.
+
+------------------------------------------------------------------------------
+4. WORK PACKAGE C — targeted Bazel build (real rules_devicetree actions)
+------------------------------------------------------------------------------
+Result: PASS for all three targets. Only DT targets built; no //common:dby_w09,
+no kernel_build/Image, no dtbo_image.
+
+Target labels:
+  //common/arch/arm64/boot/dts/qcom:huawei_dby_w09
+  //common/arch/arm64/boot/dts/qcom:huawei_dby_w09_rootparam
+  //common/arch/arm64/boot/dts/qcom:huawei_dby_w09_composite
+
+bazel query '<three labels summed>' -> RC 0, all three labels returned.
+bazel cquery --output=files for each -> RC 0 each; outputs:
+  bazel-out/k8-fastbuild/bin/common/arch/arm64/boot/dts/qcom/huawei_dby_w09.dtb
+  bazel-out/k8-fastbuild/bin/common/arch/arm64/boot/dts/qcom/huawei_dby_w09_rootparam.dtbo
+  bazel-out/k8-fastbuild/bin/common/arch/arm64/boot/dts/qcom/huawei_dby_w09_composite.dtb
+
+bazel build results (exact command = ./tools/bazel build <label>):
+  1) :huawei_dby_w09          -> BUILD_RC 0
+     "Build completed successfully, 3 total actions" (1 internal, 2
+     linux-sandbox; base preprocessing+dtc). Output DTB size 145849 B.
+     sha256 0a4a471c8cea3093c25a4da6b26d81cddbc6bfeeb166ac9071476bb3a5e1f4e7
+  2) :huawei_dby_w09_rootparam -> BUILD_RC 0
+     "Build completed successfully, 3 total actions". Output DTBO size 536 B.
+     sha256 8005d2bb6402a77751b68842604f58a985f3ac8de09925f46f733121f97c66a2
+  3) :huawei_dby_w09_composite -> BUILD_RC 0
+     "Build completed successfully, 5 total actions" (includes fdtoverlay
+     mnemonic). Output composite DTB size 146045 B.
+     sha256 a82ca733e5c3005ed4f2beebbc19185391862f6b1d03b77a4b1753984828b0a2
+
+Warnings: no dtc/dts warning text was emitted by the three build actions;
+the only non-pass text was INFO progress. Raw build logs are not uploaded.
+These are genuine pinned-rule outputs, not ROUND22 raw cpp/dtc or ROUND23 raw
+dtc/fdtoverlay results.
+
+------------------------------------------------------------------------------
+5. WORK PACKAGE D — composite property and schema validation
+------------------------------------------------------------------------------
+5a. Composite property checks (fdtget / fdtdump / dtc text of the generated
+    composite DTB; no binary uploaded):
+
+  Root identity:
+    model        = "Huawei MatePad 11 (2021) DBY-W09"
+    compatible   = "huawei,dby-w09" "qcom,sm8250"
+    qcom,board-id= <0 0>   (SoC DTB board id kept at zero, as designed)
+
+  /rootparam five values (composite), matching the VG candidate:
+    qcom,boardid      = 8 2 9 8
+    qcom,board_name   = "DBY_W09_VG"
+    qcom,product_name = "DBY-W09"
+    hardware_version  = "SH1DBSLM"
+    huawei,modem_id   = <0xffffffff 0x00000000>
+  The raw rootparam DTBO __overlay__ carries the identical five values and
+  targets /rootparam via fragment@0. Caveat preserved verbatim from the
+  taskbook and review: VG runtime selection is UNKNOWN; overlay
+  qcom,board-id is distinct from Android dt_table_entry.id/rev, and no dt
+  table metadata was chosen in this round.
+
+  UFS Host node (compatible qcom,sm8250-ufshc; MMIO node path redacted):
+    status            = "okay"
+    power-domains     = <phandle 0x34 idx 6, phandle 0x30 idx 4>
+        phandle 0x34 resolves to qcom,sm8250-rpmhpd (RPMhPD controller);
+            index 6 = RPMHPD_MMCX  (qcom,rpmhpd.h: RPMHPD_MMCX=6)
+        phandle 0x30 resolves to qcom,gcc-sm8250 (GCC);
+            index 4 = UFS_PHY_GDSC (gcc-sm8250.h: UFS_PHY_GDSC=4)
+        => order is RPMhPD MMCX first, GCC UFS_PHY_GDSC second: MATCH.
+    vcc-supply, vccq-supply, vccq2-supply             : all present
+    qcom,vccq-parent-supply, qcom,vddp-ref-clk-supply : present
+    vdd-hba-supply : NOT PRESENT (fdtget FDT_ERR_NOTFOUND): MATCH (must be absent)
+
+  UFS PHY node (compatible qcom,sm8250-qmp-ufs-phy; MMIO node path redacted):
+    power-domains = <phandle 0x30 idx 4>  => GCC UFS_PHY_GDSC only: MATCH
+    status = "okay"
+    vdda-phy-supply present; vdda-phy-always-on boolean present;
+    vdda-pll-supply present: MATCH
+
+  Property-summary: all taskbook section-6 property assertions PASS on the
+  composite produced by the pinned Kleaf rules. power-domain indices are
+  logical binding indices (6=MMCX, 4=UFS_PHY_GDSC), not physical addresses.
+
+5b. DT schema validation (narrowest supported; dtc syntax pass is NOT treated
+    as schema PASS):
+
+  Tooling: round18-venv dtschema 2026.9 dt-validate; processed schema
+  Documentation/devicetree/bindings/processed-schema.json
+  sha256 447e4c45e86f00078dd788ce114a16239f6905d29327625ad5d255f8c83a9bc9
+  (25,084,938 B; dtschema version cross-checked with the ROUND18 record).
+
+  Run 1 — narrow subset most relevant to this composite:
+    dt-validate -s processed-schema.json -l '<UFS / PHY / GCC / RPMhPD /
+      power-domain / PM8150 regulator schema ids>' <composite.dtb>
+    DT_VALIDATE_NARROW_RC = 0
+    Diagnostics (all reproduced, none suppressed): 1 line
+      ufshc (qcom,sm8250-ufshc, node path redacted): Unevaluated properties are not
+      allowed ('vcc-voltage-level' was unexpected)  [from
+      qcom,sc7180-ufshc.yaml]
+    Source of vcc-voltage-level: the main rev2 board candidate itself
+    (line ~301, <2504000 2950000>). It is not from sm8250.dtsi and was not
+    introduced by staging. Note: dt-validate returns 0 even with this
+    diagnostic, so RC 0 is reported alongside the diagnostic rather than
+    as a silent PASS.
+
+  Run 2 — compatible-match mode (-c) on the same narrow subset:
+    DT_VALIDATE_COMPAT_RC = 0, 0 diagnostics.
+
+  Run 3 — full (unlimited) dt-validate for completeness:
+    DT_VALIDATE_FULL_RC = 0, 8 diagnostic nodes.
+    - 2 for ufshc vcc-voltage-level (type + unevaluated) — same root cause
+      as Run 1.
+    - 6 for the /rootparam five logical values plus the same node: dtschema
+      types the vendor string/cell payloads as byte blobs
+      ("is not of type 'object','integer','array','boolean','null'"). This is
+      a known limitation of generic dtschema against Huawei vendor /rootparam
+      properties; it is recorded, not suppressed, and does not change the
+      property-level checks in 5a.
+
+  Schema verdict: PARTIAL / with diagnostics. The UFS host, PHY, rail and
+  power-domain structures validate against the pinned binding set, but the
+  composite does NOT come back clean: the vcc-voltage-level property is
+  rejected by qcom,sc7180-ufshc.yaml and the vendor /rootparam payload draws
+  generic type diagnostics. Per the taskbook, a dtc/build success is not a
+  schema PASS; both diagnostics are surfaced here for 1号 AI review.
+
+------------------------------------------------------------------------------
+6. RESULT SUMMARY
+------------------------------------------------------------------------------
+  START gate                         SATISFIED (reports + review verified)
+  Pin (Bazel / rules_devicetree)     PASS  (8.7.0 / 0.1.4 @1664374016a4;
+                                           lock file absent, disclosed)
+  Temporary staging + BUILD          PASS
+  bazel query / cquery                PASS (3 targets)
+  bazel build base DTB               PASS (RC 0, 145849 B)
+  bazel build rootparam DTBO         PASS (RC 0, 536 B)
+  bazel build composite DTB          PASS (RC 0, 146045 B)
+  Composite property checks          PASS (all taskbook section-6 assertions)
+  Schema validation                  PARTIAL / diagnostics present (see 5b)
+  Repeatable DT target builds        YES under the pinned local ruleset
+  Cleanup + source integrity         PASS (section 7)
+
+Interpretation (matches the review record): ROUND27 passing the three DT
+target builds means only that the specified DT targets and composite/schema
+checks run in the pinned local Kleaf toolchain. It does NOT close the ARC
+corner-equivalence, final memory/ABL handoff, DTBO table-selection, AVB, or
+device-boot gates. HOS4.3 ABL table id/rev matching remains UNKNOWN.
+
+------------------------------------------------------------------------------
+7. CLEANUP AND INTEGRITY  (taskbook section 7)
+------------------------------------------------------------------------------
+Removed before stopping:
+  common/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts         -> gone
+  common/arch/arm64/boot/dts/qcom/huawei-dby-w09-rootparam.dtso -> gone
+  common/arch/arm64/boot/dts/qcom/BUILD.bazel                -> gone
+Post-cleanup verification:
+  - git status --short -- arch/arm64/boot/dts/qcom/ : empty (clean)
+  - full common git status AFTER == baseline BEFORE, line for line:
+      M  BUILD.bazel
+      M  Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+      M  Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+      M  Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+      M  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+      M  drivers/ufs/host/ufs-qcom.c
+      M  drivers/ufs/host/ufs-qcom.h
+      ?? arch/arm64/configs/dby_w09_storage_first.fragment
+    No new temporary files, no tracked source/config/patch/Image/DTS
+    candidate changed by this round. Generated outputs remain only under the
+    disposable Bazel out/ tree.
+
+------------------------------------------------------------------------------
+8. BOUNDARIES HONORED  (taskbook sections 2 and 9)
+------------------------------------------------------------------------------
+No kernel_build / Image / olddefconfig / menuconfig / full kernel compile.
+No dtbo_image target and no table id/rev selection.
+No firmware / AVB / vbmeta / boot.img modification, signing or packing.
+No device / ADB / fastboot / recovery / reboot / unlock / root / flash /
+partition write, and no device contact at any point.
+No downloads, installs, repo sync, source fetch or WSL reconfiguration.
+No tracked source, Kconfig, .config, storage fragment or patch modified.
+No change to main project DTS sources, the protected
+ack18-dby-w09-dts-draft branch, ai-parallel/stagea-port-until-boot, or PR #1.
+Only the single sanitized report above is uploaded; no binaries or source.
+Stop rule observed: work ends after this one report is uploaded.
+
+END OF REPORT

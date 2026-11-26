@@ -1,0 +1,113 @@
+ROUND11 — HOS4.3 PM8150 RPMh parent-supply topology (read-only findings)
+Date: 2026-11-24
+Task: firmware-analysis/round11/AGENT_TASK.md
+Scope: HOS4.3 base boot FDT work copy only (ROUND3 dtb_work/boot_fdt_candidate_0.dtb).
+No local absolute path published. No device access. No firmware re-extraction.
+
+======================================================================
+1. Tool availability (safety gate)
+======================================================================
+TOOL_FOUND = YES (already-installed, previously-reviewed function)
+- Parser: ROUND3 Analyze-DBY-W09-DeviceTree.py (parse_fdt_header / decode_structure),
+  loaded via importlib by ROUND9's audited Build-Round9-Resolution.py pattern.
+- NOT a new parser. No tool installed, no EXE/DLL downloaded, no WSL,
+  no PowerShell policy change, no security-software change.
+- Input: existing ROUND3 base FDT work copy; not modified, not re-extracted.
+- FDT structure check: totalsize=556524, node entries=3471, prop paths=3281,
+  structure errors = NONE. Base phandle index built = 1693 entries.
+
+======================================================================
+2. Scope actually inspected
+======================================================================
+- Provider root: /soc/rsc@18200000 (apps_rsc equivalent) — PRESENT.
+- Subtree property paths inspected: 109 (entire rsc subtree property set).
+- Property-name filter: any prop whose name contains supply / vin / parent.
+- Also: whole-FDT property-name scan for vdd-s*-supply / vin-supply /
+  vph-pwr-supply (names only, no unrelated rail enumeration).
+- NOT inspected: ramdisk, EROFS, DTBO, vendor/odm, peripherals, PMIC GPIOs,
+  unrelated regulator rails. No ROUND1-ROUND10 work repeated.
+
+======================================================================
+3. FOUND — parent input-supply relationships (phandle resolved)
+======================================================================
+These are the direct equivalent of a "parent/input supply" relation. All
+targets resolved through the base phandle table to RPMh regulator child
+nodes (PMIC rail level regulators), NOT to a fixed regulator and NOT to an
+external always-on supply.
+
+[A] explicit *-parent-supply properties (4):
+  1) /soc/rsc@18200000/rpmh-regulator-cxlvl
+       pm8150_s3_level-parent-supply
+         -> /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level
+  2) /soc/rsc@18200000/rpmh-regulator-cxlvl
+       pm8150_s3_level_ao-parent-supply
+         -> /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level-ao
+  3) /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+       pm8150a_s4_level-parent-supply
+         -> /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-mmcx-sup-level
+  4) /soc/rsc@18200000/rpmh-regulator-mmcxlvl
+       pm8150a_s4_level_ao-parent-supply
+         -> /soc/rsc@18200000/rpmh-regulator-mxlvl/regulator-pm8150a-s3-level-ao
+     (item 2 and 4 share the same target node — one input repeated across
+      two provider groups.)
+
+[B] proxy-supply properties (6) — same supply family but SEMANTICALLY
+    distinct from a parent input: each points to a regulator child under its
+    OWN group, consistent with the RPMh proxy-regulator mechanism rather
+    than an input-voltage parent. Reported for completeness; NOT counted as
+    evidence of an external input supply:
+  - rpmh-regulator-cxlvl -> .../regulator-pm8150-s3-mmcx-sup-level
+  - rpmh-regulator-mmcxlvl -> .../regulator-pm8150a-s4-level
+  - rpmh-regulator-ldoa5 -> .../regulator-pm8150-l5   (regulator-min 880000 uV)
+  - rpmh-regulator-ldoa9 -> .../regulator-pm8150-l9   (regulator-min 1200000 uV)
+  - rpmh-regulator-ldoa14 -> .../regulator-pm8150-l14 (regulator-min 1800000 uV)
+  - rpmh-regulator-ldoc11 -> .../regulator-pm8150a-l11 (regulator-min 3104000 uV)
+
+Generic voltages observed on the resolved *proxy* targets only: 0.88 V, 1.20 V,
+1.80 V, 3.104 V (regulator-min-microvolt). The *-parent-supply target nodes
+(*-level regulators) carry no fixed microvolt range; they use voltage-level
+indices, so no generic voltage is reported for those.
+
+======================================================================
+4. NOT_FOUND_IN_INSPECTED_SCOPE
+======================================================================
+- NO property named vdd-s1-supply .. vdd-s10-supply exists anywhere in the
+  base FDT (whole-FDT property-name scan, 0 hits).
+- NO vin-supply and NO vph-pwr-supply property exists anywhere in the base
+  FDT (0 hits).
+- This is a verified NOT_FOUND: the tool successfully parsed the full base
+  FDT and scanned all property names. It is NOT inferred from the ROUND7 CSV.
+
+======================================================================
+5. BLOCKED / UNKNOWN / NOT_RUN
+======================================================================
+- BLOCKED: NONE. (Tool available, FDT readable, phandle resolution supported,
+  scope complete.)
+- UNKNOWN: NONE for the 11 properties above — every phandle resolved to a
+  named node in the base phandle table.
+- NOT_RUN: fixed-regulator/vph_pwr topology reconstruction; any check outside
+  the base FDT (DTBO, ramdisk, EROFS, live/runtime FDT, vendor display service,
+  ACK source tree). These were not attempted by design.
+
+======================================================================
+6. Interpretation limits (fail-closed)
+======================================================================
+- The public same-device Linux 7.0 DTS uses fixed 3.7 V vph_pwr and
+  vdd-s1..s10-supply links checked against HOS4.2. Those property names and
+  that topology are NOT present in this HOS4.3 base FDT. They must not be
+  copied into the ACK DBY-W09 DTS as if locally confirmed.
+- The local topology is RPMh-internal: parent inputs point from one level
+  regulator group to another level regulator's rail node. This does not
+  prove or disprove any external vph_pwr / fixed-supply stage; that remains
+  UNKNOWN because it was not in scope.
+- proxy-supply is reported but explicitly NOT equated with an input-voltage
+  parent. Do not convert it into vdd-s*-supply in a downstream DTS.
+- This is a base boot-FDT static fact only. It is not proof of runtime rail
+  selection, and does not change ACTIVE_PROFILE (still UNKNOWN).
+
+======================================================================
+7. Deliverable boundary
+======================================================================
+Only this UTF-8 text is uploaded. No DTB/DTBO/FDT/binary, no complete local
+path, no local SHA-256, no serial/MAC/IMEI, no token, no full hardware dump.
+PR #1 untouched; main and ACK DTS draft branch untouched.

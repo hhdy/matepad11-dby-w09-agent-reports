@@ -1,0 +1,574 @@
+AI2-ROUND30 — Stage A 实际代码集成：QMP UFS PHY vdda-phy-always-on + 真实编译
+================================================================================
+
+任务编号      : AI2-ROUND30
+任务归属      : 2号 AI 专属任务书（下发方 2号 AI；执行方 用户本地 Agent）
+任务性质      : 实际内核移植编程与验证（真实 patch / binding / Kleaf 编译）
+固定 ACK      : tag android17-6.18.33_r00 / commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+Stage A 分支  : ai-parallel/stagea-port-until-boot
+报告分支      : firmware-audit-v1
+唯一报告路径  : firmware-analysis/round30/AI2_ROUND30_STAGEA_QMP_PHY_IMPLEMENTATION_REPORT.txt
+
+角色隔离：本任务只属于 2号 AI。未合并、代执行或覆盖 1号 AI 的任务；
+未修改 main、firmware-audit-v1 内容分支、ack18-dby-w09-dts-draft 或 PR #1。
+本 Agent 执行的是"本地真实执行与取证"，未改动 2号 AI 的源码设计意图。
+
+--------------------------------------------------------------------------------
+0. 结论摘要
+--------------------------------------------------------------------------------
+A. 两个 ROUND63 候选已**真实**集成到精确 ACK commit 的 disposable 工作区：
+   完整 Stage A 序列 9 个 patch，逐个 `git apply --check` / `git apply` 全部 rc=0，
+   每步后 `git diff --check` rc=0；最终 tracked diff = 7 文件 +477/-7，外加 1 个新增
+   config fragment。工作树 diff SHA-256 = 045341234db90a150d559a1c256bf51e794eb74a9f23c10c9e223c57ae2f1281
+   （与 hosted 记录 d79a35bb… 的差异已定位为"新增文件是否纳入 diff"，见 §4.4）。
+
+B. 任务书锁定的 driver draft（blob a06b7d3f）**在默认上下文下无法 apply**，
+   已用可复现的最小实验定位为 hunk 结构缺陷（首个 hunk 以新增行结束、无尾随上下文），
+   并非 tree 不匹配——该 patch 声明的源 blob 8af777f7 与 ACK 树逐字节一致。
+   分支上 2号 AI 预置的重基版（blob 99fffb10）正是该缺陷的最小机械修正，本报告给出了
+   两者的等价性验证，并以重基版完成真实集成。
+
+C. driver patch 经 ACK 自带 scripts/checkpatch.pl `--no-tree --no-signoff --strict`
+   检查为 **0 errors / 0 warnings / 0 checks**（224 行）；
+   去掉 CAMELCASE 忽略后仍为 0/0/0，即该忽略在本内核版本上并非必需。
+
+D. binding：真实 `make ARCH=arm64 dt_binding_check`（强制重建 processed-schema.json）
+   rc=0 且零诊断；`dt-doc-validate` rc=0 零输出；`yamllint` rc=0；
+   修改前后 binding 诊断完全一致（0 行 vs 0 行），未引入新诊断，也未放松任何闭合规则。
+
+E. 四组 fixture 在两版 dtschema（2023.9 / 2026.9）下行为一致：
+   属性缺失 → 通过；布尔存在 → 通过；类型错误（<1>）→ 被拒且诊断点名 vdda-phy-always-on；
+   未声明属性 → 被拒且诊断点名该属性。**重要披露**：dtschema 的 dt-validate 在
+   2023.9 与 2026.9 上对校验错误均返回 0，工具本身没有退出码闸门，因此"必须失败"
+   由诊断断言闸门（脚本退出码）证明，而非工具退出码，详见 §7.4。
+
+F. Kleaf：`//common:dby_w09` 目标 query/cquery 均解析成功（outs = .config/Image/
+   System.map/vmlinux，post_defconfig_fragments 含 storage-first fragment）；
+   真实全量编译 **通过**：`tools/bazel build //common:dby_w09 --jobs=8
+   --local_ram_resources=6144` → **BUILD_RC=0**，775 actions，370.197 s
+   （Critical Path 355.83 s），一次成功、无首个错误需要修正；产出 Image / System.map /
+   vmlinux / .config 四件，身份见 §8.3，驱动确实进入产物的证据见 §8.4。
+
+G. ROUND58 config validator：11/11 单元测试通过；并以编译**真实产出**的 .config
+   作为输入跑 `check_dby_w09_config.py` → **RESULT: PASS**，**33/33** 必需符号均为
+   `=y` 且无重复赋值（JSON：`ok=true, errors=[], missing=[], not_y=[]`）。
+
+H. 独立保留的阻塞项（未因编译成功而关闭）：PM8150 L5 物理输入 parent supply 未证实；
+   HOS ARC/proxy 的临时 100mA boot-time proxy vote 与 late_initcall_sync 清理语义未移植；
+   stock DTBO entry 8 的发现不证明当前启动选择 entry 8；ROUND29 Huawei root
+   compatible/schema 实验未合入；Phase E/F 未关闭，设备仍不可宣称可启动。
+
+--------------------------------------------------------------------------------
+1. 执行环境（实测）
+--------------------------------------------------------------------------------
+宿主            : Windows 11 Pro for Workstations（AMD64）
+Linux 运行时    : WSL2 / Ubuntu 24.04.5 LTS，内核 6.6.114.1-microsoft-standard-WSL2
+                  发行版磁盘位于 D:\WSL\Ubuntu-24.04（95 GB ext4.vhdx）
+CPU / 内存      : 12 逻辑核 / 7.5 GiB（wsl 视图）
+工作区          : /home/kerneldev/work/matepad11/ack-6.18.33-a30 （本轮新建的 disposable 副本，
+                  源为 /home/kerneldev/work/matepad11/ack-6.18.33，HEAD 固定 8ad08f75，复制时 status=0）
+另设            : a30-apply（common 的 git worktree，同一 commit，用于源码级快速取证）
+Bazel           : tools/bazel 8.7.0（Kleaf wrapper）
+Clang（预置）   : r584948c（prebuilts/clang/host/linux-x86，manifest 提供）
+dtc             : DTC 1.7.0
+dtschema        : 2023.9（分支既有 hosted 基线）与 2026.9（第二复核版本）
+yamllint        : 2023.9 venv 内可用；2026.9 venv 内不可用
+perl            : 5.38.2
+
+环境披露（如实记录，不掩饰）：
+  - 默认 WSL 发行版 `Ubuntu`（BasePath 指向 C:\...\wsl\{92f14ff4-…}）的 ext4.vhdx
+    在本轮开始前已不存在，`wsl -e …` 与 `wsl -d Ubuntu` 均报
+    Wsl/Service/CreateInstance/MountDisk/HCS/ERROR_PATH_NOT_FOUND。
+    实际 manifest 工作区在 `Ubuntu-24.04` 中，本轮全部工作均在该发行版内完成，
+    未做任何 WSL 修复、注册表改动或发行版重装。
+  - 构建期间 WSL 偶发返回 0x8007274c（服务繁忙），已重试成功，不影响结果真实性。
+
+--------------------------------------------------------------------------------
+2. 输入核对（任务书 §1）
+--------------------------------------------------------------------------------
+2.1 逐项 blob 校验（git hash-object -t blob，与任务书指定 SHA 比对）
+
+  输入                                                      实测 blob                                 判定
+  driver patch 0001 (draft)                                 a06b7d3fc19e0b23895b0013ab9ac322d84cdda5  一致
+  binding patch 0002                                        a6668eebe293f9a35e9c08d6be4f37c4340e7ddd  一致
+  round63 说明 md                                           bc91a1c5b8112d9466e6b5950ae93ca246c0d366  一致
+  board review draft dts/dby-w09-ack18-board.dts.draft      3c35a806…（main 分支现状）                不一致
+                                                            c209d519614fb0ff89b042ce274191b20120a09a  一致（本地既有副本）
+
+2.2 board draft 偏差的处置（必须披露）
+  从 main 分支取回的 dts/dby-w09-ack18-board.dts.draft 为 15,283 B / blob 3c35a806…，
+  与任务书指定 c209d519… 不符——main 上该文件已被更晚的草稿取代。
+  按任务书"blob 不符即停止该输入应用、不得改用旧版"的要求：
+    - 未把 3c35a806… 用于任何集成；
+    - 指定 blob c209d519… 的字节在本地既有副本中确实存在（14,588 B），已用其完成身份核对；
+    - **本轮未对任何 DTS 源文件做修改**（任务书 §6 亦未授权修改正式 DTS），
+      因此该 draft 仅作身份核对，未进入应用链。此偏差不构成集成阻塞，但如实上报。
+
+2.3 固定 commit 下的源文件身份（在精确 ACK checkout 内以 git rev-parse HEAD:<path> 校验）
+
+  Documentation/devicetree/bindings/ufs/qcom,ufs.yaml                 1dd41f6d5258014d59c8c8005bc54f7994351a52  OK
+  Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml          962dffcd28b44b3489be5615c75e7270a0c45dc4  OK
+  drivers/ufs/host/ufs-qcom.c                                         a80c6998406dbc88c25dbd9977699ba481207efe  OK
+  drivers/ufs/host/ufs-qcom.h                                         5f979daabd5323184eeee137cc8ecc076193979e  OK
+  BUILD.bazel                                                          3c8178ebce1f27f2c417e4aeaa00fc7001a96be6  OK
+  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c                              8af777f7ddd0385a6bb9d9b9563f0e6329699cd3  OK
+  Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml fba7b2549ddee7ee4e048277a11a7da053d52887  OK
+
+  其中 phy 驱动 blob 8af777f7 与 driver draft 头部声明的 "Source blob" 完全一致，
+  这是判定 §3 缺陷性质（hunk 结构问题，而非版本漂移）的关键前提。
+
+2.4 读取的既有材料
+  - kernel-baseline/round61/ROUND61_LONG_RUNNING_STAGEA_MISSION.md、PROGRESS.md
+  - kernel-baseline/round63/round63-ufs-phy-always-on-lifecycle-compatibility.md
+  - kernel-baseline/round61/round63-ufs-phy-integration.md（2号 AI 的集成与复核记录）
+  - .github/workflows/round61-ack-ufs-validation.yml（权威应用顺序与 schema 断言方式）
+  - kernel-baseline/round61/patches/*（分支权威 patch series，含重基后的 ROUND63 两件）
+
+--------------------------------------------------------------------------------
+3. 锁定 draft 无法 apply 的根因（可复现）
+--------------------------------------------------------------------------------
+3.1 现象（在精确 ACK checkout、工作树干净、源 blob 一致的前提下）
+
+  git apply --check --verbose <pinned draft>
+    Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+    error: while searching for:
+    #include <linux/phy/phy.h>
+    #include <linux/platform_device.h>
+    #include <linux/regulator/consumer.h>
+    #include <linux/reset.h>
+    #include <linux/slab.h>
+    error: patch failed: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c:16
+    error: drivers/phy/qualcomm/phy-qcom-qmp-ufs.c: patch does not apply
+    DRAFT_CHECK_RC=1
+
+  patch -p1 --dry-run:  Hunk #1 FAILED at 16.  1 out of 5 hunks FAILED
+  （同一 patch 的其余 4 个源码 hunk 可应用）
+
+3.2 排除性验证
+  - 文件内容不是原因：`git rev-parse HEAD:drivers/phy/qualcomm/phy-qcom-qmp-ufs.c`
+    = 8af777f7… = patch 头声明的源 blob；逐字节比较 hunk 的 5 行上下文与文件 16–20 行，
+    结果完全相同（含行尾，无 CR、无尾随空格）。
+  - 不是空白策略：`--ignore-whitespace` 仍失败；`--recount` 仍失败。
+  - 不是位置偏移：`git apply --check -C1` 与 `-C0` 均 rc=0。
+
+3.3 根因（最小复现）
+  该 patch 的首个 hunk 形如：
+      @@ -16,5 +16,6 @@
+       <5 行 include 上下文>
+      +#include <linux/string.h>
+      （hunk 到此结束，之后直接是下一个 @@）
+  即"以新增行结尾、且没有尾随上下文"。对同一 6 行内容做对照实验：
+      A 组（无尾随上下文）→ git apply 失败、patch(1) 失败
+      B 组（补一行尾随空行，@@ -15,7 +15,8 @@）→ git apply 通过
+  结论：失败来自 hunk 尾部上下文不足，与 ACK 版本、文件内容无关。
+  这与 2号 AI 在 round63-ufs-phy-integration.md §9 记录的 hosted run 45441391557
+  结论一致（"insufficient include-block context … its later four source hunks applied
+  cleanly"），本轮以本地最小实验独立复现并补上了对照证明。
+
+3.4 修正版与等价性
+  分支权威重基版 kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch：
+    blob 99fffb10603b38bc30a0e6c9db99b0e9888a7b82（7,402 B）
+    - 首 hunk 改为 @@ -15,7 +15,8 @@，以上一行 `#include <linux/of_address.h>` 与
+      下一行空行为锚；
+    - 一处续行对齐修正（qphy_clrbits 的 SW_PWRDN 参数）；
+    - 提交说明措辞调整（去掉原始 hash 行、折行）。
+  等价性验证：以 `git apply -C1` 应用锁定 draft 得到的驱动文件 blob，与以重基版正常
+  应用得到的同一文件 blob 相同（两者对源码的语义改动一致）；差异仅在 hunk 上下文与
+  非语义文本。本轮因此可以既遵守"不得改用旧版"，又得到可 apply 的等价实现。
+
+--------------------------------------------------------------------------------
+4. 真实集成（任务书 §2）
+--------------------------------------------------------------------------------
+4.1 工作区与方法
+  - ack-6.18.33（基线）保持 pristine：HEAD=8ad08f75…，status 0 行。
+  - 新建 ack-6.18.33-a30（完整 repo 工作区，含 build/prebuilts/tools，供 Kleaf 使用）。
+  - 另建 a30-apply（common 的 git worktree，同 commit），用于源码级快速取证。
+  - 两处均从同一 commit 起步，应用同一 9-patch 序列，最终 `git diff --binary` 的
+    SHA-256 完全相同（04534123…），互为一致性校验。
+
+4.2 有序应用（权威顺序取自分支 workflow）——逐个真实执行
+
+  #  文件                                                                   blob       check apply diff--check
+  1  kernel-baseline/round36/0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft  dad87ef8…  0  0  0
+  2  kernel-baseline/round61/patches/round52-0001-context-corrected.patch      e47219d4…  0  0  0
+  3  kernel-baseline/round61/patches/round36-corrected-power-domain-range.patch 79b00af9…  0  0  0
+  4  kernel-baseline/round61/patches/round32-corrected-sc7180-clock-names.patch  （见日志）  0  0  0
+  5  kernel-baseline/round61/patches/round33-checkpatch-clean.patch            f1d54e5e…  0  0  0
+  6  kernel-baseline/round61/patches/round52-0002-checkpatch-clean.patch       7e5df841…  0  0  0
+  7  kernel-baseline/round61/patches/round63-0002-qmp-ufs-phy-binding.patch    a6668eeb…  0  0  0
+  8  kernel-baseline/round61/patches/round63-0001-phy-qcom-qmp-ufs-always-on.patch 99fffb10…  0  0  0
+  9  kernel-baseline/round61/patches/round58-kleaf-target.patch                dc8f4b59…  0  0  0
+
+  两个 ROUND63 patch 的位置满足任务书 §1.5：位于 UFS binding/driver 改动之后、
+  板级 DTS/schema/DTB 验证之前。
+
+4.3 最终 diff（tracked）
+  BUILD.bazel                                                |  19 ++
+  .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml            |   5 +
+  .../bindings/ufs/qcom,sc7180-ufshc.yaml                    |   1 +
+  .../bindings/ufs/qcom,ufs-common.yaml                      |  51 +++-
+  drivers/phy/qualcomm/phy-qcom-qmp-ufs.c                    | 123 ++++++++-
+  drivers/ufs/host/ufs-qcom.c                                | 281 +++++++++++++++++++++
+  drivers/ufs/host/ufs-qcom.h                                |   4 +
+  7 files changed, 477 insertions(+), 7 deletions(-)
+  另：arch/arm64/configs/dby_w09_storage_first.fragment（round58 patch 新增文件，untracked）
+
+4.4 与 hosted 记录 diff SHA 的差异（已定位，非内容差异）
+  hosted run 记录的应用后 diff SHA-256 = d79a35bbfe6a44bfe9aa2e69c32caac0e3f2862349f26299d190f0bf092eef65
+  本地 tracked diff SHA-256            = 045341234db90a150d559a1c256bf51e794eb74a9f23c10c9e223c57ae2f1281
+  原因：round58 patch 以"新增文件"方式引入 config fragment，`git apply` 后该文件处于
+  untracked 状态，默认 `git diff` 不包含它；hosted 侧在生成 diff 前把该文件纳入索引视图。
+  逐文件 diffstat/numstat 与 hosted 描述完全吻合（123/5/281/18/19 + fragment），
+  故差异仅为"是否计入新文件"，不涉及源码内容。
+
+4.5 checkpatch（ACK 自带脚本，blob 1c7795765fd3…）
+  perl scripts/checkpatch.pl --no-tree --no-signoff --strict < round33-checkpatch-clean.patch
+    → total: 0 errors, 0 warnings, 0 checks, 232 lines checked     RC=0
+  … < round52-0002-checkpatch-clean.patch
+    → total: 0 errors, 0 warnings, 0 checks, 104 lines checked     RC=0
+  … --ignore CAMELCASE < round63-0001-phy-qcom-qmp-ufs-always-on.patch
+    → total: 0 errors, 0 warnings, 0 checks, 224 lines checked     RC=0
+  同一 ROUND63 patch 去掉 `--ignore CAMELCASE` 后：
+    → total: 0 errors, 0 warnings, 0 checks, 224 lines checked     RC=0
+  即本内核版本的 checkpatch 已不再对既有公有字段 `init_load_uA` 报 CAMELCASE，
+  该忽略项在本轮非必需；未据此修改任何语义，也未隐藏任何警告。
+
+--------------------------------------------------------------------------------
+5. 独立代码逻辑复核（任务书 §2.5 / §2.6 / §2.7）
+--------------------------------------------------------------------------------
+以下结论基于应用后的实际源码（ack-6.18.33-a30/common），不是对 patch 文本的转述。
+
+5.1 property 缺省路径完全保持原状
+  qmp_ufs_regulators_enable(): `if (!qmp->vdda_phy_always_on) return regulator_bulk_enable(num_vregs, vregs);`
+  qmp_ufs_regulators_disable(): 对应 `regulator_bulk_disable(num_vregs, vregs)`
+  → 未配置该属性的节点，enable/disable 与上游实现逐语句等价（无额外 set_load、无额外引用）。
+
+5.2 首次 power-on 只取一个 vdda-phy enable 引用，并恢复 init_load_uA
+  顺序：regulator_set_load(vregs[0], vregs[0].init_load_uA) → 若 !vdda_phy_enabled 则
+  regulator_enable(vregs[0]) 并置 vdda_phy_enabled=true → regulator_bulk_enable(num_vregs-1, &vregs[1])
+  → vdda-phy 单独处理，其余 rail 仍走 bulk helper。
+
+5.3 power-off：其余 rail 正常 disable，vdda-phy 保留 enable、load 归零
+  regulator_bulk_disable(num_vregs-1, &vregs[1]) → 若曾 enable 过则 regulator_set_load(vregs[0], 0)，
+  不调用 regulator_disable(vregs[0])。即 enable 引用保留、负载投票撤销，符合 always-on 语义。
+
+5.4 后续 power-on 恢复 load、不重复 enable
+  `if (!qmp->vdda_phy_enabled)` 保护使第二次及以后不再 regulator_enable；
+  set_load(init_load_uA) 每次都会重新投票（幂等）。
+
+5.5 devm 清理顺序正确
+  qmp_ufs_probe() 内实际顺序（行号为应用后文件）：
+    23  devm_regulator_bulk_get_const(...)   ← 先取得受管 bulk handle
+    39  of_property_read_bool(np, "vdda-phy-always-on")
+    48  devm_add_action_or_reset(dev, qmp_ufs_vdda_phy_cleanup, qmp)  ← 后注册
+    54  qmp_ufs_register_clocks()
+    58  devm_phy_create()
+  devres 采用 LIFO：后注册的 cleanup 先执行，因此 cleanup 一定在 bulk regulator handle
+  释放之前运行，能安全访问 vregs[0].consumer。
+  注册时 vdda_phy_enabled 为 false，`_or_reset` 的即时回滚调用为 no-op，不会误 disable。
+
+5.6 状态位只有一个写入闭环（程序化核对写入点）
+  vdda_phy_enabled: 仅 1877 置 true（regulator_enable 成功之后）、1851 置 false（cleanup 内），
+  无其他写入点 → 不存在重复 enable 或遗忘平衡的路径。
+
+5.7 错误路径不留未平衡 enable/load
+  power_on 的 clk 使能失败 → err_disable_regulators → qmp_ufs_regulators_disable()：
+  其余 rail 撤销、vdda-phy load 归零，但保留 enable（这是 always-on 的稳态，由 §5.5 的
+  cleanup 最终平衡）。regulators_enable 内部失败路径 err_clear_load 亦把 load 归零。
+  → 失败后不存在"load 已投票但无人撤销"或"enable 计数多记一次"的情形。
+
+5.8 拒绝不符合 vdda-phy 首位约束的 regulator list
+  enable/disable 两个 helper 与 probe 三处都校验
+  `cfg->num_vregs < 2 || strcmp(cfg->vreg_list[0].supply, "vdda-phy")` → 返回 -EINVAL
+  （probe 处直接 goto err_node_put），不会把特殊处理套用到错误的 rail 上。
+
+5.9 pinned ACK 的 QMP UFS regulator 列表核对（程序化解析）
+  在 blob 8af777f7 的源文件中解析全部 `static const struct regulator_bulk_data *[]`：
+    LISTS_TOTAL=15，LISTS_OK=15，LISTS_ORDER_VIOLATIONS=0
+  15 组全部恰为 2 项且顺序为 ['vdda-phy', 'vdda-pll']
+  （msm8996 / sa8775p / sc7280 / sc8280xp / sdm845 / sm6115 / sm7150 / sm8150 /
+    sm8250 / sm8350 / sm8450 / sm8475 / sm8550 / sm8650 / sm8750）。
+  → 首位约束假设成立；若未来新增列表违反该顺序，代码会拒绝而不是误用。
+
+5.10 普通 UFS consumer-first remove 路径
+  ufshcd_pltfrm_remove() → ufshcd_remove() → ufshcd_hba_exit() → ufshcd_variant_hba_exit()
+  → vops exit = ufs_qcom_exit() → ufs_qcom_disable_lane_clks(); phy_power_off(); phy_exit()
+  而 PHY 引用由 probe 的 devm_phy_get()（行 1616）持有，直到 driver detach 的 devres
+  阶段才释放 → 消费者先 power_off/phy_exit，再释放 PHY 引用，顺序正确。
+  同时确认 drivers/phy/phy-core.c 中该链接为 `device_link_add(..., DL_FLAG_STATELESS)`
+  （行 789/881/958）：stateless link 不提供"强制先 unbind provider"的受管语义，
+  因此不得声称"强制先解绑 QMP provider 是安全的"。本报告不做该声称。
+
+5.11 一处非语义风格观察（如实记录，未改动）
+  qmp_ufs_power_on() 的结尾 `}` 与随后的 `static int qmp_ufs_phy_calibrate()` 之间
+  没有空行（上游原文件此处有空行，patch 未保留）。checkpatch --strict 对本 patch
+  报 0 checks，因此这不属于任务书 §2.4 要求修复的"新增真实错误"；为避免与分支上
+  已通过 hosted 校验的权威 patch 产生无意义分叉，本轮未改动，仅在此披露。
+
+--------------------------------------------------------------------------------
+6. Binding 修改内容（实际应用的 5 行）
+--------------------------------------------------------------------------------
+  Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+    +  vdda-phy-always-on:
+    +    type: boolean
+    +    description:
+    +      Keep the vdda-phy regulator output enabled when the PHY is powered off.
+  - 放在 vdda-phy-supply 与 vdda-pll-supply 之间；
+  - 未加入 required，属性保持可选；
+  - 该 binding 顶层仍为 `additionalProperties: false`（第 167 行），闭合性未被放松；
+  - 未把 vdda-phy-max-microamp / vdda-pll-max-microamp 加入 DTS 或 schema
+    （ACK SM8250 驱动静态 load 为 89900 / 18800 µA，binding 会严格拒绝这两个未声明属性）。
+
+--------------------------------------------------------------------------------
+7. Binding 与正负验证（任务书 §3）
+--------------------------------------------------------------------------------
+7.1 真实 dt_binding_check（强制重建 processed-schema.json，pipefail）
+  命令：make ARCH=arm64 dt_binding_check DT_SCHEMA_FILES="<5 个 yaml，冒号分隔>"
+  说明：主动删除 processed-schema.json 以强制重建，避免"目标已是最新"造成的假 rc=0。
+  结果：dtschema 2023.9 → RC=0，日志 9 行，0 条 error 类行；
+        dtschema 2026.9 → RC=0，日志 7 行，0 条 error 类行；
+        processed-schema.json 两版分别为 2718e986… 与 11024647…（版本不同故不同）。
+
+7.2 dt-doc-validate（直接调用）
+  5 个文件（ufs-common / qcom,ufs / qcom,ufs-common / sc7180-ufshc / sc8280xp-qmp-ufs-phy）
+  2023.9 → RC=0，输出 0 行；2026.9 → RC=0，输出 0 行。
+
+7.3 yamllint
+  2023.9 venv → RC=0，输出 0 行。
+  2026.9 venv 未安装 yamllint（该 venv 由既有轮次构建）→ 记 NOT_RUN，不以 2023.9 结果替代。
+
+7.4 正负 fixture（4 组，两版都跑）
+
+  fixture                                        ｜ 期望   ｜ 2023.9                                    ｜ 2026.9
+  round63-phy-legacy-no-property（无该属性）      ｜ 通过   ｜ RC=0，输出 0 行                            ｜ 同
+  round63-phy-always-on-valid（布尔存在）         ｜ 通过   ｜ RC=0，输出 0 行                            ｜ 同
+  round63-phy-always-on-invalid-type（=<1>）      ｜ 必须拒 ｜ 输出 3 行，点名 vdda-phy-always-on          ｜ 同（措辞随版本）
+  round63-phy-undeclared-property（未声明属性）    ｜ 必须拒 ｜ 输出 2 行，点名 vdda-phy-always-on-extra    ｜ 同
+
+  负向诊断原文（2023.9）：
+    .../round63-phy-always-on-invalid-type.dtb: ufs-phy@1d87000: vdda-phy-always-on: [[1]] is not of type 'boolean'
+        from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
+    .../round63-phy-undeclared-property.dtb: ufs-phy@1d87000: 'vdda-phy-always-on-extra' does not match any of the regexes: 'pinctrl-[0-9]+'
+        from schema $id: http://devicetree.org/schemas/phy/qcom,sc8280xp-qmp-ufs-phy.yaml#
+
+  **必须披露的工具语义**：本机 dtschema 2023.9 与 2026.9 的 dt-validate 在出现校验错误时
+  退出码仍为 0（工具没有 --error 之类的失败开关；`--help` 中不存在相关选项）。
+  因此"负向 fixture 必须失败"不能以 dt-validate 的退出码证明。
+  本轮的处置：把判定写成显式断言闸门（a35_gate.sh）——
+    正向：输出必须为空；
+    负向：输出必须非空且包含被点名的属性；
+  闸门脚本自身退出码 = 0（TOTAL_FAILURES=0, FIXTURE_GATE=PASS）。
+  同时保留 dt-validate 原始输出与原始退出码，未做任何过滤或改写。
+  未使用 additionalProperties: true / unevaluatedProperties: true，未只验单个临时 schema，
+  未放宽 binding 的任何闭合规则。
+
+7.5 修改前后诊断对比（任务书 §3.4）
+  以 `git show HEAD:…/qcom,sc8280xp-qmp-ufs-phy.yaml` 取原始 binding 单独 dt-doc-validate：
+    修改前 RC=0，输出 0 行
+    修改后 RC=0，输出 0 行
+    diff（前 vs 后）为空
+  → 新增属性未引入任何 schema 诊断，也未掩盖既有诊断。
+
+7.6 upstream 示例
+  dt_binding_check 成功抽取并编译了
+    Documentation/devicetree/bindings/ufs/qcom,ufs.example.dtb
+    Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.example.dtb
+  两者对 processed-schema 直接 dt-validate 均 RC=0、输出 0 行（两版一致），
+  即此前 PROGRESS 中记录的 UFS power-domains / unevaluatedProperties 示例诊断在本轮
+  基线上已不再复现；本轮不以此替代 §7.4 的自包含 fixture 闸门。
+
+--------------------------------------------------------------------------------
+8. Kleaf 编译与回归（任务书 §4）
+--------------------------------------------------------------------------------
+8.1 目标解析（真实 query / cquery）
+  tools/bazel query //common:dby_w09   → //common:dby_w09 (5a5b091)，RC=0
+  tools/bazel cquery //common:dby_w09 --output=label → 命中 1 个目标，RC=0
+  cquery --output=build 显示实际规则：
+    _kernel_build(name="dby_w09", arch="arm64",
+      outs=[".config","Image","System.map","vmlinux"],
+      config="//common:dby_w09_config",
+      srcs=["//common:kernel_aarch64_sources", …])
+  → 目标仍可解析，且 storage-first fragment 通过 post_defconfig_fragments 进入 config 目标。
+
+8.2 编译执行
+  tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  （7.5 GiB WSL 内存下的资源约束；未用单文件语法检查或 synthetic build 代替）
+  日志：`_a30/kleaf_build.log`（脚本内 `set -o pipefail`，未用 tee 吞掉失败）
+  开始 2026-11-25T09:46:04Z；结束 2026-11-25T09:52:14Z；**BUILD_RC=0**
+    INFO: Elapsed time: 370.197s, Critical Path: 355.83s
+    INFO: 775 processes: 523 internal, 252 linux-sandbox.
+    INFO: Build completed successfully, 775 total actions
+    末步 [774 / 775] Building kernel (dby_w09_storage_first.fragment) //common:dby_w09
+  编译器（由 Image 内嵌 banner 反查，不是猜测）：
+    clang 22.0.1，Android (15323222, +pgo +bolt +lto +mlgo, based on r584948c)
+    LLD 22.0.1；Linux version 6.18.33-android17-5-maybe-dirty-4k
+  构建输入：defconfig = gki_defconfig；post_defconfig_fragments =
+    arch/arm64/configs/dby_w09_storage_first.fragment（sha256 940855b7…）
+  编译树：`ack-6.18.33-a30`（41 GiB 完整副本，9 patch 已打齐，git diff --binary
+    sha256 = 04534123…，与取证 worktree 完全一致）
+  产物目录：out/bazel/output_user_root/84e9c80d…/execroot/_main/bazel-out/
+    k8-fastbuild/bin/common/dby_w09
+
+8.3 产物身份
+  Image        44,820,992 B  sha256 36ed275b8a63c716df43219dec50f500780370c2833b8212a552d78b48a4d627
+  System.map    7,610,772 B  sha256 353911b15abf7e951bae6d1fc74a2153a8aab2e57651b9c299bda5294639c4ff
+  vmlinux     230,254,408 B  sha256 b3ea307eb5719179bdcfd93aa4f1bdd766e035b2ea4a17ddbd6321635c164d78
+  .config         238,376 B  sha256 5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7
+
+  Image 头 64 字节：4d5a40fa 19a08d14 00000000 00000000 …（0x38 处 "ARMd" 40000000）
+  与 file(1) 一致：`Linux kernel ARM64 boot executable Image, little-endian, 4K pages`。
+  Module.symvers = 0 B、modules_staging_dir.tar.gz = 67 B：本轮为 make_goals=["Image"]
+  的内建构建，未产模块，与 storage-first 全部 =y 的设计一致。
+  **未上传任何构建产物**，只记录大小与 hash（任务书要求）。
+
+8.4 QMP UFS PHY 对象进入构建的证据
+  (1) 配置层：最终 .config 中 CONFIG_PHY_QCOM_QMP_UFS=y、CONFIG_PHY_QCOM_QMP=y、
+      CONFIG_SCSI_UFS_QCOM=y、CONFIG_SCSI_UFSHCD=y、CONFIG_REGULATOR_QCOM_RPMH=y
+      → 该驱动静态链入 vmlinux，而 Image 由同一 vmlinux 生成。
+  (2) 符号层：System.map 与 vmlinux 的 ELF symtab 同时含
+        ffffffc080963868 t qmp_ufs_vdda_phy_cleanup
+      该符号在 pristine 驱动中根本不存在，是本 patch 新增的 devres cleanup 回调；
+      同处另有 t qmp_ufs_probe / t qmp_ufs_register_clocks / t qmp_ufs_init_all。
+      `qmp_ufs_regulators_enable` 没有独立符号，是 clang 22.0.1 在 -O2 下把它内联进
+      probe（调用点仍留在重定位表里，见 (4)），属内联而非缺失——这一点单独核对过，
+      以免把"符号不存在"误读成"函数没编进去"。
+  (3) 对象层（真实 kbuild 编译，非单文件语法检查）：
+      用 Kleaf 同一把 clang（r584948c / 22.0.1）、同一 defconfig + fragment，在独立
+      `O=out-obj` 目录 `make drivers/phy/qualcomm/phy-qcom-qmp-ufs.o` → rc=0：
+        改后对象 277,056 B  sha256 2a32edab59317660608755a0d46308fb25261d60daf730aa27e035ba32b2e08b
+          symbols=174，含 t qmp_ufs_vdda_phy_cleanup；
+          "vdda-phy-always-on" 出现 1 次；vdda-phy / vdda-pll 各 1 次
+        对照对象（**pristine 源 blob 8af777f7 + 同一份 config**）271,648 B
+          sha256 d97835344a6979e379e5203392808801fb5465ae455bf5990aa808910036b54d
+          symbols=165，无该符号，"vdda-phy-always-on" 计数 = 0
+      对照严格性：两侧 .config 逐符号 diff **delta=0 行**；唯一差别是源文件本身。
+      段尺寸：.text 3,036 → 3,796 B；.rodata.str1.1 14,697 → 14,950 B；
+              Total 119,424 → 122,031 B
+  (4) 重定位层（证明新语义真的进了调用图，而不只是残留字符串）：
+        改后 .text 重定位：regulator_set_load ×4、regulator_enable ×1、
+                          regulator_disable ×1、regulator_bulk_enable ×2
+        对照 .text 重定位：以上四项 0 / 0 / 0 / 1
+      即"首次 power-on 单次 enable + set_load、power-off 保留 enable 且 load 归零"
+      这条路径确实被编译成代码，不是被死代码消除掉。
+  (5) 宿主工具偏差（如实披露）：独立 `O=` 目录首次编译在 scripts/gendwarfksyms 处
+      失败，根因是宿主机没有 dwarf.h（libdw 头未安装）。处置是在**这一个独立校验用**
+      .config 里关掉 CONFIG_GENDWARFKSYMS（纯宿主工具开关，不参与 PHY 对象代码生成），
+      Kleaf 全量构建不受影响——Kleaf 沙箱内自带 musl sysroot 与 dwarf.h。
+      该独立 .config 与 Kleaf 产出的 .config 之间有 64 行符号差异，全部是
+      Rust 工具链探测（CONFIG_RUST/RUSTC_*，本机无 rustc）与 GENKSYMS/PAHOLE 版本类
+      宿主项；PHY / UFS / REGULATOR / SCSI 相关符号两侧取值完全相同（已逐条列出比对）。
+
+8.5 ROUND58 config validator 回归
+  输入：编译**真实产出**的 .config（副本 `_a30/kleaf_dby_w09.config`，
+        sha256 5f7fd8b32a4127b7ca10d2333d71e6d10aec7a566cf886251f7bc2af253366d7）
+  `python3 kernel-baseline/round61/check_dby_w09_config.py <config>` →
+    CONFIG_VALIDATOR_RC=0
+    PASS: all 33 required storage-first symbols are present as =y;
+          no duplicate assignments found.
+    RESULT: PASS
+  `--json` → {"checked_required":33,"errors":[],"info":[],"missing":[],"not_y":[],"ok":true}
+  单元测试：`python3 -m unittest discover -s kernel-baseline/round61/tests -v`
+    Ran 11 tests … OK（UNITTEST_RC=0）
+    helper blob a399e3e7…，tests blob 7851b3dd…（与 ROUND58 同一对象，未被本轮改动）
+
+--------------------------------------------------------------------------------
+9. Stage A patch series 与持久化（任务书 §5）
+--------------------------------------------------------------------------------
+  内核树：仍为 disposable。**未向 ACK 仓库提交任何 commit**；已应用内容以
+    `_a30/round30-stagea-applied.diff`（19,084 B，sha256 04534123…）留档。
+
+  报告仓分支 `ai-parallel/stagea-port-until-boot`（真实 git 提交 + 推送）：
+    commit 24880326da85ba26efc33fca3c00a319a6484d42
+      "AI2-ROUND30: record real QMP UFS PHY integration and dby_w09 Image build"
+    父提交 40f5555bc78fc54ee17c5b12f1294c43368ea30c（2号 AI 的指派提交）
+    推送：40f5555..2488032  HEAD -> ai-parallel/stagea-port-until-boot，rc=0
+    `git ls-remote` 复核远端 ref = 24880326da85ba…（与本地一致，工作区 status 0 行）
+    变更：5 文件、+279 行、0 删除
+      A kernel-baseline/round61/round30-stagea-ufs-phy-implementation.md   (145 行)
+      A kernel-baseline/round61/round30-stagea-series.txt                  ( 25 行)
+      A kernel-baseline/round61/fixtures/round63-phy-undeclared-property.dts (38 行)
+      M kernel-baseline/round61/round63-ufs-phy-integration.md             (+54 行，新增 §10)
+      M kernel-baseline/round61/PROGRESS.md                                (+17 行)
+    `round30-stagea-series.txt` 的内容：9 个 patch 的**顺序、git blob、sha256**，
+    以及 27/27 全部为 0 的 check/apply/diff-check 结果；另附锁定 draft a06b7d3f 的
+    "未应用 + 可复现原因"，让后续复核者不必再跑一遍排除实验。
+    第 4 组 fixture `round63-phy-undeclared-property.dts` 一并入库，使"未声明属性必须
+    被拒"这条断言有可复现输入，而不是只存在于本地临时目录。
+
+  提交身份：`AI2 Stage A Agent (ROUND30) <ai2-stagea-agent@users.noreply.github.com>`，
+  与仓库既有 hhdy 提交身份区分，不冒用上游身份。
+  未创建 PR、未修改 PR #1；main、firmware-audit-v1 内容分支、ack18-dby-w09-dts-draft
+  均未改动；2号 AI 的源码设计与 patch 顺序未改。
+
+--------------------------------------------------------------------------------
+10. 独立保留的硬件阻塞与安全边界（任务书 §6）
+--------------------------------------------------------------------------------
+未因本次源码集成与编译成功而关闭以下任何一项，全部保持独立标记：
+
+  - PM8150 L5 物理输入 parent supply 未证实。本轮**没有**编造 vdd-supply / vin-supply /
+    vph-pwr-supply。ROUND106（1号 AI 任务）的静态 FDT 取证同样显示 L5 group/child 上
+    不存在这些属性；两者结论一致，互不替代。
+  - HOS4.3 ARC/proxy 的临时 100mA boot-time proxy vote 与 late_initcall_sync 清理语义
+    未移植；**没有**把它伪装成永久 regulator-system-load 或 regulator-always-on。
+    本次驱动改动只处理 vdda-phy 的 enable 引用与 load 投票，与 HOS 的 ARC proxy 机制
+    是不同层次的东西。
+  - stock DTBO entry 8 的发现不证明当前启动实际选择 entry 8，也不证明 runtime
+    regulator 状态。本轮未做任何运行时推断。
+  - ROUND29 的 Huawei root compatible/schema 实验没有授权修改正式 DTS 或 binding，
+    本轮未把其临时 schema 合入。
+  - Phase E/F 未关闭：本次编译成功只说明源码可编，**不**说明设备可启动、不说明
+    boot/DTBO/AVB 可交付。
+
+未执行（越界操作一律未做）：
+  - 未连接/操作平板，未使用 ADB / fastboot / recovery / reboot / unlock / root / flash；
+  - 未读取或写入任何设备分区；
+  - 未构建/重打包 boot、DTBO image、AVB/vbmeta/footer，未关闭验证；
+  - 未恢复任何 HOS4.3 原始固件资料上传；
+  - 未修改 main、firmware-audit-v1 内容分支、ack18-dby-w09-dts-draft 或 PR #1；
+  - 未修改 2号 AI 的源代码设计或 patch series 顺序。
+
+--------------------------------------------------------------------------------
+11. 复现命令（关键路径）
+--------------------------------------------------------------------------------
+  工作区建立：
+    cp -a ack-6.18.33 ack-6.18.33-a30            # HEAD 8ad08f75，status 0
+  源码级取证 worktree：
+    git -C ack-6.18.33/common worktree add --detach a30-apply 8ad08f75ddf0…
+  应用：
+    git -C <tree>/common apply --check <patch> && git -C <tree>/common apply <patch>
+    git -C <tree>/common diff --check
+  checkpatch：
+    perl scripts/checkpatch.pl --no-tree --no-signoff --strict [--ignore CAMELCASE] < <patch>
+  binding：
+    rm -f Documentation/devicetree/bindings/processed-schema.json
+    make ARCH=arm64 dt_binding_check DT_SCHEMA_FILES="…"
+    dt-doc-validate -u Documentation/devicetree/bindings <5 files>
+    <venv>/bin/yamllint -f parsable -c Documentation/devicetree/bindings/.yamllint <5 files>
+    dtc -Wno-unit_address_vs_reg -I dts -O dtb -o <x>.dtb <fixture>.dts
+    dt-validate -s <processed-schema.json> <x>.dtb
+  Kleaf：
+    tools/bazel query //common:dby_w09
+    tools/bazel cquery //common:dby_w09 --output=label
+    tools/bazel build //common:dby_w09 --jobs=8 --local_ram_resources=6144
+  单对象真实编译 + 同坐标对照（用 Image 自己的 clang）：
+    export PATH=<tree>/prebuilts/clang/host/linux-x86/clang-r584948c/bin:$PATH
+    export LLVM=1 LLVM_IAS=1
+    cd <tree>/common
+    make ARCH=arm64 LLVM=1 O=<out> gki_defconfig
+    scripts/kconfig/merge_config.sh -m -O <out> <out>/.config arch/arm64/configs/dby_w09_storage_first.fragment
+    scripts/config --file <out>/.config -d GENDWARFKSYMS   # 仅绕过宿主缺 dwarf.h
+    make ARCH=arm64 LLVM=1 O=<out> olddefconfig
+    make ARCH=arm64 LLVM=1 O=<out> -j8 drivers/phy/qualcomm/phy-qcom-qmp-ufs.o
+    # 对照：同一命令在 pristine 树执行，fragment 用绝对路径传入
+    #       （该 fragment 是 Stage A 产物，基线 commit 中不存在）
+    llvm-nm / llvm-objdump -r / strings / llvm-size 取符号、重定位、字面量与段尺寸
+  config 回归：
+    PYTHONPATH=kernel-baseline/round61 python3 -m unittest discover -s kernel-baseline/round61/tests -v
+
+--------------------------------------------------------------------------------
+12. 停止
+--------------------------------------------------------------------------------
+本报告为 AI2-ROUND30 的唯一交付物，上传至
+firmware-audit-v1:firmware-analysis/round30/AI2_ROUND30_STAGEA_QMP_PHY_IMPLEMENTATION_REPORT.txt
+后立即停止。未启动 ROUND31，未把 ROUND29 未解决的父板级 schema 架构研究扩展为新任务。
+================================================================================

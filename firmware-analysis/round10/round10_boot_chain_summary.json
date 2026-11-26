@@ -1,0 +1,139 @@
+{
+  "task_id": "ROUND10",
+  "generated": "2026-11-24",
+  "scope": "Static read-only audit of existing stock boot.img / ramdisk records only",
+  "status": "COMPLETE_WITH_BLOCKED_SUBITEMS",
+
+  "inputs": {
+    "boot_img_present": true,
+    "boot_img_original_modified": false,
+    "separate_ramdisk_img_present": true,
+    "input_paths_disclosed": false,
+    "source_used": "existing ROUND2/ROUND3 reports and existing local image copies; no re-extraction, no re-copy of full boot image"
+  },
+
+  "header_read": {
+    "from_existing_report": true,
+    "parsed_again_this_round": false,
+    "boot_header_version": 2,
+    "kernel_size_bytes": 22264379,
+    "ramdisk_size_bytes": 519986,
+    "page_size_bytes": 4096,
+    "dtb_region_size_bytes": 1664243,
+    "dtb_region_offset_from_round3": 22790144,
+    "note": "values quoted from already-uploaded ROUND2/ROUND3 reports; not new ROUND10 findings"
+  },
+
+  "ramdisk": {
+    "workcopy_existing": false,
+    "region_offset_known": false,
+    "compression_format": "UNDETERMINED",
+    "compression_format_status": "BLOCKED",
+    "contents_read": false,
+    "contents_status": "BLOCKED",
+    "files_enumerated": 0,
+    "inventory_fabricated": false,
+    "blocked_reasons": [
+      "No trusted boot unpack tool: magiskboot NOT FOUND, unpack_bootimg NOT FOUND",
+      "No reviewed script that locates or extracts the ramdisk region inside boot.img",
+      "Existing script only does whole-file magic detection, not in-image region parsing",
+      "gzip/brotli/tar are decompressors, not Android boot image parsers; lz4/zstd/7z/cpio absent",
+      "Task explicitly forbids writing a new boot parser, downloading unknown EXE/DLL, WSL and policy bypass"
+    ]
+  },
+
+  "tools_detected_only": {
+    "magiskboot": "NOT_FOUND",
+    "unpack_bootimg": "NOT_FOUND",
+    "lz4": "NOT_FOUND",
+    "zstd": "NOT_FOUND",
+    "7z": "NOT_FOUND",
+    "cpio": "NOT_FOUND",
+    "gzip": "FOUND_NOT_USED_FOR_UNPACK",
+    "brotli": "FOUND_NOT_USED_FOR_UNPACK",
+    "tar": "FOUND_NOT_USED_FOR_UNPACK",
+    "python3": "FOUND_STDLIB_COMPRESSION_ONLY",
+    "python_third_party_lz4_brotli_zstd": "NOT_FOUND"
+  },
+
+  "existing_scripts_reviewed": {
+    "Analyze-DBY-W09-Firmware.ps1": "ROUND2 reviewed working copy; header field reads + whole-file magic only; no ramdisk region extractor",
+    "Analyze-DBY-W09-DeviceTree.py": "ROUND3 reviewed; FDT/DTBO only; ramdisk not handled",
+    "Analyze-DBY-W09-Super.py": "ROUND3 reviewed; sparse/LP metadata only",
+    "Extract-DBY-W09-LogicalPartitions.py": "ROUND4 reviewed; logical partition extraction only"
+  },
+
+  "cmdline_selector_scan": {
+    "scope": "existing ROUND2 boot/recovery/erecovery cmdline records only",
+    "ramdisk_files_scanned": 0,
+    "selector_hits_direct_boot_selector": 0,
+    "selector_hits_indirect_display_boot_evidence": 0,
+    "panel_lcd_display_property_keys_found": 0,
+    "display_adjacent_args": [
+      {
+        "key": "video",
+        "kind": "generic virtual framebuffer console argument",
+        "panel_profile_mapped": false,
+        "values_disclosed": false
+      }
+    ],
+    "boot_property_keys_listed": [
+      "androidboot.hardware", "androidboot.console", "androidboot.memcg",
+      "androidboot.usbcontroller", "androidboot.selinux", "buildvariant",
+      "earlycon", "lpm_levels.sleep_disabled", "video", "msm_rtb.filter",
+      "service_locator.enable", "swiotlb", "loop.max_part", "cgroup.memory",
+      "reboot", "unmovable_isolate1"
+    ],
+    "status": "NO_PANEL_SELECTOR_FOUND_IN_CMDLINE_SCOPE"
+  },
+
+  "boot_chain_paths": {
+    "mount_statements": "NOT_READ_BLOCKED",
+    "module_load_directives": "NOT_READ_BLOCKED",
+    "firmware_path_references": "NOT_READ_BLOCKED",
+    "old_module_to_ack_kmi_compatibility": "UNKNOWN",
+    "binaries_extracted": 0
+  },
+
+  "evidence_grading": {
+    "DIRECT_BOOT_SELECTOR": 0,
+    "INDIRECT_DISPLAY_BOOT_EVIDENCE": 0,
+    "NO_PANEL_SELECTOR_FOUND": "cmdline scope only",
+    "BLOCKED": "ramdisk content scope"
+  },
+
+  "active_profile": "UNKNOWN",
+  "active_profile_reason": "No boot selector evidence and no live FDT / runtime profile evidence; static qcom,dsi-default-panel pointer is never treated as ACTIVE",
+
+  "unknowns": [
+    "ramdisk compression format",
+    "ramdisk file inventory",
+    "init rc / fstab mount and module directives",
+    "firmware path references",
+    "panel active profile",
+    "old 4.19 module compatibility with ACK 6.18 KMI"
+  ],
+
+  "cleanup": {
+    "original_boot_img_unmodified": true,
+    "temporary_unpack_directory_created": false,
+    "round1_to_round9_outputs_overwritten": false,
+    "binary_uploaded": false
+  },
+
+  "boundaries": {
+    "device_connected": false,
+    "adb": false,
+    "fastboot": false,
+    "flashed": false,
+    "unlocked": false,
+    "rooted": false,
+    "wrote_partitions": false,
+    "kernel_compiled": false,
+    "wsl_invoked": false,
+    "erofs_unpacked": false,
+    "fdt_dtbo_reparsed": false,
+    "tools_installed": false,
+    "unknown_exe_executed": false
+  }
+}

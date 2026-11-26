@@ -1,0 +1,155 @@
+DTBO entry 8 (board-id 8298 / 0x206a / DBY_W09_VG) — fragment target & board hardware resolution
+Sources: ROUND3 dtb_work boot_fdt_candidate_0.dtb (base) + dtbo_entry_8.dtbo (overlay);
+parser reused from ROUND3; base __symbols__ + overlay __fixups__ resolution; fail-closed.
+NOTE: overlay modifications are evidence of intent, NOT proof of runtime enablement or boot.
+
+=== fragment target statistics ===
+total_fragments=145 resolved=145 target_unresolved=0 no_fixup_entry=0
+duplicate_targets=19
+  DUP /huawei,lcd_panel <- fragment@83,fragment@142
+  DUP /huawei_slpi_sensor <- fragment@135,fragment@144
+  DUP /huawei_wifi_info <- fragment@76,fragment@136
+  DUP /soc <- fragment@8,fragment@40,fragment@49,fragment@53,fragment@65,fragment@89,fragment@130
+  DUP /soc/i2c@884000 <- fragment@66,fragment@93
+  DUP /soc/i2c@98c000 <- fragment@112,fragment@121
+  DUP /soc/i2c@a8c000 <- fragment@61,fragment@86
+  DUP /soc/i2c@a94000 <- fragment@62,fragment@87
+  DUP /soc/pinctrl@f000000 <- fragment@39,fragment@70,fragment@88,fragment@90,fragment@114,fragment@122,fragment@126,fragment@129
+  DUP /soc/qcom,dp_display@ae90000 <- fragment@11,fragment@41
+
+=== fragment@143 /rootparam verification ===
+fragment@143 state=RESOLVED symbols=['rootparam'] paths=['/rootparam']
+fragment@143 overlay property names: hardware_version, huawei,modem_id, qcom,board_name, qcom,boardid, qcom,product_name
+  qcom,board_name = str:DBY_W09_VG
+  hardware_version = str:SH1DBSLM
+  qcom,product_name = str:DBY-W09
+  qcom,boardid = u32[8,2,9,8] (value present; sensitive/opaque as applicable)
+  huawei,modem_id = u32[4294967295,0] (value present; sensitive/opaque as applicable)
+
+=== B. UFS host / PHY overlay tracking (entry 8 only) ===
+  fragment@63 -> /soc/ufsphy_mem@1d87000
+    modified_props: status=str:ok;vdda-phy-always-on=present(len=0);vdda-phy-max-microamp=u32[89900];vdda-phy-supply=u32[4294967295];vdda-pll-max-microamp=u32[18800];vdda-pll-supply=u32[4294967295]
+  fragment@64 -> /soc/ufshc@1d84000
+    modified_props: qcom,vccq-parent-max-microamp=u32[210000];qcom,vccq-parent-supply=u32[4294967295];qcom,vddp-ref-clk-max-microamp=u32[100];qcom,vddp-ref-clk-supply=u32[4294967295];status=str:ok;vcc-low-voltage-sup=present(len=0);vcc-max-microamp=u32[800000];vcc-supply=u32[4294967295];vcc-voltage-level=u32[2504000,2950000];vccq-max-microamp=u32[800000];vccq-supply=u32[4294967295];vccq2-max-microamp=u32[800000];vccq2-supply=u32[4294967295];vdd-hba-supply=u32[4294967295]
+Boundary: conclusion limited to dtbo_entry_8; no inference about other 8 DTBOs or runtime FDT.
+
+=== C/D/E subsystem target mapping (evidence-bound) ===
+--- TOUCH: 13 fragments ---
+  fragment@54 -> /soc/qcom,qup_uart@a90000 [RESOLVED] 
+  fragment@55 -> /soc/qcom,qup_uart@998000 [RESOLVED] 
+  fragment@56 -> /soc/qcom,qup_uart@980000 [RESOLVED] 
+  fragment@60 -> /soc/i2c@984000 [RESOLVED] 
+  fragment@61 -> /soc/i2c@a8c000 [RESOLVED] str:rt4801h_phy | str:ti,tps65132
+  fragment@62 -> /soc/i2c@a94000 [RESOLVED] str:st,fts | str:rt4801h_phy | str:ti,tps65132
+  fragment@66 -> /soc/i2c@884000 [RESOLVED] str:onnn,redriver | str:qcom,i2c-pmic | str:qcom,qpnp-revid
+  fragment@86 -> /soc/i2c@a8c000 [RESOLVED] str:rt4801h_phy | str:ti,tps65132 | str:icn68116_phy
+  fragment@87 -> /soc/i2c@a94000 [RESOLVED] str:huawei,hw_lp855x
+  fragment@89 -> /soc [RESOLVED] str:huawei,thp | str:huawei,thp_input | str:huawei,thp_pen_input
+  fragment@93 -> /soc/i2c@884000 [RESOLVED] str:bq25970 | str:hl7139 | str:sm5450
+  fragment@112 -> /soc/i2c@98c000 [RESOLVED] str:st,stwlc33_aux | str:cps,cps4029_aux | str:mt,mt5727_aux
+  fragment@121 -> /soc/i2c@98c000 [RESOLVED] str:huawei,smartpakit_i2c | str:huawei,smartpakit_i2c | str:huawei,smartpakit_i2c
+--- WLAN_BT: 7 fragments ---
+  fragment@65 -> /soc [RESOLVED] str:gpio-keys | str:qcom,qbt-handler
+  fragment@71 -> /vendor [RESOLVED] str:qca,qca6390 | str:lbs,airoha
+  fragment@76 -> /huawei_wifi_info [RESOLVED] str:huawei,hw_wifi_info
+  fragment@77 -> /huawei_bt_info [RESOLVED] strlist[huawei,huawei_bt_info; huawei,hw_bt_info]
+  fragment@136 -> /huawei_wifi_info [RESOLVED] str:huawei,hw_wifi_info
+  fragment@137 -> /singleap_wifionly [RESOLVED] str:singleap,wifionly
+  fragment@140 -> /btkb_led [RESOLVED] 
+--- PANEL: 45 fragments ---
+  fragment@4 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@11 -> /soc/qcom,dp_display@ae90000 [RESOLVED] 
+  fragment@12 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@13 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@14 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@15 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@16 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@17 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@18 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@19 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@20 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@21 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@22 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] str:dual_nt36523
+  fragment@23 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@24 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@25 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@26 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@27 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@28 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@29 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  ... 25 more (see CSV)
+--- AUDIO: 12 fragments ---
+  fragment@40 -> /soc [RESOLVED] str:qcom,msm-ext-disp | str:qcom,msm-ext-disp-audio-codec-rx | str:regulator-fixed
+  fragment@43 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,lpi-pinctrl
+  fragment@44 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio/bolero-cdc [RESOLVED] str:qcom,va-macro
+  fragment@46 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio/bolero-cdc [RESOLVED] str:qcom,bolero-clk-rsc-mngr | str:qcom,tx-macro | str:qcom,swr-mstr
+  fragment@47 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio/sound [RESOLVED] 
+  fragment@48 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl
+  fragment@49 -> /soc [RESOLVED] str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl
+  fragment@58 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,msm-cdc-pinctrl
+  fragment@59 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio/sound [RESOLVED] 
+  fragment@117 -> /huawei_audio_info [RESOLVED] str:hw,hw_audio_info
+  fragment@120 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio/sound [RESOLVED] 
+  fragment@125 -> /hw_adsp_misc [RESOLVED] str:hw,hw_adsp_misc | str:huawei,tfa_smartamp | str:huawei,awinic_smartamp
+--- USB_TYPEC: 47 fragments ---
+  fragment@0 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-power-on | str:qcom,spmi-temp-alarm
+  fragment@2 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@9 -> /soc/ssusb@a600000 [RESOLVED] 
+  fragment@10 -> /soc/ssphy@88e8000 [RESOLVED] 
+  fragment@11 -> /soc/qcom,dp_display@ae90000 [RESOLVED] 
+  fragment@12 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@13 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@14 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@15 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@16 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@17 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@18 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@19 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@20 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@21 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@22 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] str:dual_nt36523
+  fragment@23 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@24 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@25 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  fragment@26 -> /soc/qcom,mdss_mdp@ae00000 [RESOLVED] 
+  ... 27 more (see CSV)
+--- CAMERA: 6 fragments ---
+  fragment@4 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@128 -> /product_name_camera [RESOLVED] 
+  fragment@129 -> /soc/pinctrl@f000000 [RESOLVED] 
+  fragment@130 -> /soc [RESOLVED] str:qcom,camera-flash | str:qcom,cam-res-mgr
+  fragment@131 -> /soc/qcom,cci@ac4f000 [RESOLVED] str:qcom,actuator | str:qcom,eeprom | str:qcom,cam-sensor
+  fragment@132 -> /soc/qcom,cci@ac50000 [RESOLVED] str:qcom,eeprom | str:qcom,cam-sensor
+--- PMIC_GPIO: 28 fragments ---
+  fragment@0 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-power-on | str:qcom,spmi-temp-alarm
+  fragment@1 -> /soc/thermal-zones [RESOLVED] 
+  fragment@2 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@3 -> /soc/thermal-zones [RESOLVED] 
+  fragment@4 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@5 -> /soc/thermal-zones [RESOLVED] 
+  fragment@6 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-revid | str:qcom,qpnp-power-on
+  fragment@7 -> /soc/qcom,spmi@c440000 [RESOLVED] str:qcom,spmi-pmic | str:qcom,qpnp-power-on | str:qcom,spmi-pmic
+  fragment@8 -> /soc [RESOLVED] str:regulator-fixed | str:regulator-fixed
+  fragment@39 -> /soc/pinctrl@f000000 [RESOLVED] 
+  fragment@40 -> /soc [RESOLVED] str:qcom,msm-ext-disp | str:qcom,msm-ext-disp-audio-codec-rx | str:regulator-fixed
+  fragment@43 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,lpi-pinctrl
+  fragment@48 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl
+  fragment@49 -> /soc [RESOLVED] str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl | str:qcom,msm-cdc-pinctrl
+  fragment@51 -> /soc/thermal-zones [RESOLVED] 
+  fragment@52 -> /vendor [RESOLVED] 
+  fragment@58 -> /soc/qcom,msm-audio-apr/qcom,q6core-audio [RESOLVED] str:qcom,msm-cdc-pinctrl
+  fragment@65 -> /soc [RESOLVED] str:gpio-keys | str:qcom,qbt-handler
+  fragment@67 -> /soc/qcom,spmi-debug@6b0f000 [RESOLVED] 
+  fragment@70 -> /soc/pinctrl@f000000 [RESOLVED] 
+  ... 8 more (see CSV)
+--- UFS: 4 fragments ---
+  fragment@10 -> /soc/ssphy@88e8000 [RESOLVED] 
+  fragment@63 -> /soc/ufsphy_mem@1d87000 [RESOLVED] str:qcom,ufs-phy-qmp-v4
+  fragment@64 -> /soc/ufshc@1d84000 [RESOLVED] 
+  fragment@113 -> /soc/ssphy@88e8000 [RESOLVED] 
+
+=== safety / redaction ===
+No MMIO/reserved-memory addresses, MAC/BD/serial/IMEI/cookie/token, panel init payload,
+AFE/SmartPA private tables, EEPROM/calibration, firmware blobs, full local SHA-256,
+full local paths, usernames or hostnames emitted. chip_model kept opaque;
+GPIO pins / I2C addresses / clock / voltage shown only when safe and evidence-bound.

@@ -1,0 +1,94 @@
+{
+  "task": "AGENT_TASK_ROUND8.md",
+  "status": "COMPLETE",
+  "analysis_date": "2026-11-24",
+  "inputs": {
+    "base_fdt": "boot_fdt_candidate_0.dtb",
+    "overlay": "dtbo_entry_8.dtbo",
+    "both_exist": true,
+    "base_validation": "VALID",
+    "overlay_validation": "VALID",
+    "base_totalsize": 556524,
+    "overlay_totalsize": 329352,
+    "reextracted_from_firmware": false,
+    "parser": "ROUND3 Analyze-DBY-W09-DeviceTree.py (reused via importlib; not rewritten)"
+  },
+  "base_index": {
+    "phandle_entries": 1693,
+    "symbols_entries": 1753
+  },
+  "fragments": {
+    "total": 145,
+    "resolved": 145,
+    "target_unresolved": 0,
+    "no_fixup_entry": 0,
+    "duplicate_targets": 19
+  },
+  "fragment_143": {
+    "state": "RESOLVED",
+    "symbols": [
+      "rootparam"
+    ],
+    "resolved_paths": [
+      "/rootparam"
+    ],
+    "conclusion": "target=/rootparam"
+  },
+  "ufs": {
+    "host_target_present": true,
+    "phy_target_present": true,
+    "overlay_changes_found": 2,
+    "details": [
+      {
+        "fragment": "fragment@63",
+        "target_path": "/soc/ufsphy_mem@1d87000",
+        "modified_props": "status=str:ok;vdda-phy-always-on=present(len=0);vdda-phy-max-microamp=u32[89900];vdda-phy-supply=u32[4294967295];vdda-pll-max-microamp=u32[18800];vdda-pll-supply=u32[4294967295]"
+      },
+      {
+        "fragment": "fragment@64",
+        "target_path": "/soc/ufshc@1d84000",
+        "modified_props": "qcom,vccq-parent-max-microamp=u32[210000];qcom,vccq-parent-supply=u32[4294967295];qcom,vddp-ref-clk-max-microamp=u32[100];qcom,vddp-ref-clk-supply=u32[4294967295];status=str:ok;vcc-low-voltage-sup=present(len=0);vcc-max-microamp=u32[800000];vcc-supply=u32[4294967295];vcc-voltage-level=u32[2504000,2950000];vccq-max-microamp=u32[800000];vccq-supply=u32[4294967295];vccq2-max-microamp=u32[800000];vccq2-supply=u32[4294967295];vdd-hba-supply=u32[4294967295]"
+      }
+    ],
+    "boundary": "entry 8 only; no runtime/other-DTBO inference"
+  },
+  "subsystem_coverage": {
+    "TOUCH": 13,
+    "WLAN_BT": 7,
+    "PANEL": 45,
+    "AUDIO": 12,
+    "USB_TYPEC": 47,
+    "CAMERA": 6,
+    "PMIC_GPIO": 28,
+    "UFS": 4
+  },
+  "redaction": {
+    "mmio_reserved_addresses": "not emitted",
+    "identifiers": "not emitted",
+    "private_payloads": "not emitted",
+    "full_local_sha256": "not emitted",
+    "user_host_path": "not emitted",
+    "fdt_dtbo_binary_uploaded": false
+  },
+  "boundary_flags": {
+    "device_connected": false,
+    "flashed": false,
+    "rooted": false,
+    "wrote_partitions": false,
+    "wsl_invoked": false,
+    "adb_invoked": false,
+    "kernel_compiled": false,
+    "erofs_unpacked": false,
+    "firmware_reextracted": false,
+    "external_dts_overlaid": false
+  },
+  "upload": {
+    "branch": "firmware-audit-v1",
+    "dir": "firmware-analysis/round8/",
+    "files": [
+      "dtbo8_fragment_target_map.csv",
+      "dtbo8_board_hardware_resolution.txt",
+      "round8_summary.json"
+    ]
+  }
+}

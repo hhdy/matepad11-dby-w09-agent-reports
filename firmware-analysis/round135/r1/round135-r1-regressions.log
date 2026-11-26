@@ -1,0 +1,10 @@
+round135-r1-regressions.log
+generated: 2026-11-26T04:10:02Z by WorkBuddy test agent (Revision-1 rerun)
+
+STATUS: NOT RUN - BLOCKED UPSTREAM
+
+Revision-1 step 5 requires proceeding to §6 (exact 38/38 + 83/83 host regressions)
+only after both patches 22 and 23 apply. Patch 23 did not apply, so no regression
+was reproduced, no entry/test-source blobs were captured, and no 38/38 or 83/83
+result exists for R1. Nothing is claimed. Historical ROUND130 results do not
+transfer (Revision-1 step 6).

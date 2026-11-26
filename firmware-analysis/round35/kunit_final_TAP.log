@@ -1,0 +1,18 @@
+stty: 'standard input': Inappropriate ioctl for device
+[23:40:28] Configuring KUnit Kernel ...
+[23:40:28] Building KUnit Kernel ...
+Populating config with:
+$ make ARCH=um O=/home/kerneldev/work/matepad11/round35-agent/kunit-r35 olddefconfig
+Building with:
+$ make all compile_commands.json scripts_gdb ARCH=um O=/home/kerneldev/work/matepad11/round35-agent/kunit-r35 --jobs=12
+[23:40:31] Starting KUnit Kernel (1/1)...
+[23:40:31] ============================================================
+Running tests with:
+$ /home/kerneldev/work/matepad11/round35-agent/kunit-r35/linux kunit.enable=1 mem=1G console=tty kunit_shutdown=halt
+[23:40:31] ====== regulator-proxy-consumer-lifecycle (1 subtest) ======
+[23:40:31] [PASSED] proxy_kunit_lifecycle
+[23:40:31] ======= [PASSED] regulator-proxy-consumer-lifecycle ========
+[23:40:31] ============================================================
+[23:40:31] Testing complete. Ran 1 tests: passed: 1
+[23:40:31] Elapsed time: 3.442s total, 0.000s configuring, 3.377s building, 0.062s running
+

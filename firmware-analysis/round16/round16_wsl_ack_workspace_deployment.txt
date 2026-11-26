@@ -1,0 +1,368 @@
+================================================================================
+firmware-analysis ROUND16 — WSL2 Ubuntu deployment and pinned ACK 6.18.33
+Kleaf workspace preparation — EXECUTION REPORT
+
+Date (UTC)        : 2026-11-24
+Task file         : firmware-analysis/round16/AGENT_TASK.md (main)
+Target device     : Huawei MatePad 11 (2021), DBY-W09 / KONA / SM8250 rev 2.1
+Stage             : A only — ACK 6.18.33 kernel port
+Pinned source     : tag android17-6.18.33_r00 / commit
+                    8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+READINESS VERDICT : WSL_AND_PINNED_ACK_WORKSPACE_READY
+================================================================================
+
+SUPERSEDES: the earlier version of this same file, which reported
+BLOCKED_BY_HOST_SECURITY_POLICY because wsl.exe was refused by the host
+command-safety layer. The operator removed wsl.exe from that program
+blacklist through the product's own settings UI (a user action, not an agent
+action), after which every stage below ran through the normal approved
+invocation path. No bypass, no rename, no alternate shell, no policy edit and
+no elevation was used at any point.
+
+--------------------------------------------------------------------------------
+1. AUTHORIZATION AND BOUNDARIES
+--------------------------------------------------------------------------------
+The user explicitly authorized local environment deployment: a WSL 2 Ubuntu
+24.04 environment, official Ubuntu host packages, and an official Android
+common-kernel Repo workspace pinned to the immutable ACK tag.
+
+This round delivered environment provisioning and source synchronization only.
+Explicitly NOT done (see also section 10):
+  - no kernel patch applied, no kernel source edited, no device BUILD target;
+  - no Kconfig/olddefconfig/savedefconfig;
+  - no dtc/dt-schema/dtbs_check against any board tree;
+  - no Bazel build, no compile, no image packaging, no AVB tooling;
+  - no device connection, ADB, fastboot, unlock, root, partition write;
+  - no changes to main, ack18-dby-w09-dts-draft, the parallel branch or PR #1;
+  - no firmware binary, VHDX, source tree or credential uploaded.
+
+Three deliberate environment-level changes were made and are disclosed in
+section 11 so they can be reviewed or reverted independently.
+
+--------------------------------------------------------------------------------
+2. WINDOWS / WSL
+--------------------------------------------------------------------------------
+OS                 : Windows 11 Pro for Workstations, build 10.0.26200, x64
+CPU                : AMD Ryzen 5 9600X, 12 logical processors
+RAM (host)         : 15.16 GiB visible; 2.15 GiB free at preflight time
+Virtualization     : HypervisorPresent=True, VirtualizationFirmwareEnabled=True,
+                     VMMonitorModeExtensions=False (expected reading when a
+                     hypervisor is already active; not a missing-CPU-virt signal)
+Current process    : standard user context, IsAdmin=False
+Optional features  : VirtualMachinePlatform=Enabled,
+                     Microsoft-Windows-Subsystem-Linux=Disabled (legacy feature;
+                     the Store/MSI WSL 2.x package does not require it, and WSL 2
+                     distros below run normally),
+                     HypervisorPlatform=Disabled
+
+wsl --version      : WSL 2.7.3.0, WSL kernel 6.6.114.1-1, WSLg 1.0.73
+wsl --status       : default distribution Ubuntu, default version 2
+                     (WSL1 not supported on this machine — expected)
+Before this round  : one pre-existing distro "Ubuntu" (WSL 2) stored under the
+                     Windows user profile on C:. It was NOT modified,
+                     unregistered, relocated or reset; it remains Stopped.
+After this round   : "Ubuntu-24.04" (WSL 2), state installed/Stopped.
+
+Blockers encountered : none. No security-policy block, no admin requirement, no
+                       reboot requirement, no virtualization error.
+WSL memory visible inside the distro: 7.3 GiB total (default ~50% of host RAM).
+                       Recorded as an observation for the later build round; no
+                       memory tuning was applied in this round.
+
+--------------------------------------------------------------------------------
+3. STORAGE
+--------------------------------------------------------------------------------
+Drive free space (GiB)      before          after
+  C:                         63.3            63.3
+  D:                        324.9           275.28
+  E:                        299.2           299.2
+
+Deployed footprint on D:   ~49.6 GiB total
+  WSL ext4 VHDX             53,287,583,744 bytes = 49.63 GiB
+  Workspace inside the VM   41 GiB (common/ 1.7 GiB, prebuilts/ 21 GiB)
+WSL root filesystem        : 43 GiB used, 913 GiB reported available
+                             (dynamic VHDX, 1007 GiB nominal ceiling)
+
+Budget rules from the task file:
+  D: free space must stay >= 100 GiB   -> 275.28 GiB free, SATISFIED
+  total deployment must stay <= 200 GiB -> ~49.6 GiB, SATISFIED
+
+--------------------------------------------------------------------------------
+4. UBUNTU PACKAGES (official repositories only)
+--------------------------------------------------------------------------------
+Distro: Ubuntu 24.04.5 LTS (noble). Sources are the stock images:
+  http://archive.ubuntu.com/ubuntu/  (noble, noble-updates, noble-backports)
+  http://security.ubuntu.com/ubuntu/ (noble-security)
+Components main/universe/restricted/multiverse as configured out of the box.
+No PPA, no third-party repository, no pip --break-system-packages was used.
+
+apt-get update : OK (38.5 MB index, 11 s)
+apt-get install: INSTALL_RC=0, all requested packages installed
+
+Installed (package = version):
+  bc 1.07.1-3ubuntu4
+  bison 2:3.8.2+dfsg-1ubuntu0.24.04.1
+  build-essential 12.10ubuntu1
+  ca-certificates 20260816ubuntu0.24.04.2
+  curl 8.5.0-2ubuntu10.16
+  device-tree-compiler 1.7.0-2build1
+  dwarves 1.25-0ubuntu3
+  file 1:5.45-3build1
+  flex 2.6.4-2build1
+  fontconfig 2.15.0-1.1ubuntu2
+  git 1:2.43.0-1ubuntu7.4
+  git-lfs 3.4.1-1ubuntu0.4
+  gnupg 2.4.4-2ubuntu17.6
+  libelf-dev 0.190-1.1ubuntu0.1
+  libncurses-dev 6.4+20240113-1ubuntu2.2
+  libssl-dev 3.0.13-0ubuntu3.16
+  libxml2-utils 2.9.14+dfsg-1.3ubuntu3.10
+  lz4 1.9.4-1build1.1
+  pkg-config 1.8.1-2build1
+  python3 3.12.3-0ubuntu2.1
+  python3-pip 24.0+dfsg-1ubuntu1.3
+  python3-venv 3.12.3-0ubuntu2.1
+  python3-yaml 6.0.1-2build2
+  repo 2.36.1-1ubuntu0.1
+  rsync 3.2.7-1ubuntu1.5
+  unzip 6.0-28ubuntu4.1
+  xsltproc 1.1.39-0exp1ubuntu0.24.04.3
+  zip 3.0-13ubuntu0.2
+  zlib1g-dev 1:1.3.dfsg-3.1ubuntu2.3
+
+Reported versions:
+  git 2.43.0 | git-lfs 3.4.1 | python3 3.12.3 | GNU Make 4.3
+  gcc 13.3.0 (Ubuntu 13.3.0-6ubuntu2~24.04.1) | dtc 1.7.0 | pahole 1.25
+  flex 2.6.4 | bison 3.8.2 | xsltproc (libxml 20914, libxslt 10139)
+  lz4 1.9.4 | rsync 3.2.7 | bc 1.07.1 | file 5.45 | pkg-config 1.8.1
+
+Failed / skipped: none. The `repo` package from Ubuntu noble was available, so
+the fallback path in the task (download the Google launcher and verify its
+signature manually) was NOT needed and was NOT used.
+Note: /usr/bin/repo is the official AOSP launcher script shipped by the
+distribution package. Before the first `repo init` it answers "repo is not yet
+installed", which is its normal pre-init behaviour, not a broken install.
+On first init it self-updated its internal copy from
+https://gerrit.googlesource.com/git-repo to v2.73 and printed the expected
+"the launcher is not writable" advisory because the packaged launcher lives in
+/usr/bin. That advisory was recorded, not worked around.
+
+No global Bazel, Clang, LLD, Rust or JDK was installed on Windows or in Ubuntu.
+The toolchain used below is entirely manifest-provided.
+
+--------------------------------------------------------------------------------
+5. REPO WORKSPACE
+--------------------------------------------------------------------------------
+Manifest URL      : https://android.googlesource.com/kernel/manifest
+Manifest branch   : common-android17-6.18
+Manifest revision : 46a1a5274ff0b40419952c861a8958bba5f28cfc
+                    (2026-05-20, "Remove smoltcp crate, now it's in the monorepo.")
+repo tool version : v2.73 (launcher 2.71), User-Agent git-repo/2.73,
+                    git 2.43.0, Python 3.12.3
+
+Commands executed exactly as specified:
+  repo init -u https://android.googlesource.com/kernel/manifest \
+            -b common-android17-6.18            -> INIT_RC=0
+  repo sync -c -j4 --fail-fast                  -> SYNC_RC=0,
+                                                  "repo sync has finished successfully."
+Sync wall time    : 45 min 35 s (15:37:39Z -> 16:23:12Z)
+Projects          : 58 in the revision-pinned manifest
+Sync errors       : none; no retry, no -j change, no manifest-branch change
+Revision-pinned manifest captured at
+  metadata/repo-manifest-revisions.xml  (12,472 bytes, 58 <project> entries)
+Relevant resolved revisions (from that file):
+  kernel/common                        path=common
+      revision=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a  upstream=android17-6.18
+  platform/prebuilts/clang/host/linux-x86
+      revision=4a7d0a5e443c27d8f68fbd46abfab464e1355a69
+  platform/prebuilts/rust-toolchain/linux-x86
+      revision=844e1621bcf67c25ceae15bdd3ddd698cbe8df7c
+  kernel/prebuilts/build-tools
+      revision=78af2daf5d9d36fc6e1ddb28ee0d7b6516709eb4
+  platform/prebuilts/clang-tools
+      revision=4155cb466dcd9b53c6f873829c53aa6f905449dd
+Top level of the workspace: MODULE.bazel (symlink to
+build/kernel/kleaf/bzlmod/bazel.MODULE.bazel), bootable, build, common,
+common-modules, devices, external, metadata, out, prebuilts, test, tools,
+u-boot.
+
+Note on a moving manifest: the manifest branch head is a recipe, and its
+default revision resolved to branch main-kernel-2026 for most projects. That is
+why the revision-pinned manifest above was captured and is the authoritative
+record of this workspace, not the branch name.
+
+--------------------------------------------------------------------------------
+6. ACK SOURCE PIN
+--------------------------------------------------------------------------------
+Project path      : common/
+Remote identity   : aosp  https://android.googlesource.com/kernel/common
+                    (fetch and push)
+Revision before pinning: 6cf9ae643d2b3fc3dec65ef821a1367fb2946539
+                    ("BACKPORT: KVM: arm64: Top up stage-2 memcache for dirty
+                     logging faults") — this is the moving branch head and was
+                    deliberately NOT accepted as the baseline.
+
+Tag verification:
+  tag ref          : refs/tags/android17-6.18.33_r00
+  tag object type  : annotated tag (git cat-file -t = tag)
+  tag object SHA   : 369fecee1ecf4c78af4889640c618cc9a19f3921
+  tag dereference  : 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  Independently confirmed on the official remote with git ls-remote:
+    refs/tags/android17-6.18.33_r00     -> 369fecee1ecf4c78af4889640c618cc9a19f3921
+    refs/tags/android17-6.18.33_r00^{}  -> 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
+  The tag was already present locally after sync, so no extra fetch was needed.
+
+Checkout:
+  git checkout --detach 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a   -> RC=0
+  "HEAD is now at 8ad08f75ddf0 Merge android17-6.18 into android17-6.18-lts"
+
+Verification:
+  git rev-parse HEAD           = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a  (MATCH)
+  git describe --tags --always = android17-6.18.33_r00
+  git status --short           = 0 lines (clean working tree, detached HEAD)
+  Makefile                     = VERSION 6, PATCHLEVEL 18, SUBLEVEL 33,
+                                 NAME "Baby Opossum Posse"  -> 6.18.33
+  common/build.config.constants: BRANCH="android17-6.18", KMI_GENERATION=5
+
+The tree was left pristine in detached-HEAD state. No ROUND32/36/37/33/52
+patch draft was applied.
+
+--------------------------------------------------------------------------------
+7. TOOLCHAIN (measured, not assumed)
+--------------------------------------------------------------------------------
+Declared by the pinned source:
+  CLANG_VERSION   = "r584948c"
+  RUSTC_VERSION   = "1.91.1.p3"
+  KMI_GENERATION  = 5
+
+Measured from the manifest-provided prebuilts:
+  clang  : prebuilts/clang/host/linux-x86/clang-r584948c/bin/clang --version
+           "Android (15323222, +pgo, +bolt, +lto, +mlgo, based on r584948c)
+            clang version 22.0.1
+            (https://android.googlesource.com/toolchain/llvm-project
+             2d65e4108033380e6fe8e08b1f1826cd2bfb0c99)"
+           -> declared r584948c is present and is what the tree declares.
+  rustc  : prebuilts/rust-toolchain/linux-x86/1.91.1.p3/bin/rustc --version
+           "rustc 1.91.1-dev (ed61e7d7e 2025-11-07)
+            (Android Rust Toolchain version 15551131-linux-x86)"
+           Toolchain directories present in that prebuilt project:
+             1.91.1.p2, 1.91.1.p3, 1.91.1.p4
+           -> the declared 1.91.1.p3 exists; the source declaration selects it,
+              the newer p4 directory was NOT substituted or forced.
+  bazel  : tools/bazel version  -> "Build label: 8.7.0"
+           (the Kleaf wrapper extracted its declared Bazel installation and
+            started a local server to answer the version query)
+  The clang prebuilt project also ships clang-r547379, clang-r584948,
+  clang-r584948b, clang-r596125, clang-stable; this round used only the
+  declared clang-r584948c.
+
+Comparison with the ROUND39 expectation (Clang r584948c / Rust 1.91.1.p3):
+  MATCH on both. The pinned source declarations and the manifest-provided
+  prebuilts agree, so there is no toolchain mismatch.
+  All 58 resolved prebuilt revisions are recorded in
+  metadata/repo-manifest-revisions.xml; the four toolchain-bearing ones are
+  quoted in section 5.
+
+Deviation, disclosed: `tools/bazel --version` is not accepted by this Kleaf
+wrapper (it is forwarded as a Bazel startup option and Bazel rejects it with
+"Unknown startup option: '--version'"). The task's intent — a version query,
+not a build — was satisfied with `tools/bazel version`, which is a query
+command and produced the Bazel label above. No build target was invoked.
+
+--------------------------------------------------------------------------------
+8. WORKSPACE PATH
+--------------------------------------------------------------------------------
+Linux workspace   : /home/kerneldev/work/matepad11/ack-6.18.33
+Storage location  : inside the WSL2 ext4 VHDX, which lives on the Windows D:
+                    NTFS volume at D:\WSL\Ubuntu-24.04\ext4.vhdx.
+                    The tree is NOT under /mnt/d, so kernel operations will not
+                    run on the Windows-mounted filesystem.
+Linux account     : kerneldev (generic non-privileged account, uid 1000, member
+                    of sudo). No Windows account name and no personal profile
+                    path is reproduced in this report.
+Local README      : /home/kerneldev/work/matepad11/ack-6.18.33/WORKSPACE_STATUS.txt
+                    (4,710 bytes, 95 lines; local only, not uploaded)
+Evidence logs     : /home/kerneldev/work/matepad11/logs/
+                    stageC_apt.log, stageD_repo_sync.log, stageE_pin.log,
+                    stageE2_toolchain.log, stageF_readiness.log (local only)
+
+--------------------------------------------------------------------------------
+9. READINESS VERDICT
+--------------------------------------------------------------------------------
+WSL_AND_PINNED_ACK_WORKSPACE_READY
+
+Basis: WSL 2 with Ubuntu 24.04.5 on D:; all required host packages installed
+from official repositories; official kernel manifest synced successfully
+(58 projects); common/ detached at exactly
+8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a with a clean tree and a 6.18.33
+Makefile; tag verified against the official remote; revision-pinned manifest
+captured; declared and provided toolchains match (clang r584948c /
+rust 1.91.1.p3) and the workspace-provided Bazel answers 8.7.0.
+
+Environment notes carried forward (not blockers for this round):
+  N1. The WSL VM currently sees 7.3 GiB RAM of the host's 15.16 GiB (default
+      ~50% split) and the host had only 2.15 GiB free at preflight. A Kleaf
+      kernel build in the next round may need a deliberate memory setting in
+      the Windows-side WSL configuration (for example a memory= entry). This
+      was NOT changed here; it is a decision for the build round.
+  N2. The Linux account kerneldev has a locked password field ("!") because no
+      secure interactive prompt was available to the agent. The operator must
+      set it once with `passwd` inside the distro. No password was created,
+      echoed, stored or uploaded by the agent, and root is no longer the
+      default user of the distro.
+  N3. Repo sync consumed 45 min 35 s for 41 GiB. The same command is
+      resume-safe and will be fast to re-verify.
+
+--------------------------------------------------------------------------------
+10. NOT PERFORMED
+--------------------------------------------------------------------------------
+  - No kernel patch applied (ROUND32/33/36/37/52 drafts untouched).
+  - No edit of any file under common/.
+  - No Kconfig / olddefconfig / savedefconfig.
+  - No dtc / dt-schema / dt_binding_check / dtbs_check on any board tree.
+  - No `tools/bazel build`, no bazel query, no compile, no packaging.
+  - No AVB tooling, no boot image assembly, no ramdisk/FDT/EROFS parsing.
+  - No ADB/fastboot, no device connection, no unlock, no root, no flashing,
+    no partition write, no device state change.
+  - No full AOSP/DerpFest platform checkout.
+  - No Windows-side global Clang/LLD/Bazel/Bazelisk/JDK/Rust/NDK install.
+  - No change to main, ack18-dby-w09-dts-draft, the parallel branch or PR #1.
+
+--------------------------------------------------------------------------------
+11. ENVIRONMENT-LEVEL CHANGES MADE (disclosed for review)
+--------------------------------------------------------------------------------
+  E1. Installed distro "Ubuntu-24.04" (Ubuntu 24.04.5 LTS, WSL 2) at
+      D:\WSL\Ubuntu-24.04 via the documented command
+        wsl --install --distribution Ubuntu-24.04 --location "D:\WSL\Ubuntu-24.04"
+            --no-launch
+      The pre-existing "Ubuntu" distro on C: was left untouched.
+  E2. Linux account created non-interactively: kerneldev (uid 1000, sudo,
+      locked password), and /etc/wsl.conf set to
+        [user] default=kerneldev
+      Rationale: the agent has no channel for a private interactive password
+      prompt, and leaving the distro without a default user would have made
+      passwordless root the everyday login context, which the task prohibits.
+      The password itself is deliberately unset and left to the operator.
+  E3. Windows-side WSL configuration file created:
+        <user profile>\.wslconfig  containing  [wsl2] networkingMode=mirrored
+      Rationale: in the default NAT mode the VM cannot reach the host's
+      loopback proxy, and android.googlesource.com was unreachable directly
+      from the VM (TCP connect timeout). Mirrored networking is a documented
+      Microsoft mode; it lets the VM use the host network path and reach the
+      official sources without any third-party mirror. Measured effect: direct
+      HTTPS to android.googlesource.com returns HTTP 200 afterwards. To revert,
+      delete that line and run `wsl --shutdown`. No firewall rule, proxy LAN
+      exposure, security product or policy was modified.
+
+--------------------------------------------------------------------------------
+12. GATES FOR THE NEXT ROUND (patch integration and build)
+--------------------------------------------------------------------------------
+  G1. Operator decision on the WSL memory setting (N1) before any real build.
+  G2. Operator sets the kerneldev password (N2) if an interactive login is
+      wanted.
+  G3. Next task must explicitly authorize: applying the prepared patch drafts,
+      running Kconfig resolution, running dt-schema/dtc checks, and compiling.
+  G4. ROUND12 AVB metadata remains BLOCKED on a trusted avbtool; it is
+      unaffected by this round and still gates packaging.
+================================================================================
+END OF REPORT

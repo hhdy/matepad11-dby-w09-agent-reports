@@ -1,0 +1,56 @@
+DBY-W09 HOS 4.3 — local FDT evidence matrix (read-only, redacted)
+Source: ROUND3 dtb_work 13 files; parser: ROUND3 validated FDT decoder.
+NOTE: property inventory != driver portability. No kernel boot claim.
+
+=== 4.1 SoC / board / boot identity ===
+boot DTB (deterministic @22,790,144 per ROUND3): totalsize=556524 nodes=3471 props=16502 VALID
+ROOT msm-id (boot DTB, safe): qcom,msm-id = [356, 131073] (soc_id 356, rev 2.1).
+ROOT model/compatible/board-id values: see dtbo_board_rootparam_matrix.csv.
+DTBO 9 entry board-id (decimal, authoritative u32): 8200/8296/8206/8208/8202/8238/8302/8240/8298.
+Last entry 8298 = 0x206a (ROUND3 baseline).
+MSM-id is absent from DTBO overlays (present only in boot FDT) -> matrix msm_id column is empty by design.
+boot FDT /rootparam fields (names only): phandle
+/rootparam present in boot FDT: True; values REDACTED (no serial/MAC/device-unique value emitted).
+DTBO overlays do not contain a /rootparam node; matrix rootparam_present=False is factual for the overlay layer, not a contradiction with the boot FDT.
+
+=== 4.2 Display / DSI / panel ===
+matched_property_rows=1029 unique_nodes=45
+key_properties: compatible, hw_lp855x,backlight_ic_bits_compatible, hw_rt8555,backlight_ic_bits_compatible, model, qcom,mdss-dsi-panel-status-check-mode, qcom,mdss-dsi-panel-status-command, qcom,mdss-dsi-panel-status-command-state, qcom,mdss-dsi-panel-status-read-length, qcom,mdss-dsi-panel-status-value, qcom,mdss-dsi-panel-timings, qcom,mdss-dsi-panel-timings-phy-v2, qcom,mdss-dsi-to-120-cmds-status, qcom,mdss-dsi-to-30-cmds-status, qcom,mdss-dsi-to-60-cmds-status, qcom,panel-cphy-mode, status
+representative_nodes: /, /fragment@12/__overlay__/qcom,mdss_dsi_sw43404_amoled_wqhd_cmd, /fragment@13/__overlay__/qcom,mdss_dsi_sw43404_amoled_wqhd_video, /fragment@14/__overlay__/qcom,mdss_dsi_sw43404_fhd_plus_cmd, /fragment@20/__overlay__/qcom,mdss_dsi_nt35597_truly_wqxga_cmd/qcom,mdss-dsi-display-timings/timing@0, /fragment@21/__overlay__/qcom,mdss_dsi_nt35597_wqxga_video_truly/qcom,mdss-dsi-display-timings/timing@0, /fragment@22/__overlay__/qcom,mdss_dsi_nt36523_wqxga_video_cost, /fragment@27/__overlay__/qcom,mdss_dsi_sim_cmd/qcom,mdss-dsi-display-timings/timing@0, /fragment@27/__overlay__/qcom,mdss_dsi_sim_cmd/qcom,mdss-dsi-display-timings/timing@1, /fragment@27/__overlay__/qcom,mdss_dsi_sim_cmd/qcom,mdss-dsi-display-timings/timing@2
+
+=== 4.3 Touch / SPI / I2C ===
+matched_property_rows=1104 unique_nodes=64
+key_properties: clocks, compatible, detect_by_dummy_reg, interrupt-parent, interrupts, pinctrl-names, reg, reg-names, rtc6226,vdd-supply-voltage, send_adsorption_status_to_fw, send_bt_status_to_fw, spi-max-frequency, status, vdd-supply
+representative_nodes: /, /fragment@119/__overlay__/hl7139_i2c6@55, /fragment@119/__overlay__/sm5450_i2c6@6F, /fragment@89/__overlay__/spi@880000, /fragment@89/__overlay__/spi@880000/huawei_thp@10, /fragment@89/__overlay__/spi@880000/huawei_thp@10/ilitek, /fragment@89/__overlay__/spi@880000/huawei_thp@10/novatech, /fragment@89/__overlay__/spi@880000/huawei_thp@10/thp_input_dev, /fragment@89/__overlay__/spi@880000/huawei_thp@10/thp_pen_input_dev, /fragment@93/__overlay__/hl7139_i2c6@55
+
+=== 4.4 Wi-Fi / Bluetooth / PCIe ===
+matched_property_rows=196 unique_nodes=29
+key_properties: compatible, gdsc-vdd-supply, pinctrl-names, qcom,phy-status-bit, qcom,phy-status-offset, status
+representative_nodes: /, /btkb_led, /fragment@105/__overlay__/qcom,pcie@1c08000, /fragment@128/__overlay__/qcom,pcie@1c08000, /fragment@65/__overlay__/qcom,qbt_handler, /fragment@71/__overlay__/bt_qca6390, /reserved-memory/cnss_wlan_region, /reserved-memory/pil_wlan_fw_region@ADDR_REDACTED, /soc/apps-smmu@15000000/anoc_1_pcie_tbu@151a1000, /soc/qcom,cnss-qca6390@b0000000
+
+=== 4.5 UFS / QMP PHY ===
+matched_property_rows=75 unique_nodes=5
+key_properties: clock-names, clocks, compatible, interrupts, phy-names, phys, reg, reg-names, resets, status
+representative_nodes: /, /soc/ad-hoc-bus/mas-xm-ufs-mem/qcom,node-qos-clks, /soc/qcom,qmp-aop@c300000, /soc/ufshc@1d84000, /soc/ufsphy_mem@1d87000
+
+=== 4.6 PMIC / regulator / GPIO / clocks ===
+matched_property_rows=1170 unique_nodes=147
+key_properties: #gpio-cells, clock-names, clocks, compatible, gpio-controller, regulator-max-microvolt, regulator-min-microvolt, regulator-name
+representative_nodes: /, /fragment@0/__overlay__/qcom,pm8150@0/clock-controller@5b00, /fragment@0/__overlay__/qcom,pm8150@0/pinctrl@c000, /fragment@2/__overlay__/qcom,pm8150b@2/clock-controller@6000, /fragment@2/__overlay__/qcom,pm8150b@2/pinctrl@c000, /fragment@4/__overlay__/qcom,pm8150l@4/clock-controller@5b00, /fragment@4/__overlay__/qcom,pm8150l@4/pinctrl@c000, /fragment@40/__overlay__/display_gpio_regulator@1, /fragment@43/__overlay__/lpi_pinctrl@33c0000, /fragment@48/__overlay__/cdc_dmic01_pinctrl
+
+=== 4.7 Audio / USB-C / Camera / sensors ===
+matched_property_rows=921 unique_nodes=214
+key_properties: compatible, interrupts, interrupts-extended, mipi-csi-vdd-supply, model, pinctrl-names, qcom,use-pdc-interrupts, status, vdd-supply
+representative_nodes: /, /fragment@108/__overlay__/qcom,camera-flash0, /fragment@109/__overlay__/qcom,cam-sensor0, /fragment@110/__overlay__/qcom,cam-sensor1, /fragment@130/__overlay__/qcom,camera-flash0, /fragment@131/__overlay__/qcom,cam-sensor0, /fragment@131/__overlay__/qcom,camera-flash0, /fragment@132/__overlay__/qcom,cam-sensor0, /fragment@132/__overlay__/qcom,cam-sensor1, /fragment@133/__overlay__/qcom,cam-sensor1
+
+=== 4.8 Reserved memory ===
+matched_property_rows=342 unique_nodes=57
+key_properties: #size-cells, alignment, compatible, no-map, resize, reusable, size, status
+representative_nodes: /, /reserved-memory, /reserved-memory/adsp_region, /reserved-memory/bootfail_mem@ADDR_REDACTED, /reserved-memory/cdsp_region, /reserved-memory/cdsp_secure_heap@ADDR_REDACTED, /reserved-memory/cnss_wlan_region, /reserved-memory/hyp_region@ADDR_REDACTED, /reserved-memory/kerneldump, /reserved-memory/linux,cma
+physical addresses REDACTED; only node names/sizes/no-map/reusable recorded.
+
+=== Cross-check evidence for ChatGPT (local facts only) ===
+Huawei-specific nodes present: /huawei,lcd_panel, /huawei_thp@10, /huawei_audio_info.
+Qualcomm SPMI PMIC nodes: pm8150 / pm8150b / pm8150l / pmk8002 / pmxprairie (from node paths).
+External svesnav DTS / rootparam overlay facts belong to ChatGPT report; not copied here.
+No 4.19 .ko loadability claim; GKI 6.18 portability assessment remains ChatGPT-side.

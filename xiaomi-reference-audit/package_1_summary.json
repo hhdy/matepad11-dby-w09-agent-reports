@@ -1,0 +1,115 @@
+{
+  "package_id": 1,
+  "status": "IDENTIFIED_AND_VERIFIED",
+  "volume_set": [
+    {
+      "file": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.z01",
+      "size_bytes": 4294967296
+    },
+    {
+      "file": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫.zip",
+      "size_bytes": 2194062296
+    }
+  ],
+  "volume_count": 2,
+  "format": "PKWARE split ZIP (multi-volume; .z01 + final .zip)",
+  "split_marker": "PK0708 + PK0304 at .z01 offset 0",
+  "virtual_archive_size_bytes": 6489029592,
+  "integrity_status": "ARCHIVE_TEST_OK",
+  "entry_count": 51,
+  "file_entries": 46,
+  "directory_entries": 5,
+  "crc_verified_file_entries": 46,
+  "path_risk_count": 0,
+  "total_uncompressed_bytes": 8528938587,
+  "max_single_uncompressed_bytes": 7663020944,
+  "compression_ratio": 1.314,
+  "device_identity": {
+    "product_codename": "elish",
+    "evidence": [
+      "README.txt line 3: \"ColorOS 17 for Xiaomi Pad 5 Pro (elish / SM8250)\"",
+      "flash_all.sh: \"getvar product ... grep ^product: *elish\"",
+      "archive base name: elish_XiaomiPad5Pro_..."
+    ],
+    "soc": "SM8250 / Qualcomm KONA family (README textual claim)",
+    "model": "Xiaomi Pad 5 Pro (11-inch Wi-Fi variant; README says Pad 5 Pro, no 5G/12.4 mention)",
+    "rom": "ColorOS 17 (ported), sfix18 full flash ROM, packaged 2026-11-19",
+    "android_version": "UNKNOWN (no build.prop or OTA metadata in archive)",
+    "kernel_version": "UNKNOWN (boot.img header parsed; kernel version string not extracted from binary)",
+    "root_note": "README states APatch-patched boot.img; APatch manager preinstalled"
+  },
+  "boot_header": {
+    "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/boot.img",
+    "magic": "ANDROID!",
+    "kernel_size": 51131920,
+    "ramdisk_size": 27598134,
+    "page_size": 1580,
+    "page_size_note": "NON-STANDARD: 1580 is not a power of two; typical AOSP page_size is 4096. Consistent with a third-party/APatch repack of this boot image; value recorded verbatim, not normalized.",
+    "os_version_raw": 0,
+    "cmdline": "androidboot.selinux=permissive",
+    "cmdline_offset": 44,
+    "header_size_v2": 0,
+    "parsed": true,
+    "dtbo_archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images/dtbo.img",
+    "dtbo_magic_hex": "d7b7ab1e"
+  },
+  "text_evidence_extracted": {
+    "extracted_count": 6,
+    "files": [
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.bat",
+        "local_path": "entry_09_flash_all.bat",
+        "uncompressed_size": 4162,
+        "sha256": "ee63053360e3d9e97f56bac126370abd285bc86d82acd6f9e81b02b1f5501344",
+        "note": "flash script - read as text only, NEVER executed"
+      },
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all.sh",
+        "local_path": "entry_10_flash_all.sh",
+        "uncompressed_size": 4716,
+        "sha256": "f2b6d284b7db587ca973a8208322494777c7b923d36e6f9de8aeae20414c4bb8",
+        "note": "flash script - read as text only, NEVER executed"
+      },
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.bat",
+        "local_path": "entry_11_flash_all_except_storage.bat",
+        "uncompressed_size": 3995,
+        "sha256": "e0ea787da126e57c135c2c2779ed3c61903bd0fea8a73071b3127dc4b31cedb2",
+        "note": "flash script - read as text only, NEVER executed"
+      },
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/flash_all_except_storage.sh",
+        "local_path": "entry_12_flash_all_except_storage.sh",
+        "uncompressed_size": 4509,
+        "sha256": "fedbe0972e137457b66199c0386dbcdd13d9b33d24662e18e5d5d59e353575fd",
+        "note": "flash script - read as text only, NEVER executed"
+      },
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/images.sha256",
+        "local_path": "entry_13_images.sha256",
+        "uncompressed_size": 3091,
+        "sha256": "debdfaef1e7591459643f6491c5835c90a271e22fc9a3fffe9d942aca3a7b547",
+        "note": "text document"
+      },
+      {
+        "archive_path": "elish_XiaomiPad5Pro_ColorOS17.0.0.102_V2_L小炫/README.txt",
+        "local_path": "entry_51_README.txt",
+        "uncompressed_size": 3998,
+        "sha256": "50be49106dc804318a6f377fd2a0254f1ac7f881ac94454107dec8ab5ae08fd7",
+        "note": "text document"
+      }
+    ],
+    "policy": "allowlisted plain text only; no binaries; no execution"
+  },
+  "content_classes": {
+    "firmware_images": 35,
+    "flash_scripts": 4,
+    "checksum_manifest": 1,
+    "readme": 1,
+    "kernel_source_files": 0,
+    "dts_dtsi_files": 0,
+    "defconfig_files": 0
+  },
+  "value_for_dby_w09": "NOT_DIRECTLY_REUSABLE",
+  "value_reason": "This is a complete fastboot firmware ROM for elish, not a kernel source package. It contains no .dts/.dtsi/Makefile/Kconfig/defconfig/patch. All .img/.mbn/.elf/.bin are board/device-specific prebuilt binaries, including APatch-patched boot and ColorOS super; none may be flashed to DBY-W09 or reused as GKI 6.18 source."
+}

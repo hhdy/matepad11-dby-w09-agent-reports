@@ -1,0 +1,63 @@
+AOSP reference notes for ROUND3 parser (authoritative sources, read-only fetched)
+Fetched: 2026-11-24
+Source mirror: https://github.com/aosp-mirror/platform_system_core (official AOSP read-only mirror of android.googlesource.com/platform/system/core)
+Files fetched into local workspace _aosp_ref/: metadata_format.h, reader.cpp, utility.cpp, writer.cpp, sparse_format.h, sparse_defs.h, sparse_read.cpp, sparse_crc32.cpp, output_file.cpp
+
+=== LP metadata constants (metadata_format.h) ===
+LP_METADATA_GEOMETRY_MAGIC = 0x616c4467
+LP_METADATA_GEOMETRY_SIZE  = 4096
+LP_METADATA_HEADER_MAGIC   = 0x414C5030
+LP_METADATA_MAJOR_VERSION  = 10
+LP_METADATA_MINOR_VERSION_MIN = 0 ; MAX = 2
+LP_METADATA_VERSION_FOR_UPDATED_ATTR = 1
+LP_METADATA_VERSION_FOR_EXPANDED_HEADER = 2
+LP_SECTOR_SIZE = 512
+LP_PARTITION_RESERVED_BYTES = 4096
+LP_TARGET_TYPE_LINEAR = 0 ; LP_TARGET_TYPE_ZERO = 1
+LP_PARTITION_ATTR_READONLY=1<<0 SLOT_SUFFIXED=1<<1 UPDATED=1<<2 DISABLED=1<<3
+
+=== LpMetadataGeometry (packed, LE), sizeof = 52 ===
+ 0 u32 magic ; 4 u32 struct_size ; 8 u8 checksum[32] (SHA256 with checksum zeroed, over struct_size bytes)
+40 u32 metadata_max_size ; 44 u32 metadata_slot_count ; 48 u32 logical_block_size
+
+=== LpMetadataHeader (packed, LE) ===
+ 0 u32 magic ; 4 u16 major ; 6 u16 minor ; 8 u32 header_size
+12 u8 header_checksum[32] (SHA256 with checksum zeroed, over header_size bytes)
+44 u32 tables_size ; 48 u8 tables_checksum[32] (SHA256 over tables bytes)
+80 LpMetadataTableDescriptor partitions ; 92 extents ; 104 groups ; 116 block_devices
+128 u32 flags ; 132 u8 reserved[124]  (only present when minor >= 2)
+sizeof(LpMetadataHeaderV1_0) = 128 ; sizeof(LpMetadataHeader) = 256
+LpMetadataTableDescriptor (packed, 12 bytes): 0 u32 offset (relative to END of header) ; 4 u32 num_entries ; 8 u32 entry_size
+
+=== Entry structs (packed, LE) ===
+LpMetadataPartition (52): 0 name[36] ; 36 u32 attributes ; 40 u32 first_extent_index ; 44 u32 num_extents ; 48 u32 group_index
+LpMetadataExtent (24): 0 u64 num_sectors (512-byte sectors) ; 8 u32 target_type ; 12 u64 target_data ; 20 u32 target_source (block device index for LINEAR)
+LpMetadataPartitionGroup (48): 0 name[36] ; 36 u32 flags ; 40 u64 maximum_size (bytes)
+LpMetadataBlockDevice (64): 0 u64 first_logical_sector ; 8 u32 alignment ; 12 u32 alignment_offset ; 16 u64 size ; 24 name[36] ; 60 u32 flags
+
+=== Offsets (utility.cpp, EXACT formulas) ===
+GetPrimaryGeometryOffset() = LP_PARTITION_RESERVED_BYTES = 4096
+GetBackupGeometryOffset()  = 4096 + LP_METADATA_GEOMETRY_SIZE = 8192
+GetPrimaryMetadataOffset(geometry, slot) = 4096 + (4096*2) + metadata_max_size*slot = 12288 + metadata_max_size*slot
+GetBackupMetadataOffset(geometry, slot)  = 12288 + metadata_max_size*metadata_slot_count + metadata_max_size*slot
+GetTotalMetadataSize(max_size, slots) = 4096 + (4096 + max_size*slots)*2
+
+=== Validation rules (reader.cpp ParseGeometry / ReadMetadataHeader / ParseMetadata) ===
+Geometry: magic correct; struct_size <= sizeof(52); SHA256(checksum zeroed, first struct_size bytes) == stored checksum; struct_size == 52; slot_count != 0; metadata_max_size % 512 == 0.
+Header: magic correct; major == 10; minor <= 2; header_size == 128 if minor<2 else 256; SHA256(checksum zeroed, first header_size bytes) == stored checksum.
+Table bounds: for each descriptor, offset <= tables_size AND tables_size - offset >= num_entries*entry_size (u64 multiply).
+Entry size: partitions.entry_size==52; extents.entry_size==24; groups.entry_size==48. (block_devices entry_size checked only for bounds in upstream; we additionally require 64.)
+tables_size <= geometry.metadata_max_size; SHA256(tables bytes) == tables_checksum.
+Per partition: attributes subset of valid mask (V0 always; V1 when minor>=1); first_extent_index+num_extents no overflow and <= extents.num_entries; group_index < groups.num_entries.
+Per extent: if target_type==LINEAR then target_source < block_devices.num_entries.
+Super device = block_devices[0] must exist.
+Overlap check: metadata_region = GetTotalMetadataSize(...) must be <= block_devices[0].first_logical_sector * 512.
+
+=== Sparse format (sparse_format.h / sparse_read.cpp) ===
+SPARSE_HEADER_MAGIC = 0xED26FF3A ; stored LE bytes 3A FF 26 ED
+sparse_header (28 bytes): 0 u32 magic ; 4 u16 major ; 6 u16 minor ; 8 u16 file_hdr_sz ; 10 u16 chunk_hdr_sz ; 12 u32 blk_sz ; 16 u32 total_blks ; 20 u32 total_chunks ; 24 u32 image_checksum (CRC32 IEEE 802.3)
+chunk_header (12 bytes): 0 u16 chunk_type ; 2 u16 reserved1 ; 4 u32 chunk_sz (in OUTPUT blocks) ; 8 u32 total_sz (bytes incl chunk header)
+Types: RAW=0xCAC1 (data = chunk_sz*blk_sz) ; FILL=0xCAC2 (data = 4 bytes fill value, repeated) ; DONT_CARE=0xCAC3 (no data, read as zeros) ; CRC32=0xCAC4 (data = 4 bytes CRC32, chunk_sz is 0; verifies running CRC since prior CRC chunk)
+Validation: magic; major<=1; file_hdr_sz>=28; chunk_hdr_sz>=12; blk_sz!=0 and blk_sz%4==0; total_blks!=0; iterate all chunks: header within file, total_sz>=chunk_hdr_sz, data within file, chunk_data_size consistency (RAW: total_sz-chunk_hdr_sz == chunk_sz*blk_sz; FILL/CRC32: ==4; DONT_CARE: ==0), sum(chunk_sz) == total_blks at end; do not expand into raw.
+
+NOTE: all parsing is read-only virtual access; no full-file hash, no sparse-to-raw conversion, no partition extraction.

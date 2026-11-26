@@ -184,3 +184,42 @@ ROUND32 历史记录中 `huawei,dby-w09` 的 root compatible 有已知 undocumen
 ## 10. 完成后停止
 
 上传并回读全部证据后立即停止，不启动其他轮次，不更改源码或分支。把最终报告、commit/blob、PASS/FAIL/BLOCKED 结论交回 1号 AI 审查。未经新的明确指令，不得继续执行其他任务。
+
+
+---
+
+## Revision 1 — mandatory rerun after patch-22 remediation (2026-11-26)
+
+**This addendum supersedes the original patch-22 / DTS file identities above.** The previous run correctly blocked at patch 22 because the Makefile hunk context used spaces rather than the literal TAB in the fixed ACK file. Do not use the old patch-22 blob `d303439a9fde864ea765f59ef0888ada3f20468c` or old DTS blob `f51c5691d2955909149ba8f76d0b99dcf671e36f`.
+
+### Current authoritative candidate identities
+
+- Updated 23-patch manifest blob: `ffcb225b4a28974350bd1cc8588fdb95df9372d0`
+- Updated DTS source blob: `58293f7a62a50f8109886c92ce4b9cd14d7980e2`
+- Corrected patch 22 blob: `ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f`
+- Patch 23 unchanged blob: `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`
+- Frozen 17-patch manifest remains blob: `9a93b7e3a500d807533517a92b98fe244b2ea456`
+- Exact ACK qcom Makefile blob remains: `296688f7cb26550f75bce65826f234bc24110356`
+
+Re-fetch the manifest and verify every blob/SHA before execution. The corrected patch 22 has literal TAB characters in the six Makefile context rows and the new DTB target row. Do not normalize tabs to spaces.
+
+The updated DTS synchronizes with the latest reviewed main DTS while retaining the extra dual-domain Host property. It must contain:
+- `vdda-phy-always-on;`;
+- no `vdda-phy-max-microamp` or `vdda-pll-max-microamp` properties;
+- accurate comment that included `sm8250.dtsi` supplies the bootloader-filled zero-size `/memory` placeholder;
+- 37 HOS4.3 reserved-memory children;
+- UFS Host domains MMCX index 0 then GCC UFS_PHY_GDSC index 1;
+- no guessed RAM addresses, PMIC physical input parents or synthetic regulators.
+
+### Rerun procedure
+
+1. Use a **new isolated clean source tree and new output directory**. Do not resume or mutate the preserved first-run tree under `round135-agent/a30`; retain it as historical evidence.
+2. Re-verify exact ACK commit and all 23 patch identities.
+3. Re-apply patches 1–21 in immutable manifest order with the required per-patch `git apply --check --verbose`, `git apply --verbose`, and `git diff --check`. Report all offsets; known historical offsets must match the prior logs. The corrected 17-patch content tree must again equal `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+4. Apply corrected patch 22, then patch 23. Do not proceed on any error, fuzz, reject or unreviewed offset. Do not use `--ignore-whitespace`, `--3way`, reduced context, manual edits or patch regeneration.
+5. If both patches apply, proceed with all original taskbook sections §4–§7: source assertions; the four binding schemas; real `huawei-dby-w09.dtb` build; full `dtbs_check`; decompile of the newly built DTB; final .config and all 14 symbols; `ufs-qcom.o`; full `//common:dby_w09` Image build; exact 38/38 and 83/83 Host regressions; diff/checkpatch/SPDX logs.
+6. Do not treat an old ROUND18/ROUND130 build, the prior 21-patch tree, or the previous Agent's historical regression results as ROUND135 R1 results. Re-run what the original taskbook requires against the complete corrected 23-patch tree.
+7. Preserve all prior ROUND135 report/log files. Upload this rerun as new, non-overwriting files under `firmware-analysis/round135/r1/` on `firmware-audit-v1` (final report plus apply, schema/DTB, Kconfig/build, regressions, and checkpatch logs). Read back every uploaded file and record commit/blob identities.
+8. Stop after upload and readback. No device connection, ADB/fastboot/recovery/serial, firmware extraction, boot/flash, partition read/write, packaging or branch merge.
+
+The first ROUND135 report remains historically BLOCKED. The rerun can be marked PASS only under original §9's full criteria and only after 1号 AI independently reviews its raw logs. If the corrected patch still fails, stop and report the exact failure; do not repair it locally.

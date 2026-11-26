@@ -1,0 +1,79 @@
+##################################################################################
+# ROUND135 R2 - UPLOAD AND READBACK VERIFICATION LOG
+# Target: firmware-audit-v1 branch, firmware-analysis/round135/r2-preflight/
+# Method: GitHub Contents API PUT, then GET with Accept: application/vnd.github.raw
+#         until byte-identical to the local file (eventual-consistency retries at 15s).
+##################################################################################
+
+### Sequence of events
+
+1. Initial upload of 4 content files (2026-11-26, commit 0dc3782f1f6f53bda42bcbfa89ab9a6d07c0cec3
+   and successors per file below). All 4 read back byte-identical.
+
+2. CORRECTION within the same R2 session (disclosed for AI2 review):
+   The initially uploaded round135-r2-tree-a-identity-apply.log and
+   round135-r2-tree-b-identity-apply.log contained only the raw per-patch apply
+   evidence. The taskbook requires each tree log to also carry the tree's exact
+   identity evidence. The two files were updated (Contents API PUT with prior
+   blob sha; Git history preserves the initial apply-only versions) to the
+   merged form: Part 1 = input verification + clone/rebuild identity evidence
+   (prep_r2a_log.txt / prep_r2b_log.txt), Part 2 = raw ordered apply evidence.
+   Final report and equivalence log were unchanged. No previous-round file was
+   touched; no file outside round135/r2-preflight/ was created or modified.
+
+### Final per-file state (verified by byte-identical raw readback)
+
+FILE: ROUND135_R2_PREFLIGHT_FINAL_REPORT.txt
+  bytes=12689
+  sha256=66308e0fc75e1715c76db9ecaa77fbfcf5c648d6edee4650d2459cfcc501b483
+  git_blob=2d8b006482b4542e6018e27afbe8b4d8fbeed5d8
+  upload_commit=0dc3782f1f6f53bda42bcbfa89ab9a6d07c0cec3
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r2-tree-a-identity-apply.log
+  bytes=25058
+  sha256=aae532095e32321d9c018dcec449e0293d065da77b274e584343448995a3f887
+  git_blob=6fe70593091d0aaed0478b8b5bb100d1479c1b7f  (initial apply-only blob b882f9707533d751e4cbb11f7f7b6efee01aaa27 superseded)
+  upload_commit=f99702e176ecc4ee2e6b14455598e8cf280548a9  (initial commit 985b9f36502234c4d7274bfd8f865c69b8dd3246)
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r2-tree-b-identity-apply.log
+  bytes=21066
+  sha256=35a44f160e21683452a34ddd8ad545f7f519a4492816a410030cbed3ecb0ea2d
+  git_blob=87c7119c687448b1f1336f120a437ec15d8bba6d  (initial apply-only blob c3b86c78bd5e5759b376d6efe11394fb07b231cc superseded)
+  upload_commit=ece5f20ff793a02d63e4f080130daa6cbb1cd0e6  (initial commit 81c2fcb9e283ca874285dee5a5c452e60fef63aa)
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r2-tree-equivalence-and-offsets.log
+  bytes=9679
+  sha256=280769a1eb6c9dfe643b52306750cb47d6fb9cf97d359b9ab13636673d1d7da7
+  git_blob=1a191291963d0e78c2138332fb639e5232d9d687
+  upload_commit=e9a95a496c3a7fb08665fec8412cab126dea1fba
+  readback=BYTE_IDENTICAL
+
+FILE: round135-r2-upload-readback.log
+  (this file; uploaded last, self-row records the PUT commit SHA and blob
+   returned by the API at upload time)
+  readback=BYTE_IDENTICAL
+
+### Key content facts established by the uploaded evidence
+
+- Both trees: HEAD=8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a,
+  HEAD^{tree}=790a68ae6d4f4ac51ab2d88977b6fd5c031473b7, clean, no alternates,
+  distinct gitdirs, no shared object DB.
+- 23/23 patches: check/apply/diff-check RC=0 in BOTH trees; no fuzz/reject.
+- Offsets (identical in both trees, all matching historical controlled list):
+  patch16 H1 -25 H2 -2 H3 +2; patch17 H1 +1 H2 -2; patch20 H3 -19;
+  all other patches emitted no offset line from the primary applier.
+- 17-stage tree (both trees) = 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 (matches
+  the pre-declared ROUND132 value).
+- 23-stage CANDIDATE tree (both trees) = afe9517f8062b96bfeb5b4dd5714942861e6a44b
+  (not pinned; awaiting AI2 verification and AI1 follow-on taskbook).
+- R2 stages NOT RUN (by design): schema, dtbs_check, DTB build/decompile,
+  Kconfig, object compile, Image build, Host regressions, checkpatch, SPDX.
+
+No kernel binaries or firmware were uploaded. No token material appears in any
+uploaded file (automated privacy scan performed pre-upload).
+
+R2 UPLOAD/READBACK: ALL 5 DELIVERABLES VERIFIED - STOP.
+##################################################################################

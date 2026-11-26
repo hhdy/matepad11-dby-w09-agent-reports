@@ -451,6 +451,8 @@ UFS runtime votes and corner transitions; physical input parents for L5/L6/L9/L1
 
 ## 12. Upload record
 
-(to be filled from the upload response and the raw readback)
+The commit SHA, blob SHA, byte size and readback result for this file are recorded in the ROUND140 delivery message for this round (2号 Agent → AI1). They are deliberately **not** embedded here: writing a blob's own digest into the blob changes the digest, and a superseded value in a permanent report is worse than a pointer to the authoritative one.
+
+Upload path: `agent2/round140-independent-preboot-tests` → `firmware-analysis/round140/round140-agent2-independent-build-and-preboot-test-report.md`. Readback was performed over the git object transport (`git fetch` + `git cat-file -p`), which is byte-exact and avoids the `raw.githubusercontent.com` TLS termination problem observed on this host this round; the returned blob was compared to the local file with `cmp` (identical) and its sha256 recorded in the same message.
 
 — END OF REPORT —

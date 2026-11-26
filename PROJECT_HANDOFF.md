@@ -2478,3 +2478,40 @@ R2 is consequently a gated preflight:
 The project controlled-offset policy remains `kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md`, blob `6712f686da9940937ed87eab2f4b27d44cb29626`. Nonzero offsets are not automatically a failure, but must be fully itemized, reproduced identically in both independent trees, have no fuzz/context relaxation/reject/partial apply, and finish at the independently verified predeclared tree SHA. Until the complete 23-patch SHA is pinned after independent review, R2 may establish a candidate SHA but may not mark the series accepted or run downstream tests.
 
 R2 Agent output goes to `firmware-audit-v1/firmware-analysis/round135/r2-preflight/` and stops after upload/readback. No device access, firmware extraction, boot/flash/partition operation or branch merge is authorized. Phase E/F blockers remain; Phase G NOT RUN; Stage B remains deferred.
+
+
+---
+
+## 2026-11-26 — ROUND135 Revision 2 dual-tree preflight completed (candidate only)
+
+The local WorkBuddy test Agent completed the exact R2 preflight scope and uploaded five read-back-verified artifacts to `firmware-audit-v1/firmware-analysis/round135/r2-preflight/`.
+
+### R2 result (do not overstate)
+
+- **Agent verdict: PASS — PREFLIGHT CANDIDATE ESTABLISHED, pending AI2 independent evidence review and AI1 expected-SHA pinning.**
+- Both independent trees started from ACK commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`, initial root tree `790a68ae6d4f4ac51ab2d88977b6fd5c031473b7`, clean state, separate Git directories/object stores, no alternates or shared object database.
+- All 23 manifest-ordered patches passed `git apply --check --verbose`, `git apply --verbose`, and `git diff --check` in both trees (23/23 each; all recorded command exit codes 0; no fuzz, rejects, partial application, fallback applier or context relaxation).
+- Both 17-patch intermediate trees equal the predeclared ROUND132 tree `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+- Both full 23-patch resulting content trees independently calculate to candidate `afe9517f8062b96bfeb5b4dd5714942861e6a44b`; Tree A == Tree B. **This SHA remains a candidate and is not yet the pinned expected tree.**
+- Controlled offsets reproduced identically in both trees: patch 16 H1=-25, H2=-2, H3=+2; patch 17 H1=+1, H2=-2; patch 20 (ROUND128 V2) H3=-19. All other patches emitted no offset line from the primary `git apply` applier. These match the known historical controlled-offset set.
+- Patch identity correction remains in force: patch 22 is DTS-only blob `ab0108364c835d87ac35ca670347d9d0001a821d`; patch 23 is qcom Makefile-only blob `ceb72ed206d97beb2c2fa8558cb120ee186cb685`. The duplicate ROUND45 driver patch is excluded; the driver implementation is already supplied by frozen patch 5 blob `f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622`.
+
+### Frozen-manifest snapshot disclosure
+
+Tree A's preparation log records that the local `reports-a30` export used frozen manifest blob `96b52a4fdbc1f63023ec1fbfc9aec12b8176cfdb`, which differs from the authoritative pinned blob `9a93b7e3a500d807533517a92b98fe244b2ea456`. The R2 report discloses this mismatch. 1号 AI independently fetched both versions and confirmed that exactly two lines (patch 16 and 17 status annotations only) differ; all 17 patch paths, blob IDs, SHA-256 values and order are identical. The authoritative GitHub manifest was used for the 17 input identity checks. **AI2 must explicitly review this raw-log disclosure; do not silently erase the mismatch or relabel the old snapshot as byte-identical.**
+
+### Five R2 artifacts (all read back byte-identical)
+
+- `ROUND135_R2_PREFLIGHT_FINAL_REPORT.txt` — blob `2d8b006482b4542e6018e27afbe8b4d8fbeed5d8`
+- `round135-r2-tree-a-identity-apply.log` — blob `6fe70593091d0aaed0478b8b5bb100d1479c1b7f`
+- `round135-r2-tree-b-identity-apply.log` — blob `87c7119c687448b1f1336f120a437ec15d8bba6d`
+- `round135-r2-tree-equivalence-and-offsets.log` — blob `1a191291963d0e78c2138332fb639e5232d9d687`
+- `round135-r2-upload-readback.log` — blob `f03511589fba658a503fcb11efb6365396ff8a42`
+
+### Required handoff and stop gate
+
+The latest AI2 branch commit currently available is `c35fe440d0219dfe623f5e3babfc901609b797eb` (2026-11-26 05:22:33 UTC): it approves the R2 taskbook for this limited preflight, but it predates the Agent's R2 upload and is **not** an independent review of the five execution artifacts. 2号 AI must now independently review the raw Tree A/Tree B logs, patch identities/order, 17-stage equality, all per-hunk offsets, final candidate tree equality, upload/readback record, and the manifest snapshot disclosure. 1号 AI must not impersonate this review.
+
+R2 intentionally did **not** run dt_binding_check, dtbs_check, actual board DTB build/decompile, Kconfig/.config, UFS object compile, Kleaf/Image build, Host regressions, checkpatch or SPDX. These remain NOT_RUN by design. Once AI2 publishes its independent raw-evidence ruling, 1号 AI will pin the AI2-verified full 23-patch Tree SHA in a new follow-on taskbook, then authorize the next validation stage. Do not start downstream tests before that SHA is pinned. No device, USB, ADB/fastboot, recovery, serial, root, firmware, boot, flash or partition operation occurred or is authorized by R2.
+
+Phase E/F blockers remain unchanged: actual HOS4.3 ABL memory/reserved-memory handoff, PM8150 physical input supply topology, ARC/MMCX-to-MX semantic equivalence, and AVB/vbmeta/DTBO/ramdisk path. Phase G remains NOT RUN. Stage B DerpFest remains deferred until Stage A 6.18.33 kernel boot and storage/basic-hardware acceptance.

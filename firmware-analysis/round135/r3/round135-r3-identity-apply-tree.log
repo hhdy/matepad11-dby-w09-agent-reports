@@ -1,0 +1,428 @@
+################################################################################
+# ROUND135 R3 - identity / apply / tree evidence log
+# Part 1: input fetch + verification (frozen manifest 9a93b7e3 from GitHub; 23 patches)
+# Part 2: fresh isolated staging + ordered 23-patch apply + pinned tree assertions
+################################################################################
+
+### R3 input fetch + verification 2026-11-26T07:35:16Z
+frozen manifest (GitHub ai-parallel/stagea-port-until-boot:kernel-baseline/round61/round32-stagea-series.txt):
+  blob=9a93b7e3a500d807533517a92b98fe244b2ea456 (expect 9a93b7e3a500d807533517a92b98fe244b2ea456)
+frozen  1 0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft blob=dad87ef8dfefee6141b8a7949982c007c4a03b4a sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171 size=1575 OK
+frozen  2 round52-0001-context-corrected.patch                       blob=e47219d4a944b44f5c1461689b76e77b4f0317a8 sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6 size=5093 OK
+frozen  3 round36-corrected-power-domain-range.patch                 blob=79b00af904454f637098b2882b78b01d52c831cf sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764 size=1006 OK
+frozen  4 round32-corrected-sc7180-clock-names.patch                 blob=2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836 size=1151 OK
+frozen  5 round33-checkpatch-clean.patch                             blob=f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65 size=8481 OK
+frozen  6 round52-0002-checkpatch-clean.patch                        blob=7e5df841b756dfef803edec486d9a5e3e753f47b sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4 size=4773 OK
+frozen  7 round63-0002-qmp-ufs-phy-binding.patch                     blob=a6668eebe293f9a35e9c08d6be4f37c4340e7ddd sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0 size=1152 OK
+frozen  8 round63-0001-phy-qcom-qmp-ufs-always-on.patch              blob=99fffb10603b38bc30a0e6c9db99b0e9888a7b82 sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539 size=7402 OK
+frozen  9 round58-kleaf-target.patch                                 blob=dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec size=8513 OK
+frozen 10 round31-0001-regulator-add-proxy-consumer.patch            blob=c7438eb8772c0b90a319ba5a37d5fa71b9342964 sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003 size=14865 OK
+frozen 11 round31-0002-regulator-proxy-consumer-binding.patch        blob=d810e771bc16e531bc01082af0e9feea157aeb7a sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6 size=2657 OK
+frozen 12 round31-0003-dby-w09-enable-proxy-consumer.patch           blob=2a486d066b8eeb914665730feb9d42b21e847fd6 sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435 size=1230 OK
+frozen 13 round32-0001-regulator-child-scoped-proxy-consumer.patch   blob=6b4f6d9969dde82733523d713b810df8451e934c sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650 size=14265 OK
+frozen 14 round32-0002-regulator-child-scoped-proxy-binding.patch    blob=ae349d95b011c2193c18e0352a8f482513501e85 sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15 size=2945 OK
+frozen 15 round32-0003-dby-w09-child-scoped-proxy-review-dts.patch   blob=14f0219736c018c3cf361b7608eb00023dacbf77 sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594 size=2625 OK
+frozen 16 round33-0001-regulator-proxy-self-target-only.patch        blob=3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 size=3375 OK
+frozen 17 round33-0002-regulator-proxy-self-target-binding.patch     blob=d2e818296118672bd708db34ed08d817fcd3895b sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 size=2848 OK
+
+=== extension patches 18-23 (from _r135 verified copies, re-verified) ===
+cp: cannot stat 'D:/workbuddy/2026-11-23-22-29-12/_r135/19-round122-ufs-regulator-load-first.patch': No such file or directory
+cp: cannot stat 'D:/workbuddy/2026-11-23-22-29-12/_r135/20-round128-qmp-ufs-dual-rail-v2.patch': No such file or directory
+cp: cannot stat 'D:/workbuddy/2026-11-23-22-29-12/_r135/21-round126-proxy-consumer-load-first.patch': No such file or directory
+ext 18 18-round120-ufs-per-hba-async-join.patch           blob=f604c8672fcbc98f3e9645f5e8888c8a34b1c11e sha256=12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7 size=3242 OK
+ext 22 22-round135-huawei-dby-w09-real-dts.patch          blob=ab0108364c835d87ac35ca670347d9d0001a821d sha256=c88d4fdb4a140c3a79614901950bf0a03077b2e836c37d3b266cdfccd067af59 size=15986 OK
+ext 23 23-round135-huawei-dby-w09-dtb-makefile.patch      blob=ceb72ed206d97beb2c2fa8558cb120ee186cb685 sha256=cf9536d807ff2d19d0b77256b6d733ce8f0a58d193bc3b84847d2d7b7eac4f46 size=542 OK
+/mnt/d/workbuddy/2026-11-23-22-29-12/_r135/r3/fetch_verify_inputs_wsl.sh: line 60: EB[$n]: unbound variable
+ext 19 19-round122-ufs-regulator-load-first.patch         blob=64dd2ad9022251e2411a1a745aeb920a0badfa85
+ext 20 20-round128-qmp-ufs-dual-rail-v2.patch             blob=22ccec1cabf2d78e61442d19219985135f8341e7
+ext 21 21-round126-proxy-consumer-load-first.patch        blob=c180dbf458403d68b2c32c1d54776a7559e7e5db
+
+patch count: 23/23
+
+################################################################################
+# PART 2: staging + ordered apply
+################################################################################
+
+### ROUND135 R3 s1: staging + ordered apply 2026-11-26T07:36:38Z
+pinned expected 23-patch tree: afe9517f8062b96bfeb5b4dd5714942861e6a44b (R3 taskbook predeclared; NOT changeable by this run)
+
+=== staging: hardlink top-level workspace, own common clone with OWN object DB ===
+cp_al_ok
+clone_source=R2 Tree A (round135-r2-agent/tree-a/common: verified clean transport clone of pinned ACK)
+HEAD           = 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a (expect 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a)
+HEAD^{tree}    = 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7 (expect 790a68ae6d4f4ac51ab2d88977b6fd5c031473b7)
+status_dirty   = 0 (expect 0)
+git-dir        = .git
+git-common-dir = .git
+abs-git-dir    = /home/kerneldev/work/matepad11/round135-r3-agent/a30/common/.git
+alternates=none
+count-objects: count: 27;size: 252.00 KiB;in-pack: 14655001;packs: 1;size-pack: 7.30 GiB;prune-packable: 0;garbage: 0;size-garbage: 0 bytes;
+remote_origin=/home/kerneldev/work/matepad11/round135-r2-agent/tree-a/common
+own_output_base=/home/kerneldev/work/matepad11/round135-r3-agent/a30/out/bazel/output_user_root
+
+=== patch 1: 0001-dt-bindings-ufs-allow-sm8250-dual-power-domains.patch.draft ===
+identity: blob=dad87ef8dfefee6141b8a7949982c007c4a03b4a sha256=9bd87c76939df51da1bbda992b4e289b462d505ffef51b76b0903c624bd81171 size=1575
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 2: round52-0001-context-corrected.patch ===
+identity: blob=e47219d4a944b44f5c1461689b76e77b4f0317a8 sha256=74ef372913a17cb4cf156586b6803d7732a34911a8db6e40ad8588af4e6127e6 size=5093
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 3: round36-corrected-power-domain-range.patch ===
+identity: blob=79b00af904454f637098b2882b78b01d52c831cf sha256=5b3dbd2f7624ae37214bbbd7f315045a1751fede4b740ea1cc954a71d58a3764 size=1006
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 4: round32-corrected-sc7180-clock-names.patch ===
+identity: blob=2a038774ffac4cc0d742a52baeb1d41ce2aa1dfb sha256=f1fe33f0fb8fb0e1c8254b6f0c8dd99241b99a028563efbbd6be2eb74fbc6836 size=1151
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml...
+Applied patch Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 5: round33-checkpatch-clean.patch ===
+identity: blob=f1d54e5e0379183fbdfb3ca6132c6d0fc61d4622 sha256=e95e2ee727adcb128f0f6b720db31e3779b4b76bd53414353b15af8c6e080d65 size=8481
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 6: round52-0002-checkpatch-clean.patch ===
+identity: blob=7e5df841b756dfef803edec486d9a5e3e753f47b sha256=d3f9bc5294a409dd55caf17f076302f62e4250f60857091b4590a1e94cb6aff4 size=4773
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/ufs/host/ufs-qcom.h...
+Checking patch drivers/ufs/host/ufs-qcom.c...
+Applied patch drivers/ufs/host/ufs-qcom.h cleanly.
+Applied patch drivers/ufs/host/ufs-qcom.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 7: round63-0002-qmp-ufs-phy-binding.patch ===
+identity: blob=a6668eebe293f9a35e9c08d6be4f37c4340e7ddd sha256=534412c3dba85890c47f7bb66117910ac13c5b89385d1ff735480108a095f2a0 size=1152
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml...
+Applied patch Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 8: round63-0001-phy-qcom-qmp-ufs-always-on.patch ===
+identity: blob=99fffb10603b38bc30a0e6c9db99b0e9888a7b82 sha256=d33e1d405cc6c855de9a3867ec7e39a25e7bec2f6f74924cb1bbc6a86b1f9539 size=7402
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 9: round58-kleaf-target.patch ===
+identity: blob=dc8f4b5932f6aabaeef068b2d25cf6f9fe9be0ec sha256=bd9f124ab9ac865dfe452e6f29faf75e0e58db8a31c9e183a9962ae6b15e8dec size=8513
+--- git apply --check --verbose (raw) ---
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch BUILD.bazel...
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch BUILD.bazel cleanly.
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 10: round31-0001-regulator-add-proxy-consumer.patch ===
+identity: blob=c7438eb8772c0b90a319ba5a37d5fa71b9342964 sha256=38f8daf2cf247cb10c203b7f98d19dc4ff8b3b033692e73177b6b47645fdb003 size=14865
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/Makefile...
+Checking patch drivers/regulator/core.c...
+Checking patch drivers/regulator/proxy-consumer.c...
+Checking patch include/linux/regulator/driver.h...
+Checking patch include/linux/regulator/proxy-consumer.h...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/Makefile cleanly.
+Applied patch drivers/regulator/core.c cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+Applied patch include/linux/regulator/driver.h cleanly.
+Applied patch include/linux/regulator/proxy-consumer.h cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 11: round31-0002-regulator-proxy-consumer-binding.patch ===
+identity: blob=d810e771bc16e531bc01082af0e9feea157aeb7a sha256=1f89f0b7c1a5b16f2a968f1459aa3687555737a2eef41ca506cfcfd9114173c6 size=2657
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 12: round31-0003-dby-w09-enable-proxy-consumer.patch ===
+identity: blob=2a486d066b8eeb914665730feb9d42b21e847fd6 sha256=c55529184c29fe88ee8b3b0fd57a209e6a6ef6e39c7af310f9cc218214708435 size=1230
+--- git apply --check --verbose (raw) ---
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch arch/arm64/configs/dby_w09_storage_first.fragment...
+Applied patch arch/arm64/configs/dby_w09_storage_first.fragment cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 13: round32-0001-regulator-child-scoped-proxy-consumer.patch ===
+identity: blob=6b4f6d9969dde82733523d713b810df8451e934c sha256=9b47f5bf125924d3ca8db4018e0f3338a8b0d85311fd4749d4821d36768aa650 size=14265
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/regulator/Kconfig...
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/Kconfig cleanly.
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 14: round32-0002-regulator-child-scoped-proxy-binding.patch ===
+identity: blob=ae349d95b011c2193c18e0352a8f482513501e85 sha256=30a1ee7123480bd1e5ffefb7ca163e749355a5edf75285ed75333f68c8923d15 size=2945
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 15: round32-0003-dby-w09-child-scoped-proxy-review-dts.patch ===
+identity: blob=14f0219736c018c3cf361b7608eb00023dacbf77 sha256=3f524acc4bacdbcdd3cdf6e5d2d91bd0e62d42b8e71c767f24dac77235201594 size=2625
+--- git apply --check --verbose (raw) ---
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts...
+Applied patch arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 16: round33-0001-regulator-proxy-self-target-only.patch ===
+identity: blob=3899e2b7ce7f6e028bf3f79ed31fc47cf442abfe sha256=7b4858f5bf8f80e83092275afc1add586676b45ebc4f343fa9d2fcb218ec2de4 size=3375
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Hunk #1 succeeded at 187 (offset -25 lines).
+Hunk #2 succeeded at 244 (offset -2 lines).
+Hunk #3 succeeded at 274 (offset 2 lines).
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 17: round33-0002-regulator-proxy-self-target-binding.patch ===
+identity: blob=d2e818296118672bd708db34ed08d817fcd3895b sha256=d19fb3b6ddf43ed5c05c1ca6dc3d7a57602514fb954bb3854b5a7ee78d681d05 size=2848
+--- git apply --check --verbose (raw) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml...
+Hunk #1 succeeded at 119 (offset 1 line).
+Hunk #2 succeeded at 149 (offset -2 lines).
+Applied patch Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== stage-17 content tree: 77e2b2b1515b3813f7538aedffe4c5a4e90edb57 (expected 77e2b2b1515b3813f7538aedffe4c5a4e90edb57) ===
+TREE17_MATCH=YES
+
+=== patch 18: 18-round120-ufs-per-hba-async-join.patch ===
+identity: blob=f604c8672fcbc98f3e9645f5e8888c8a34b1c11e sha256=12efbe8a14d80f8b657bad763a344b5439abeb572158079beb32daba05e02bc7 size=3242
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/ufs/core/ufshcd-priv.h...
+Checking patch drivers/ufs/core/ufshcd.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/ufs/core/ufshcd-priv.h...
+Checking patch drivers/ufs/core/ufshcd.c...
+Applied patch drivers/ufs/core/ufshcd-priv.h cleanly.
+Applied patch drivers/ufs/core/ufshcd.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 19: 19-round122-ufs-regulator-load-first.patch ===
+identity: blob=64dd2ad9022251e2411a1a745aeb920a0badfa85 sha256=2f335f513fd1f7013a0edbc2e0d9eb5dca9ae68055eff4fd526b1c4274cfca66 size=2339
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/ufs/core/ufshcd.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/ufs/core/ufshcd.c...
+Applied patch drivers/ufs/core/ufshcd.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 20: 20-round128-qmp-ufs-dual-rail-v2.patch ===
+identity: blob=22ccec1cabf2d78e61442d19219985135f8341e7 sha256=53ef42bb997a46e776f65c256039b13285047f784fed506ab8b22ab7f76e3bfb size=11114
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c...
+Hunk #3 succeeded at 2310 (offset -19 lines).
+Applied patch drivers/phy/qualcomm/phy-qcom-qmp-ufs.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 21: 21-round126-proxy-consumer-load-first.patch ===
+identity: blob=c180dbf458403d68b2c32c1d54776a7559e7e5db sha256=eae21b96d34ebff0e7bbd4843bcd4f96cda26b02f83dd6f323b8c571e51fef80 size=2252
+--- git apply --check --verbose (raw) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch drivers/regulator/proxy-consumer.c...
+Applied patch drivers/regulator/proxy-consumer.c cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 22: 22-round135-huawei-dby-w09-real-dts.patch ===
+identity: blob=ab0108364c835d87ac35ca670347d9d0001a821d sha256=c88d4fdb4a140c3a79614901950bf0a03077b2e836c37d3b266cdfccd067af59 size=15986
+--- git apply --check --verbose (raw) ---
+Checking patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts...
+Applied patch arch/arm64/boot/dts/qcom/huawei-dby-w09.dts cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== patch 23: 23-round135-huawei-dby-w09-dtb-makefile.patch ===
+identity: blob=ceb72ed206d97beb2c2fa8558cb120ee186cb685 sha256=cf9536d807ff2d19d0b77256b6d733ce8f0a58d193bc3b84847d2d7b7eac4f46 size=542
+--- git apply --check --verbose (raw) ---
+Checking patch arch/arm64/boot/dts/qcom/Makefile...
+CHECK_RC=0
+--- git apply --verbose (raw; hunk offsets appear here if any) ---
+Checking patch arch/arm64/boot/dts/qcom/Makefile...
+Applied patch arch/arm64/boot/dts/qcom/Makefile cleanly.
+APPLY_RC=0
+--- git diff --check (raw) ---
+DIFFCHECK_RC=0
+
+=== final 23-patch content tree: afe9517f8062b96bfeb5b4dd5714942861e6a44b ===
+pinned_expected=afe9517f8062b96bfeb5b4dd5714942861e6a44b
+TREE23_MATCH_PINNED=YES
+
+--- git diff --stat (raw) ---
+ BUILD.bazel                                        |  19 ++
+ .../bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml    |   5 +
+ .../bindings/regulator/qcom,rpmh-regulator.yaml    |  46 ++++
+ .../devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml |   1 +
+ .../devicetree/bindings/ufs/qcom,ufs-common.yaml   |  51 +++-
+ arch/arm64/boot/dts/qcom/Makefile                  |   1 +
+ drivers/phy/qualcomm/phy-qcom-qmp-ufs.c            | 202 ++++++++++++++-
+ drivers/regulator/Kconfig                          |  15 ++
+ drivers/regulator/Makefile                         |   1 +
+ drivers/regulator/core.c                           |   5 +
+ drivers/ufs/core/ufshcd-priv.h                     |   4 +
+ drivers/ufs/core/ufshcd.c                          |  52 +++-
+ drivers/ufs/host/ufs-qcom.c                        | 281 +++++++++++++++++++++
+ drivers/ufs/host/ufs-qcom.h                        |   4 +
+ include/linux/regulator/driver.h                   |   3 +-
+ 15 files changed, 674 insertions(+), 16 deletions(-)
+--- git status --short (raw) ---
+ M BUILD.bazel
+ M Documentation/devicetree/bindings/phy/qcom,sc8280xp-qmp-ufs-phy.yaml
+ M Documentation/devicetree/bindings/regulator/qcom,rpmh-regulator.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,sc7180-ufshc.yaml
+ M Documentation/devicetree/bindings/ufs/qcom,ufs-common.yaml
+ M arch/arm64/boot/dts/qcom/Makefile
+ M drivers/phy/qualcomm/phy-qcom-qmp-ufs.c
+ M drivers/regulator/Kconfig
+ M drivers/regulator/Makefile
+ M drivers/regulator/core.c
+ M drivers/ufs/core/ufshcd-priv.h
+ M drivers/ufs/core/ufshcd.c
+ M drivers/ufs/host/ufs-qcom.c
+ M drivers/ufs/host/ufs-qcom.h
+ M include/linux/regulator/driver.h
+?? arch/arm64/boot/dts/qcom/dby-w09-proxy-review.dts
+?? arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+?? arch/arm64/configs/dby_w09_storage_first.fragment
+?? drivers/regulator/proxy-consumer.c
+?? include/linux/regulator/proxy-consumer.h
+--- final git diff --check ---
+FINAL_DIFFCHECK_RC=0
+changed_tracked=15 changed_untracked=5
+binary_diff_sha256=83a5e06f7198a5a8b9d35c2d04ba854eca2c17708242c9b512a9aab794ac36a2
+tree_compute=temporary index GIT_INDEX_FILE=/home/kerneldev/work/matepad11/round135-r3-agent/a30/common/.git/idx-r3-tmp (read-tree HEAD + add -A + write-tree), removed after each computation; main index never staged
+### R3 s1 end 2026-11-26T07:37:26Z tree23=afe9517f8062b96bfeb5b4dd5714942861e6a44b

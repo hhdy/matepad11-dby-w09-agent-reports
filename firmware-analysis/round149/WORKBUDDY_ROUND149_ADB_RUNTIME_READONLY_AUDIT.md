@@ -137,7 +137,7 @@ Permission denial is an acceptable result; do not use root or attempt bypass.
 
 Before upload, filter for relevant lines, case-insensitive:
 
-`ufs|ufshcd|u​​fs-qcom|rpmh|rpmhpd|regulator|pmic|pm8150|genpd|power domain|mmcx|mmc[xX]|cx|mx|smmu|iommu|scsi|scsi host|sdhci|dtbo|bootconfig|memory|reserved-memory|avb|dm-verity|failed|timeout|probe defer`
+`ufs|ufshcd|ufs-qcom|rpmh|rpmhpd|regulator|pmic|pm8150|genpd|power domain|mmcx|mmc[xX]|cx|mx|smmu|iommu|scsi|scsi host|sdhci|dtbo|bootconfig|memory|reserved-memory|avb|dm-verity|failed|timeout|probe defer`
 
 Preserve timestamps and a small amount of surrounding context. Keep raw logs locally. Do not upload full unfiltered logcat if it contains account identifiers, notifications, message content, Wi-Fi data, location, tokens or other unrelated personal data.
 

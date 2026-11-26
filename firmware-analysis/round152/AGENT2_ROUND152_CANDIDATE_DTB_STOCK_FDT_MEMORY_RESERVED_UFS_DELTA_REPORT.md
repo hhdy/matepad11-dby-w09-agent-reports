@@ -241,7 +241,7 @@ Two different comparison keys are needed, and using the wrong one produces a fal
 | `disp_rdump_region@9c000000` | `0x9c000000` | `0x800000` | 8.000 | — | **absent** (nested in splash) |
 | `dfps_data_region@9e300000` | `0x9e300000` | `0x100000` | 1.000 | — | **absent** |
 | `rainbow_mem@b0000000` | `0xb0000000` | `0x400000` | 4.000 | no-map, removed-dma-pool, rainbow_mem | **absent** |
-| `bootfail_mem@b0400000` | `0xb0400000` | `0x800` | 0.0005 | no-map, removed-dma-pool, bootfail_mem | **absent** |
+| `bootfail_mem@b0400000` | `0xb0400000` | `0x800` | 0.00195 | no-map, removed-dma-pool, bootfail_mem | **absent** |
 | `kerneldump` | `0x0` | `0x0` | 0 | — (unpopulated placeholder) | **absent** |
 
 Subtracting the candidate's intervals from the stock static union leaves **42 027 008 B = 40.080 MiB** in three contiguous gaps:

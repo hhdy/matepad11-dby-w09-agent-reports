@@ -8,7 +8,7 @@
 
 ## 1. Accepted identities
 
-- ABL PE payload SHA-256: a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747b404 (2,597,064 B).
+- ABL PE payload SHA-256: a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404 (2,597,064 B).
 - Captured stock dtbo.img SHA-256: 51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c (25,165,824 B).
 - Candidate base DTB SHA-256: 9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60 (108,680 B).
 - Live runtime observation: androidboot.dtbo_idx=2, matching stock DTBO Entry 2 / qcom,board-id <0x200e 0>. Entry 8 / 0x206a is not the active target.

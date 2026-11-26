@@ -40,7 +40,7 @@ Both named Window A and Window B branches themselves are discoverable and exist.
 
 Because the candidate binary, manifest, and exact target facts are unavailable, the requested byte-level and parser checks cannot be executed. The results below deliberately distinguish unavailable evidence from a demonstrated failure.
 
-- ROUND155/157/158 source artifact identities: **not re-hashed in this component review**; AI1 plan records the expected base DTB (108,680 bytes, SHA-256 `9d0d76001cf1b156ddbdee4e4c5fed60`) and captured stock DTBO partition (25,165,824 bytes, SHA-256 `51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c`). Those plan values do not substitute for checking Window B's actual input/output files.
+- ROUND155/157/158 source artifact identities: **not re-hashed in this component review**; AI1 plan records the expected base DTB (108,680 bytes, SHA-256 `9d0d76001cf1b156ddbdee0a0e77afaaffa23d77cb8068ab21e407ee4c5fed60`) and captured stock DTBO partition (25,165,824 bytes, SHA-256 `51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c`). Those plan values do not substitute for checking Window B's actual input/output files.
 - Exact Entry 2 table metadata and selector properties: **not independently verifiable** without Window A report/JSON and the candidate manifest.
 - Five exact HOS4.3 `/rootparam` properties: AI1 plan lists four known values:
   - `qcom,boardid`: raw bytes `08 02 06`

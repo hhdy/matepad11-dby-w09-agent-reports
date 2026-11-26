@@ -1,0 +1,31 @@
+round135-dt-schema-and-dtb.log
+generated: 2026-11-26 (UTC) by WorkBuddy test agent
+
+STATUS: NOT RUN — BLOCKED UPSTREAM
+
+Reason: taskbook §4 requires the final merged 23-patch tree as input.
+Patch 22 (22-round135-huawei-dby-w09-real-dts.patch) failed git apply
+--check with "patch does not apply" on arch/arm64/boot/dts/qcom/Makefile
+(TAB vs SPACE whitespace defect in the hunk context lines; full evidence in
+round135-23patch-identity-and-apply.log SECTION E). Per taskbook §3.2 the
+series must stop at the apply error; patch 23 was not attempted either
+(skip/reorder forbidden). Therefore:
+
+  * §4.1 source-level structural assertions on the final merged DTS:
+        NOT RUN — arch/arm64/boot/dts/qcom/huawei-dby-w09.dts was never
+        created in the working tree (patch 22 not applied).
+  * §4.2 dt_binding_check on qcom,ufs.yaml / qcom,ufs-common.yaml /
+        qcom,sc8280xp-qmp-ufs-phy.yaml / qcom,rpmh-regulator.yaml:
+        NOT RUN — run only after a successful 23-patch apply per taskbook;
+        not executed on the interrupted 21-patch tree to avoid producing a
+        log that could be mistaken for the §4.2 deliverable.
+  * §4.3 real huawei-dby-w09.dtb build, full dtbs_check, decompile of the
+        just-built DTB, per-item assertions (dual-domain phandles/cells/
+        order, PHY domain, UFS SID, supplies, model/compatible, Makefile
+        target): NOT RUN.
+
+No synthetic output, no hand-written fixture, no substitute DTB was produced.
+dtc/fdtdump were not invoked at all in this round.
+
+The tree remains at the verified 21-patch state
+(tree21 = b6a82b03c281cc8248b44db1a03714ca3ee54dc8).

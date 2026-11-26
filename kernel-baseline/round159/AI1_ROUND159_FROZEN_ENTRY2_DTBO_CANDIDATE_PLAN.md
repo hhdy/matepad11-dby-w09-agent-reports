@@ -17,7 +17,7 @@ ROUND158 established from the exact HOS4.3 captures:
 - The original Entry 2 fragment@143 supplies five /rootparam properties by external symbol fixup.
 - The candidate base contains /rootparam but no phandle or exported symbols. The stock Entry 2 with 166 external fixups therefore cannot be reused.
 - A single target-path="/rootparam" fragment merges into the candidate with only five properties changed. ROUND158 prototypes used public HOS4.2 values and are NOT final.
-- Exact HOS4.3 values known so far: qcom,boardid raw bytes [08 02 06], qcom,board_name "DBY_W09_VD", qcom,product_name "DBY-W09", hardware_version "SH1DBSLM"; exact huawei,modem_id bytes must be extracted from the already captured stock Entry 2, not guessed.
+- Exact HOS4.3 Entry 2 values now extracted and live-FDT byte-compared (Window A ROUND159 report + JSON): `qcom,boardid` is a 16-byte u32-cell list `[8, 2, 0, 6]` (`00000008000000020000000000000006`); `qcom,board_name="DBY_W09_VD"`; `qcom,product_name="DBY-W09"`; `hardware_version="SH1DBSLM"`; `huawei,modem_id` is the exact 8-byte u32-cell list `[0xffffffff, 0]` (`ffffffff00000000`). Do not use the earlier shorthand `[08 02 06]`; it was incomplete.
 - The HOS4.3 ABL selection/table contract is not fully closed. The target-derived table metadata and selector rules must decide whether one-entry or preserved-index table construction is appropriate.
 
 ## 2. ROUND159 bounded deliverable
@@ -68,3 +68,22 @@ STOP after one of these outcomes:
 - FAIL: host merge or DTBO serialization fails. Report the concrete failure and one minimal repair recommendation; do not multiply variants.
 
 No ADB, root, fastboot, recovery, reboot, partition read/write, flash, source/config edit, AVB bypass, signing/key extraction, or device test is authorized by ROUND159.
+
+
+## ROUND159 update — Window A facts are now published
+
+Window A report blob: `a54c849a84924387b0f13eaf25dd1702398e8b5b`
+Window A exact facts JSON blob: `db1866588836df69e959a90809e2a5fb12d89cc6`
+Window B builder-input normalization (derived without changing source facts): branch `agent2/round159-entry2-preserving-dtbo-candidate`, path `firmware-analysis/round159/entry2-target-facts.builder-input.json`, commit `fabda246500506a52d03ea57149614116b3f3686`.
+
+Window A's decoded HOS4.3 ABL validator accepts a table with at least one entry; one exact root `qcom,board-id=<0x200e 0>` match in a one-entry table produces index 0. No fixed index-2 consumer was found within the decoded ABL; userspace consumers are not audited. The candidate decision is therefore a **host-side one-entry GO**, not device-boot proof.
+
+The original stock Entry 2 table fields are id/rev/custom all zero. The one-entry candidate should therefore retain those zeros, use header_size=32, dt_entry_size=32, dt_entries_offset=32, page_size=4096, version=0, and place its only FDT at offset 64. ABL parser code does not enforce page-size or 4-byte alignment of dt_offset; do not add arbitrary alignment padding.
+
+Window A source-of-truth report:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/workbuddy/round159-exact-entry2-facts/firmware-analysis/round159/WORKBUDDY_A_ROUND159_EXACT_ENTRY2_TARGET_FACTS_AND_ABL_SELECTOR_REPORT.md
+
+Source JSON:
+https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/workbuddy/round159-exact-entry2-facts/firmware-analysis/round159/entry2-target-facts.json
+
+The prior AI2 BLOCKED report and Window B BLOCKED report were produced before these Window A files were published. They are stale workflow-state reports, not a negative result against the newly available facts.

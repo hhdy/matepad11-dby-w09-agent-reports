@@ -21,10 +21,10 @@ The exact frozen series was independently replayed in two fresh trees for ROUND1
 | 19 | `kernel-baseline/round135/series/19-round122-ufs-regulator-load-first.patch` | `64dd2ad9022251e2411a1a745aeb920a0badfa85` | exact ROUND122 candidate; original source blob preserved |
 | 20 | `kernel-baseline/round135/series/20-round128-qmp-ufs-dual-rail-v2.patch` | `22ccec1cabf2d78e61442d19219985135f8341e7` | exact ROUND128 V2 candidate; original source blob preserved |
 | 21 | `kernel-baseline/round135/series/21-round126-proxy-consumer-load-first.patch` | `c180dbf458403d68b2c32c1d54776a7559e7e5db` | exact ROUND126 candidate; original source blob preserved |
-| 22 | `kernel-baseline/round135/series/22-round135-huawei-dby-w09-real-dts.patch` | `ea15a051d75cb0c9b8319fff30f0c7cf6bb7ed6f` | new real-path board DTS plus qcom Makefile DTB entry |
-| 23 | `kernel-baseline/round135/series/23-round135-ufs-dual-genpd-driver.patch` | `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5` | exact ROUND45 dual-GenPD / required-OPP driver candidate |
+| 22 | `kernel-baseline/round135/series/22-round135-huawei-dby-w09-real-dts.patch` | `ab0108364c835d87ac35ca670347d9d0001a821d` | new real-path DBY-W09 board DTS (DTS file only) |
+| 23 | `kernel-baseline/round135/series/23-round135-huawei-dby-w09-dtb-makefile.patch` | `ceb72ed206d97beb2c2fa8558cb120ee186cb685` | qcom Makefile DTB target entry (TAB-exact hunk) |
 
-All four ROUND130 source blobs (18–21) are byte-identical copies of the accepted candidate inputs. Patch 23 is a byte-identical copy of the fixed-ACK source-reviewed ROUND45 driver patch.
+All four ROUND130 source blobs (18–21) are byte-identical copies of the accepted candidate inputs. The frozen 17-patch series already contains the complete SM8250 UFS dual-GenPD / required-OPP implementation in patch 5 (`round33-checkpatch-clean.patch`). A separate ROUND45 driver patch was compared against patch 5 and its diff body differed only by one whitespace alignment character; re-applying it as patch 23 would duplicate the driver implementation and fail on the already-added include hunk. Therefore the duplicate driver patch is intentionally excluded, and patch 23 is now a separate qcom Makefile DTB target entry.
 
 ## 3. ROUND135 board-DTS integration
 
@@ -49,7 +49,7 @@ And changes the UFS Host domain array to the required ordered pair:
 };
 ```
 
-The `ufs_mem_phy` node is not changed; it retains its GCC `UFS_PHY_GDSC` domain. Patch 22 adds `huawei-dby-w09.dtb` to the qcom Makefile. This is the first candidate that places the board file at a real kernel DTS path rather than the old repository-only `.dts.draft` path.
+The `ufs_mem_phy` node is not changed; it retains its GCC `UFS_PHY_GDSC` domain. Patch 22 creates the board DTS at the real kernel source path. Patch 23 adds `huawei-dby-w09.dtb` to the qcom Makefile. This is the first candidate that places the board file at a real kernel DTS path rather than the old repository-only `.dts.draft` path.
 
 ## 4. Explicit acceptance boundaries
 
@@ -71,3 +71,15 @@ The ROUND135 Agent taskbook on this branch is the operational authority. It requ
 ## 6. ROUND135 patch-22 remediation (2026-11-26)
 
 The first Agent pass correctly blocked at patch 22 because the qcom Makefile hunk used spaces where the pinned ACK file uses a TAB before `+=`. Patch 22 has been regenerated against the manifest-pinned ACK Makefile using TABs in both context and inserted lines. The board DTS has also been synchronized with the latest reviewed main-branch evidence: `vdda-phy-always-on` is retained; obsolete PHY `*-max-microamp` properties are omitted because the pinned SM8250 QMP UFS regulator list already supplies those loads; memory comments now state that the included `sm8250.dtsi` supplies a bootloader-filled zero-size `/memory` node and HOS4.3 has 37 reserved-memory children. The dual-domain Host order remains MMCX index 0, GCC UFS_PHY_GDSC index 1. This is a candidate correction only; it is not yet revalidated by Agent.
+
+
+## 7. ROUND135 patch-series deduplication (2026-11-26)
+
+A source diff comparison found that frozen patch 5 (`round33-checkpatch-clean.patch`) already contains the complete ROUND45 SM8250 UFS dual-GenPD / required-OPP implementation. The original patch 23 (`23-round135-ufs-dual-genpd-driver.patch`) had the same diff body except for one alignment whitespace character; when ordered after frozen patch 5, its include hunk would be a duplicate and cannot apply.
+
+To preserve an honest 23-patch manifest without duplicate implementation:
+- patch 22 now contains only the new real-path board DTS file;
+- patch 23 now contains only the TAB-exact qcom Makefile DTB target entry;
+- the duplicate ROUND45 driver patch is removed from this series; its implementation is already carried by frozen patch 5.
+
+The corrected series still contains 17 frozen patches + 4 ROUND130 patches + 2 independent DTS/Makefile integration patches = 23 ordered patch inputs.

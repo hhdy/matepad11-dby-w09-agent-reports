@@ -77,20 +77,45 @@ Window B's published positive host-merge evidence reports `fdtoverlay -i BASE -o
 
 **AI1 conclusion:** the single host-side Entry 2 DTBO component is now frozen and passes the offline FDT/container/host-merge checks. This is not a bootable or flashable package. It must not be written to the DTBO partition by itself. The table is 442 bytes and contains no original AVB descriptor/footer; its component-only nature is intentional.
 
-## 4. Independent 2号 AI review status — stale report must not be misrepresented
+## 4. Independent 2号 AI review — completed
 
-The file at the assigned 2号 AI report path currently remains blob `20fa1f5e3dd5c48c7f8c7ed207955ce23841f3ab`. It is the earlier **BLOCKED — required Window A and Window B artifacts are not published** report, authored before Window A facts and Window B final candidate existed. It has not been replaced with a review of the final candidate.
+2号 AI has now published the final review at:
+- Branch: `ai2/round159-frozen-dtbo-candidate-review`
+- Path: `firmware-analysis/round159/AI2_ROUND159_INDEPENDENT_FROZEN_DTBO_COMPONENT_REVIEW.md`
+- Final review blob: `d7c169c56debcaaae6e31022a890c77a24aaab37`
+- Result: **HOST-SIDE DTBO COMPONENT GO (bounded, static evidence only); integrated boot remains NO-GO.**
 
-Therefore:
-- This old BLOCKED report is **not** a negative technical finding against the candidate.
-- It also cannot be counted as 2号 AI approval of the final candidate.
-- AI1 has performed its own final byte-level check as documented above, but does not impersonate 2号 AI.
+The previous AI2 BLOCKED report (blob `20fa1f5e3dd5c48c7f8c7ed207955ce23841f3ab`) is superseded. It was accurate when written because A/B artifacts had not yet been uploaded; it is not the final review result.
+
+### What AI2 independently checked
+
+- Read Window A report + exact facts JSON and Window B final report + manifest + build/selftest/independent verification logs.
+- Downloaded and parsed the real 442-byte dt_table image and 378-byte embedded DTBO FDT, checking header, entry metadata, bounds, FDT totalsize and manifest hashes.
+- Confirmed root `qcom,board-id=<0x200e 0>`, target-path `/rootparam`, and the exact five property encodings against Window A's facts.
+- Confirmed static one-entry selector result is index 0 (Grade B); it is not a device boot test.
+- Confirmed the 4096 page-size field does not imply an assumed 4096-byte dt_offset alignment requirement.
+
+### AI2's explicit reproduction limitation
+
+The candidate base DTB itself was not included in the published B artifacts. AI2 therefore did not independently rerun the real-base `fdtoverlay` operation; the exactly-five-property merge result is corroborated from Window B's manifest/logs, not independently reproduced against the raw base by AI2. AI2 did directly inspect the real DTBO and container bytes. AI1 also separately checked the downloaded binary hashes and FDT property payloads.
+
+This limitation does not overturn the component GO, but it must remain disclosed in the evidence record.
+
+### Final combined disposition
+
+- Host-side DTBO component: **GO / FROZEN**.
+- HOS4.3 ABL selector compatibility: **static Grade B GO**, not boot-proven; userspace consumers of `ro.boot.dtbo_idx=0` remain unaudited.
+- Integrated boot-v2 package: **NO-GO**.
+- Temporary boot: **NO-GO**.
+- Partition write: **HARD NO-GO**.
+
+2号 AI did not approve any boot.img, AVB/vbmeta change, device test, or partition write.
 
 ## 5. End of ROUND159 and next phase boundary
 
 ROUND159's implementation goal — one reproducible host-side HOS4.3 Entry 2 DTBO candidate — is complete. No competing variants were created; kernel source/config/base DTB were not changed; no device operation occurred.
 
-Do not automatically open ROUND160 or repeat the same DTBO tests. The next work, when the independent review status is settled, should move directly to the minimum boot-v2 package prerequisites and a single consolidated recovery/acceptance gate. Current hard blockers remain:
+Do not automatically open ROUND160 or repeat the same DTBO tests. With the independent component review now complete, the next work should move directly to the minimum boot-v2 package prerequisites and a single consolidated recovery/acceptance gate. Current hard blockers remain:
 1. exact boot-v2 kernel/ramdisk/initrd and `/chosen` handoff assembly;
 2. ABL runtime `/memory/reg` rewrite and resulting memory/reserved-memory map;
 3. UFDT overlay error atomicity / safe application behavior;

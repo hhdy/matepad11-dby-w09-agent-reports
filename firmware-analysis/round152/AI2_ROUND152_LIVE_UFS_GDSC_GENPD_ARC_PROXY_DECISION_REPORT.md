@@ -204,7 +204,7 @@ Sources:
 
 **PUBLISHED OBSERVATION — ROUND139 / ROUND144 / ROUND151**
 - Candidate UFS host has `operating-points-v2`, two OPP entries, `required-opps` to the RPMhPD table, and two ICC paths.
-- The two candidate UFS OPPs are reported at 37.5 MHz and 300 MHz, with `required-opps` pointing to RPMhPD table entries `opp3` and `opp6`.
+- The candidate has two UFS OPP entries, with `required-opps` pointing to RPMhPD table entries `opp3` and `opp6`. The 37.5 MHz current / 300 MHz maximum values cited above are the HOS live devfreq snapshot, not independently asserted here as candidate OPP frequencies.
 - ROUND144 confirms the candidate patch attaches domain devices in the order MMCX then UFS PHY GDSC, and the single UFS `required-opps` slot maps to the first attached device with `required_dev_index=0`.
 - The selected SM8250 `RPMHPD_MMCX` descriptor is the plain MMCX object with `res_name = "mmcx.lvl"` and no parent pointer. A similarly named MMCX-with-CX-parent descriptor exists but is not selected by the SM8250 array.
 - The ACK UFS PHY GDSC descriptor has no `.parent` relationship to MMCX.

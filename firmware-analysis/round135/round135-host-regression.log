@@ -1,0 +1,23 @@
+round135-host-regression.log
+generated: 2026-11-26 (UTC) by WorkBuddy test agent
+
+STATUS: NOT RUN — BLOCKED UPSTREAM
+
+Reason: taskbook §6 requires reproducing the ROUND130 regression entries
+(first suite 38/38, second suite 83/83) from their original entry file and
+test-source identities against the completed candidate series. The 23-patch
+series stopped at patch 22 (apply failure; see
+round135-23patch-identity-and-apply.log SECTION E), so per taskbook §3.2 the
+sequence halted before §6. Therefore:
+
+  * entry-file and test-source blob capture: NOT STARTED.
+  * compilation commands and outputs: NONE produced this round.
+  * no 38/38 or 83/83 result exists for ROUND135, and none is claimed.
+  * the test set was not substituted, reduced or re-invented; per taskbook a
+    non-reproducible entry would be BLOCKED, and here the blocker is the
+    upstream apply failure, so this log records NOT RUN rather than any
+    PASS/FAIL.
+
+Historical reference only (from ROUND130, not this round): 38/38 and 83/83
+both passed on the accepted candidate series. That fact does not transfer to
+ROUND135 and is recorded here solely as lineage.

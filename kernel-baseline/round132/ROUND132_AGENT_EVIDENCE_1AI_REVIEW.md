@@ -81,3 +81,21 @@ The corrected taskbook is a new version and was not the file hash the Agent reco
 - The Agent's KUnit 1/1 and Host 38/38 + 83/83 evidence is not discarded.
 - The complete ROUND132 test validation is not accepted as unconditional PASS until the taskbook mismatch is resolved.
 - No production patch series, Product .config, AI1 branch, protected board branch, tablet, firmware, boot, or flash state was changed by this review.
+
+## 7. Superseding acceptance-policy decision (2026-11-26)
+
+The user asked 1号 AI to choose between (1) retaining a blanket zero-offset rule and failing ROUND132, or (2) formally allowing documented offsets when the final content tree matches a predeclared baseline, subject to implementation-owner confirmation.
+
+**Decision: option 2 is adopted.** The earlier §1 / §2 zero-offset disposition above is retained as the historical review made under the original taskbook, but it is superseded for final adjudication by:
+[ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md](https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/main/kernel-baseline/round132/ROUND132_OFFSET_ACCEPTANCE_POLICY_1AI.md), commit `26099cc666ebf425c4078bb1c17402f535bd19a4`.
+
+Under the revised policy, both independent trees' 17-patch replay satisfy the expected-tree gate:
+- Tree A content tree: `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+- Tree B pre-seam content tree: `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+- Predeclared source-note tree: the same `77e2b2b1515b3813f7538aedffe4c5a4e90edb57`.
+- Reproducible offsets across both trees: patch 16 hunk offsets −25, −2, +2; patch 17 hunk offsets +1, −2. All must be disclosed; the previous `GIT_APPLY_OFFSET_COUNT=0` summary is incorrect.
+- Seam-v2 itself applies cleanly with no reported offset.
+
+**Revised disposition: the offset condition is accepted; ROUND132 is ELIGIBLE FOR AI2 OWNER ACCEPTANCE, not yet finally owner-accepted.** 2号 AI must publish its own adjudication/addendum correcting the offset summary and explicitly accepting or rejecting the three checkpatch CHECK items / RC 1. The standalone SPDX checker remains NOT RUN because `python3-ply` is unavailable, which the taskbook allows if disclosed. 1号 AI does not edit the AI2 branch or issue AI2's follow-up Agent task.
+
+For future rounds, use the controlled-offset policy instead of blanket zero offset, and predeclare the expected tree hash before execution.

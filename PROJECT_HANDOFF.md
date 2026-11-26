@@ -2421,8 +2421,8 @@ Verdict: **BLOCKED at patch 22**, not a toolchain problem. Patches 1–21 had pe
 - Patch 23 unchanged: `2bf34810b15fd3fef8b1033d9b6ceb884b77fbb5`
 - Updated 23-patch manifest blob: `ffcb225b4a28974350bd1cc8588fdb95df9372d0`
 - Updated taskbook blob: `865c0f2a7eb15f3cf8594c757cf658005d33ea3f`
-- Remediation review: `kernel-baseline/round135/ROUND135_PATCH22_REMEDIATION_1AI_REVIEW.md`, commit `2cd78808db9429b972493abee74ec5f46841a3a9`
-- Current AI1 branch head after taskbook revision 1: `db6458bcfc02d0b77f9239c6a5c7b3464dbccec4`
+- Remediation review: `kernel-baseline/round135/ROUND135_PATCH22_REMEDIATION_1AI_REVIEW.md`, blob `66a4405900871b497c60c200881e77edc3c239a5`; R1 start prompt `kernel-baseline/round135/START_PROMPT_R1.md`, blob `7f7cc91b910c1a01016fac360b2f7d8f2c7902ef`
+- Current AI1 branch HEAD after adding the R1 start prompt: `7abd6647e230e55a4e636c689b08f4a0dfd2c962`
 
 The corrected Makefile hunk uses literal TABs in all context rows and the inserted DTB row. 1号 AI's exact-source inspection confirmed the six context lines exist byte-for-byte in the manifest-pinned ACK Makefile, the inserted DTB target is not duplicated, and the patch's added DTS payload exactly equals the updated candidate DTS file.
 

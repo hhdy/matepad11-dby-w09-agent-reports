@@ -1,0 +1,99 @@
+From 491d0cbffb4d16e2840c1788674e6a05b26e88a2 Mon Sep 17 00:00:00 2001
+From: WorkBuddy Window A <window-a@local>
+Date: Thu, 26 Nov 2026 23:42:09 +0800
+Subject: [PATCH] arm64: dts: qcom: dby-w09: declare ROUND153 three-window RAM
+ map
+
+Override the single /memory@80000000 node inherited from sm8250.dtsi with
+the three tuples measured on the captured stock live FDT; no second memory
+node, no reserved-memory edit. Correct stale DTBO selector/ABL comments.
+---
+ arch/arm64/boot/dts/qcom/huawei-dby-w09.dts | 47 ++++++++++++++-------
+ 1 file changed, 32 insertions(+), 15 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts b/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+index 58293f7a6..f9cc42ff6 100644
+--- a/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
++++ b/arch/arm64/boot/dts/qcom/huawei-dby-w09.dts
+@@ -10,10 +10,12 @@
+  *   - ACK android17-6.18 SM8250 SoC DTSI;
+  *   - same-device public Linux DTS used only as a structural cross-reference.
+  *
+- * The original HOS4.3 DTBO entry 8 is NOT compatible with this minimal base:
+- * it contains 145 fragment targets into many Huawei vendor-only nodes.
+- * Pair this base only with a separately reviewed minimal DBY-W09 rootparam
+- * DTBO draft. Do not apply the stock entry 8 to this base.
++ * The captured stock boot selected DTBO Entry 2 (dtbo_idx=2, board-id 0x200e),
++ * not Entry 8 (0x206a) as an earlier draft comment claimed; the mechanism that
++ * selects that index remains UNKNOWN. The stock boot chain demonstrably
++ * changes the RAM map between the boot.img base FDT and the live FDT, but the
++ * exact mutating component is UNKNOWN. Neither stock entry is assumed
++ * compatible with this minimal base; compatibility is measured separately.
+  */
+ 
+ /dts-v1/;
+@@ -32,12 +34,25 @@ / {
+ 
+ 	/*
+ 	 * Local ROUND3 identity: MSM-ID [356, 131073] = SM8250 v2.1.
+-	 * Keep the SoC DTB board-id at zero; the separate DBY-W09 DTBO is
+-	 * selected by board-id 0x206a and fills /rootparam for Huawei ABL.
++	 * Keep the SoC DTB board-id at zero. The captured stock boot used DTBO
++	 * Entry 2 (dtbo_idx=2, board-id 0x200e); the earlier 0x206a/Entry 8
++	 * selection claim is withdrawn and the selection mechanism is UNKNOWN.
+ 	 */
+ 	qcom,msm-id = <QCOM_ID_SM8250 0x20001>;
+ 	qcom,board-id = <0 0>;
+ 
++	/*
++	 * ROUND153 live RAM map, declared here explicitly. This merges with the
++	 * single /memory@80000000 node inherited from sm8250.dtsi: it does not
++	 * create a second device_type = "memory" node. Cells are
++	 * #address-cells/#size-cells = <2>/<2> in that inherited node.
++	 */
++	memory@80000000 {
++		reg = <0x0 0x80000000 0x0 0x39900000>,
++		      <0x0 0xc0000000 0x0 0xc0000000>,
++		      <0x2 0x00000000 0x2 0x00000000>;
++	};
++
+ 	/*
+ 	 * The label is required by dby-w09-ack18-rootparam.dtso.draft.
+ 	 * Board identity values are populated by the matching DTBO. The local
+@@ -310,10 +325,11 @@ &ufs_mem_phy {
+  *
+  * IMPORTANT: the included pinned sm8250.dtsi itself defines one
+  * device_type = "memory" node with a bootloader-filled zero-size reg
+- * placeholder. Therefore the compiled DTB does inherit a memory node even
+- * though this board file does not define one explicitly. Do not add a
+- * duplicate memory node until the HOS4.3 ABL fixup contract is verified.
+- * The final ABL-provided RAM tuple and reservation map remain UNKNOWN.
++ * placeholder. The board root above overrides that SAME node's reg with the
++ * three windows measured in ROUND153, so the compiled DTB has exactly one
++ * memory node and its final RAM tuple is now explicit in the candidate DTS.
++ * The 18 reserved-memory children of sm8250.dtsi, including the provisional
++ * 70 MiB cdsp_secure_heap, are deliberately untouched.
+  *
+  * ROUND19/20/22 corrected the stock HOS4.3 base-FDT fact:
+  * /memory exists with device_type = "memory", but reg = <0 0 0 0>
+@@ -325,11 +341,12 @@ &ufs_mem_phy {
+  * and only four reserved-memory nodes; it is based on HOS4.2, not this
+  * HOS4.3 image.
+  *
+- * ABL may populate the usable-memory node dynamically, but that is not
+- * proven for the new ACK DTB. Do not infer the final live FDT from the stock
+- * boot-image base FDT, and do not copy HOS4.2 splash/DFPS addresses into this
+- * HOS4.3 tree. The memory map and reservation handoff are a separate gate
+- * before any build/boot attempt or enabling DSP/display/GPU consumers.
++ * The stock boot chain mutates the RAM map, but attributing that mutation to
++ * ABL specifically is NOT proven for this ACK DTB. Do not infer a mutation
++ * mechanism from the difference between the stock boot-image base FDT and the
++ * live FDT, and do not copy HOS4.2 splash/DFPS addresses into this HOS4.3 tree.
++ * Reservation handoff remains a separate gate before any build/boot attempt
++ * or enabling DSP/display/GPU consumers.
+  *
+  * Later stages, intentionally not enabled in this minimal draft:
+  *   &uart2 / GENI debug console (qcom,geni-debug-uart)
+-- 
+2.43.0
+

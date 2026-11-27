@@ -9,7 +9,7 @@
 
 The host-only package toolkit is available as:
 - Archive: `Android17_Boot_Package_Tools_PREP02.zip`
-- SHA-256: `6f602a198a4437116952808dc6b36f1d2affa3d7f0575f45e38272c21d737570`
+- SHA-256: `e698f2bd873ec3ca047dcefe84535012e88857e6739c7031cb908c47024a40ea`
 
 It includes:
 - Android boot-image header v0-v2 parser and v2 unsigned payload packer.
@@ -17,6 +17,7 @@ It includes:
 - DBY-W09 three-FDT DTB-slot composer: candidate Kona v2.1 FDT + stock Kona v2/v1 fallback FDTs + original 173-byte tail.
 - First-stage fstab presence check at `/firmware/android/fstab`; warns if absent from candidate FDT.
 - Header-v0 separate ramdisk wrapper builder.
+- Deterministic root-owned CPIO newc + gzip archive creator from an Android 17 ramdisk source tree (does not invent init/fstab contents).
 - Gzip decompression with a 128 MiB cap and CPIO newc/crc inventory parser.
 - AVB footer metadata inspection only; no signatures or descriptors are forged.
 - Frozen ROUND159 442-byte DTBO table/FDT verifier.

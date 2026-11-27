@@ -36,7 +36,7 @@ From existing ROUND154/155/64/65 reports (not a fresh parse of unavailable raw l
 ## Verification
 
 - Python compile: PASS.
-- Synthetic unit tests: **15/15 PASS**.
+- Synthetic unit tests: **16/16 PASS**.
 - Real frozen ROUND159 DTBO component: **PASS**, 442 B and SHA-256 `f185c13de5f9d2ca8dc2610c4cef33d12db601bfa29bae079fb5827951c1a6cc`.
 
 ## What is not claimed

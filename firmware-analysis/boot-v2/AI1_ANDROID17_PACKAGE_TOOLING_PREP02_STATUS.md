@@ -9,7 +9,7 @@
 
 The host-only package toolkit is available as:
 - Archive: `Android17_Boot_Package_Tools_PREP02.zip`
-- SHA-256: `90102e63d849389b27f5801154637b9e1994f31cc2aff2dfffa38816508d39e2`
+- SHA-256: `6f602a198a4437116952808dc6b36f1d2affa3d7f0575f45e38272c21d737570`
 
 It includes:
 - Android boot-image header v0-v2 parser and v2 unsigned payload packer.

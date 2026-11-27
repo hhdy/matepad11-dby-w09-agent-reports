@@ -20,11 +20,11 @@
 
 每个窗口在本机建立以下目录（使用当前 Windows 用户的 Desktop Known Folder，不要猜测用户名）：
 
-`%USERPROFILE%\\Desktop\\PREP03_REDELIVERY\\WindowA\\`
+`%USERPROFILE%\Desktop\PREP03_REDELIVERY\WindowA\`
 
 或
 
-`%USERPROFILE%\\Desktop\\PREP03_REDELIVERY\\WindowB\\`
+`%USERPROFILE%\Desktop\PREP03_REDELIVERY\WindowB\`
 
 将本窗口 ZIP 保存到对应目录，并在本窗口的 WorkBuddy 回复中**直接附加 ZIP 文件本体，生成可点击下载的附件**。
 

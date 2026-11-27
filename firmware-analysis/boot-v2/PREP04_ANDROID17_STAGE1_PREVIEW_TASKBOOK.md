@@ -188,3 +188,66 @@ Then list:
 - confirm: no device access, no reboot, no flash, no kernel rebuild.
 
 The task is complete after attaching PREP04_ANDROID17_STAGE1_PREVIEW.zip (or, if objectively blocked, an archive containing all parsed facts and the single blocker report). Stop afterwards.
+
+
+## 9. AI1 scope correction — this is a kernel validation package, not a complete ROM
+
+This section is an authoritative correction to the task scope. It supersedes any interpretation that all drivers, peripherals, Android services, or DerpFest integration must be complete before making the Stage 1 package.
+
+### 9.1 Driver completeness is NOT a package gate
+
+The purpose is to validate the ACK 6.18.33 kernel on DBY-W09. It is not a production ROM and not the final DerpFest port.
+
+The following may be incomplete, disabled, missing, or left for later work without blocking the Stage 1 validation package, unless a specific item is required by the selected validation checkpoint:
+- display / panel / touch;
+- GPU / graphics acceleration;
+- camera;
+- audio;
+- Wi-Fi / Bluetooth;
+- sensors, GPS, NFC and other optional peripherals;
+- power-management polish, suspend/resume optimization, thermal tuning and performance tuning;
+- product features and user-facing Android services.
+
+Do not start a driver-completion campaign before first kernel validation. Record what is missing and continue to the next useful checkpoint.
+
+### 9.2 Use staged validation checkpoints
+
+The first test should aim for the earliest meaningful proof, then advance incrementally:
+
+- **Checkpoint K1 — kernel entry / early boot:** ABL transfers control to the ACK Image; ARM64 kernel starts; core CPU/MMU, RAM, GIC, timer and PSCI initialization progresses; early console or another observable kernel log confirms execution. Full Android userspace and peripheral drivers are not required.
+- **Checkpoint K2 — storage / first-stage init (next target when K1 succeeds):** essential UFS host/PHY/clock/regulator/reset/interconnect path works sufficiently to enumerate storage; the required boot/ramdisk handoff occurs; first-stage init can read the required partitions. Display/touch/GPU/audio/Wi-Fi etc. still are not prerequisites.
+- **Checkpoint K3 — minimal userspace / diagnostic access (when feasible):** init advances sufficiently to expose ADB or another diagnostic channel. USB gadget/UDC support is needed only if ADB-over-USB is the chosen observation path.
+- **Checkpoint K4 — broad device functionality:** peripheral drivers and system polish. This is explicitly out of scope for the first validation package.
+
+The package is not required to reach K4. A K1-only package is still useful evidence about kernel startup, even if K2 is not yet reached. The report must state the achieved checkpoint, not label it a full system boot.
+
+### 9.3 Only boot-critical structures remain hard gates
+
+Do not confuse incomplete peripheral drivers with an unresolved boot container. A candidate still needs correct:
+- boot image header and payload offsets/alignment;
+- kernel Image identity and bytes;
+- device DTB / DTBO placement and selector contract;
+- initrd/ramdisk handoff arrangement;
+- partition boundary and preserved tail handling;
+- a legitimate and known test-boot acceptance route before any device operation.
+
+These are boot-protocol / safe-test requirements, not a demand for full driver completeness.
+
+### 9.4 Ramdisk conservative mode: preserve stock, do not invent a new one
+
+For this first kernel-only validation, do not build a new Android 17 or DerpFest ramdisk. Do not insert a new initramfs into boot or into the separate partition.
+
+If the actual stock boot template contains a 519,986-byte embedded ramdisk and the separate 2 MiB ramdisk partition, preserve both source payloads byte-for-byte and preserve their respective stock roles/locations. This avoids introducing a new duplicate initramfs merely for testing. The separate partition must not be copied into the embedded boot ramdisk.
+
+If the packer must move offsets because the kernel size changes, preserve the exact ramdisk payload bytes and report the new offsets. Only clear or replace a ramdisk if exact device evidence demonstrates that is necessary; do not make that change for this test package.
+
+If ABL handoff code remains partly unresolved but the stock embedded and separate ramdisk payloads can both be preserved exactly, the host-side candidate may still be assembled as a **non-flashable experimental preview**, with the unresolved handoff limitation prominently recorded. Do not block all package construction merely because optional drivers are incomplete. However, do not authorize actual flashing until the boot-critical handoff and accepted test path are sufficiently established.
+
+### 9.5 AVB and recovery gate is proportional to the action
+
+- For offline host assembly and parser validation, no signing key or device acceptance proof is required; do not edit vbmeta or forge a footer.
+- Before any actual write/flash, establish the device's legitimate acceptance path for the modified image and a credible recovery route. This does not mean that the image must be a production-signed ROM; it means the test image must be accepted through the device's legitimate unlocked/development mechanism, if one is available and verified.
+- Do not require all peripheral drivers or a DerpFest system image as a prerequisite to a limited kernel bring-up flash test.
+- Do not bypass AVB/OEM protections or imply that flags=3 prove acceptance.
+
+**AI1 priority:** produce one conservatively assembled Stage 1 kernel-validation candidate as soon as the binary formats permit. Report unresolved boot-critical questions as explicit limitations. Do not turn this into a full ROM or driver-completion exercise.

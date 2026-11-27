@@ -16,11 +16,11 @@ Establish the exact *device bootloader/partition packaging contract* for this ph
 2. the stock separate `ramdisk` partition's container/footer format and its role in the boot chain (reference only);
 3. the frozen Android 17 ACK kernel candidate and frozen device base DTB;
 4. the frozen one-entry ROUND159 device DTBO component;
-5. an **Android 17-compatible target ramdisk/initramfs and required boot configuration**, which must come from the target Android 17 build/source and must not be copied from the HOS4.3 stock ramdisk;
+5. for Stage 1 kernel-only bring-up, the existing HOS4.3 embedded/separate ramdisk bytes may be preserved unchanged if ABL handoff and first-stage mount compatibility are evidenced; for Stage 2 DerpFest, a genuine Android 17/DerpFest target ramdisk/initramfs and required boot configuration must come from the target build/source; do not label the stock HOS ramdisk as DerpFest content;
 6. ABL-provided kernel command line, FDT `/chosen` fields, and initrd placement;
 7. the existing AVB/vbmeta/Huawei OEM acceptance chain.
 
-This is an evidence-extraction and host-only reproducibility task. It is **not** a HarmonyOS image rebuild, not a boot attempt, not an image-writing task, and not permission to change AVB/security state. The stock HOS4.3 kernel/ramdisk payloads are used only for parsing and round-trip tests; they are not the Android 17 target payloads. Do not substitute the HOS4.3 stock ramdisk for the Android 17 target ramdisk.
+This is an evidence-extraction and host-only reproducibility task. It is **not** a HarmonyOS image rebuild, not a boot attempt, not an image-writing task, and not permission to change AVB/security state. The stock HOS4.3 kernel is reference-only. For Stage 1 kernel-only bring-up, the existing HOS4.3 embedded and/or separate ramdisk bytes may be kept byte-for-byte unchanged if ABL runtime handoff and first-stage mount compatibility support that choice. This is not a DerpFest OS package. For Stage 2 DerpFest Android 17, use a genuine target ramdisk and first-stage files; do not describe HOS4.3 files as DerpFest content.
 
 ## 1. Immutable project anchors
 

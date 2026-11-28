@@ -143,26 +143,79 @@ U-Boot ELF/bin/map、FIT itb、gzip Image、DTB、wrapper ramdisk 及全部原�
 | USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED** | — |
 | ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD** | — |
 
-## 17. §17 final-FDT 只读采集 —— BLOCKED（设备不在 HOS4.3 运行态）
+## 17. §17 final-FDT 只读采集 —— **SUCCESS**（2026-11-29 补采完成）
 
-- 2026-11-29 执行：`adb devices -l` → **无 ADB 设备**；`fastboot devices`（仅枚举，未发任何命令）→ **设备处于 Fastboot 模式**（自 FIRST-BOOT01 起停留状态）。
-- §17.2 前置条件（"当前已启动的 HOS4.3 正常系统"）**不满足**；§17.5 禁止 reboot/切模式 → **未执行任何设备侧读取**，五个身份字段与 /sys/firmware/fdt 导出均未进行。
-- **FINAL_FDT_CAPTURE = BLOCKED（设备需用户手动重启回 HarmonyOS 后重新授权一次采集）**；不使用 /dev/mem、旁路读取或 sysfs 展开树替代。
-- 设备状态：`W3VBB…`（序列号不入公开记录）fastboot。
+首轮尝试设备处于 Fastboot（BLOCKED）；用户将平板手动重启回 HOS4.3 并连接 ADB 后，按 §17.3 完成补采。
 
-### 17.1 本地预置：ACK VD DTB reserved-memory 清单（capture 后即用）
+### 17.0 设备身份（五个允许字段，全部匹配目标）
 
-ACK VD DTB（`prep_dtb.bin`，`7bb9a1fb…`）解析：`/reserved-memory` 直接带 reg 的 children **17 个**（全部 no-map：0x80000000+6M、0x80700000+1.4M、0x80900000+2M、0x80B00000+83.2M、0x86200000+5M、0x86700000+1M、0x86800000+64K、0x86810000+40K、0x8681A000+8K、0x86900000+5M、0x86E00000+5M、0x87300000+5M、0x87800000+20M、0x88C00000+21M、0x8A100000+29M、0x8BE00000+1M、0x8BF00000+70M）；`/memreserve/` = **0 条**。任务书所称 37 children 中其余 ~20 个为无内联 reg/带 phandle label 节点，待 capture 后用全量 parse 对照（final-FDT 缺失时对照本身即 BLOCKED）。
+| 字段 | 值 |
+|---|---|
+| ro.build.fingerprint | HUAWEI/DBY-W09/HWDBY:12/HUAWEIDBY-W09/104.3.0.196C00:user/release-keys |
+| ro.build.version.release | 12 |
+| ro.build.version.incremental | 104.3.0.196C00 |
+| ro.product.device | HWDBY |
+| ro.boot.hardware | qcom |
 
-U-Boot 控制 DTB 6 项（§13 表）保持 CONDITIONAL 待对照。
+### 17.0.1 FDT 身份
 
-## 18. 门禁更新（final-FDT 采集 BLOCKED 后）
+- 本地路径：`final-fdt-capture/hos43-final-fdt.dtb`（**仅本地，不上传**）
+- 字节数：**800,324**（与设备侧 `/sys/firmware/fdt` 文件大小精确一致）
+- SHA-256：**`dc0ab259c800d52946d4a3d633fe1546430895d2878054d0376d428a135da52d`**
+- header：magic **0xD00DFEED** ✓；totalsize=800,324（==文件长 ✓）；off_struct=0x38；off_strings=0xB1CD4；off_memrsv=0x28；version=17 / last_comp=16
+- 采集方式：`adb exec-out su -c 'cat /sys/firmware/fdt'`（KernelSU root，`u:r:ksu:s0`，静默授权，无弹窗、无策略修改）
+
+### 17.0.2 RAM banks（§17.4.B）
+
+`/memory` **存在且非零**（节点名 `memory`，无 @ 后缀；`ddr_device_type=0x7`）。reg 12 cells = 3 banks：
+
+| bank | base | size | end | 备注 |
+|---|---|---|---|---|
+| 0 | 0x0000000080000000 | 0x39900000 (921.6 MiB) | 0xB9900000 | — |
+| 1 | 0x0000000200000000 (8 GiB) | 0x0000000200000000 (8 GiB) | 0x280000000 | — |
+| 2 | 0x00000000C0000000 (3 GiB) | 0x00000000C0000000 (3 GiB) | 0x180000000 | — |
+
+**TOTAL = 12.17 GiB（12GB 设备 ✓）**；零长度=0、重叠=0、已排序 ✓。**与 CoWave 8GB 三 tuples 确认不同**（real bank1=0x200000000+8G vs CoWave 0x180000000+4G；bank0 尺寸 921M vs 951M）——纠错删除静态 tuples 的决策再次被证实。
+
+### 17.0.3 memreserve / reserved-memory（§17.4.C）
+
+- **memreserve entries = 0**（FDT 根 memreserve map 为空 → initrd 无 FDT 级保留）
+- **/reserved-memory children = 37**（与任务书预期数精确一致 ✓）。关键项：hyp/xbl_aop/cmd-db/res_xbl_uefi_log/smem/removed_region(+0x5300000)/pil_{camera,wlan,ipa_fw,ipa_gsi,gpu,npu,video,cvsp,cdsp,slpi,adsp,spss}/cdsp_secure_heap；共享池类（reusable）：adsp/sdsp/cdsp/mem_dump/sp/user_contig/qseecom/qseecom_ta/secure_display/cnss_wlan/linux,cma/mailbox；显示类：**cont_splash_region@9C000000+0x2300000（35 MiB 真实存在 ✓，无 no-map 属性）**、disp_rdump@9C000000+0x800000（同基址重叠，厂商定义）、dfps_data@9E300000；华为私有：rainbow_mem@B0000000+4M(no-map)、bootfail_mem@B0400000+2K(no-map)、kerneldump(reg 动态)。完整 37 项表在 `evidence_final_fdt_parse.txt`。
+
+### 17.0.4 chosen initrd（§17.4.D）
+
+- `linux,initrd-start = 0x00000000F0000000`；`linux,initrd-end = 0x00000000F015749A` → **长度 = 0x15749A = 1,406,106 B = live separate ramdisk gzip payload 精确值（ADDENDUM01）✓✓**
+- **结论：ABL initrd = separate ramdisk 分区的 gzip payload（wrapper 已剥离），放置 0xF0000000（bank2 内）** —— 审计 B 的 initrd 来源与 payload form 由 final-FDT 直接证实（RECOVERY 路径仍 CONDITIONAL，此为 HOS normal 路径证据）。
+- **重叠算术**：initrd 区间落在 bank2 [0xC0000000,0x180000000) 内部偏移 0x30000000，与全部 37 个 reserved-memory children 及 cont_splash 无重叠 ✓；但 **memreserve=0、initrd 无 FDT 级保留** → `SAVE_PREV_BL_INITRAMFS_START_ADDR` 只能取 start，end 未保存，LMB 保护需 U-Boot 侧自行处理（不得声称已保留）。
+- bootargs 存在（长度已记录，内容不公开）。
+
+### 17.0.5 对照结果（§17.4.C 对照要求）
+
+| 对照 | 结果 |
+|---|---|
+| U-Boot 控制 DTB cont-splash@9C000000+0x2300000 | **base/size MATCH**（final-FDT cont_splash_region 同值）；**属性 DIFF**（final 无 no-map，U-Boot 控制侧声明 no-map） |
+| U-Boot 控制 framebuffer@9C000000 | 区域真实存在 ✓（与 disp_rdump 同基址共存）；simple-framebuffer 节点 final 中 ABSENT（HOS 不向 Linux 导出 fb 节点） |
+| U-Boot 控制 4 个 sm8250.dtsi carveout | **MATCH**（hyp/xbl_aop/cmd-db/smem 与 final 同 base/size/no-map） |
+| ACK VD DTB 17 个直接 reg children | **MATCH**（base/size/no-map 与 final 对应 children 一致；ACK 即源自本设备 DTB） |
+| final-FDT 独有（ACK ABSENT） | 显示类 3 + 华为私有 5 + 共享池 9 + kerneldump 等 ≈ 20 项 → ACK candidate 需按 §11.5 对照补齐/确认非重叠 |
+| cdsp_secure_heap@8BF00000 | ACK=+0x4600000 固定 70M；final=reg 动态 → **DIFFERENT/UNKNOWN** |
+
+### 17.0.6 fallback 判定（§17.4.E）
+
+- **ABL_FINAL_FDT_RAM_SOURCE = PRESENT**（非零三 bank）
+- **UBOOT_QCOM_EXTERNAL_FDT_FALLBACK_INPUT = usable**：控制 DTB 根 `/memory` 已删（纠错 §13）→ `qcom_parse_memory()` 内部路径 -ENODATA → `board_fdt_blob_setup()` 走 `get_prev_bl_fdt_addr()` external FDT → 该 FDT 含有效非零 RAM → U-Boot 将获得**真实 12GB map**（而非 CoWave 8GB tuples）
+- 严格声明：这是**源码路径 + external FDT 输入可用性**的证明；**U-Boot 未在设备上运行**，不构成实机启动结果。
+- initrd 注意：external FDT chosen 含 ABL initrd(0xF0000000)；若 U-Boot 采用该 FDT，`boot_fdt_add_mem_rsv_regions` 会保护 chosen 声明的区域；我们走 `abootimg`+FIT 路线时需避免与 0xF0000000–0xF015749A 冲突（FIT 目标区 0x91000000/0x96000000 与之无重叠 ✓）。
+
+### 17.0.7 FINAL_FDT_CAPTURE = SUCCESS；RECOVERY 路径 FDT = UNKNOWN（本 capture 为 HOS normal 启动会话，不自动证明 recovery 模式相同）
+
+## 18. 门禁更新（final-FDT 采集 SUCCESS 后）
 
 | 门 | 值 | 说明 |
 |---|---|---|
 | HOST_PACKAGE_READINESS | **READY**（不变） | — |
-| DEVICE_BOOT_READINESS | **HOLD**（不变；RAM/reserved/initrd 判定继续 UNKNOWN，等待 capture） | — |
-| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED**（§17 授权已下发但前置条件未满足——设备需先由用户手动重启回 HOS4.3 正常系统，再重新发起一次采集） | — |
-| ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD**（不变） | — |
+| DEVICE_BOOT_READINESS | **HOLD**（保持——但多项 UNKNOWN 已解除：RAM map=PRESENT 12.17GiB 三 bank、external fallback input=usable、ABL initrd=separate ramdisk gzip payload 确认、reserved-memory 37 项已枚举；仍 HOLD 项：recovery entry chain CONDITIONAL、initrd label PARTIAL、recovery FDT UNKNOWN、认证 UNKNOWN、ACK 20 项 final-only 节点对照待补） | 采集前多项 UNKNOWN → 已解除 |
+| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED**（final-FDT 只读授权已使用完毕；后续任何设备操作需新授权） | — |
+| ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD**（不变，但 HOLD 项数量显著减少） | — |
 
-**声明：本轮未重启设备、未切换启动模式、未运行任何 ADB/Fastboot 命令（仅只读枚举确认状态）、未读取任何分区、无写入/刷写、无 AVB/vbmeta 修改。**
+**声明：本轮仅执行 adb devices/getprop×5/exec-out su -c cat /sys/firmware/fdt（只读）；无重启、无模式切换、无分区读取、无写入/刷写、无 AVB/vbmeta 修改、无 /dev/mem 或旁路读取；原始 FDT 仅存本地未上传。**

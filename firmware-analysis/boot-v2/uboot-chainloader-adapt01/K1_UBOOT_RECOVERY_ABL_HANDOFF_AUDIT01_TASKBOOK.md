@@ -48,7 +48,10 @@
 并核对 AI1 已发布的公开 U-Boot 源码分析：
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_PREVBL_FDT_RAM_FALLBACK.md
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_ANDROID_RAMDISK_RAMMAP_CORRECTION.md
+- firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_FIT_NATIVE_RAMDISK_ROUTE.md
+
+注意：AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md 只证明 U-Boot v2026.10 的源码命令机制，不证明本机 ABL recovery 分支实际提供的是同一份 separate ramdisk。审计 B 必须独立从精确 HOS4.3 ABL 的 recovery caller 和 LoadRamdisk 数据流判断来源，不得把 U-Boot 之后可读取的 ramdisk 分区反推成 ABL 当前选择的 initrd。
 
 如现有本地分析脚本/反汇编已能回答，不要重复整套反编译工作。
 

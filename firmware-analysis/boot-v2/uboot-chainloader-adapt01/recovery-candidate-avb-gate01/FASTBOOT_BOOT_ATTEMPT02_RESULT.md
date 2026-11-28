@@ -57,7 +57,7 @@ U-Boot Recovery 链式路线在**当前 ABL 上不可行**，除非：
 
 ## UFS/SCSI 崩溃事件（2026-11-29 深夜，`oem run:scsi scan` 触发）
 
-`fastboot oem run:"scsi scan"` 触发 **qcom-ufshcd ufshc@1d84000 OCS error from controller = f** 数百次刷屏，随后 U-Boot **Sync Exception（esr=0x96000007 数据外部中止，far=0x8...4）**，寄存器转储后 `Resetting CPU` → `### ERROR ### Please RESET the board ###`（挂死）。
+`fastboot oem run:"scsi scan"` 触发 **qcom-ufshcd ufshc@1d84000 OCS error from controller = f** 数百次刷屏，随后 U-Boot **Sync Exception（esr=0x96000007 数据外部中止，far=0x8...4）**，寄存器转储后 `Resetting CPU` → `### ERROR ### Please RESET the board ###`（挂死）。主机侧时序：scan 命令本身 1.835s 返回 OKAY（崩溃发生在设备侧 scan 执行中），其后 `getvar partition-size:recovery` 收到 **`Device sent unknown status code: i`**（崩溃后 USB 栈回垃圾状态码，宿主重试循环耗时 296s）——崩溃后设备 USB 栈已损坏的直接证据。
 
 **确立事实：本机（HOS4.3 / 12GB 单元）的 U-Boot UFS/SCSI 访问路径存在驱动级崩溃缺陷**——`scsi scan`/`scsi read` 会崩。这意味着：
 - bootmenu_0 `Boot Linux from reserved3`（scsi read 路径）**同样会崩溃，不可用**

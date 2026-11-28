@@ -1,0 +1,18 @@
+claim,verdict,evidence
+Input identity (3 frozen files + PREP10 Image),PASS,evidence/align02_stage_a.py output (stock boot 7a95c897 PREP10 boot d1d76c21 ABL PE a14e29da kernel f89a2839)
+stock compressed payload +0x38,0x00C85788 (no ARM64 magic),align02_stage_a.py
+stock decompressed +0x38 / text_offset / flags,0x644D5241 / 0x80000 / 0xA,align02_stage_a.py
+PREP10 payload +0x38 / text_offset / flags,0x644D5241 / 0x0 / 0xA,align02_stage_a.py
+stock gz path skips flag=1 magic check,CONFIRMED,0x3720C gzip detect -> 0x3721C b 0x37384 bypasses 0x37344/0x37368; flag cleared at 0x37200 (dis_bootlinux_full.txt)
+flag byte stores complete map,3 stores (0x37200=0 0x37380=1 0x37894/98=1),grep -0x10 stores in dis_bootlinux_full.txt + dis_probe 37890
+stock branch = +0x80000,CONFIRMED (taskbook §2 +0x8000 alternative refuted),CFG + flag map; decompress dst = kload slot (x2 @0x3775C call)
+PREP10 branch = +0x80000,CONFIRMED,magic hit at 0x37368 -> flag stays 0 -> csel
+required buf residue,stock 0x0 / PREP10 0x180000 (mutually exclusive),stock_prep10_alignment_math.csv
+AllocatePages alignment guarantee,4KiB only; no 2MiB mask/realignment in loader path,evidence/align02_alloc_sites.txt + allocation_callsite_evidence.md
+runtime ImageBuffer phys address,UNKNOWN (runtime-dependent; wrapper allocator e.g. x0=UTF-16 secdata tag @0x30858),allocation_callsite_evidence.md
+head.S text_offset source,hardcoded .quad 0 at L59 (no TEXT_OFFSET in Makefile),ack_head_image_header_source.md @commit 8ad08f75
+head.S flags source,__HEAD_FLAGS = LE|4K|PHYS_BASE(unconditional) = 0xA,image.h L40-57 @commit 8ad08f75
+head.S runtime alignment assert,NONE (MIN_KIMG_ALIGN count 0; contract is bootloader obligation),ack_head_image_header_source.md
+historical inference correction,LOAD_MAP01 stock=>buf==0 inference: branch premise now CFG-supported but remains runtime-empirical fact AND implies PREP10 FAIL under same allocation,K1_BOOT_LOAD_ALIGN02_REPORT.md §0/§3
+FINAL ALIGNMENT,UNKNOWN (runtime-dependent); working hypothesis FAIL under same-allocation assumption,K1_BOOT_LOAD_ALIGN02_REPORT.md §0/§5
+DEVICE_OPERATIONS,NONE,offline only

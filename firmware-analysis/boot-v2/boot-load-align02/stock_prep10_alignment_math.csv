@@ -1,0 +1,12 @@
+item,stock,PREP10,source
+payload_byte_0x38_measured,0x00C85788 (compressed; not checked on gz path),0x644D5241 (ARM64 magic; hit),align02_stage_a.py
+ABL_branch_selected,+0x80000,+0x80000,"CFG: gz skips 0x37368 check (0x3720C->0x3721C b 0x37384); flag stays 0 from 0x37200 clear; PREP10 magic hit at 0x37368; dis_bootlinux_full.txt"
+decompressed_text_offset,0x80000 (524288),0x0,align02_stage_a.py / Image header parse
+image_size_B,70504448,45547520,align02_stage_a.py
+flags_measured,0xA (decompressed inner),0xA,align02_stage_a.py; matches image.h unconditional __HEAD_FLAG_PHYS_BASE
+formula,(ImageBuffer_phys + 0x80000 - text_offset) mod 0x200000 = 0,(same),K1_BOOT_LOAD_ALIGN02_REPORT.md §3
+required_ImageBuffer_mod_2MiB,0x00000,0x180000,derived
+allocate_pages_guarantee,4KiB (EFI page granularity; Huawei wrapper callsites 0x30858/0x55944; no 0x1fffff mask in loader path),4KiB (same),evidence/align02_alloc_sites.txt
+runtime_ImageBuffer_phys_known,NO (empirical: every stock boot success implies ==0 in that instance),NO,static analysis limit
+kernel_entry_alignment,empirical PASS (stock device boots daily),UNKNOWN; FAIL under buf==0 assumption,K1_BOOT_LOAD_ALIGN02_REPORT.md §3/§5
+verdict,empirically compatible,ALIGNMENT=UNKNOWN (runtime-dependent); working hypothesis FAIL,K1_BOOT_LOAD_ALIGN02_REPORT.md §0

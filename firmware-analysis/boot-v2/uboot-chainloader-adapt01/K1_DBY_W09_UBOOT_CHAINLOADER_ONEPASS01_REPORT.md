@@ -142,3 +142,27 @@ U-Boot ELF/bin/map、FIT itb、gzip Image、DTB、wrapper ramdisk 及全部原�
 | DEVICE_BOOT_READINESS | **HOLD**（维持：entry chain CONDITIONAL、initrd label PARTIAL、RAM/final-FDT UNKNOWN、认证 UNKNOWN、reserved-memory 对照 CONDITIONAL 待 capture） | 纠错通过前不解除 |
 | USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED** | — |
 | ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD** | — |
+
+## 17. §17 final-FDT 只读采集 —— BLOCKED（设备不在 HOS4.3 运行态）
+
+- 2026-11-29 执行：`adb devices -l` → **无 ADB 设备**；`fastboot devices`（仅枚举，未发任何命令）→ **设备处于 Fastboot 模式**（自 FIRST-BOOT01 起停留状态）。
+- §17.2 前置条件（"当前已启动的 HOS4.3 正常系统"）**不满足**；§17.5 禁止 reboot/切模式 → **未执行任何设备侧读取**，五个身份字段与 /sys/firmware/fdt 导出均未进行。
+- **FINAL_FDT_CAPTURE = BLOCKED（设备需用户手动重启回 HarmonyOS 后重新授权一次采集）**；不使用 /dev/mem、旁路读取或 sysfs 展开树替代。
+- 设备状态：`W3VBB…`（序列号不入公开记录）fastboot。
+
+### 17.1 本地预置：ACK VD DTB reserved-memory 清单（capture 后即用）
+
+ACK VD DTB（`prep_dtb.bin`，`7bb9a1fb…`）解析：`/reserved-memory` 直接带 reg 的 children **17 个**（全部 no-map：0x80000000+6M、0x80700000+1.4M、0x80900000+2M、0x80B00000+83.2M、0x86200000+5M、0x86700000+1M、0x86800000+64K、0x86810000+40K、0x8681A000+8K、0x86900000+5M、0x86E00000+5M、0x87300000+5M、0x87800000+20M、0x88C00000+21M、0x8A100000+29M、0x8BE00000+1M、0x8BF00000+70M）；`/memreserve/` = **0 条**。任务书所称 37 children 中其余 ~20 个为无内联 reg/带 phandle label 节点，待 capture 后用全量 parse 对照（final-FDT 缺失时对照本身即 BLOCKED）。
+
+U-Boot 控制 DTB 6 项（§13 表）保持 CONDITIONAL 待对照。
+
+## 18. 门禁更新（final-FDT 采集 BLOCKED 后）
+
+| 门 | 值 | 说明 |
+|---|---|---|
+| HOST_PACKAGE_READINESS | **READY**（不变） | — |
+| DEVICE_BOOT_READINESS | **HOLD**（不变；RAM/reserved/initrd 判定继续 UNKNOWN，等待 capture） | — |
+| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED**（§17 授权已下发但前置条件未满足——设备需先由用户手动重启回 HOS4.3 正常系统，再重新发起一次采集） | — |
+| ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD**（不变） | — |
+
+**声明：本轮未重启设备、未切换启动模式、未运行任何 ADB/Fastboot 命令（仅只读枚举确认状态）、未读取任何分区、无写入/刷写、无 AVB/vbmeta 修改。**

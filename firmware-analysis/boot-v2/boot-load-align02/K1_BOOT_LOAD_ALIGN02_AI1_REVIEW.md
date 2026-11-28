@@ -119,7 +119,7 @@ BOOT_WRITE_GATE                        = HOLD
 
 需要进一步核实：
 
-1. 冻结 ACK 源码 commit 在任务书中是 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9`；报告中多处写成 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`，多了一个尾字符，需统一更正并给出 git rev-parse 原始输出。
+1. **AI1 此处更正：** ALIGN02 报告中的 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a` 是 40 位完整 SHA；早期任务书中的 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9` 实际只有 39 位，是 AI1 任务书遗漏了末尾 `a`。应保留 ALIGN02 报告的 40 位 commit，并以本地 `git rev-parse HEAD` 复核；不得要求 Agent 将有效 40 位 SHA 截短。
 2. `head.S` 的 text_offset header slot、`image.h` 中 `HEAD_SYMBOLS` / `_kernel_offset_le` 的真实引用关系必须逐行闭合。当前报告同时声称 head.S 硬编码 `.quad 0`，又引用 image.h 中由 `TEXT_OFFSET` 生成 `_kernel_offset_le`，两者的最终链接关系尚未讲清楚。
 3. 必须查清 `CONFIG_RELOCATABLE`、`CONFIG_RANDOMIZE_BASE`、相关 relocations 和入口代码对加载地址的要求；不能只改头部字段后假定二进制其余部分无需变化。
 4. 任何方案都必须经源代码构建生成新 Image，再重新解析 64-byte header；禁止手改现有 PREP10 Image header。
@@ -133,7 +133,7 @@ BOOT_WRITE_GATE                        = HOLD
 3. 追踪 `+0x28` 方法的入参/返回值，直到最终 ImageBuffer 的返回/写入字段；识别它是否调用 EFI AllocatePages、AllocatePool、自定义 heap 或固定内存池。
 4. 只有当寄存器基址经数据流证明是 gBS 时，才能将 `[gBS,#0x28]` 计为 AllocatePages；重新生成准确的 gBS AllocatePages 站点清单。
 5. 明确可证明的对齐保证（4 KiB / 2 MiB / 固定 residue / runtime unknown），并区分 pointer 与 physical address。
-6. 用精确 40 字符 ACK source commit 修正 commit pin；闭合 `head.S` / `image.h` header slot 的来源关系。暂不修改源码、不重编译。
+6. 使用 40 位 ACK source commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`，提供 git rev-parse 原始输出；闭合 `head.S` / `image.h` header slot 的来源关系。暂不修改源码、不重编译。
 7. 对“改 text_offset 为 0x80000”只做源码影响评估，不生成镜像。
 
 ## 6. 最终审核判定

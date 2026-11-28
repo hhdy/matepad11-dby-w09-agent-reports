@@ -1,76 +1,43 @@
-# K1 DBY-W09 Direct ABL Partition Adaptation — AI2 Report
+# AI2 ADAPT02 修订结论（2026-11-28）
 
-Scope: read-only source and prior offline evidence review. Target: DBY-W09 VD, HOS4.3.0.196(C00E100), ACK android17-6.18.33_r00.
+只读研究。设备未连接；未运行 ADB/Fastboot；未修改源码、编译、制作镜像或写分区。
 
-- Device connected: NO
-- ADB/fastboot/recovery/device commands: NOT RUN
-- Source edits/build/image construction/partition writes: NOT PERFORMED
+## 最终字段
 
-## Executive decision
+- SVESNAV_REFERENCE_IDENTITY=PASS（12 个冻结文件 blob SHA 全部匹配）
+- ABL_FASTBOOT_BOOT_REFUSAL=REPORTED（项目 README 报告；未做设备实测）
+- STOCK_BOOT_V2_REPACK_METHOD=CONFIRMED（参考脚本解包 stock v2、替换 kernel/DTB/cmdline、AOSP mkbootimg 重建）
+- SVE_KERNEL_PAYLOAD_FORMAT=IMAGE_GZ
+- SVE_UNCOMPRESSED_TEXT_OFFSET=0x80000（arm64 协议预期；未直接测量 release 二进制）
+- ABL_GZIP_KERNEL_DEST_OFFSET=0x80000
+- PREP10_RAW_ALIGNMENT=UNKNOWN
+- ACK_IMAGE_GZ_ALIGNMENT=UNKNOWN
+- ACK_SOURCE_ADAPTATION_NEEDED=UNKNOWN
+- ANDROID_RAMDISK_POLICY=KEEP_STOCK
+- VD_DTBO_POLICY=KEEP_STOCK_VD_ENTRY2
+- BOOT_PARTITION_SIZE_CHECK=PASS（PREP10 46,563,215 B 小于 96 MiB；只证明容量）
+- SEPARATE_RAMDISK_AVB_FOOTER=VERIFIED（引用既有离线审计，本轮未重读原始分区）
+- WRITE_READBACK_ROLLBACK_PLAN=PARTIAL
+- DIRECT_ABL_ACK_ANDROID=BLOCKED
+- RECOMMENDED_NEXT_STEP=单独授权只读确定 ACK 尺寸 ImageBuffer 物理地址 modulo 2MiB 余数；或先由 AI1 独立审查条件性 head.S text_offset 源码修正。
+- DEVICE_WRITE_PERFORMED=NO；DEVICE_CONNECTED=NO
 
-DIRECT_ABL_ACK_ANDROID = UNKNOWN (architecture is plausible, but the exact-target kernel alignment and Android handoff gates are not closed).
+## 对齐结论（本轮关键修订）
 
-The public svesnav project documents Huawei ABL loading boot-v2 plus a separate ramdisk and DTBO. Its implementation is for mainline Linux 7.0.14 with a microSD ext4 root and a custom Linux initramfs. It is not an Android adaptation. The route is architecturally plausible, but the exact target ABL kernel-loader contract and Android first-stage handoff are not closed, so feasibility remains UNKNOWN.
+既有 Hybrid ABL load-map 反汇编证明 raw ARM64 Image 与 gzip inflate 两条路径都使用 KernelLoadAddress=ImageBuffer+0x80000；gzip inflate 目的地址相同。既有 ALIGN02-CORR01 修正后的真实调用链证明 ImageBuffer 来自 EFI gBS->AllocatePages(AllocateAnyPages, EfiBootServicesData, EFI_SIZE_TO_PAGES)，只保证 4KiB 页粒度，未发现 2MiB 对齐请求、掩码或二次搬移。
 
-The decisive unresolved item is physical alignment for ACK Image. The taskbook reports text_offset=0, image_size=45,547,520, flags=0xA, magic=0x644D5241. The reviewed inputs do not establish the exact HOS4.3 ABL raw/gzip branch, decompression destination or runtime allocation residue modulo 0x200000. Compression alone does not solve alignment.
+ACK commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9 的 Image header text_offset=0、flags=0xA。公式 (ImageBuffer_phys + 0x80000 - text_offset) mod 0x200000 = 0，故 ACK 要求 ImageBuffer_phys mod 2MiB=0x180000。stock text_offset=0x80000 要求余数 0。stock 成功只是运行时实例经验，不是 allocator 保证。ACK gzip 仍保留内层 text_offset=0，故所需余数仍为 0x180000；Image.gz 不会修复对齐。运行时余数未知，不能判 PASS。
 
-## Final fields
+ALIGN02-CORR01 曾提出 head.S L59 text_offset 槽 0→0x80000 的条件性源码方向；可能影响 __PHYS_OFFSET、relocations 和入口约定，必须先独立审查、完整重建和协议验证。本任务未修改或编译。
 
-| Field | Finding |
-|---|---|
-| SVESNAV_REFERENCE_IDENTITY | PASS — all 12 pinned source blob SHAs match |
-| ABL_FASTBOOT_BOOT_REFUSAL | REPORTED for public project; exact HOS4.3 UNKNOWN |
-| STOCK_BOOT_V2_REPACK_METHOD | CONFIRMED in source; target-specific compatibility PARTIAL |
-| SVE_KERNEL_PAYLOAD_FORMAT | IMAGE_GZ |
-| SVE_UNCOMPRESSED_TEXT_OFFSET | UNKNOWN |
-| ABL_GZIP_KERNEL_DEST_OFFSET | UNKNOWN |
-| PREP10_RAW_ALIGNMENT | UNKNOWN |
-| ACK_IMAGE_GZ_ALIGNMENT | UNKNOWN |
-| ACK_SOURCE_ADAPTATION_NEEDED | UNKNOWN |
-| ANDROID_RAMDISK_POLICY | KEEP_STOCK |
-| VD_DTBO_POLICY | KEEP_STOCK_VD_ENTRY2 (preserve live stock partition; no VG transplant) |
-| BOOT_PARTITION_SIZE_CHECK | PASS arithmetically for reported PREP10 payload vs 96 MiB; ABL acceptance not implied |
-| SEPARATE_RAMDISK_AVB_FOOTER | VERIFIED by prior report as footer/layout; exact boundary not re-read here |
-| WRITE_READBACK_ROLLBACK_PLAN | PARTIAL |
-| DIRECT_ABL_ACK_ANDROID | UNKNOWN |
-| RECOMMENDED_NEXT_STEP | Obtain exact-HOS4.3 ABL loader trace for raw/gzip dispatch, destination and allocator residue |
-| DEVICE_WRITE_PERFORMED | NO |
-| DEVICE_CONNECTED | NO |
+## 分区与 Android 适配
 
-## Findings
+svesnav 是 Linux v7.0.14 + microSD ext4 Kubuntu。它的 busybox + sd_root_init.sh initramfs 会挂载 LINUX70ROOT 并 switch_root 到 Linux /sbin/init，不是 Android init。保留 Huawei separate ramdisk（既有证据含 init/init.real 与 KernelSU），也保留 boot 内 stock embedded ramdisk。bootconfig handoff、ACK Android 17 first-stage init/fstab/dynamic partitions/dm-verity 兼容性仍未闭环。
 
-1. All 12 pinned svesnav source identities match: README, repack_boot.py, build_dev_images.sh, configure-and-build.sh, install_images.py, matepad-kernel-install, boot-cmdline.txt, pack_dtbo.py, dby-w09-rootparam.dtso, build_release.sh, sd_root_init.sh and KERNEL_VERSION.
-2. The Linux flow replaces boot-v2 kernel/DTB, creates a Linux SD-root initramfs, overlays a header-v0 ramdisk payload onto the separate ramdisk partition preserving the reported AVB footer region, and creates a one-entry DTBO table. Linux cmdline includes rdinit=/init; it is not an Android first-stage init command line.
-3. repack_boot.py checks fixed stock SHA 6fb82f6ca823c8acffaece13b161eca6c685a6e26f2c216b50293c3fd5da539d, which differs from target live stock boot SHA 7a95c897c14a6f9151b6d22308b8086b8f6395d4bd9aa438faab126ae39d24a8. Do not apply the public hash guard to this target.
-4. STOCK_PAYLOAD_SIZE=24,412,160 is a script-defined payload boundary, not the 96 MiB partition size. --full-partition copies the stock partition, overlays the payload, zeroes to that boundary, and leaves the tail unchanged. It does not independently verify the AVB footer.
-5. Both public installer paths back up full selected partitions, but readback hashes only the written image-length prefix. On mismatch they stop and direct manual restoration; no automatic rollback is implemented.
-6. Target live DTBO selection is stock Entry 2 / board-id 0x200e. Public overlay is VG / 0x206a. Do not transplant it. Preserve stock VD Entry 2 pending exact integration approval.
-7. Android separate ramdisk is reported to contain Huawei init/init.real and KernelSU files. The Linux SD-root initramfs is incompatible in purpose. KEEP_STOCK is the conservative Android policy; Android 12-to-17 init/fstab/bootconfig compatibility remains open.
-8. Prior target evidence reports boot=96 MiB, ramdisk=2 MiB, DTBO=25,165,824 B. Stock hashes: boot 7a95c897c14a6f9151b6d22308b8086b8f6395d4bd9aa438faab126ae39d24a8; ramdisk 4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb; DTBO 51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c. These are reused from prior evidence, not raw-image re-read in this task.
+svesnav dby-w09-rootparam.dtso 是 VG（board-id 0x206a、boardid [8,2,9,8]、DBY_W09_VG），不能用于本机 VD。保留 stock VD DTBO Entry 2 和 androidboot.dtbo_idx=2 行为；ROUND159 已独立核验该组件的精确 VD rootparam 与静态 selector 证据，但不代表整包可启动。
 
-## Gate decisions
+参考 repack_boot.py 的 stock SHA 6fb82f6c... 与本机 stock boot SHA 7a95c897... 不同，禁止套用固定 hash guard。--full-partition 的 STOCK_PAYLOAD_SIZE=24,412,160 是脚本边界，不是分区容量；本机既有 boot-tail 审计记录 payload_end=24,449,024，差 36,864 B，且尾部全零/无 AVB footer。参考安装器会备份完整旧分区，但写后只校验写入前缀；无自动回滚，依赖人工恢复。既有本机 boot/ramdisk/DTBO 容量和备份 SHA 本轮只引用，未重新读取原始备份。
 
-| Gate | Decision | Reason |
-|---|---|---|
-| Public reference identity | PASS | 12 frozen blob SHAs match |
-| Direct ABL architecture | CONDITIONAL | Same-model flow exists; Linux-only pieces cannot be copied |
-| ACK raw/gzip alignment | UNKNOWN | Exact loader branch and allocator residue open |
-| Android ramdisk | KEEP_STOCK | Preserve Huawei Android init chain |
-| VD DTBO | KEEP_STOCK_VD_ENTRY2 | Public VG overlay incompatible |
-| Boot-v2 layout | PARTIAL | Repack source understood; target ABL acceptance not proven |
-| AVB | PARTIAL | Footer preservation in Linux ramdisk code; Huawei Android acceptance unknown |
-| Partition recovery | NO-GO | Full-chain backup/restore proof incomplete |
-| Device write | HARD NO-GO | Explicitly out of scope |
+## 总结
 
-## Next action and stop
-
-Smallest next action: offline exact-HOS4.3 ABL loader trace, scoped only to raw ARM64 Image and gzip handling. Identify dispatch predicate, decompression destination, kernel offset, header fields consumed and runtime ImageBuffer physical residue modulo 0x200000. If residue cannot be established statically, retain UNKNOWN and propose a separately authorized read-only observation plan. Do not edit ACK source or rebuild.
-
-Supporting files: boot_v2_repack_analysis.md, abl_imagegz_alignment_analysis.md, android_ramdisk_and_bootconfig.md, vd_dtbo_policy.md, partition_write_readback_recovery_matrix.csv and evidence_matrix.csv.
-
-Prior evidence:
-- ROUND158: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/ai2/round158-independent-rootparam-bootgate/firmware-analysis/round158/AI2_ROUND158_INDEPENDENT_ROOTPARAM_AND_FASTBOOT_BOOT_GATE_REVIEW_REPORT.md
-- ROUND155 ABL capture: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/workbuddy/round155-readonly-bootchain-backup/firmware-analysis/round155/WORKBUDDY_A_ROUND155_READONLY_BOOTCHAIN_PARTITION_CAPTURE_REPORT.md
-- ROUND155 candidate analysis: https://github.com/hhdy/matepad11-dby-w09-agent-reports/blob/agent2/round155-candidate-overlay-minimal-plan/firmware-analysis/round155/WORKBUDDY_B_ROUND155_CANDIDATE_SPECIFIC_DTBO_MINIMAL_OVERLAY_REPORT.md
-
-STOP: research only. No device operation, image creation, build, source modification or partition action.
+架构有参考实现，但 ACK kernel alignment 与 Android first-stage/bootconfig 尚未闭环，因此 DIRECT_ABL_ACK_ANDROID=BLOCKED。下一步只做独立授权的只读 alignment 证据或源码方案审查；不制作镜像、不写分区。交 AI1 审核。

@@ -94,7 +94,7 @@ Do not assume ABL's initrd properties transfer into a different ACK FIT FDT. FIT
 Known values:
 - reserved3 capacity: 25,165,824 bytes.
 - ACK DTB candidate referenced in the existing plan: 1,216,399 bytes.
-- Prior package-copy ramdisk payload: 1,322,962 bytes. This is not the live ramdisk SHA; use only as an estimate.
+- ROUND64 Phase F package/inventory candidate (SHA-256 `5c20e4781f701e075ab30d3f8389172435e5591579bb5971f1b29331862fddc0`) had a previously inventoried payload of 1,322,962 bytes. A different 2 MiB candidate (`4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb`) is listed in K1_FASTBOOT_GATE01 as the stock separate-ramdisk backup. Their acquisition provenance must be resolved; do not treat the 1,322,962-byte figure as valid for the 4dd6 candidate.
 - Remaining theoretical space for gzip(ACK Image), after those two payloads: 22,626,463 bytes, before FIT header, configuration data, nodes, strings, alignment and padding.
 
 Actual Route C acceptance condition:

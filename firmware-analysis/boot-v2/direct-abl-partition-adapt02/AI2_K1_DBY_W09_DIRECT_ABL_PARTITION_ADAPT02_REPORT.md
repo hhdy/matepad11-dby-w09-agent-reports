@@ -19,7 +19,7 @@
 - SEPARATE_RAMDISK_AVB_FOOTER=VERIFIED（引用既有离线审计，本轮未重读原始分区）
 - WRITE_READBACK_ROLLBACK_PLAN=PARTIAL
 - DIRECT_ABL_ACK_ANDROID=BLOCKED
-- RECOMMENDED_NEXT_STEP=单独授权只读确定 ACK 尺寸 ImageBuffer 物理地址 modulo 2MiB 余数；或先由 AI1 独立审查条件性 head.S text_offset 源码修正。
+- RECOMMENDED_NEXT_STEP=由 AI1 对 ALIGN02-CORR01 提出的 head.S L59 text_offset 槽 0→0x80000 条件性修正做一次独立静态审查，重点判定 __PHYS_OFFSET、relocations 与 entry assumptions 是否允许；不改源码、不编译。
 - DEVICE_WRITE_PERFORMED=NO；DEVICE_CONNECTED=NO
 
 ## 对齐结论（本轮关键修订）

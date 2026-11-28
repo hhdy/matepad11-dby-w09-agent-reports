@@ -1,41 +1,37 @@
-# ABL Image.gz physical alignment analysis
+# ABL Image.gz physical alignment analysis — corrected with load-map and allocator evidence
 
-## ACK facts from taskbook / prior build evidence
+## Target ABL static reverse-engineering evidence
+Prior Hybrid ABL reports for PE SHA-256 a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404 establish:
+- raw ARM64 Image magic at payload+0x38 selects the 64-bit path;
+- gzip detection selects inflate path;
+- both paths set KernelLoadAddress = ImageBuffer + 0x80000;
+- gzip inflate destination is the same KernelLoadAddress;
+- ImageBuffer is returned by EFI gBS->AllocatePages(AllocateAnyPages=0, EfiBootServicesData=4, EFI_SIZE_TO_PAGES(size));
+- no 2MiB alignment request, mask or secondary relocation was found in the corrected allocator chain;
+- allocation guarantee is EFI 4KiB page granularity only; runtime ImageBuffer_phys modulo 2MiB remains UNKNOWN.
 
-ACK source ref android17-6.18.33_r00; commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9; patched tree c56d93eafa35057d65176db6594d67d5144868a0. Raw Image is 44,820,992 B, SHA-256 f89a283954b9c8df22aa790967f9cf8f6af84fc4aabf9bc4ff1659adc80bad21. Header: text_offset=0, image_size=45,547,520, flags=0xA, magic=0x644D5241. PREP10 boot candidate: 46,563,215 B, SHA-256 d1d76c2199dff54e762bffe98260116369af1e8b50f5d813fe197434ac1cc091.
+The corrected ALIGN02-CORR01 report explicitly retracts the earlier false 32-site allocator count. The true gBS AllocatePages site is 0x3468C through helper 0x34624; ImageBuffer is the direct returned base.
 
-File length being smaller than image_size is not by itself invalid; image_size is a memory footprint field.
+## ACK image facts
+Exact ACK source commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9. Frozen Image header: text_offset=0, image_size=45,547,520, flags=0xA, magic=0x644D5241. Raw Image SHA-256 f89a283954b9c8df22aa790967f9cf8f6af84fc4aabf9bc4ff1659adc80bad21.
 
-## What public source proves
-
-svesnav build scripts pass Image.gz as the kernel payload. repack_boot.py treats it as opaque bytes and does not inspect the decompressed ARM64 Image header or prove the ABL decompression destination. README reports Linux 7.0.14 works on DBY-W09; that is an existence report for that project's particular firmware/kernel/device combination, not a measurement of this ACK payload's physical address residue.
-
-The pinned configure-and-build.sh runs arm64 defconfig and toggles many symbols, but the reviewed pinned source does not provide the final .config. CONFIG_RELOCATABLE, CONFIG_RANDOMIZE_BASE and page-size values therefore remain unverified here.
-
-## Alignment formula
-
-Required formula from taskbook:
+## Formula and result
 (ImageBuffer_phys + ABL_kernel_offset - text_offset) mod 0x200000 = 0.
 
-For ACK raw Image, text_offset=0. If ABL uses offset 0x8000, ImageBuffer_phys must have residue 0x1f8000 modulo 0x200000. If ABL uses 0x80000, required residue is 0x180000. These are conditional arithmetic examples only; the exact target offset is not established in reviewed evidence.
+| Payload | ABL offset | Inner text_offset | Required ImageBuffer residue mod 2MiB | Status |
+|---|---:|---:|---:|---|
+| stock inner Image | 0x80000 | 0x80000 | 0 | empirical successful instances only |
+| PREP10 raw ACK | 0x80000 | 0 | 0x180000 | UNKNOWN |
+| gzip of same ACK | 0x80000 | 0 | 0x180000 | UNKNOWN |
 
-For Image.gz, apply the same equation to the decompressed ImageBuffer and its decompressed Image header. Compression changes container and loader path; it does not automatically eliminate the alignment requirement. The physical residue of the decompression buffer or a proven fixed destination remains decisive.
+Stock boot success implies the particular successful instances met their requirement; it does not establish a general allocator guarantee. If an ACK-sized buffer happens to have residue 0, ACK entry is misaligned by 0x80000. Because allocator residue is runtime-dependent and not statically constrained to 0x180000, no PASS can be issued.
 
-## A/B/C comparison
+## Why gzip does not fix it
+Gzip changes the outer payload encoding only. The uncompressed Image header remains text_offset=0 and ABL inflates into the same +0x80000 destination. Required residue remains 0x180000. Smaller compressed size is not an alignment argument.
 
-| Variant | Decision | Reason |
-|---|---|---|
-| A. PREP10 raw Image | UNKNOWN | Exact HOS4.3 raw branch, kernel offset and allocator residue not closed |
-| B. Same ACK Image gzip-compressed | UNKNOWN | No proof gzip bypasses alignment; decompressed header remains same |
-| C. ACK source/config adaptation | UNKNOWN | No source change justified before loader contract is known |
+The exact svesnav release Image.gz binary was not among the fetched source files, so its inner header was not directly measured. 0x80000 is the relevant arm64 protocol expectation for the reference configuration, not a direct measurement of that release artifact.
 
-## Required missing proof
+## Source adaptation
+ALIGN02-CORR01 discusses changing ACK head.S L59 text_offset slot 0 to 0x80000 as CONDITIONAL only. It may affect __PHYS_OFFSET, relocations and entry assumptions. Requires independent source review, complete rebuild and ARM64 boot protocol verification. No source edit/build was performed.
 
-1. Exact ABL predicate distinguishing raw Image from gzip payload.
-2. Actual kernel offset for each path; resolve 0x8000 vs 0x80000.
-3. Decompression destination allocation/base calculation and relocation behavior.
-4. Decompressed ACK Image header as consumed by ABL.
-5. Runtime ImageBuffer_phys modulo 0x200000, or exact fixed destination.
-6. Proof final kernel entry/text address follows ARM64 boot protocol.
-
-Without item 5, alignment remains UNKNOWN even if static branch is identified. Do not infer ACK success from svesnav Linux 7.0.14 success. No source edit, build, image generation or device observation was performed.
+Final: PREP10_RAW_ALIGNMENT=UNKNOWN; ACK_IMAGE_GZ_ALIGNMENT=UNKNOWN; ACK_SOURCE_ADAPTATION_NEEDED=UNKNOWN.

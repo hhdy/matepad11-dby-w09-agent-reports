@@ -8,9 +8,9 @@ Scope: read-only source and prior offline evidence review. Target: DBY-W09 VD, H
 
 ## Executive decision
 
-DIRECT_ABL_ACK_ANDROID = FEASIBLE_WITH_IMAGE_ADAPTATION (architecture/design hypothesis only; not boot-validated and not authorized for image construction or device use).
+DIRECT_ABL_ACK_ANDROID = UNKNOWN (architecture is plausible, but the exact-target kernel alignment and Android handoff gates are not closed).
 
-The public svesnav project documents Huawei ABL loading boot-v2 plus a separate ramdisk and DTBO. Its implementation is for mainline Linux 7.0.14 with a microSD ext4 root and a custom Linux initramfs. It is not an Android adaptation. Android must preserve Huawei's Android first-stage environment and satisfy the exact target ABL kernel-loader contract.
+The public svesnav project documents Huawei ABL loading boot-v2 plus a separate ramdisk and DTBO. Its implementation is for mainline Linux 7.0.14 with a microSD ext4 root and a custom Linux initramfs. It is not an Android adaptation. The route is architecturally plausible, but the exact target ABL kernel-loader contract and Android first-stage handoff are not closed, so feasibility remains UNKNOWN.
 
 The decisive unresolved item is physical alignment for ACK Image. The taskbook reports text_offset=0, image_size=45,547,520, flags=0xA, magic=0x644D5241. The reviewed inputs do not establish the exact HOS4.3 ABL raw/gzip branch, decompression destination or runtime allocation residue modulo 0x200000. Compression alone does not solve alignment.
 
@@ -32,7 +32,7 @@ The decisive unresolved item is physical alignment for ACK Image. The taskbook r
 | BOOT_PARTITION_SIZE_CHECK | PASS arithmetically for reported PREP10 payload vs 96 MiB; ABL acceptance not implied |
 | SEPARATE_RAMDISK_AVB_FOOTER | VERIFIED by prior report as footer/layout; exact boundary not re-read here |
 | WRITE_READBACK_ROLLBACK_PLAN | PARTIAL |
-| DIRECT_ABL_ACK_ANDROID | FEASIBLE_WITH_IMAGE_ADAPTATION |
+| DIRECT_ABL_ACK_ANDROID | UNKNOWN |
 | RECOMMENDED_NEXT_STEP | Obtain exact-HOS4.3 ABL loader trace for raw/gzip dispatch, destination and allocator residue |
 | DEVICE_WRITE_PERFORMED | NO |
 | DEVICE_CONNECTED | NO |

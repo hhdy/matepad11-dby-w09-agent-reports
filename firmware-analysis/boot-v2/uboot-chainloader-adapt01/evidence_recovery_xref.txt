@@ -1,0 +1,12 @@
+string offsets found:
+  0x0C06CF bootmode: %d, PartitionName %a
+  0x0C62DD rescue_recovery
+  0x0D43C6 Invalid recovery dtbo
+  0x0D4433 Recovery Dtbo Offset: 0x%x
+  0x0D444F Recovery Dtbo Size: 0x%x
+  0x0D70E4 AppendRecoveryCmdline
+
+xref sites (composed VA in +-8 window):
+  site 0x04BB88 va=0x0D43BE -> Invalid recovery dtbo
+  site 0x04BCF0 va=0x0D442F -> Recovery Dtbo Offset: 0x%x
+  site 0x04BD84 va=0x0D4453 -> Recovery Dtbo Size: 0x%x

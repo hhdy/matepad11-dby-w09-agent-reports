@@ -1,0 +1,36 @@
+file sha256=4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb (expect 4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb) MATCH=True
+partition size=2097152 (2 MiB) bounds headroom=0
+
+== wrapper header ==
+  kernel_size    = 0x00000000 (0)
+  kernel_addr    = 0x10008000 (268468224)
+  ramdisk_size   = 0x0015749A (1406106)
+  ramdisk_addr   = 0x12000000 (301989888)
+  second_size    = 0x00000000 (0)
+  second_addr    = 0x00000000 (0)
+  tags_addr      = 0x10000100 (268435712)
+  page_size      = 0x00000800 (2048)
+  dt_size        = 0x18000168 (402653544)
+  header_version(@40) = 0x0
+  unused(@44) dt size field = 0x18000168
+
+== payload arithmetic (v0 style) ==
+  ramdisk payload offset = page_size(2048) + ALIGN(kernel_size=0) = 0x800
+  ramdisk payload length = 1406106 (0x15749A)
+  payload end = 0x157C9A; partition 2MiB bounds = OK
+  payload sha256=4f71768ac33c494b2afdc7ea8dd224ea2af53a08e9542f07f9ae7c21de6cfa16
+  gzip magic at payload start: True
+
+== decompressed ==
+  decompressed size=3192124 sha256=e662b994155779c627a5b035e1560b346e2d7756d992b65609b8c225ed88d608
+  cpio magic: 070701 (newc) OK
+  cpio entries: 19
+  init: [('init', 2712), ('init.real', 2880584)]
+  init.real: [('init.real', 2880584)]
+  ksu.ko: [('ksu.ko', 305048)]
+  first 12 entries: ['cache', 'debug_ramdisk', 'dev', 'eng', 'init', 'init.real', 'ksu.ko', 'metadata', 'mnt', 'patch_avb_key', 'patch_hw', 'proc']
+
+== U-Boot v2026.10 CMD_ABOOTIMG route compatibility (per AI1 source review + local header facts) ==
+  header version observed: v0 (no header_version field used; classic 10-field header)
+  ramdisk in-place payload: offset 0x800 len 1406106 (v0 arithmetic ALIGN(2048)+ALIGN(kernel_size=0))
+  ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR (ARCH_SNAPDRAGON selects it): in-place pointer/len return = compatible

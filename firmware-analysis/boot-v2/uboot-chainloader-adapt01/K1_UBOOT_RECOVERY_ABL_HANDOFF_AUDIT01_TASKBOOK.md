@@ -87,6 +87,14 @@
 
 ## 4. 审计 B：recovery 路径 ramdisk 来源及内存载荷形态
 
+**ramdisk 文件身份提醒：**现有报告有两个不同的 2,097,152 B 候选：
+- K1_FASTBOOT_GATE01_AI1_REVIEW.md 标记 stock separate-ramdisk SHA-256 为 4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb；
+- ROUND64 Phase F 标记 ramdisk.img SHA-256 为 5c20e4781f701e075ab30d3f8389172435e5591579bb5971f1b29331862fddc0，并复用了 header v0 / page_size 2048 / payload 1,322,962 B 的历史 inventory。
+
+这两者哈希不同。不得把 5c20 对应的 header / payload 字段套用到 4dd6。先从本地 acquisition manifest、源分区 label、采集路径和时间戳核对哪个文件才是当前 HOS4.3 live separate ramdisk；没有 provenance 闭环就将 live wrapper 身份标 UNKNOWN，不得尝试解析/推断。
+
+
+
 1. 从 recovery 选择分支进入 LoadRamdisk 函数（现有地址候选 0x3969C），追踪所有关键参数和数据来源。
 2. 逐项判断：
    - Android boot v2 embedded ramdisk header/payload 是否参与；

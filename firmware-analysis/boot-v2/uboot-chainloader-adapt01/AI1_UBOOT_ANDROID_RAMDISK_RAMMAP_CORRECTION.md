@@ -209,3 +209,29 @@ CoWave 仓库公开 README/status 记载其实际启动链为 U-Boot 2026.10 -> 
 5. 只有当 RAM banks、reserved-memory、ramdisk 交接、Android bootargs/bootconfig、UFS handoff、recovery rollback 都有证据后，才进入主机端 boot package 设计。
 
 本报告未批准启动、fastboot、recovery 写入、临时启动、分区写入或刷机。没有执行任何设备命令，也没有生成或修改镜像。
+
+## 3.6 Further source closure — existing `CMD_ABOOTIMG` pointer override avoids the proposed patch/embed workarounds
+
+A later direct control-flow review identified a narrower option that was not captured in §3.4: enable `CONFIG_CMD_ABOOTIMG=y`, then explicitly point the command's global Android-image address at the external wrapper before calling `bootm`.
+
+```text
+abootimg addr ${ramdisk_wrapper_addr}
+bootm ${fit_addr} ${ramdisk_wrapper_addr}
+```
+
+Why this is different from the original NO-GO:
+- The original failure is real when `CMD_ABOOTIMG` is disabled, or when the `abootimg` global address is not set to the same external wrapper.
+- With `CMD_ABOOTIMG=y`, `select_ramdisk()` uses `get_abootimg_addr()` in the Android-format branch. `abootimg addr` sets that global address to the external wrapper buffer.
+- The second `bootm` argument is still required as a plain hexadecimal address so `select_ramdisk()` recognizes the buffer's Android image format and enters the Android branch.
+- Do not use `addr:size`: with `CONFIG_FIT=y`, U-Boot tries `fit_parse_conf()` (`#`) and `fit_parse_subimage()` (`:`) first. A colon is treated as a FIT subimage separator. A plain hex address has neither separator and falls through to `hextoul()` correctly.
+- `ARCH_SNAPDRAGON` selects `ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR`; for a valid Android wrapper header v0-v2, the parser returns the ramdisk payload address inside the wrapper instead of honoring the stale header RAM address. The normal bootm initrd relocation/FDT handoff can then handle placement.
+
+This means the current first-choice implementation does **not** require a custom `boot/image-board.c` parser patch and does **not** require embedding the ramdisk in the FIT. It still requires `CONFIG_CMD_ABOOTIMG=y`, explicit `abootimg addr` setup, a plain-address second argument, exact live wrapper header validation, and a verified scratch/final initrd memory range.
+
+Source-level implementation details and the full command design are recorded in:
+`AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md`.
+
+Updated disposition:
+- Generic `bootm FIT_ADDR wrapper_addr` without an explicit `abootimg addr` setup: **NO-GO**.
+- `CONFIG_CMD_ABOOTIMG=y` + `abootimg addr wrapper_addr` + `bootm FIT_ADDR wrapper_addr`: **SOURCE-CONFIRMED WORKAROUND; live-wrapper compatibility remains UNKNOWN/HOLD**.
+- Candidate A (patch raw-initrd syntax) and candidate B (FIT ramdisk node) remain fallback designs only if host/sandbox validation finds a defect in the existing `CMD_ABOOTIMG` route.

@@ -9,7 +9,7 @@
 - GitHub 仓库：`hhdy/matepad11-dby-w09-agent-reports`
 - 分支：`ai1/boot-v2-first-package-prep`
 - 先前基线：`K1_UBOOT_RECOVERY_ABL_HANDOFF_AUDIT01`，commit `7f03c2fd70598d9bf8a39eb58358ace7d0ab06a7`
-- 本任务吸收并取代：`K1_UBOOT_CHAINLOADER_PREBUILD_GATE02_TASKBOOK.md`。不要把 GATE02 再作为独立任务启动。
+- 本任务吸收并取代：`K1_UBOOT_CHAINLOADER_PREBUILD_GATE02_TASKBOOK.md`。GATE02 报告已于 commit `8d1f1190762ee6399448230a2479aac2a96ba5df` 交付并回读；其结论作为本任务固定基线，不再重复执行 GATE02。
 - 重要边界：**本任务允许本地主机端源码检查、配置、构建、测试与候选文件制作；不授权任何设备连接、设备侧读取、临时启动、分区写入、刷写或 AVB/vbmeta 修改。**
 
 ---
@@ -47,6 +47,7 @@
 - `firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_FIT_NATIVE_RAMDISK_ROUTE.md`
 - `firmware-analysis/boot-v2/boot-load-map01/K1_BOOT_LOAD_MAP01_REPORT.md`
 - `firmware-analysis/boot-v2/boot-load-map01/hybrid_abl_load_path.md`
+- `firmware-analysis/boot-v2/uboot-chainloader-adapt01/K1_UBOOT_CHAINLOADER_PREBUILD_GATE02_REPORT.md`（commit `8d1f1190762ee6399448230a2479aac2a96ba5df`）
 
 如某路径不存在，记录 missing，不得用相似名字/其他版本报告冒充。
 
@@ -110,7 +111,9 @@ a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404
 
 ### 2.3 UpdateDeviceTree / RAM / reservation
 
-围绕精确 PE 的 `0x3D9D0/0x3D9D4` 函数族和直接 helper/provider，做一次完整、受限的调用/数据流检查：
+**GATE02 已经完成 900 指令窗口（0x3D9D4 起，149 个 BL，gBS 加载调用 @0x3E1A0）并交付 `evidence_updtdt_full.txt`。本任务先核对该证据；不得原样重复该 900 指令 pass。**只有在本地已有更完整的函数边界/反汇编或 provider 文件时，才做一次增量核对，重点识别 GATE02 尚未证明的真实 FDT 写入接口。没有新证据就沿用 `NOT_FOUND_IN_ANALYZED_PATH` / `UNKNOWN`，继续其余工作。
+
+围绕精确 PE 的 `0x3D9D0/0x3D9D4` 函数族和直接 helper/provider，增量检查：
 
 - 标准 `/memory/reg` 是否有实际写操作；
 - `/reserved-memory` 子节点和 `no-map` / `reusable`；
@@ -139,7 +142,7 @@ a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404
 1. 记录 CoWave DBY-W09 U-Boot v2026.10 源码精确 commit/tree；
 2. 记录本地补丁顺序、每个补丁 SHA、应用结果；
 3. 记录交叉编译器/版本、host 工具版本、构建环境；
-4. 不从网络下载固件或安装新工具。缺少工具时标记 BLOCKED，继续做可做部分。
+4. 允许从官方/公开源码仓库获取纯源码，并固定 commit/tree；禁止下载设备固件、闭源分区镜像或未知二进制，也不安装新工具。缺少既有工具链时标记 BLOCKED，继续做可做部分。
 
 ### 3.2 配置必须来自最终生成的 .config
 
@@ -347,4 +350,160 @@ bootm <FIT-address> <wrapper-address>
 
 ## START_PROMPT（整段可直接交给本地 WorkBuddy Agent）
 
-你是 K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 的唯一主执行 Agent。请一次性完成本任务书第 1–9 节的所有可执行工作：读取既有证据，完成剩余 ABL recovery/initrd/FDT 静态检查，盘点 U-Boot/ACK/DTB/ramdisk/recovery 输入，验证或生成最终 U-Boot 配置，在本地主机条件具备时构建 U-Boot、组装并测试 FIT 和 external Android ramdisk 路径，审核 recovery 容器结构与合法认证门禁，完成所有可行 host-side 验证，最后给出 HOST_PACKAGE_READINESS、DEVICE_BOOT_READINESS 和 USER_AUTHORIZATION_GATE。不要每个阶段结束后停下来请求新任务；缺项标 UNKNOWN/BLOCKED 后继续其余独立工作。不得连接设备、运行 ADB/Fastboot/OEM、读取 live 分区、reboot、临时启动、写分区、刷写、修改 AVB/vbmeta、绕过签名或上传原始固件。不得创建第二份任务书。最终只交付并回读核验一份 ONEPASS01 综合报告，回读成功立即停止。
+你是 K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 的唯一主执行 Agent。GATE02 commit 8d1f1190 已完成并回读，直接采用其证据，不重复已完成的 900 指令窗口。请一次性完成本任务书第 1–11 节的所有可执行工作：读取既有证据，完成剩余 ABL recovery/initrd/FDT 静态检查，盘点 U-Boot/ACK/DTB/ramdisk/recovery 输入，验证或生成最终 U-Boot 配置，在本地主机条件具备时构建 U-Boot、组装并测试 FIT 和 external Android ramdisk 路径，审核 recovery 容器结构与合法认证门禁，完成所有可行 host-side 验证，最后给出 HOST_PACKAGE_READINESS、DEVICE_BOOT_READINESS 和 USER_AUTHORIZATION_GATE。不要每个阶段结束后停下来请求新任务；缺项标 UNKNOWN/BLOCKED 后继续其余独立工作。不得连接设备、运行 ADB/Fastboot/OEM、读取 live 分区、reboot、临时启动、写分区、刷写、修改 AVB/vbmeta、绕过签名或上传原始固件。不得创建第二份任务书。同时把六份 recovery 备份核验、U-Boot/ACK/FIT 主机端工作、认证检查、FDT 对照及授权后的设备验证流程全部按本任务书一次性纳入执行范围；未授权的设备阶段只标 AUTHORIZATION_REQUIRED。最终只交付并回读核验一份 ONEPASS01 综合报告，回读成功立即停止，不得再创建后续任务书。
+
+
+---
+
+## 10. GATE02 已完成结果：固定基线，不得再拆任务重复执行
+
+GATE02 于 commit `8d1f1190762ee6399448230a2479aac2a96ba5df` 已交付，报告路径：
+
+`firmware-analysis/boot-v2/uboot-chainloader-adapt01/K1_UBOOT_CHAINLOADER_PREBUILD_GATE02_REPORT.md`
+
+本轮确认以下事实，ONEPASS Agent 必须直接采用：
+
+| 子项 | 已交付状态 | 后续处理 |
+|---|---|---|
+| A1 recovery 间接调用 | `CONDITIONAL`，BL/静态指针扫描 0 命中 | 只允许一次以 loader/最终 `blr` 为根的数据流增量检查；仍缺则保留 CONDITIONAL |
+| A2 recovery initrd label | `PARTIAL`；候选 `ramdisk` / `erecovery_ramdisk`；payload form UNKNOWN | 一次检查 LoadRamdisk 调用者参数；不套用 PREP04 normal 路径结论 |
+| UpdateDeviceTree | 已有 900 指令窗口、149 BL、gBS 加载 @`0x3E1A0`；标准 `/memory/reg` 与 reserved-memory 为 `NOT_FOUND_IN_ANALYZED_PATH` | 不重复原窗口；仅用新函数边界/provider 证据做增量检查 |
+| initrd memreserve | `UNKNOWN` | 不把 chosen start/end 等同 reservation |
+| RAM bank | `RUNTIME_DEPENDENT`；EFI_RAMPARTITION provider 不在冻结 PE | 不推算物理 bank tuples |
+| U-Boot `.config` | `MISSING` | 从固定源码/defconfig 在本地主机生成最终配置；无法构建则说明原因 |
+| FIT | `UNKNOWN_NOT_BUILT` | 完成 host-side 组装前置条件后实际构建、解析、计量；不能假报 PASS |
+| recovery 链备份 | `INCOMPLETE`；六个文件在 r155 copies-primary 在册，但 SHA/provenance 未闭环 | 在本地一次性对六文件及 manifest 逐项闭环；不从设备补采 |
+| 总体 | `PREBUILD_READINESS = HOLD` | 不可提升为实机可写或可刷 |
+
+六个备份对象必须分别核验：
+- `recovery.img`
+- `recovery_ramdisk.img`
+- `recovery_vbmeta.img`
+- `erecovery.img`
+- `erecovery_ramdisk.img`
+- `erecovery_vbmeta.img`
+
+每个文件必须记录原始采集 manifest、源 label、路径、长度、SHA-256、采集时间及 manifest 一致性。仅“文件在册”不等于完整备份。任何一个关键项缺少 provenance，恢复/刷写门禁仍为 NO-GO。
+
+---
+
+## 11. 一次性完整执行路线：从当前状态直至实机验证结束
+
+下列项目全部属于同一主任务，不得另发任务书。Agent 应在一次执行中完成所有无需用户补充授权的工作；遇到设备侧授权门槛，只记录待授权，不得擅自执行。
+
+### 11.1 静态证据最终收敛
+
+完成第 2 节规定的 ABL 增量检查，目标仅是：
+- recovery 是否实际到达 common BootLinux 尾段；
+- recovery LoadRamdisk 的准确 label 与 payload form；
+- ABL 是否写入 RAM bank、reserved-memory 或 initrd reservation。
+
+对已由 GATE02 充分覆盖的 900 指令窗不重复扫描。找不到 caller/provider 时以最小缺口结束，不再开展同类字符串搜索。
+
+### 11.2 recovery 链备份闭环
+
+在现有 r155 copies-primary 文件夹内完成六文件 hash + manifest provenance。若本地实际文件路径缺失或 manifest 不全：
+- 不通过文件名/长度推断；
+- 不联网下载闭源固件；
+- 不连接设备重新采集；
+- 记录缺失对象和其唯一缺失证据。
+
+若六项全部闭环，形成只读恢复清单；原文件保留不变，不重新压缩、不覆盖。
+
+### 11.3 U-Boot 源码、配置、构建与测试
+
+1. 固定 CoWave DBY-W09 U-Boot v2026.10 的源码 commit/tree 与补丁清单；
+2. 检查 toolchain 和 defconfig；生成唯一最终 `.config`；
+3. 检查第 3.2 节全部 CONFIG 项；
+4. 构建 U-Boot ELF/map/bin；
+5. 核验 PIE、relative relocations、4 KiB entry alignment、initial stack、FIT 与 Android boot image parser 命令；
+6. 运行所有可用 sandbox/host 测试；
+7. 归档构建日志、配置、map、ELF 和产物 SHA。
+
+若源码/工具链不能取得或构建失败，记录首个可复现根因，不再创建“修复任务书”；其余静态打包分析继续。
+
+### 11.4 ACK Image / DTB / FIT 与 ramdisk 完整组装
+
+1. 锁定 ACK commit `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`、设备 VD 配置和补丁；
+2. 锁定 Image、目标 VD DTB 的来源和 SHA；
+3. 核验 Image header、kernel load、2 MiB Linux Image 物理对齐要求；
+4. 在主机端生成 gzip kernel、ITS、完整 FIT；
+5. 核算完整 FIT 与 reserved3 25,165,824 B 的容量关系；
+6. 使用 U-Boot 自身工具解析 FIT，并核验 FIT configuration、kernel、FDT 和地址属性；
+7. 对 live separate ramdisk `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb` 重新 hash；仅匹配后解析 v0 wrapper；
+8. 使用 `CONFIG_CMD_ABOOTIMG=y`、`abootimg addr <wrapper-address>` 与 plain-address `bootm <FIT-address> <wrapper-address>` 路径做 host/sandbox 验证，禁止冒号形式；
+9. 用 sandbox/单元测试核验解析出的 ramdisk payload 范围、搬移、LMB 冲突检查和最终 FDT chosen/initrd 处理。
+
+FIT 若实际超过 24 MiB，优先在不改变内核语义、不丢 DTB/reservation 的前提下分析压缩与 metadata；不得静默裁剪内核、DTB 或 ramdisk。无论 FIT 是否通过，sandbox 通过不等于设备验证通过。
+
+### 11.5 FDT / RAM / reserved-memory 最终安全对照
+
+1. 对 ACK VD DTB 中 37 个 reserved-memory children 形成脱敏表：节点名/用途类别、size、no-map、reusable、compatible/consumer 类别；不公开不必要的物理地址；
+2. 与已有 HOS4.3 DTB/FDT 报告逐项比较；
+3. 标记每个节点为 MATCH / DIFFERENT / UNKNOWN；
+4. 确认 U-Boot 会如何将真实 `gd->dram[]` 更新进 ACK FDT 的 `/memory/reg`；
+5. 确认 U-Boot LMB 对 U-Boot 本体、FIT buffer、DTB、initrd、ABL reserved ranges 的保护；
+6. 对于 ABL final-FDT 真实 RAM tuple 与 reserved-memory 无证据的部分，保持 UNKNOWN；不以 CoWave HOS4.2 tuples 填补；
+7. 在缺少真实 RAM map 时，不得把静态地址布局宣称为无重叠或设备可启动。
+
+### 11.6 Recovery 容器与合法认证
+
+1. 完成六份 recovery 链文件身份和恢复能力闭环；
+2. 完成 ABL recovery 的 LoadImageAndAuth/LoadImageAndAuthVB2、vbmeta/AVB 依赖图；
+3. 判断 U-Boot recovery 容器能否由现有合法签名/认证链接受；
+4. 如果必须使用未提供的 OEM 私钥、关闭验证或修改 vbmeta，立即 `AUTH_BLOCKED / NO-GO`；
+5. 仅在输入、备份和合法认证门禁均通过后，才可制作主机端离线候选；未签名候选必须标记 `UNSIGNED / NOT FOR DEVICE`；
+6. 候选必须通过 Android boot/recovery header、DTB/recovery_dtbo、分区容量、hash、container parser 检查；
+7. 不得生成可误刷的“最终版”文件名，不得上传原始固件。
+
+### 11.7 设备侧只读 FDT 证据（授权门）
+
+唯一权威的 HOS4.3 真实 RAM bank/reservation 证据是设备运行时 final-FDT 字节或等价可信只读采集。GATE02 已说明本地静态 PE 不能证明非零 `/memory/reg`。
+
+本任务书提前列出该步骤，但**没有设备操作授权**。只有用户之后明确授权特定只读采集时，Agent 才可：
+- 使用用户明确指定的只读方式采集 final FDT；
+- 不读取/导出其他私有分区，不写分区、不重启；
+- 对采集结果本地 hash，并解析 `/memory/reg`、`/reserved-memory`、memreserve、`/chosen/linux,initrd-start/end`；
+- 公开仓库只交付脱敏 tuple/范围类别和哈希，不上传原始 FDT 或可识别物理布局的敏感数据。
+
+没有授权则本阶段保持 `AUTHORIZATION_REQUIRED`，继续完成其余任务并提交总报告。
+
+### 11.8 实机启动验证与回退（预先布置，严格授权门）
+
+本任务把完整测试顺序和验收标准一次性布置好，但**任务书不构成实机操作授权**。只有同时满足下列全部条件且用户针对具体操作明确授权时，才可执行相应设备步骤：
+
+- HOST_PACKAGE_READINESS = READY；
+- recovery/recovery_vbmeta 及所有相关写入面备份逐项 SHA/provenance 完整；
+- 认证路径合法，候选已通过独立签名/认证验证；
+- final FDT RAM banks、reserved-memory、initrd、U-Boot/FIT/DTB 地址范围无重叠证据；
+- 有经验证的恢复步骤与所需原始备份；
+- 设备型号、固件版本、电量、数据风险与可能失去启动能力的风险已明确；
+- 用户明确批准具体测试动作（只读检查、非持久临时启动或指定分区写入必须分别说明，不能把一次授权扩展到其他动作）。
+
+执行顺序：
+1. 先只读确认当前设备身份/固件和启动状态（仅在单独授权后）；
+2. 若硬件/ABL 确实支持非持久加载路径，先做一次非持久测试；不可用就停止，不用未验证方法强试；
+3. 采集完整 UART/USB/ABL/U-Boot/Linux 启动日志，按阶段判定 ABL entry、U-Boot PIE relocation、DRAM、FDT、FIT、kernel entry、earlycon、initcall、rootfs；
+4. 一旦发现地址冲突、FDT 内存异常、启动卡死或不可解释重启，立即停止，不自动重复启动；
+5. 只有临时启动获得明确成功日志且用户再次明确授权，才可考虑持久化恢复/写入路径；
+6. 任何分区写入前必须再次核验原始备份 SHA、目标分区 label/大小/布局和恢复命令；写入后只读回读并对比 hash；
+7. 若失败，按事先验证过的原始备份恢复，不得临场猜测分区或写入命令。
+
+若认证链不允许、无 OEM key、不能做安全临时启动、或无可验证恢复方案，则 `DEVICE_BOOT_READINESS = NO_GO`，不尝试刷入。
+
+### 11.9 最终报告必须一次给出全链路结果
+
+唯一总报告应包括各阶段结果：
+- ABL 静态证据；
+- GATE02 已有证据及本轮增量；
+- 六份备份 provenance；
+- U-Boot 源码、工具链、最终配置、构建日志、ELF/map/hash；
+- ACK Image/DTB/FIT/ramdisk 的 hash、尺寸和 host parser 测试；
+- reserved-memory 对照和 RAM/LMB 区间安全；
+- recovery auth/AVB/vbmeta 判定；
+- final FDT 授权状态及设备实测结果（如获授权）；
+- HOST_PACKAGE_READINESS、DEVICE_BOOT_READINESS、USER_AUTHORIZATION_GATE；
+- 明确推荐继续、暂停或 NO-GO 的唯一决策。
+
+**最终总报告发布并回读后，整个任务结束。不得再另发 PREBUILD_GATE03、FIT_AUDIT、FLASH_TASKBOOK 或类似分拆任务书。**
+

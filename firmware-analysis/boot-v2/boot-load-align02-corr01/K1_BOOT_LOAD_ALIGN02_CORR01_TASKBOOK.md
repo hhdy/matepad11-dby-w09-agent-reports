@@ -28,10 +28,10 @@ ALIGN02 最终结论 PREP10 ALIGNMENT=UNKNOWN 是正确的，但 AI1 审核发�
 - 关联 helper：0x32968、0x32A28、0x32AF0、0x3283C、0x32B5C；这些函数的准确角色仍需重新验证，不能只用函数名猜测。
 
 ### ACK source commit
-任务书冻结的准确 40 位 commit：
-8ad08f75ddf056e1ee600e1339e0463c5fcbdc9
+已核定的完整 40 位 commit：
+8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a
 
-ALIGN02 报告出现了多一个尾字符的 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a，必须更正。以本任务书上述 40 位 commit 为唯一 pin，并提供 git rev-parse HEAD 原始值与长度。
+AI1 早期任务书中的 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9 只有 39 位，是遗漏末尾 a 的截断值；ALIGN02 报告给出的 40 位 commit 才是正确候选 pin。Agent 必须对本地源码树执行 git rev-parse HEAD，并将原始值与上面 40 位完整 SHA 比对。
 
 ### PREP10
 - Image SHA-256：f89a283954b9c8df22aa790967f9cf8f6af84fc4aabf9bc4ff1659adc80bad21
@@ -126,7 +126,7 @@ ALIGN02 报告出现了多一个尾字符的 8ad08f75ddf056e1ee600e1339e0463c5fc
 
 ## 6. 阶段 E — ACK source header slot 核验
 
-用精确 commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9：
+用精确 commit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a：
 
 1. 原样提供 arch/arm64/kernel/head.S header 64-byte 区域完整行（不是只摘 L59），标明 offset 0x08 的 text_offset、0x10 image_size、0x18 flags。
 2. 原样提供 arch/arm64/kernel/image.h 中所有相关宏和 HEAD_SYMBOLS 展开关系。

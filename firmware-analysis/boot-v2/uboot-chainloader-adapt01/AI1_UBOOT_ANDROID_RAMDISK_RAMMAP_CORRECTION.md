@@ -264,7 +264,8 @@ Why this is different from the original NO-GO:
 - The original failure is real when `CMD_ABOOTIMG` is disabled, or when the `abootimg` global address is not set to the same external wrapper.
 - With `CMD_ABOOTIMG=y`, `select_ramdisk()` uses `get_abootimg_addr()` in the Android-format branch. `abootimg addr` sets that global address to the external wrapper buffer.
 - The second `bootm` argument is still required as a plain hexadecimal address so `select_ramdisk()` recognizes the buffer's Android image format and enters the Android branch.
-- Do not use `addr:size`: with `CONFIG_FIT=y`, U-Boot tries `fit_parse_conf()` (`#`) and `fit_parse_subimage()` (`:`) first. A colon is treated as a FIT subimage separator. A plain hex address has neither separator and falls through to `hextoul()` correctly.
+- For the CMD_ABOOTIMG wrapper mode, use a plain hexadecimal wrapper address; it has neither FIT delimiter and falls through to `hextoul()`.
+- If instead `abootimg get ramdisk` has extracted the raw payload pointer and size, `addr:size` is also source-supported with `CONFIG_SUPPORT_RAW_INITRD=y`: after initial FIT syntax parsing, `select_ramdisk()` inspects the bytes, sees that the payload is not a FIT image, and then executes the raw-initrd parser.
 - `ARCH_SNAPDRAGON` selects `ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR`; for a valid Android wrapper header v0-v2, the parser returns the ramdisk payload address inside the wrapper instead of honoring the stale header RAM address. The normal bootm initrd relocation/FDT handoff can then handle placement.
 
 This means the current first-choice implementation does **not** require a custom `boot/image-board.c` parser patch and does **not** require embedding the ramdisk in the FIT. It still requires `CONFIG_CMD_ABOOTIMG=y`, explicit `abootimg addr` setup, a plain-address second argument, exact live wrapper header validation, and a verified scratch/final initrd memory range.
@@ -275,4 +276,4 @@ Source-level implementation details and the full command design are recorded in:
 Updated disposition:
 - Generic `bootm FIT_ADDR wrapper_addr` without an explicit `abootimg addr` setup: **NO-GO**.
 - `CONFIG_CMD_ABOOTIMG=y` + `abootimg addr wrapper_addr` + `bootm FIT_ADDR wrapper_addr`: **SOURCE-CONFIRMED WORKAROUND; live-wrapper compatibility remains UNKNOWN/HOLD**.
-- Candidate A (patch raw-initrd syntax) and candidate B (FIT ramdisk node) remain fallback designs only if host/sandbox validation finds a defect in the existing `CMD_ABOOTIMG` route.
+- The raw `addr:size` path and FIT-native ramdisk node remain alternative designs; neither requires a parser patch based on the currently reviewed v2026.10 source. Use host/sandbox tests and exact live wrapper validation before selecting either.

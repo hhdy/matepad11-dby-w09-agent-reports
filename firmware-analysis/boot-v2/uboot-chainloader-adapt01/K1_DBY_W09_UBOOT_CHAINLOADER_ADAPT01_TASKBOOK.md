@@ -234,3 +234,60 @@ B. Recovery U-Boot chainloader + FIT：
 - 交 AI1 独立审核；不因本任务结果自动获得任何设备写入授权。
 
 本任务目标：评估一条不依赖 Huawei ABL 直接加载 ACK Linux Image 的启动路线；不制作镜像、不授权写入。
+
+
+---
+
+## 13. AI1 研究补充 / 任务收敛修订（2026-11-28）
+
+本节优先于前文中与现有证据不符或已经被 AI1 源码核验的表述。不要重复进行已经闭环的通用源码审查。
+
+### 13.1 reserved3 已经确认，不要再要求设备查询
+
+现有 PREP12 只读分区 inventory 的准确记录位于：
+`firmware-analysis/boot-v2/linux-port-adapt01-corr01/partition_map.md`
+
+其中已确认：
+- label：`reserved3`
+- block device：`/dev/block/sda13`
+- size：25,165,824 B（24 MiB）
+
+因此本任务不能再写“尚未确认 reserved3 是否存在/容量”。不得连接设备重新查询。仍然未知的是该分区当前内容、OEM 用途/保护策略、能否安全覆盖；没有原始备份和使用情况核验，不得写入。
+
+### 13.2 ARM64 Linux FDT memory fixup 已有上游代码闭环
+
+AI1 已独立核验 U-Boot v2026.10：
+- `arch/arm/lib/bootm-fdt.c::arch_fixup_fdt()` 使用 `gd->dram[]` 调用 `fdt_fixup_memory_banks()`；
+- `boot/image-fdt.c::image_setup_linux()` 调用该 arch fixup；
+- Qualcomm `arch/arm/mach-snapdragon/board.c::board_fdt_blob_setup()` 在 internal FDT 有效时优先从 internal FDT 的 `/memory/reg` 运行 `qcom_parse_memory()`；`dram_init_banksize()` 再把 banks 复制到 `gd->dram[]`。
+
+CoWave dby-w09 defconfig 已见：
+- `CONFIG_ARCH_SNAPDRAGON=y`
+- `CONFIG_NR_DRAM_BANKS=24`
+- `CONFIG_FIT=y`
+- `CONFIG_OF_BOARD_SETUP=y`
+
+CoWave patch 0004 internal U-Boot control DTS 给出三个固定 RAM tuples：
+- `0x80000000 + 0x3BB00000`
+- `0xC0000000 + 0xC0000000`
+- `0x180000000 + 0x100000000`
+
+因此，U-Boot 可以在 Linux 交接前自动把其 DRAM bank ranges 写入 FIT 内的 ACK DTB，原始 ACK `/memory/reg=<0 0 0 0>` 不是不可解问题。
+
+**但是**这些固定 tuples 在本机 HOS4.3 的最终 ABL memory map 中尚无独立可核验 capture。ROUND64 Phase E 将 `/sys/firmware/fdt` 读取记为 Permission denied；stock base DTB 的 memory 仍是 placeholder。故 CoWave tuples 对本机只能判 CONDITIONAL，不能报告为本机 RAM 已验证。
+
+### 13.3 本轮最有价值的剩余工作
+
+不要再审查 generic ARM memory fixup 本身。只聚焦：
+1. 三段 CoWave RAM tuples 的真实来源，是否为同一 RAM SKU 的 DBY-W09 live final FDT；不能只引用 DTS 注释；
+2. U-Boot 最终 .config 的 CONFIG_OF_LIBFDT / CONFIG_ARCH_SNAPDRAGON / CONFIG_NR_DRAM_BANKS / CONFIG_FIT / CONFIG_CMD_BOOTM / CONFIG_ANDROID_BOOT_IMAGE 实际值；
+3. 将 ACK candidate DTB 的 37 个 reserved-memory children 与现有 HOS4.3 证据做脱敏逐项对比（name / size / no-map / reusable / consumer 类别），不要公开原始物理地址；
+4. 核算 Android FIT 的 kernel gzip 实际尺寸能否连同 VD DTB 和 FIT 元数据放入已知 24 MiB reserved3。原始 ACK Image 44,820,992 B 不能未经压缩直接放入。
+
+AI1 已提交两份源码结果供参考：
+- `AI1_UBOOT_ANDROID_FIT_SOURCE_FINDINGS.md`
+- `AI1_UBOOT_FDT_MEMORY_FIXUP_SUPPLEMENT.md`
+
+### 13.4 仍然不得做的事项
+
+保持本任务原有全部禁止事项：不得连接设备、ADB/Fastboot/OEM 命令、reboot、fastboot boot、分区写入、刷写、构建 U-Boot/FIT/recovery、生成候选或公开固件二进制。此补充不改变任何操作授权。

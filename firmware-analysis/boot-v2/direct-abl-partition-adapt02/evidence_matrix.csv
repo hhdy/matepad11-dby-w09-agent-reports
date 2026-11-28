@@ -1,18 +1,20 @@
 id,claim,evidence_source,evidence_grade,status,limitation
-E01,Reference repository identity,12 pinned blob SHAs fetched at commit 116cb1fe06110543ce03217e8bd8f35c12ca89c3,A,PASS,Source identity only
-E02,Direct ABL uses boot v2 plus separate ramdisk,linux-dby-w09 README.md,A,CONFIRMED_FOR_PUBLIC_PROJECT,Not an Android 17 package
-E03,fastboot boot refused,linux-dby-w09 README.md,B,REPORTED,Exact HOS4.3 behavior unknown
-E04,Stock boot repack method,repack_boot.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Target stock hash differs from public fixed guard
-E05,STOCK_PAYLOAD_SIZE 24412160,repack_boot.py,A,CONFIRMED,Script payload boundary not partition size
-E06,Full partition backups,install_images.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Only selected/changed partitions backed up
-E07,Readback checks image prefix,install_images.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Untouched tail not compared
-E08,Automatic rollback,installer source,A,NOT_PRESENT,Manual restore guidance only
-E09,ACK Image header facts,taskbook and ROUND158 build report,B,REPORTED,Raw artifact not reparsed here
-E10,ABL raw/gzip dispatch and destination offset,prior ABL reports/taskbook,C,PARTIAL,No closed ACK loader trace
-E11,ACK physical buffer residue mod 0x200000,not available,UNKNOWN,OPEN,Needs fixed address proof or authorized read-only observation
-E12,Android ramdisk contains Huawei init/init.real,taskbook/prior capture references,B,REPORTED,Raw partition bytes not re-read
-E13,Android bootconfig transfer contract,not closed in reviewed reports,C,UNKNOWN,Do not infer from Linux cmdline
-E14,Live VD stock Entry 2 / board-id 0x200e,ROUND158 and ROUND159 target evidence,B,REPORTED,Prior evidence reused
-E15,Public overlay is VG 0x206a,svesnav dby-w09-rootparam.dtso,A,CONFIRMED,Must not transplant to VD
-E16,Complete write/readback/rollback recovery,ROUND158 and installer source,C,PARTIAL,Full chain backup/GPT/rollback/rehearsal incomplete
-E17,Device connected or modified,this task execution,A,NO,No device operations performed
+E01,Reference repository identity,12 taskbook-pinned Git blob SHAs re-fetched from svesnav main,A,PASS,source identity not target runtime
+E02,Reference boot v2 plus separate ramdisk and /rootparam DTBO,linux-dby-w09 README.md,A,REPORTED,project documentation not ABL source
+E03,fastboot boot refusal,linux-dby-w09 README.md,B,REPORTED,no fresh device test
+E04,repack method and header v2 preservation,repack_boot.py and AOSP mkbootimg,A,CONFIRMED,reference stock hash differs from target
+E05,ABL raw/gzip dispatch and +0x80000 destination,prior Hybrid ABL load-map disassembly,C,CONFIRMED_STATIC,prior archived PE evidence; no runtime observation
+E06,ImageBuffer allocation is EFI AllocatePages AnyPages/BsData,ALIGN02-CORR01 corrected allocator report,C,CONFIRMED_STATIC,4KiB only; runtime 2MiB residue UNKNOWN
+E07,ACK Image text_offset=0 flags=0xA,ACK source commit and frozen Image header audit,B,CONFIRMED,config values partly unresolved
+E08,ACK raw and gzip alignment requirement,formula from E05-E07,derived,UNKNOWN,requires actual ImageBuffer residue 0x180000 or validated source correction
+E09,Android separate ramdisk KEEP_STOCK,taskbook and prior target ramdisk evidence,B,KEEP_STOCK,first-stage/bootconfig compatibility incomplete
+E10,VD DTBO KEEP_STOCK_VD_ENTRY2,ROUND159 independent component report,B,PASS_BOUNDED,not integrated boot proof
+E11,public overlay is VG,reference dby-w09-rootparam.dtso,A,CONFIRMED,board-id 0x206a; prohibited on VD
+E12,partition sizes,prior PREP12 partition_map.md,B,REFERENCED,raw partition inventory not re-read
+E13,separate ramdisk footer,prior offline partition audit,B,REFERENCED,raw ramdisk bytes not re-read
+E14,boot tail zero/no AVB footer,prior boot_tail_audit.md,B,REFERENCED,not re-read this task
+E15,installer backup and prefix readback,install_images.py and matepad-kernel-install,A,CONFIRMED,full old partition backup; prefix-only readback; manual restore
+E16,installer app implementation,external installer repository not in frozen source set,C,UNKNOWN,not audited
+E17,Android bootconfig and first-stage integration,target-specific artifacts incomplete,C,UNKNOWN,requires dedicated offline evidence
+E18,complete recovery chain and rollback,prior ROUND158 gate plus installer source,C,PARTIAL,full-chain backup and restore rehearsal incomplete
+E19,device connection/write in this task,execution record,A,NO,none performed

@@ -1,0 +1,54 @@
+stock boot: 100663296 B sha256=7a95c897c14a6f9151b6d22308b8086b8f6395d4bd9aa438faab126ae39d24a8
+PREP10 boot: 46563215 B sha256=d1d76c2199dff54e762bffe98260116369af1e8b50f5d813fe197434ac1cc091
+partition capacity: 100663296 B (96 MiB)
+
+== STOCK 96MiB ==
+  magic=b'ANDROID!' kernel_size=22256282 kernel_addr=0x8000 ramdisk_size=519986 ramdisk_addr=0x2000000
+  second_size=0 second_addr=0x0 tags_addr=0x100 page_size=4096 header_version=2 os_version=0x1600014b
+  name=b''
+  cmdline_len=432 cmdline=b'earlycon=msm_geni_serial,0xa90000 androidboot.hardware=qcom androidboot.console='
+  extra_cmdline=b''
+  img_id=e14cadb62b78ff3dfeec988dd45639d52c604bad
+  recovery_dtbo_size=0 recovery_dtbo_offset=0 header_size=1660 dtb_size=1664243 dtb_addr=0x1f00000
+  layout: kernel@0x1000 ramdisk@0x153b000 second@0x15ba000 dtb@0x15ba000 payload_end=0x1751000
+
+== PREP10 ==
+  magic=b'ANDROID!' kernel_size=44820992 kernel_addr=0x8000 ramdisk_size=519986 ramdisk_addr=0x2000000
+  second_size=0 second_addr=0x0 tags_addr=0x100 page_size=4096 header_version=2 os_version=0x1600014b
+  name=b''
+  cmdline_len=442 cmdline=b'ignore_loglevel earlycon=qcom_geni,0xa90000 androidboot.hardware=qcom androidboo'
+  extra_cmdline=b''
+  img_id=8f1501bcba02b9e787386b97171c6d0b852a9ef7
+  recovery_dtbo_size=0 recovery_dtbo_offset=0 header_size=1660 dtb_size=1216399 dtb_addr=0x1f00000
+  layout: kernel@0x1000 ramdisk@0x2ac0000 second@0x2b3f000 dtb@0x2b3f000 payload_end=0x2c68000
+
+# ==== header comparison ====
+  ksz          DIFF stock=22256282 prep=44820992
+  rsz          SAME (519986)
+  ssz          SAME (0)
+  dtb_sz       DIFF stock=1664243 prep=1216399
+  page         SAME (4096)
+  hv           SAME (2)
+  osver        SAME (369099083)
+  hdr_size     SAME (1660)
+  cmdline     DIFF (stock_len=432 prep_len=442)
+    first_diff @0: stock=b'earlycon=msm_geni_serial,0xa90' prep=b'ignore_loglevel earlycon=qcom_'
+    prep prefix: b'ignore_loglevel earl'
+    stock prefix: b'earlycon=msm_geni_se'
+
+# ==== stock boot tail audit ====
+stock payload_end=0x1751000 (24449024), tail_size=76214272 B (72.68 MiB)
+last 64 bytes: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  AVB footer NOT found at last 64 B
+tail non-zero ranges (merged <64B gap): 0
+last last 4KiB: 0 non-zero bytes out of 4096
+last last 64KiB: 0 non-zero bytes out of 65536
+last last 1MiB: 0 non-zero bytes out of 1048576
+PREP10 payload_end=0x2c68000 (46563328) — stock payload_end=0x1751000 (24449024)
+PREP10 fits in partition: True (46,563,215 < 100,663,296)
+PREP10 vs stock payload_end: PREP10_end=46563328 stock_end=24449024 diff=-22114304
+
+# ==== prefix write [0,46563215) preserves [46563215,100663296) ====
+preserved region: 54100081 B, non-zero bytes=0 (0.0%)
+preserved region sha256=ea0dc9f4d674e896819c0b137deecce5ca15c370c22852234540015d435bdb12
+first 1KiB of preserved region all-zero: True

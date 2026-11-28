@@ -1,0 +1,77 @@
+DTBO total size: 25165824 B
+dtbo.img sha256=51a5d7b81bc149765c1b4038e9aba5917392cd7370e029ea9f1b2933a8970c0c
+header: magic=0xD7B7AB1E total_size=2963810 hdr_size=32 entry_size=32 num_entries=9 entries_offset=32 page_size=4096 version=0
+
+--- Entry 0 ---
+  dt_size=329044 dt_offset=320 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329044 (matches dt_size: true) blob_sha256=6940ce1167a3a21cb677a422da4327682d5e6d266dc5af5a002acb28cfc72aef
+  rootparam_present=true
+  boardid prop name @overlay+0x4e3d1 "qcom,boardid.qco"
+  entry_end=0x50694 saved=entry_0_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 1 ---
+  dt_size=329352 dt_offset=329364 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329352 (matches dt_size: true) blob_sha256=685a837e65a692da8780df6f9245c010128893ef22d0aeb1046b572eabe2872f
+  rootparam_present=true
+  boardid prop name @overlay+0x4e4fb "qcom,boardid.qco"
+  entry_end=0xa0d1c saved=entry_1_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 2 ---
+  dt_size=329240 dt_offset=658716 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329240 (matches dt_size: true) blob_sha256=0633a6fbeebbad45c0f5572faf222c779e1cd51d253a6ef8282592a730ba3c8b
+  rootparam_present=true
+  VARIANT VD found @overlay+0x399b0
+  boardid prop name @overlay+0x4e48b "qcom,boardid.qco"
+  entry_end=0xf1334 saved=entry_2_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 3 ---
+  dt_size=329098 dt_offset=987956 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329098 (matches dt_size: true) blob_sha256=e68e5a48f64cfb686e2698b4dba07d58fa07fe4316522bbb4323ecfbeb9f486c
+  rootparam_present=true
+  boardid prop name @overlay+0x4e40d "qcom,boardid.qco"
+  entry_end=0x1418be saved=entry_3_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 4 ---
+  dt_size=329340 dt_offset=1317054 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329340 (matches dt_size: true) blob_sha256=866991056bef3a99d7e010bc13196f87ee5b93474e70a75a4c34ddcc4bad6cfc
+  rootparam_present=true
+  boardid prop name @overlay+0x4e4f9 "qcom,boardid.qco"
+  entry_end=0x191f3a saved=entry_4_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 5 ---
+  dt_size=329356 dt_offset=1646394 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329356 (matches dt_size: true) blob_sha256=699df8950612ca3825db38050dceb20d08c85ded666e238a57b281c80ba7eec1
+  rootparam_present=true
+  boardid prop name @overlay+0x4e4ff "qcom,boardid.qco"
+  entry_end=0x1e25c6 saved=entry_5_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 6 ---
+  dt_size=329356 dt_offset=1975750 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329356 (matches dt_size: true) blob_sha256=fca5a7a83ea69a473720c180594cf95035c57707957e1effe0484b76bdbad844
+  rootparam_present=true
+  boardid prop name @overlay+0x4e4ff "qcom,boardid.qco"
+  entry_end=0x232c52 saved=entry_6_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 7 ---
+  dt_size=329352 dt_offset=2305106 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329352 (matches dt_size: true) blob_sha256=0a57a7f8ac678073542de72cef02e2bbbf9d40dd5aeb30000835258d55cff07b
+  rootparam_present=true
+  boardid prop name @overlay+0x4e4fb "qcom,boardid.qco"
+  entry_end=0x2832da saved=entry_7_id0x00000000_rev0x00000000.dtbo
+
+--- Entry 8 ---
+  dt_size=329352 dt_offset=2634458 id=0x00000000 rev=0x00000000 custom=[0x00000000,0x00000000,0x00000000,0x00000000]
+  FDT magic=0xD00DFEED fdt_total_size=329352 (matches dt_size: true) blob_sha256=a7946352a86ab6e47b5ee79d84e5d6c4cf4e548c96b0221cec909f32ebd9d21d
+  rootparam_present=true
+  VARIANT VG found @overlay+0x399b4
+  boardid prop name @overlay+0x4e4fb "qcom,boardid.qco"
+  entry_end=0x2d3962 saved=entry_8_id0x00000000_rev0x00000000.dtbo
+
+# ==== boundary checks ====
+max_end=0x2d3962 (2963810) vs total_size_field=2963810 vs file_size=25165824
+overlaps: none
+gaps: none (entries contiguous)
+page_size=4096 — entries with non-page-aligned dt_offset: 9/9 (packed layout, dt_offset contiguous)
+table region [0, 0x140) — first payload dt_offset=0x140
+
+DTBO_PARSE_CORR01 = PASS (magic ok, 9 entries, all FDT magic 0xD00DFEED, fdt_total_size==dt_size, no overlap)

@@ -663,3 +663,120 @@ sudo apt-get install --no-install-recommends \
 
 你是 K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 唯一主执行 Agent。用户已明确授权在本机 Ubuntu 24.04 主机通过 APT 安装 U-Boot/FIT 构建所需的软件包，并继续主机端源码固定、U-Boot 构建、ACK 6.18.33 / VD DTB / FIT 组装和离线验证。请按本任务书 §12 一次执行到底，不得再创建新任务书或每完成阶段向用户索要下一轮任务。先盘点，随后只安装 §12.1 列出的缺失构建包；固定 CoWave 源码到 commit `b76d7e095104fc2a010f2d1dc43121a9e3484464` 和 U-Boot v2026.10 精确源码；核对 5 个 patch；完成最终 .config、U-Boot build、ACK/FIT/ramdisk parser 测试和六份备份 provenance 复核。明确禁止运行 CoWave `pack-recovery.sh`（该脚本用 AVB flags=2 关闭校验）、`boot-linux.sh`、任何 adb/fastboot/OEM/EDL 命令、任何设备连接、重启、临时启动、分区读取或写入，且禁止修改任何 vbmeta/AVB 状态。缺少最终 FDT 或 recovery provenance 时保留 HOLD/NO-GO。最终只更新并回读核验 ONEPASS01 综合报告，回读成功立即停止。
 
+
+---
+
+## 17. 用户明确授权：当前 HOS4.3 运行态 final-FDT 一次性只读取证（2026-11-29）
+
+本节是用户在 2026-11-29 明确批准的窄范围设备只读授权，仅覆盖当前已启动的 HOS4.3 系统中的 final-FDT 导出及最低限度身份/权限核验。本节仅在与旧版 §8 / §12 的“完全不连接设备”条款冲突时，对本节明列的读取动作作例外；除此之外所有禁止事项继续有效。
+
+### 17.1 授权范围
+
+允许执行一次：
+1. 使用已经配置、已经授权的本地 ADB 传输连接当前正在运行的 HOS4.3 系统；
+2. 只读采集 /sys/firmware/fdt 原始 FDT 二进制；
+3. 只读读取最少设备身份字段，用于证明采集对象确为目标 DBY-W09 / HOS4.3：ro.build.fingerprint、ro.build.version.release、ro.build.version.incremental、ro.product.device、ro.boot.hardware。不要采集序列号、IMEI、账号或其他个人数据；
+4. 本地核验 FDT magic/header/总长度/SHA-256，解析 /memory/reg、/reserved-memory 的全部子节点、/memreserve/ map、/chosen/linux,initrd-start、linux,initrd-end、bootargs（只在报告必要字段，不公开完整 bootargs）；
+5. 对照 U-Boot 控制 DTB 中保留的 6 个 reserved-memory / framebuffer 项和 ACK VD DTB 中 37 个 reserved-memory children，逐项标记 MATCH / DIFFERENT / ABSENT / UNKNOWN；
+6. 只上传脱敏的解析报告、SHA-256、尺寸、节点名/地址/属性差异；原始 final-FDT 二进制只保留在本地，不上传 GitHub。
+
+### 17.2 执行前置条件
+
+- 必须是当前已启动的 HOS4.3 正常系统，不得通过重启、切换启动模式、进入 Recovery/Fastboot 或临时启动来取得。
+- 仅能使用已经可用的 ADB transport；不得为了本任务启用开发者选项、修改 USB 调试配置、运行 adb tcpip、adb connect、安装设备端应用或更改系统属性。
+- 可先运行只读的 adb devices -l 和上述 getprop 字段检查目标身份；不要把设备序列号写入公开报告。
+- 只读权限优先。读取原始文件时可在当前已授权的 root 环境下使用一次性 su -c cat；如出现新的 root 授权弹窗、需要修改 superuser 策略、需要 remount 或更改权限，立即停止并将权限门记为 BLOCKED，不能自行批准持久 root 权限或修改设备设置。
+
+### 17.3 唯一允许的采集方式
+
+优先从当前运行系统导出原始扁平 FDT：
+
+    mkdir -p final-fdt-capture
+    adb devices -l
+    adb shell getprop ro.build.fingerprint
+    adb shell getprop ro.build.version.release
+    adb shell getprop ro.build.version.incremental
+    adb shell getprop ro.product.device
+    adb shell getprop ro.boot.hardware
+    adb exec-out su -c 'cat /sys/firmware/fdt' > final-fdt-capture/hos43-final-fdt.dtb
+
+执行后必须检查：
+- 输出文件非空；
+- 读取的 FDT magic 是 big-endian 0xd00dfeed；
+- FDT header 的 totalsize 不大于文件实际长度，且不小于 header 最小长度；
+- 对原始文件记录精确字节数及 SHA-256；
+- 用本地 fdtdump / dtc -I dtb -O dts / fdtget 解析；任何解析错误都保留日志并标记 INVALID，不得手工修补后冒充原始 FDT。
+
+如果 /sys/firmware/fdt 不存在或不可读：
+- 可以只读检查 /sys/firmware/devicetree/base 的存在性和权限，报告为辅助信息；
+- 不得把 sysfs 展开树伪装为原始 FDT；它不能替代原始 FDT header/memreserve map；
+- 不得使用 /dev/mem、/proc/kcore、任意物理地址扫描或其他旁路读取方式；
+- 不得重启或切换 Recovery 以寻找另一个 FDT；
+- 报告 FINAL_FDT_CAPTURE = BLOCKED/PARTIAL，任务照样完成并停止。
+
+### 17.4 解析与审计要求
+
+对取得的原始 FDT 解析并报告：
+
+**A. FDT 身份 / 来源**
+- 五个允许的 build/product 字段；
+- 文件路径（本地）、实际字节数、SHA-256、FDT magic、totalsize、version/last_comp_version；
+- 明确注明这是当前正常 HOS4.3 启动会话的 Linux 可见 final-FDT。它不自动证明 recovery 模式的 FDT 完全相同；recovery 路径仍需按已有 ABL 条件结论标记。
+
+**B. RAM bank**
+- /memory 节点是否存在；
+- device_type、#address-cells、#size-cells；
+- 原始 reg bytes 与按 cell 解码出的每个 (base,size,end)；
+- 每个 bank 的 64-bit overflow、零长度、对齐、彼此重叠和排序检查；
+- 总 RAM 仅作为各 bank size 的和报告，不从产品名或“12GB”报告倒推。
+
+**C. Reserved memory / memreserve**
+- /reserved-memory 的 cells/ranges；
+- 每个子节点的名称、reg、no-map、reusable、alignment、size、compatible、status 等实际存在的关键属性；
+- 根 FDT memreserve map 的所有 (address,size) tuple；
+- 对照 U-Boot 控制 DTB 的 6 个节点（cont-splash@9C000000、framebuffer@9C000000、四个 Qualcomm sm8250.dtsi carveout）和 ACK VD DTB 的 37 个 reserved-memory children，逐项给出 MATCH / DIFFERENT / ABSENT / UNKNOWN；
+- 重点判断 0x9C000000 + 0x2300000（35 MiB）区域是否真实存在于 final-FDT、是否有 no-map / reusable 差异、是否与其他 carveout 冲突；
+- 不得因为节点名相同就宣称地址/属性匹配。
+
+**D. initrd / chosen**
+- /chosen/linux,initrd-start 与 linux,initrd-end 的原始 cell、解码值、长度；
+- 与 live separate ramdisk 身份/长度及 ABL 已证据作静态一致性比较；
+- 明确 SAVE_PREV_BL_INITRAMFS_START_ADDR 只读取 start 的事实，不能把它表述成 end 已保存或 memreserve 已建立；
+- 对 initrd 与 RAM bank/reserved regions 的重叠做算术分析；未证 reservation 时不能声称安全。
+
+**E. 对 U-Boot fallback 的判定**
+- 结合已验证控制 DTB 根级 /memory 已移除、U-Boot v2026.10 board_fdt_blob_setup() / qcom_parse_memory() 源码，以及本次取得的有效 final-FDT：
+  - 若 raw final-FDT 有有效非零 /memory/reg：ABL_FINAL_FDT_RAM_SOURCE = PRESENT；源码层 external fallback 可提供 bank source，但仍未实机运行 U-Boot。
+  - 若无有效 RAM reg：ABL_FINAL_FDT_RAM_SOURCE = INVALID，U-Boot 将无法从该 external FDT 成功初始化 RAM，维持 NO-GO。
+  - 若文件无效或未取得：UNKNOWN/BLOCKED。
+- 严格区别“源码路径能够 fallback”和“目标 U-Boot 已在设备运行并采用该 FDT”。不能把前者写成实机运行结果。
+
+### 17.5 禁止事项（本次授权不覆盖）
+
+- 不执行 adb reboot、fastboot、recovery、临时启动、boot、flash、erase、format、OEM、EDL、Sahara、Firehose。
+- 不运行 adb root（若当前系统不支持则不要重启 adbd）；不运行 adb remount、adb disable-verity、adb tcpip、adb connect。
+- 不修改 /sys、/proc、/dev 节点，不 chmod/chown，不修改 bootargs、属性或配置，不安装 APK/二进制。
+- 不读取任何分区、vbmeta、recovery、boot 或其他原始固件；本授权只读 /sys/firmware/fdt 和最低限度 getprop 字段。
+- 不对设备执行写入、刷写或恢复操作；不修改 AVB/vbmeta/安全启动。
+- 不把原始 FDT、完整设备属性转储或设备序列号上传公开 GitHub。
+
+### 17.6 单次交付 / 停止条件
+
+在原 ONEPASS01 综合报告中新增 final-FDT capture 结果，不创建新任务书。唯一更新：
+firmware-analysis/boot-v2/uboot-chainloader-adapt01/K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01_REPORT.md
+
+更新内容必须包含：
+- 本节授权的使用范围；
+- 当前 HOS4.3 设备身份字段（脱敏）；
+- 原始 FDT 本地路径/尺寸/SHA/header 校验结果；
+- RAM bank、memreserve、reserved-memory 及 initrd 解析表；
+- 6 个 U-Boot 控制 FDT 项和 ACK 37 个 reserved-memory children 的对照结果；
+- fallback 是否满足所需输入条件（不宣称 U-Boot 已实机启动）；
+- 重新计算 HOST_PACKAGE_READINESS、DEVICE_BOOT_READINESS、USER_AUTHORIZATION_GATE；
+- 明确声明无重启、无分区读取、无分区写入、无 AVB/vbmeta 修改。
+
+若 capture 成功，完成全部解析和一次 GitHub 回读后停止；若 capture 被权限/路径阻断，记录最小缺口、继续所有可完成的本地 FDT/节点对照后交付并停止。不得自动扩成下一轮、不得执行任何实机启动/刷写。
+
+### START_PROMPT_OVERRIDE — 当前 HOS4.3 final-FDT 只读采集
+
+用户已于 2026-11-29 明确批准一次当前 HOS4.3 正常运行态 final-FDT 只读采集。现在按本任务书 §17 执行一次：仅使用现有 ADB transport，读取规定的五个非敏感 build/product 字段及 /sys/firmware/fdt 原始二进制；优先保持当前权限，必要时只允许一次性 su -c cat，不能触发持久权限策略修改。不得重启、切换模式、读其他分区、写设备、修改 AVB/vbmeta、使用 /dev/mem 或物理内存扫描。把原始 FDT 留在本地，计算 hash/header，解析 RAM banks、memreserve、reserved-memory 全量节点、chosen initrd 区间，并对照 U-Boot 6 项与 ACK 37 项。若原始 FDT 不可读，停止设备侧尝试，不得改用旁路方法；报告 BLOCKED/PARTIAL。最终只更新原 ONEPASS01 综合报告并 GitHub 回读，完成即停止。

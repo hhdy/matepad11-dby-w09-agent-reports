@@ -10,7 +10,7 @@
 本仓库现有报告：
 - `firmware-analysis/boot-v2/boot-load-map01/K1_BOOT_LOAD_MAP01_REPORT.md`
 - `firmware-analysis/boot-v2/boot-load-map01/hybrid_abl_load_path.md`
-- 目标 ABL PE SHA-256：`a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404`（应以仓库文件中完整 SHA 为准：`a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404`）
+- 目标 ABL PE SHA-256：`a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404`
 
 BOOT_LOAD_MAP01 记录了已核验的 BootLinux 主函数尾段：
 - ABL 对 DTB 先 CopyMem、再进行 ufdt overlay，最终 FDT 指针保存在 TagsAddress；

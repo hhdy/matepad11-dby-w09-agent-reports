@@ -19,7 +19,9 @@ U-Boot 作为 ABL 后的第二启动级仍然是值得保留的主候选：U-Boo
 | U-Boot PIE 入口对齐 | 源码 CONFIRMED：4 KiB | start.S 有 4 KiB 运行时断言 |
 | U-Boot PIE 重定位 | 源码 CONFIRMED | early RELA fixup + 后续 relocate_code |
 | U-Boot 规避 ABL 对 Linux Image 的 +0x80000 放置冲突 | CONDITIONAL GO | 需 ABL recovery 路径确实能把 U-Boot 交给它 |
-| Android separate ramdisk wrapper 直接作为 bootm 第二参数 | NO-GO | Android image 解析分支取的是主 OS image，不是第二参数 wrapper |
+| Android wrapper 直接作为 bootm 第二参数、未设置 abootimg 全局地址 | NO-GO | Android image 分支使用 abootimg 全局地址；但先执行 abootimg addr wrapper 后可用同一 wrapper 地址作为第二参数 |
+| CMD_ABOOTIMG 外置 wrapper 路径 | 源码机制 CONFIRMED；目标 live wrapper 待核 | CMD_ABOOTIMG=y + abootimg addr wrapper + bootm FIT wrapper |
+| 提取 payload 后 addr:size | 源码机制 CONFIRMED（需 SUPPORT_RAW_INITRD） | raw 数据格式识别失败后会进入 raw-initrd 分支；不会因前置 FIT parser 解析冒号而提前退出 |
 | abootimg 提取 ramdisk | 源码机制 CONFIRMED | header v0-v2 可返回原始 ramdisk payload 地址/长度 |
 | 提取后用 addr:size 直接作为 FIT bootm 第二参数 | 当前源码路径 NO-GO | FIT 子镜像解析先吞掉冒号 |
 | CoWave 8 GiB 静态 RAM tuples 用于当前扩容设备 | NO-GO | tuple 总量约 7.93 GiB，不能覆盖用户报告的 12GB RAM |
@@ -84,43 +86,82 @@ abootimg get ramdisk 调用 android_image_get_ramdisk()，把返回的 payload �
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-android.c
 - https://github.com/u-boot/u-boot/blob/v2026.10/arch/arm/Kconfig
 
-### 3.3 又发现一个 FIT 与 raw initrd 参数解析冲突
+### 3.3 重新核对：addr:size 在当前 FIT 流程中可以进入 raw-initrd 分支
 
-即使执行 abootimg get ramdisk 成功，直接运行：
+此前曾把 fit_parse_subimage() 找到冒号理解成提前结束，这个结论不正确。必须按 select_ramdisk() 完整控制流判断：
 
-    bootm <FIT_ADDR> <RAMDISK_ADDR>:<RAMDISK_SIZE>
+1. CONFIG_FIT=y 时，select_ramdisk() 先调用 fit_parse_conf() 和 fit_parse_subimage()。若参数包含冒号，fit_parse_subimage() 会把冒号后部分记录为 FIT subimage name，并设置 done_select=true。
+2. 随后代码仍会调用 genimg_get_format() 检查 rd_addr 指向的实际内存。
+3. 如果地址指向真正的原始 CPIO / gzip initramfs payload，而不是 FIT 容器，genimg_get_format() 不会返回 IMAGE_FORMAT_FIT，switch 也不会设置 done。
+4. switch 之后，若 CONFIG_SUPPORT_RAW_INITRD=y，代码会再次查找 select 中的冒号，读取冒号后的十六进制长度，并把 rd_addr / rd_len 作为 raw initrd。
+5. 因此 raw payload 的 addr:size 在 CONFIG_FIT=y 情况下仍是源码支持的路径；前置 fit_parse_subimage() 没有使函数提前返回。
 
-在现有 U-Boot v2026.10 配置 CONFIG_FIT=y 时也不能直接视为可用。
+真正的限制是：
+- 整个 ANDROID! wrapper 不能在未设置 abootimg 全局地址时直接作为第二参数；Android-format 分支不会仅凭 rd_addr 自动解析任意外部 wrapper。
+- addr:size 必须指向已经提取的 raw ramdisk payload，而不是 Android mini-bootimg wrapper header。
+- 必须显式启用 CONFIG_SUPPORT_RAW_INITRD=y，并在 host/sandbox 上验证真实 payload 格式和参数路径。
 
-原因：
-1. boot/image-board.c 的 select_ramdisk() 在 SUPPORT_RAW_INITRD 路径之前先尝试 fit_parse_conf() 和 fit_parse_subimage()。
-2. boot/image-fit.c 的 fit_parse_subimage() 调用 fit_parse_spec(spec, ':', ...)。
-3. fit_parse_spec() 只要找到冒号就返回 1，并将冒号后的所有内容直接设为 image_name；它不检查后半部分是不是 FIT 子镜像名，也不检查它是否是十六进制长度。
-4. 因此 addr:size 形式先被当作 FIT subimage 规格；代码将尝试从 addr 所指缓冲区读取名为 size 的 FIT 子镜像，而不会进入后面的 SUPPORT_RAW_INITRD 原始地址/长度分支。
-
-这是一项基于源码控制流的静态发现，尚未通过设备运行复现；但在现有代码下，不应把 addr:size + CONFIG_FIT=y 组合标记为已验证可用。
-
-源码：
+来源：
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fit.c
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/Kconfig
-- https://github.com/u-boot/u-boot/blob/v2026.10/README
 
-### 3.4 正确的两个候选修正
+### 3.4 首选现成 U-Boot 路径：CMD_ABOOTIMG 设置外部 wrapper 全局地址
 
-候选 A（优先保留 separate ramdisk 分区，改动小）：
-- 为 U-Boot 增加明确的 raw-initrd 语法识别，必须在 FIT subimage parser 之前识别；例如增加显式 raw:<address>:<length> 语法，或严格识别数字 address:size 形式。
-- 将解析后的地址/长度送入现有 raw-initrd -> boot_ramdisk_high() -> fdt_initrd() 路径。
-- 为新语法添加 sandbox/pytest：CONFIG_FIT=y + CONFIG_SUPPORT_RAW_INITRD=y 时，验证 raw initrd 走 raw 分支；同时确认普通 addr:subimage 名仍正常工作。
-- 先用主机端模拟和 U-Boot sandbox 测试证明，不要直接对设备测试。
+无需改 U-Boot parser，也不必先嵌入 FIT。若先把 live Android wrapper 读到 RAM，现有命令/bootm 路径可按以下方式组合：
 
-候选 B（不修改 U-Boot parser）：
-- 在主机端从当前 live ramdisk wrapper 精确提取 CPIO payload；
-- 把 payload 作为 FIT 的 ramdisk image 节点，配置节点增加 ramdisk = "ramdisk"；
-- FIT 仍保留 kernel 与最终 Linux FDT；
-- 计算 gzip(ACK Image) + VD DTB + ramdisk payload + FIT metadata/alignment 是否 <= reserved3 的 25,165,824 B。
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+bootm <FIT_ADDR> <ANDROID_WRAPPER_ADDR>
+```
 
-按旧包副本已知的 1,322,962 B ramdisk payload 估算，若嵌入 FIT，则 gzip kernel 的理论上限约为 22,626,463 B，且还要扣除 FIT metadata 和 padding。此数字只用于预算门槛，不表示当前 live ramdisk payload 已确认相同，也不代表 FIT 已能装入 reserved3。原厂 separate ramdisk 分区仍保持不写入、不覆盖。
+机制：
+1. CMD_ABOOTIMG=y 时，abootimg addr 设置 U-Boot 全局 abootimg 地址。
+2. bootm 的第二参数为普通十六进制地址（不加冒号），select_ramdisk() 先按该地址读取格式；wrapper magic 识别为 IMAGE_FORMAT_ANDROID。
+3. Android-format 分支在 CMD_ABOOTIMG=y 时调用 android_image_get_ramdisk()，其输入取自 get_abootimg_addr()，即上一步设置的外置 wrapper 地址。
+4. 对 header v0-v2，android_image_get_ramdisk() 计算 ramdisk payload pointer/size。ARCH_SNAPDRAGON 会选择 ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR，忽略 wrapper 内旧的固定 ramdisk 地址，返回 wrapper 内实际 payload 的位置。
+5. boot_get_ramdisk() 随后把得到的 payload range 传给 boot_ramdisk_high()；默认路径使用 LMB 分配安全目的区并复制 ramdisk。image_setup_libfdt() 最终调用 fdt_initrd()，为 initrd 添加 FDT memreserve 并写 /chosen/linux,initrd-start/end。
+
+因此：
+- “直接把 wrapper 当作第二参数、未先执行 abootimg addr”仍然不可依赖；
+- “先 abootimg addr wrapper，再 bootm FIT wrapper”是 U-Boot v2026.10 源码支持的组合；
+- 本机 live wrapper 的 header、payload 长度、mini-bootimg 版本和目标 U-Boot 构建配置仍需按精确 SHA 核验，当前不能宣称设备已可启动。
+
+相关源码：
+- https://github.com/u-boot/u-boot/blob/v2026.10/cmd/abootimg.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-android.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/arch/arm/Kconfig
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/fdt_support.c
+
+### 3.5 备用路线：先提取 payload，再走 SUPPORT_RAW_INITRD
+
+若不希望 bootm 的第二参数处于 Android image format 分支，可以显式提取地址/长度：
+
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+abootimg get ramdisk rd_data rd_size
+bootm <FIT_ADDR> ${rd_data}:${rd_size}
+```
+
+这条路径要求：
+- CONFIG_ANDROID_BOOT_IMAGE=y
+- CONFIG_CMD_ABOOTIMG=y
+- CONFIG_SUPPORT_RAW_INITRD=y
+- wrapper 必须是 U-Boot 当前 parser 支持的有效 Android header（本机优先核验 v0-v2）
+- rd_data 指向真正的 raw initramfs payload；rd_size 是 payload 长度，不是整个 wrapper 大小。
+
+其优点是第二参数会指向原始 payload；U-Boot 即使先尝试 FIT 语法，随后也会因实际数据不是 FIT image 而进入 SUPPORT_RAW_INITRD 分支。这个路径不要求修改 fit_parse_subimage()。
+
+### 3.6 FIT-native ramdisk 仍是可选方案
+
+若希望启动文件完全自包含，或外置 wrapper/parser 路径在 host/sandbox 验证中出现问题，可以在 FIT 中增加 ramdisk image 节点，并在配置节点设置 ramdisk = "ramdisk"。
+
+预算仍需满足：
+
+gzip(ACK Image) + exact live CPIO payload + exact ACK VD DTB + FIT metadata/alignment <= 25,165,824 B。
+
+此前固件包副本中的 1,322,962 B 只能作为预算示例，不能代替当前 live ramdisk payload 的长度。FIT-native 方案不是由于 addr:size 解析限制而被强制采用。
 
 ### 3.5 CoWave defconfig 不是 Android 完整配置
 
@@ -136,7 +177,7 @@ CoWave scripts/build-uboot.sh 只安装 uboot/dby-w09_defconfig、应用五个�
 Android 适配应显式配置并回读：
 - CONFIG_ANDROID_BOOT_IMAGE=y
 - CONFIG_CMD_ABOOTIMG=y
-- CONFIG_SUPPORT_RAW_INITRD=y（若继续采用 raw initrd parser 修补路线）
+- CONFIG_SUPPORT_RAW_INITRD=y（若采用 abootimg get ramdisk + addr:size raw payload 路线）
 - CONFIG_FIT=y
 - CONFIG_CMD_BOOTM=y
 - CONFIG_OF_LIBFDT=y
@@ -144,7 +185,7 @@ Android 适配应显式配置并回读：
 - CONFIG_POSITION_INDEPENDENT=y
 - CONFIG_INIT_SP_RELATIVE=y
 
-这里显式启用 raw initrd 并不能单独解决 FIT 冒号解析冲突；仍需候选 A 的代码修正，或候选 B 的 FIT ramdisk 节点方案。
+这里不需要为了 addr:size 修改 FIT 解析器；但必须确保第二参数指向 raw payload，而不是整个 Android wrapper。若使用 3.4 的 CMD_ABOOTIMG 方案，则可将 wrapper 作为第二参数，但必须事先执行 abootimg addr wrapper。
 
 CoWave 来源：
 - https://github.com/CoWave-Fall/linux-on-arm-matepad11/blob/main/scripts/build-uboot.sh
@@ -204,7 +245,7 @@ CoWave 仓库公开 README/status 记载其实际启动链为 U-Boot 2026.10 -> 
 
 1. 本机 live separate ramdisk（精确 SHA）离线解析：header version、page_size、kernel_size、ramdisk_size、payload offset/length、payload magic/压缩格式；只上传脱敏字段和哈希，不上传固件本体。
 2. 本机 HOS4.3 recovery previous-bootloader FDT 的来源和有效性；确认是否能提供准确的 12GB RAM banks。若无可核验 final FDT，就保持 UNKNOWN。
-3. 独立评估候选 A 的 U-Boot raw-initrd parser 小补丁，并加 FIT-on / FIT-off 正反测试；或先对候选 B 计算 FIT 容量，不同时做两套大方案。
+3. 优先验证现成 CMD_ABOOTIMG 路径：abootimg addr wrapper + bootm FIT wrapper；同时用 U-Boot sandbox 测试 payload/addr:size 备用路径。只有这两条现成源码机制有缺陷时，才考虑改 parser 或 FIT-native 节点。
 4. 最终 U-Boot .config readback，确认 PIE、relative SP、FIT、bootm、Android parser、raw-initrd 配置。
 5. 只有当 RAM banks、reserved-memory、ramdisk 交接、Android bootargs/bootconfig、UFS handoff、recovery rollback 都有证据后，才进入主机端 boot package 设计。
 

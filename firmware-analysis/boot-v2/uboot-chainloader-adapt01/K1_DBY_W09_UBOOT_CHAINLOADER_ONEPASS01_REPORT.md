@@ -1,6 +1,6 @@
 # K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 — 综合报告（§12 续行更新版）
 
-- 首版 commit `361f3894`；本版为 §12 授权后的一次性构建续行更新（2026-11-28）
+- 首版 commit `361f3894`；本版为 §12 授权后的一次性构建续行更新 + §13 控制设计纠错（2026-11-28）
 - §12 授权：用户明确授权 Ubuntu 24.04 主机 APT 安装构建依赖 + 主机端源码固定/构建/FIT 组装/离线验证；**非设备操作授权**
 - 全程无设备连接、无设备侧读取、无 reboot/临时启动、无分区写入/刷写、无 AVB/vbmeta 修改、无原始固件上传
 - **CoWave `pack-recovery.sh`（blob `0f3076bc…`）被禁止运行：该脚本使用 AVB flags=2 关闭校验，违反"不得修改/关闭验证"边界——本任务未运行它**
@@ -96,3 +96,49 @@ LoadImageAndAuth/VB2 路径存在；对 recovery 容器替换 kernel 后能否�
 ## 10. 二进制不入库声明
 
 U-Boot ELF/bin/map、FIT itb、gzip Image、DTB、wrapper ramdisk 及全部原始固件**仅存本地**（`/home/kerneldev/build/`、workspace `UBOOT_CHAINLOADER_ADAPT01/fit/`），GitHub 仅上传本脱敏报告与脚本清单 ✓
+
+## 13. 设计纠错（控制 FDT 静态 RAM tuples / framebuffer reservation）— 已完成
+
+**发现确认**：CoWave `0004-dts-qcom-add-dby-w09.patch`（本地树 `dts/upstream/src/arm64/qcom/sm8250-huawei-dby-w09.dts` L35-40）在内部控制 FDT 写入三段静态 RAM tuples（0x80000000+0x3BB00000、0xC0000000+0xC0000000、0x180000000+0x100000000，≈7.93 GiB）+ `cont-splash@9C000000`/35 MiB no-map + `simple-framebuffer@9C000000`（1600×2560, stride 6400, a8r8g8b8）。`board_fdt_blob_setup()`（`arch/arm/mach-snapdragon/board.c` L212-226）优先解析内部 FDT 的 memory 信息——若内部 `/memory/reg` 有效非零，`SAVE_PREV_BL_FDT_ADDR=y` 也不会走 previous-BL 路径。
+
+**纠错执行**（本地纠错，不改 CoWave pristine）：
+1. 删除控制 DTS 的静态 `memory { reg = 三段 tuples }` 节点（保留其余控制节点）；纠正后源 sha256 `fd4f3bde…c3b2981a`。
+2. 重建：`MAKE_EXIT_CODE=0`（显式捕获，无管道掩码）；重建产物：
+   - `u-boot` ELF sha **`d0d85843…b025162123`**
+   - `u-boot.bin` sha **`33741739…3f3e46`**
+   - `u-boot.map` sha `949cb0f4…`（不变）
+   - `u-boot.dtb` sha **`e522efd2…680fab`**
+   - `.config` sha `6faf3b40…`（配置未变）
+3. **编译产物核验**：重建后 `u-boot.dtb` **根级 `/memory` 节点消失（decompile count=0）** → 内部 `qcom_parse_memory()` 无有效 `/memory/reg` → 按已源码闭环逻辑返回 `-ENODATA` → `board_fdt_blob_setup()` 走 `get_prev_bl_fdt_addr()` external FDT 路径（fallback 源码证据：board.c L213-224，internal/external 双有效性检查，internal memory 优先仅在存在时生效）。**SAVE_PREV_BL_FDT_ADDR 现在真实生效。**
+4. **reserved-memory / framebuffer 逐项标记（未取得 HOS4.3 final-FDT 前一律 CONDITIONAL/UNPROVEN，不声称安全）**：
+
+| 节点 | 范围 | 属性 | 判定 |
+|---|---|---|---|
+| cont-splash@9C000000 | 0x9C000000 + 0x2300000 (35 MiB) | no-map | **CONDITIONAL-UNPROVEN**（CoWave HOS4.2 splash 记录；本机 XBL splash 配置未捕获） |
+| framebuffer@9C000000 | 同上 | simple-framebuffer 1600×2560 a8r8g8b8 | 同上 |
+| memory@80000000 | 0x80000000 + 0x600000 (6 MiB) | no-map | sm8250.dtsi 标准 Qualcomm carveout（zap/removed-mem 类）**CONDITIONAL** |
+| memory@80700000 | +0x160000 (1.4 MiB) | no-map | 同上 **CONDITIONAL** |
+| memory@80860000 | +0x20000 (128 KiB) | no-map | 同上 **CONDITIONAL** |
+| memory@80900000 | +0x200000 (2 MiB) | no-map | 同上 **CONDITIONAL** |
+
+   这些节点影响 U-Boot 自身 LMB 保护行为，**不影响 ABL→U-Boot 的真实 RAM map 来源**（后者由 prev-BL external FDT 提供）。设备侧 final-FDT capture 后逐项 MATCH/DIFFERENT 复核。
+
+## 14. recovery_ramdisk 哈希澄清（响应审计质询）
+
+- "旧 SHA `1a703a84…`"为**无效串**：来自一次终端管道中断的 62 字符截断输出（非真实哈希），从未进入任何报告正文。
+- 干净重算（本轮）：本地 `r155/copies-primary/recovery_ramdisk.img` 37,748,736 B sha256 = **`b6fa0371…2295`**，与 `capture_manifest.tsv` 的 sda20（by-name/recovery_ramdisk）设备侧双次 SHA 逐字一致；erecovery_ramdisk 同值（出厂内容相同，§6）。**无实际差异。**
+
+## 15. 验证严谨性补强（响应审计质询）
+
+- 重建退出码显式捕获：`MAKE_EXIT_CODE=0`（无 `| tail` 掩码；失败分支会直接输出日志尾并退出非零）。
+- `dumpimage -l`（FIT `dby-w09-ack.itb`）退出码 **0** 显式验证。
+- FIT 本体不受本纠错影响（FIT 内含 ACK DTB，非 U-Boot 控制 DTB）；19,078,551 B ≤ 24 MiB 结论不变。
+
+## 16. 门禁更新（纠错后）
+
+| 门 | 值 | 说明 |
+|---|---|---|
+| HOST_PACKAGE_READINESS | **READY**（维持；控制 FDT 已去除静态 RAM，prev-BL fallback 为已证实路径） | — |
+| DEVICE_BOOT_READINESS | **HOLD**（维持：entry chain CONDITIONAL、initrd label PARTIAL、RAM/final-FDT UNKNOWN、认证 UNKNOWN、reserved-memory 对照 CONDITIONAL 待 capture） | 纠错通过前不解除 |
+| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED** | — |
+| ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD** | — |

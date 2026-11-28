@@ -1,0 +1,5 @@
+file	bytes	sha256	AVBf	partition_vbmeta	dtbo_vbmeta	notes
+stock-recovery.img	100663296	956417584d2deb409761316f262732859e356a15cb5fe85436df3d5f141c5548	2 (0x5FFFFC0 end-64, 0x2DB9FC0 dtbo)	PRESENT 0x2F51000 1344B algo=1 rb=0	PRESENT 0x188E000 1472B	full partition dump
+recovery-uboot-candidate.img	27926528	b48e9185e0260706f4f8275bd73ab9c4f22a8bdaa5bba366a25d2f0704811990	1 (0x190AFC0 dtbo)	ABSENT	PRESERVED 0x3DF000 1472B	mkbootimg output UNSIGNED
+recovery_vbmeta.img	1048576	bf59d55d664b9f6295273b10701845b9e4e3f184b6e7c5140f29681d1c5b507b	none	AVB0@0x0 flags=0 chain->recovery rb23	-	untouched
+twrp.img	33386938	(zip d24331b5…5ad591)	NONE	ABSENT	-	v0 kernel_size=0 ramdisk-only

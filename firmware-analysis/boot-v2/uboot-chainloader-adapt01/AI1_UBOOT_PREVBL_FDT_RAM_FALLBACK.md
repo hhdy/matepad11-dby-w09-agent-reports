@@ -85,3 +85,32 @@ ROUND64 Phase E 明确记载：
 ## 6. 操作边界
 
 本补充没有连接设备、执行 ADB/Fastboot/OEM 命令、构建 U-Boot、生成 FIT/recovery/DTBO、刷写、重启、读取或写入任何分区。没有授权任何设备启动测试或写入。
+
+## 7. Exact fallback trigger verified in `qcom_parse_memory()`
+
+Additional line-by-line review of U-Boot v2026.10 `arch/arm/mach-snapdragon/board.c` confirms the trigger precisely:
+
+- A missing `/memory` node returns `-ENODATA`.
+- A missing `/memory/reg` property returns `-ENODATA`.
+- The parser counts `reg` tuples, skips entries whose `size` cell is zero, and returns `-ENODATA` when there are no usable banks or the first stored bank has zero size.
+- `board_fdt_blob_setup()` then tries `qcom_parse_memory(external_fdt)` if the internal parse returned an error.
+- When the internal FDT header is valid, it remains the U-Boot control FDT even after the external FDT supplies the RAM bank list; the code only switches `*fdtp` to external when the internal FDT itself is invalid.
+
+Thus a future target-specific U-Boot DTS can keep CoWave's board ID, UART, UFS, USB, PMIC and other control nodes while omitting the static `/memory/reg` tuples (or retaining an empty `/memory` node without `reg`) to trigger the existing external-memory fallback. This is a design option, not a patch already made.
+
+Important limitations from the same parser:
+- It does not validate that each `start + size` operation is overflow-safe.
+- It does not reject overlapping or physically impossible bank ranges.
+- It bounds the number of entries by `CONFIG_NR_DRAM_BANKS`, but malformed/trailing tuple lengths are not a complete schema validation.
+- Therefore the external FDT is not automatically trusted merely because it parses. Before it can drive `gd->dram[]`, the exact target bank list must be independently validated for count, tuple length, non-zero size, arithmetic overflow, ordering/overlap policy, and actual DRAM boundaries.
+- The final Linux FDT will receive these same `gd->dram[]` values from `arch_fixup_fdt()`. The 37 reserved-memory nodes remain a separate validation problem; the fallback does not copy them from the ABL FDT into the ACK FDT.
+
+Source:
+- https://github.com/u-boot/u-boot/blob/v2026.10/arch/arm/mach-snapdragon/board.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/arch/arm/lib/bootm-fdt.c
+
+Updated disposition:
+- External FDT pointer preservation: source-supported when the build includes the previous-BL FDT save path.
+- Internal-empty-memory → external-bank fallback: source-confirmed.
+- Exact HOS4.3 recovery x0 pointer and usable 12GB memory tuples: still CONDITIONAL / UNKNOWN.
+- Use of CoWave's 7.93 GiB static tuples on the expanded target: NO-GO.

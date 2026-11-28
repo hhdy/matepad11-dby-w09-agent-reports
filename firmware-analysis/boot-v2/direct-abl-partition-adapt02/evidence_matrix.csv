@@ -1,19 +1,19 @@
 id,claim,evidence_source,evidence_grade,status,limitation
 E01,Reference repository identity,12 taskbook-pinned Git blob SHAs re-fetched from svesnav main,A,PASS,source identity not target runtime
-E02,Reference boot v2 plus separate ramdisk and /rootparam DTBO,linux-dby-w09 README.md,A,REPORTED,project documentation not ABL source
-E03,fastboot boot refusal,linux-dby-w09 README.md,B,REPORTED,no fresh device test
-E04,repack method and header v2 preservation,repack_boot.py and AOSP mkbootimg,A,CONFIRMED,reference stock hash differs from target
+E02,Reference boot v2 plus separate ramdisk and /rootparam DTBO,linux-dby-w09 README.md lines 35-49,A,REPORTED,project documentation not ABL source
+E03,fastboot boot refusal,linux-dby-w09 README.md line 43,B,REPORTED,no fresh device test
+E04,repack method and header v2 preservation,repack_boot.py lines 17-22,43-90; matepad-kernel-install lines 63-98,A,CONFIRMED,reference stock hash differs from target
 E05,ABL raw/gzip dispatch and +0x80000 destination,prior Hybrid ABL load-map disassembly,C,CONFIRMED_STATIC,prior archived PE evidence; no runtime observation
 E06,ImageBuffer allocation is EFI AllocatePages AnyPages/BsData,ALIGN02-CORR01 corrected allocator report,C,CONFIRMED_STATIC,4KiB only; runtime 2MiB residue UNKNOWN
 E07,ACK Image text_offset=0 flags=0xA,ACK source commit and frozen Image header audit,B,CONFIRMED,config values partly unresolved
 E08,ACK raw and gzip alignment requirement,formula from E05-E07,derived,UNKNOWN,requires actual ImageBuffer residue 0x180000 or validated source correction
 E09,Android separate ramdisk KEEP_STOCK,taskbook and prior target ramdisk evidence,B,KEEP_STOCK,first-stage/bootconfig compatibility incomplete
 E10,VD DTBO KEEP_STOCK_VD_ENTRY2,ROUND159 independent component report,B,PASS_BOUNDED,not integrated boot proof
-E11,public overlay is VG,reference dby-w09-rootparam.dtso,A,CONFIRMED,board-id 0x206a; prohibited on VD
+E11,public overlay is VG,reference dby-w09-rootparam.dtso lines 16-28,A,CONFIRMED,board-id 0x206a; prohibited on VD
 E12,partition sizes,prior PREP12 partition_map.md,B,REFERENCED,raw partition inventory not re-read
 E13,separate ramdisk footer,prior offline partition audit,B,REFERENCED,raw ramdisk bytes not re-read
 E14,boot tail zero/no AVB footer,prior boot_tail_audit.md,B,REFERENCED,not re-read this task
-E15,installer backup and prefix readback,install_images.py and matepad-kernel-install,A,CONFIRMED,full old partition backup; prefix-only readback; manual restore
+E15,installer backup and prefix readback,install_images.py lines 4-9,18-58; matepad-kernel-install lines 203-237,A,CONFIRMED,full old partition backup; prefix-only readback; manual restore
 E16,installer app implementation,external installer repository not in frozen source set,C,UNKNOWN,not audited
 E17,Android bootconfig and first-stage integration,target-specific artifacts incomplete,C,UNKNOWN,requires dedicated offline evidence
 E18,complete recovery chain and rollback,prior ROUND158 gate plus installer source,C,PARTIAL,full-chain backup and restore rehearsal incomplete

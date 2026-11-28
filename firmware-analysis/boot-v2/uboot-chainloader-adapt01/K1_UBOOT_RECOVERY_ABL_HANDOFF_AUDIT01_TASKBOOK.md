@@ -49,11 +49,14 @@
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_PREVBL_FDT_RAM_FALLBACK.md
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_ANDROID_RAMDISK_RAMMAP_CORRECTION.md
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md
+- firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_PREVBL_INITRD_REUSE_REVIEW.md
 - firmware-analysis/boot-v2/uboot-chainloader-adapt01/AI1_UBOOT_FIT_NATIVE_RAMDISK_ROUTE.md
 
 注意：AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md 只证明 U-Boot v2026.10 的源码命令机制，不证明本机 ABL recovery 分支实际提供的是同一份 separate ramdisk。审计 B 必须独立从精确 HOS4.3 ABL 的 recovery caller 和 LoadRamdisk 数据流判断来源，不得把 U-Boot 之后可读取的 ramdisk 分区反推成 ABL 当前选择的 initrd。
 
 如现有本地分析脚本/反汇编已能回答，不要重复整套反编译工作。
+
+另需注意：CoWave defconfig 启用 CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR；U-Boot 可从 previous-BL FDT 保存 initrd-start，但不保存 initrd-end，也不自动做 LMB 预留。请在审计 B 中把 ABL 的 initrd-start/end 当作独立证据项，严格判断其来源是否为 recovery initrd，不能直接认为可作为 Android first-stage ramdisk。
 
 ## 3. 审计 A：recovery boot image → BootLinux 调用链
 

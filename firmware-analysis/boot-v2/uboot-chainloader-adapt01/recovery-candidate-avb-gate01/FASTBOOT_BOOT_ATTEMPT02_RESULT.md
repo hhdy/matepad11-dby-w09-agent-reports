@@ -54,3 +54,19 @@ U-Boot Recovery 链式路线在**当前 ABL 上不可行**，除非：
 - `oem help` → not recognized（U-Boot 无 oem 处理器，无碍）；`ep1in-bulk not queued` 为 gadget 噪声
 
 当前设备处于 U-Boot fastboot 模式（bootmenu_2）。下一里程碑需用户授权：写 FIT v2（20,484,879 B）到 reserved3，随后经 U-Boot 菜单 `Boot Linux from reserved3` → bootm ACK。
+
+## UFS/SCSI 崩溃事件（2026-11-29 深夜，`oem run:scsi scan` 触发）
+
+`fastboot oem run:"scsi scan"` 触发 **qcom-ufshcd ufshc@1d84000 OCS error from controller = f** 数百次刷屏，随后 U-Boot **Sync Exception（esr=0x96000007 数据外部中止，far=0x8...4）**，寄存器转储后 `Resetting CPU` → `### ERROR ### Please RESET the board ###`（挂死）。
+
+**确立事实：本机（HOS4.3 / 12GB 单元）的 U-Boot UFS/SCSI 访问路径存在驱动级崩溃缺陷**——`scsi scan`/`scsi read` 会崩。这意味着：
+- bootmenu_0 `Boot Linux from reserved3`（scsi read 路径）**同样会崩溃，不可用**
+- reserved3 的 `fastboot flash` 失败（partition info 获取即失败）与该缺陷同源
+- 替代路径（无需 UFS）：**`fastboot stage <FIT>`** 把 FIT 上传到 U-Boot 下载缓冲（CONFIG_FASTBOOT_BUF_ADDR=**0x1A000000**，size 0x7000000=112MiB，bank0 内、远离 kernel/DTB/cont_splash 区）→ **`fastboot oem run:"bootm 0x1A000000"`** 直接引导——完全绕开 UFS/SCSI
+- U-Boot 崩溃前的 USB fastboot 是稳定的；崩溃仅在触碰 UFS 后发生
+
+## 设备恢复步骤（需用户物理操作）
+
+1. 长按电源键 ~15-30 秒强制复位 → 设备回到 ABL → 正常启动 HOS（boot 分区未动，TWRP 在 recovery 不影响正常启动）
+2. 回到 HOS 后 `adb reboot recovery` 可重新进入 U-Boot（recovery = U-Boot 候选仍在位）
+3. 进 U-Boot 后 **10 秒内**用音量下+电源选择 `Enable fastboot mode`（跳过会自动触发 Boot Linux from reserved3 → 再次 UFS 崩溃）

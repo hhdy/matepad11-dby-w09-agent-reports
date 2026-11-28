@@ -23,7 +23,7 @@ U-Boot 作为 ABL 后的第二启动级仍然是值得保留的主候选：U-Boo
 | CMD_ABOOTIMG 外置 wrapper 路径 | 源码机制 CONFIRMED；目标 live wrapper 待核 | CMD_ABOOTIMG=y + abootimg addr wrapper + bootm FIT wrapper |
 | 提取 payload 后 addr:size | 源码机制 CONFIRMED（需 SUPPORT_RAW_INITRD） | raw 数据格式识别失败后会进入 raw-initrd 分支；不会因前置 FIT parser 解析冒号而提前退出 |
 | abootimg 提取 ramdisk | 源码机制 CONFIRMED | header v0-v2 可返回原始 ramdisk payload 地址/长度 |
-| 提取后用 addr:size 直接作为 FIT bootm 第二参数 | 当前源码路径 NO-GO | FIT 子镜像解析先吞掉冒号 |
+| 提取后用 addr:size 直接作为 FIT bootm 第二参数 | SOURCE-CONFIRMED（需 SUPPORT_RAW_INITRD） | 非 FIT 的 raw payload 经格式检查后会进入 raw-initrd 长度解析分支 |
 | CoWave 8 GiB 静态 RAM tuples 用于当前扩容设备 | NO-GO | tuple 总量约 7.93 GiB，不能覆盖用户报告的 12GB RAM |
 | ACK Android 第一启动包 | NO-GO | 仍缺 live ramdisk header、正确 ramdisk 参数路径、真实 RAM map、保留区与 AVB/恢复闭环 |
 

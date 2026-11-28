@@ -507,3 +507,159 @@ FIT 若实际超过 24 MiB，优先在不改变内核语义、不丢 DTB/reserva
 
 **最终总报告发布并回读后，整个任务结束。不得再另发 PREBUILD_GATE03、FIT_AUDIT、FLASH_TASKBOOK 或类似分拆任务书。**
 
+
+
+---
+
+## 12. 2026-11-28 用户明确授权：主机工具安装 + 一次性构建续行（本节优先级高于旧限制）
+
+用户在 2026-11-28 明确回复“继续”，对应主机侧安装编译依赖并继续构建的授权。**本节覆盖本任务旧版 §3.1“不得安装新工具”的限制**，仅在以下边界内生效：
+
+- 允许：在本地 Ubuntu 24.04 构建主机上用系统 APT 安装 U-Boot / FIT 主机端构建依赖；固定公开 CoWave 源码及 U-Boot v2026.10；生成最终 .config；构建 U-Boot；在输入身份核验通过时制作、解析和计量 ACK FIT；做离线 parser / sandbox / ELF / FIT 验证。
+- 不允许：连接 DBY-W09；运行 ADB、Fastboot、EDL、Sahara、Firehose 或 OEM 命令；读取设备分区；reboot / recovery / 临时启动；写分区、刷写；修改 recovery、recovery_vbmeta、vbmeta、AVB、安全启动状态；绕过或关闭签名验证；上传任何原始设备固件。
+- 这不是设备操作授权。即使 host build 和 FIT 全部 PASS，仍不得触碰设备。
+
+### 12.1 Ubuntu 24.04 APT 安装范围
+
+先只读盘点 OS、磁盘空间、已有包版本、工具是否存在；记录安装前状态。只在确认为 Ubuntu 24.04 的构建主机上执行。允许一次 APT 安装，按需安装缺失项：
+
+```bash
+sudo apt-get update
+sudo apt-get install --no-install-recommends \
+  build-essential make git curl xz-utils bzip2 bc bison flex \
+  gcc-aarch64-linux-gnu device-tree-compiler u-boot-tools \
+  libssl-dev libgnutls28-dev libncurses-dev libpython3-dev \
+  python3 python3-dev python3-setuptools python3-pyelftools \
+  swig pkg-config
+```
+
+注意：
+1. 不运行 `apt upgrade`、`full-upgrade`、`autoremove`，不添加 PPA、不下载第三方 .deb、不改系统源。
+2. 如果部分包已安装，保留现有版本，不必重复安装；若包名在该 Ubuntu 版本不存在，先记录并停止该包，不得擅自改用来源不明的软件。
+3. APT 若要求用户输入 sudo 密码/交互确认，等待用户在本机授权输入；不得尝试绕过。
+4. 安装后保存 `dpkg-query` 包版本、`aarch64-linux-gnu-gcc --version`、`dtc --version`、`mkimage -V`、`make --version`、`python3 --version` 和完整 APT 日志。
+5. 不安装 adb/fastboot/EDL 工具；本任务不需要这些设备工具。
+
+### 12.2 CoWave 源码固定（禁止跟踪浮动分支）
+
+本轮已通过 GitHub API 核实的 CoWave 仓库固定点：
+
+- Repo：`https://github.com/CoWave-Fall/linux-on-arm-matepad11`
+- `main` 当前审计固定 commit：`b76d7e095104fc2a010f2d1dc43121a9e3484464`
+- Tree：`2d6b79e3df31bfad1001da6e565a155794b5e7f7`
+- 该 commit 未签名（GitHub verification reason=unsigned），报告中必须记录，不得称签名验证通过。
+- U-Boot 上游目标 tag：`v2026.10`；CoWave 固定脚本给出的源码压缩包 SHA-256：`f943a88389c8fd70a6b0d061a88267465e143c7ca6ea2b75837ab20f5b60c739`。下载后必须核验 SHA；若不匹配，停止使用该源码包。
+
+必须固定并记录以下 CoWave 文件身份（按该 commit 读取并核对本地内容）：
+
+| 文件 | Git blob SHA |
+|---|---|
+| `uboot/dby-w09_defconfig` | `38a39ecd60f25360ceabe2ee81f1f1e96564b52c` |
+| `uboot/patches/0001-gpio-qcom-pmic-add-bias-and-input-config.patch` | `c17d6a2dd4a393f110e829ee5b236adb37932c53` |
+| `uboot/patches/0002-button-gpio-apply-pinctrl-default.patch` | `72cebdaae482f97eedcfe644f47b66469fcf7ff8` |
+| `uboot/patches/0003-input-button-kbd-initialize-state.patch` | `bedfbbe01310e17aecda64adf54abfffee37684f` |
+| `uboot/patches/0004-dts-qcom-add-dby-w09.patch` | `bc10cbcde24275c91dcf56ef8f9e8562260c3714` |
+| `uboot/patches/0005-board-qualcomm-add-dby-w09-env.patch` | `f07d01f1f073f63ae8b75493dd6560f56c2d4dca` |
+| `scripts/build-uboot.sh` | `bb1e94b8b0cad0df4eca9b771bca77fd53770ca7` |
+| `scripts/pack-fit.sh` | `529bebcf3fe0380d4c21b4998467db42898f3584` |
+| `scripts/pack-recovery.sh` | `0f3076bcd397f8d694a950b49bfd381cb571fee4` |
+| `scripts/fetch-sources.sh` | `a640962b7f985904cb330d6355bbdf009fc1e8e8` |
+
+执行规则：
+- checkout 到精确 commit `b76d7e095104fc2a010f2d1dc43121a9e3484464`，记录本地 HEAD、tree、所有补丁 SHA；不得以最新 main 替换。
+- 仅使用 U-Boot v2026.10；CoWave 的 `fetch-sources.sh` 会同时抓取 Linux 7.3.4，**不得运行它来代替 ACK 6.18.33 目标内核构建**。可只按已固定 SHA 获取 U-Boot v2026.10 源码包。
+- 先静态阅读 `build-uboot.sh`、所有 5 个 patch、defconfig，再应用补丁；确认 patch 顺序与源树匹配，保留 pristine tree 和 patched tree 的差异摘要。
+- CoWave defconfig 是板级配置参考，不等于最终 .config；本机 HOS4.3 / ACK 项目所需的差异必须有源码和运行时证据。
+
+### 12.3 高风险脚本明确禁用
+
+**绝对禁止运行 CoWave `scripts/pack-recovery.sh`**。本轮已读取该固定 commit 的脚本内容：它会生成 `recovery_vbmeta.img`，并以 `avbtool make_vbmeta_image --flags 2` 生成“关闭校验”的 vbmeta。这与本项目禁止 AVB/vbmeta 修改、不得绕过认证的要求直接冲突。不得复制其输出、参数或做法。
+
+同时禁止运行：
+- `tools/host/boot-linux.sh`（其用途涉及 fastboot/设备启动操作）；
+- 任何 recovery 写入、fastboot flash、reserved3 写入、设备 boot 命令；
+- CoWave 的 `scripts/build-kernel.sh`，除非仅作静态阅读。该脚本目标为 Linux 7.3.4，不是本项目 ACK `android17-6.18.33_r00`，不可将其输出冒充本项目 ACK。
+- 不得运行含 `avbtool`、`fastboot`、`adb`、`dd`（指向设备）、`flash`、`reboot` 的打包/部署流程。
+
+`scripts/build-uboot.sh` 只可在审计脚本内容、将源码和输出路径限定为项目独立 host workspace 后运行；任何副作用不得触及设备或用户原始固件文件。
+
+### 12.4 最终 .config 与 U-Boot 构建
+
+在固定的 CoWave U-Boot v2026.10 源码 + 5 个 patch + defconfig 上完成一次构建。构建前后保存：
+- pristine source commit/tree、patched tree hash / diff；
+- patch apply log；
+- defconfig SHA；
+- `.config` 原件及 SHA；
+- 完整构建日志；
+- `u-boot` ELF、`u-boot.bin`、map 文件及 SHA/长度；
+- `readelf -h/-l/-r`、PIE/relocation/entry alignment 审计结果。
+
+最终配置必须从生成的 `.config` 读取，不能从 defconfig 推断。重点核验：
+- `CONFIG_POSITION_INDEPENDENT=y`
+- `CONFIG_INIT_SP_RELATIVE` 的最终值
+- `CONFIG_SYS_INIT_SP_BSS_OFFSET`
+- `CONFIG_ARCH_SNAPDRAGON=y`
+- `CONFIG_SAVE_PREV_BL_FDT_ADDR` 相关功能实际启用情况
+- `CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR`
+- `CONFIG_CMD_ABOOTIMG=y`
+- `CONFIG_ANDROID_BOOT_IMAGE=y`
+- `CONFIG_FIT=y`
+- `CONFIG_CMD_BOOTM=y`
+- `CONFIG_OF_LIBFDT=y`
+- `CONFIG_OF_BOARD_SETUP=y`
+- `CONFIG_NR_DRAM_BANKS`
+- `CONFIG_SYS_BOOTM_LEN`
+- `CONFIG_USB_FUNCTION_FASTBOOT`
+
+若 `CMD_ABOOTIMG` 缺失或因依赖未启用，基于本地 Kconfig 做一次明确配置调整并重新生成 .config；仍不可用则标记 ramdisk handoff BLOCKED，不得自写 parser 规避证据。CoWave defconfig 未显式列出 `CONFIG_CMD_ABOOTIMG`，不能假定它默认启用。
+
+**内存策略**：
+- 不把 CoWave 的三个固定 RAM tuples 或静态约 7.93 GiB RAM 布局移植到 HOS4.3 的 12GB 报告设备。
+- 检查其控制 FDT 的 `/memory/reg` 处理以及 Qualcomm `board_fdt_blob_setup()` previous-BL fallback 路径；若要删除控制 FDT 的静态 memory reg，必须先做源码级审查并在报告说明变更理由，不能在无最终 FDT 证据下自行填入 bank 值。
+- ABL final-FDT / RAM bank 值仍为 UNKNOWN，host build 不能提升此门禁。
+
+### 12.5 ACK / FIT 的一次性主机端构建与验证
+
+目标仍是 ACK/GKI `android17-6.18.33_r00`，commit 基线 `8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a`。只用确切 ACK 源码/补丁/输入，不得使用 CoWave Linux 7.3.4 内核。
+
+1. 从本地冻结目录 inventory ACK Image、VD DTB、gzip 输入、ITS、外置 ramdisk；对每项重算 SHA/长度并关联 PREP 来源。缺少就用已固定 ACK 源码及已验证补丁在主机端构建；不得下载闭源固件或从 CoWave 拿 DTB 代替。
+2. 如果 ACK/DTB 构建依赖缺包，可一次性把必要公开 Ubuntu 软件包加入同一次 APT 安装（仅构建依赖）；记录新增包名及版本。不要安装与设备操作有关的工具。
+3. gzip ACK Image 既有数据为 17,860,410 B（17.04 MiB），但最终容量只以真实生成的完整 FIT 文件长度为准。
+4. 生成 FIT 时明确 image type、compression、load/entry 地址、FDT binding 和配置名；不要使用未经证明的 HOS4.3 RAM tuples。核验 FIT 完整文件 `<= 25,165,824 B`（reserved3 24 MiB）并以 `dumpimage -l` / `mkimage -l` 等实际解析输出证明结构。
+5. 外置 Android ramdisk wrapper 使用此前 source-closed 路径：`CONFIG_CMD_ABOOTIMG=y`、`abootimg addr <plain-hex-wrapper-address>`、`bootm <FIT-address> <plain-hex-wrapper-address>`。禁止 address:size / 冒号格式。对本地 wrapper 重算 SHA，必须匹配 live wrapper 固定身份 `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb`；不匹配则停止对该副本的解析。
+6. 执行 parser / sandbox / FIT listing / LMB 范围静态测试。必须把“parser 接受 wrapper”与“目标 DRAM 里无重叠 / initrd 已被安全保留”分开判定；后者缺 final-FDT / memreserve 证据仍 UNKNOWN。
+7. 不把 FIT 成功解析或主机端 build PASS 表述为真机启动验证。
+
+### 12.6 六份 recovery 备份 provenance 处理
+
+仅在当前本地文件/manifest 已存在时做一次完整复核：
+- `recovery.img`
+- `recovery_ramdisk.img`
+- `recovery_vbmeta.img`
+- `erecovery.img`
+- `erecovery_ramdisk.img`
+- `erecovery_vbmeta.img`
+
+对每个文件核验路径、大小、SHA-256、原始采集 label、源 manifest 记录及采集时间。重点解释 `recovery.img == erecovery.img`、`recovery_ramdisk.img == erecovery_ramdisk.img` 的 hash 相同现象：对照原始采集 manifest 和文件复制日志，不得通过重命名/文件名/长度推断身份。无 manifest 原始记录时维持 provenance UNKNOWN / recovery write surface NO-GO，不得连接设备重新读取。
+
+### 12.7 本轮唯一交付和停止条件
+
+在当前 ONEPASS01 下只更新一份综合报告：
+`firmware-analysis/boot-v2/uboot-chainloader-adapt01/K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01_REPORT.md`
+
+报告至少增加：
+- 用户 host-install authorization 的范围与执行日期；
+- Ubuntu 版本、安装前后包清单/版本、APT 日志；
+- CoWave 固定 commit/tree、所有五个补丁和 defconfig blob SHA；
+- U-Boot v2026.10 tarball SHA、最终 .config、build output hashes、PIE/ELF 验证；
+- ACK Image / VD DTB / wrapper 的实际输入身份、完整 FIT 实际长度、FIT parser / sandbox 日志；
+- 六份 recovery provenance 的最终结论；
+- 单独列明 CoWave `pack-recovery.sh` 被禁止的原因（flags=2）；
+- HOST_PACKAGE_READINESS、DEVICE_BOOT_READINESS、USER_AUTHORIZATION_GATE 的新值。
+
+若任一构建项缺失，先保留根因、继续其他独立步骤；最终单报告交付后立即停止。GitHub 上传仅限脱敏报告和文本日志摘要，不上传 U-Boot/ACK/FIT/DTB/ramdisk/recovery/vbmeta 二进制，不创建新任务书。
+
+### START_PROMPT_OVERRIDE（本节覆盖旧 START_PROMPT 的“不安装新工具”句）
+
+你是 K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 唯一主执行 Agent。用户已明确授权在本机 Ubuntu 24.04 主机通过 APT 安装 U-Boot/FIT 构建所需的软件包，并继续主机端源码固定、U-Boot 构建、ACK 6.18.33 / VD DTB / FIT 组装和离线验证。请按本任务书 §12 一次执行到底，不得再创建新任务书或每完成阶段向用户索要下一轮任务。先盘点，随后只安装 §12.1 列出的缺失构建包；固定 CoWave 源码到 commit `b76d7e095104fc2a010f2d1dc43121a9e3484464` 和 U-Boot v2026.10 精确源码；核对 5 个 patch；完成最终 .config、U-Boot build、ACK/FIT/ramdisk parser 测试和六份备份 provenance 复核。明确禁止运行 CoWave `pack-recovery.sh`（该脚本用 AVB flags=2 关闭校验）、`boot-linux.sh`、任何 adb/fastboot/OEM/EDL 命令、任何设备连接、重启、临时启动、分区读取或写入，且禁止修改任何 vbmeta/AVB 状态。缺少最终 FDT 或 recovery provenance 时保留 HOLD/NO-GO。最终只更新并回读核验 ONEPASS01 综合报告，回读成功立即停止。
+

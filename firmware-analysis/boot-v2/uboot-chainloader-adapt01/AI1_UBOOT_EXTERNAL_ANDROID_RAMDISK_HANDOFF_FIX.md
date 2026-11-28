@@ -101,7 +101,7 @@ This is the correct mechanism only if the current live `ramdisk` partition backu
 - a non-zero `ramdisk_size` that stays within the partition's captured byte length;
 - a ramdisk payload whose decompressed CPIO/initramfs contents match the expected Huawei first-stage image.
 
-Earlier project reports identify the current live wrapper backup SHA-256 as `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb`, but the exact live header fields have not yet been closed in the current analysis. A separate historical package copy was reported as header v0 / page size 2048 / ramdisk payload 1,322,962 bytes, but it has a different SHA and must not be substituted for the live backup.
+Project evidence currently contains two different 2,097,152-byte ramdisk candidates and they must not be conflated: (1) K1_FASTBOOT_GATE01_AI1_REVIEW.md labels SHA-256 `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb` as the stock separate-ramdisk backup; (2) ROUND64 Phase F labels SHA-256 `5c20e4781f701e075ab30d3f8389172435e5591579bb5971f1b29331862fddc0` as `ramdisk.img`, with a previously inventoried header-v0 / page-size-2048 / payload-size-1,322,962-byte CPIO. These SHA values differ, and the available reports do not yet prove that the second file is the same live partition capture as the first. Therefore the 5c20 header/payload fields must not be applied to the 4dd6 candidate. Resolve the live wrapper identity by acquisition path, source partition label, capture timestamp and exact SHA before enabling either parser route.
 
 Therefore `ANDROID_RAMDISK_PARSER_PATH=SOURCE_CONFIRMED`, while `CURRENT_LIVE_WRAPPER_COMPATIBILITY=UNKNOWN/HOLD` until the exact live bytes are re-read and validated.
 

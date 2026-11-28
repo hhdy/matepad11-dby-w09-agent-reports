@@ -1,77 +1,124 @@
-# AI1 — U-Boot Android ramdisk handoff: FIT-native route decision
+# AI1 — U-Boot Android separate ramdisk handoff route comparison
 
 - Date: 2026-11-28
 - Target: DBY-W09 / HOS4.3 / ACK android17-6.18.33 / U-Boot v2026.10
-- Scope: Pinned U-Boot source-control-flow review and FIT design comparison. No device or image operations.
+- Scope: Pinned U-Boot source-control-flow and packaging-route comparison. No device or image operations.
 
-## 1. Decision
+## 1. Updated decision
 
-If the exact live Android separate ramdisk payload plus compressed ACK Image and ACK DTB fits within the 24 MiB staging budget, prefer a FIT-native ramdisk node over a U-Boot raw-initrd parser patch.
+FIT-native ramdisk is a valid option, but it is **not required** merely to avoid a U-Boot parser conflict. A direct source-supported route exists using the existing U-Boot Android boot-image command:
 
-The proposed host-side flow is:
-1. Fetch/inspect the exact live separate ramdisk backup by its verified SHA-256.
-2. Parse its Android mini-bootimg wrapper and extract only the actual initramfs payload. Do not copy the wrapper header into FIT.
-3. Create a FIT ramdisk image node with type=ramdisk, arch=arm64, os=linux, compression=none and the raw CPIO payload.
-4. Add ramdisk="ramdisk" to the default FIT configuration alongside kernel and fdt.
-5. Let U-Boot v2026.10 select this FIT configuration ramdisk and use boot_ramdisk_high() to copy it into an LMB-selected safe range. image_setup_linux() then writes the initrd start/end and reservation into the final Linux FDT.
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+bootm <FIT_ADDR> <ANDROID_WRAPPER_ADDR>
+```
 
-This avoids both previously found parser traps:
-- An Android wrapper as the second bootm parameter is not treated as an arbitrary external Android initrd; Android-format handling reads the primary Android image/global abootimg context.
-- addr:size is ambiguous with FIT [address]:subimage syntax when CONFIG_FIT=y because fit_parse_subimage()/fit_parse_spec() recognizes any colon before the raw-initrd parser.
+This route requires CONFIG_ANDROID_BOOT_IMAGE=y, CONFIG_CMD_ABOOTIMG=y, and an exact valid Android wrapper (expected v0-v2). The wrapper buffer is passed as the second bootm address so U-Boot recognizes Android format; the command-global pointer set by abootimg addr tells android_image_get_ramdisk() which external wrapper to parse.
 
-## 2. U-Boot source path for a FIT-native ramdisk
+If live wrapper validation or sandbox testing shows this route is unsuitable, an alternative is to extract the payload and use raw addr:size with CONFIG_SUPPORT_RAW_INITRD=y. FIT-native ramdisk remains a third option when a self-contained FIT is useful and the bundle fits reserved3.
 
-Pinned v2026.10 control flow:
+## 2. Route A — existing CMD_ABOOTIMG external wrapper path (preferred first test)
 
-1. bootm_find_images() calls boot_get_ramdisk() with the selected ramdisk argument. When the FIT config was loaded and no explicit second argument is supplied, the FIT configuration is used.
-2. select_ramdisk() looks up FIT_RAMDISK_PROP in the selected FIT configuration. If present, it resolves the named FIT ramdisk image and loads/returns its data and length.
-3. boot_ramdisk_high() takes the returned raw payload and either keeps it in place under an explicit zero-copy configuration or allocates a safe LMB region, copies the payload, and sets initrd_start/initrd_end.
-4. image_setup_libfdt() invokes fdt_initrd(), which adds an FDT memreserve entry and writes /chosen/linux,initrd-start and /chosen/linux,initrd-end.
+Sequence after the wrapper has been read into a safe RAM staging buffer:
 
-If the FIT configuration has no ramdisk property, select_ramdisk() returns -ENOPKG; boot_get_ramdisk() turns that into success with rd_start=rd_end=0. In that case fdt_initrd() returns immediately for zero size. This would preserve initrd properties already present in the selected FDT, but the proposed Android FIT uses the ACK DTB as its FDT; therefore it must include the FIT-native ramdisk if it needs an initrd. One cannot assume ABL's separate initrd properties magically carry across into a different FIT DTB.
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+bootm <FIT_ADDR> <ANDROID_WRAPPER_ADDR>
+```
+
+Pinned v2026.10 source chain:
+
+1. cmd/abootimg.c::do_abootimg_addr() stores the supplied address in the global Android boot image pointer.
+2. bootm_find_images() passes the explicit second bootm argument to boot_get_ramdisk()/select_ramdisk().
+3. select_ramdisk() parses a plain hexadecimal address, inspects the data format at that address, and identifies the Android wrapper.
+4. With CONFIG_CMD_ABOOTIMG enabled, its Android-format branch obtains get_abootimg_addr() and calls android_image_get_ramdisk() on that global wrapper pointer.
+5. For Android header v0-v2, android_image_get_data() calculates the actual payload pointer/length. ARCH_SNAPDRAGON selects ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR, so U-Boot ignores stale wrapper ramdisk_addr values and can reference the payload inside the wrapper buffer.
+6. boot_get_ramdisk() returns the extracted payload range. boot_ramdisk_high() normally allocates a safe LMB destination and copies it.
+7. image_setup_libfdt() calls fdt_initrd(), which adds the final initrd FDT memreserve and writes /chosen/linux,initrd-start and /chosen/linux,initrd-end.
+
+Important:
+- Generic bootm FIT + wrapper address without an earlier abootimg addr setup is not sufficient for this external wrapper case.
+- Use a plain wrapper address in the second argument, not addr:size.
+- Do not set initrd_high=~0 unless a zero-copy memory reservation is fully designed and verified.
+- The current live separate-ramdisk wrapper must be checked by exact SHA; do not substitute old package-copy fields.
 
 Sources:
-- https://github.com/u-boot/u-boot/blob/v2026.10/boot/bootm.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/cmd/abootimg.c
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
-- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fit.c
-- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fdt.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-android.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/arch/arm/Kconfig
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/fdt_support.c
 
-## 3. Size gate
+## 3. Route B — extract raw payload, then addr:size
 
-Known exact limits:
+Alternative sequence:
+
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+abootimg get ramdisk rd_data rd_size
+bootm <FIT_ADDR> ${rd_data}:${rd_size}
+```
+
+Required configuration:
+- CONFIG_ANDROID_BOOT_IMAGE=y
+- CONFIG_CMD_ABOOTIMG=y
+- CONFIG_SUPPORT_RAW_INITRD=y
+- CONFIG_FIT=y
+
+This is source-supported with FIT enabled. select_ramdisk() initially tries FIT address/name syntax. When the parsed address points to raw CPIO/gzip bytes, genimg_get_format() does not identify a FIT image, so the later SUPPORT_RAW_INITRD branch processes the colon suffix as the raw payload length. It then goes through the ordinary boot_ramdisk_high()/LMB and fdt_initrd() path.
+
+There is no need to modify fit_parse_subimage() for this route. The earlier claim that the colon inevitably blocks the raw-initrd fallback was incorrect.
+
+This alternative reduces reliance on the Android-format second-argument branch, but needs the extra CONFIG_SUPPORT_RAW_INITRD setting and explicit address/length variables.
+
+Sources:
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fit.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/Kconfig
+- https://github.com/u-boot/u-boot/blob/v2026.10/cmd/abootimg.c
+
+## 4. Route C — FIT-native ramdisk node
+
+If a self-contained FIT is preferable, parse the exact live Android wrapper on the host, extract only the actual initramfs payload, and add that payload as a FIT image node of type=ramdisk. The default configuration then references ramdisk="ramdisk" alongside kernel and fdt.
+
+U-Boot source path:
+1. bootm_find_images() calls boot_get_ramdisk().
+2. If the FIT configuration supplies a ramdisk property, select_ramdisk() resolves that FIT ramdisk node and returns its data/length.
+3. boot_ramdisk_high() allocates/copies it to an LMB-managed destination.
+4. image_setup_libfdt()/fdt_initrd() writes the final initrd reservation and chosen properties.
+
+Do not assume ABL's initrd properties transfer into a different ACK FIT FDT. FIT route C explicitly supplies the initrd to the FDT that will be passed to Linux.
+
+## 5. FIT size gate for Route C only
+
+Known values:
 - reserved3 capacity: 25,165,824 bytes.
 - ACK DTB candidate referenced in the existing plan: 1,216,399 bytes.
-- A prior package-copy ramdisk payload: 1,322,962 bytes. This is not the live ramdisk SHA, so it is only a budget illustration, not the accepted live size.
-- Remaining theoretical space for gzip(ACK Image) after those two payloads: 22,626,463 bytes, before FIT header, configuration data, nodes, string table, alignment and padding.
+- Prior package-copy ramdisk payload: 1,322,962 bytes. This is not the live ramdisk SHA; use only as an estimate.
+- Remaining theoretical space for gzip(ACK Image), after those two payloads: 22,626,463 bytes, before FIT header, configuration data, nodes, strings, alignment and padding.
 
-Therefore the actual acceptance condition is:
+Actual Route C acceptance condition:
 
 gzip(ACK Image) + exact live CPIO payload + exact ACK VD DTB + FIT metadata/alignment <= 25,165,824 bytes.
 
-The compressed kernel length and exact current live CPIO payload length are not yet measured from the authorized frozen candidate files. Do not assume the image fits.
+The exact gzip length and live CPIO length are not yet measured from the authorized frozen candidate files. Do not assume the bundle fits.
 
-## 4. Why the FIT-native route is preferable when it fits
+Routes A and B keep the separate ramdisk wrapper/payload outside the FIT and therefore do not add its bytes to reserved3. They still need a separate safe RAM staging range for the wrapper/payload, plus final LMB placement and reservation validation.
 
-Advantages:
-- No patch to U-Boot's generic FIT subimage parser.
-- No reliance on ambiguous addr:size second-argument handling.
-- No need to interpret an Android wrapper inside bootm's external initrd selection path.
-- U-Boot owns the LMB placement and final FDT initrd fixup.
-- Android boot header v2 remains a recovery/ABL wrapper; the Linux boot payload is represented independently as FIT kernel + FDT + ramdisk.
+## 6. Current target disposition
 
-Fallback only if capacity fails:
-- Consider a tightly scoped U-Boot raw-initrd syntax patch, parsed before FIT [address]:subimage parsing, with CONFIG_FIT=y and CONFIG_SUPPORT_RAW_INITRD=y tests. Keep the separate ramdisk as a distinct UFS read rather than squeezing it into FIT.
-- Do not silently fall back to reusing ABL's previous initrd. The ABL x0 FDT handoff may be useful for RAM banks, but the selected Linux FDT in the FIT is a different tree. Reusing ABL initrd requires an explicit copy/import and LMB-reservation implementation, plus proof that the recovery ABL path provided the correct Android ramdisk.
+| Gate | Result |
+|---|---|
+| Route A CMD_ABOOTIMG source path | SOURCE-CONFIRMED |
+| Route B raw addr:size with CONFIG_SUPPORT_RAW_INITRD | SOURCE-CONFIRMED |
+| Route C FIT-native ramdisk node | SOURCE-CONFIRMED |
+| Exact live wrapper v0-v2 header/payload compatibility | UNKNOWN pending exact SHA parse |
+| Final U-Boot .config | UNKNOWN pending readback |
+| Recovery ABL path actually launches U-Boot | CONDITIONAL; recovery-specific ABL control flow audit pending |
+| RAM banks and full reserved-memory map for expanded device | BLOCKED pending authoritative final FDT |
+| External ramdisk partition authorization/AVB expectations | OPEN |
+| Android bootargs/bootconfig, UFS takeover, recovery rollback | OPEN |
 
-## 5. Remaining prerequisites
+Recommended sequence: validate Route A with exact live wrapper bytes and U-Boot host/sandbox. Keep Route B as alternate. Choose Route C only if bundle size and a self-contained FIT provide a concrete advantage.
 
-1. Parse the exact live separate-ramdisk backup by SHA-256 and report header version, page_size, kernel_size, ramdisk_size, exact payload offset/length and CPIO magic/compression. Keep the raw firmware private.
-2. Obtain the exact frozen ACK Image bytes and compute gzip size with a recorded command, tool version, output SHA and reproducible log.
-3. Build the FIT in a host-only scratch area and record exact total byte count, component hashes and parser verification.
-4. Re-check FIT staging, 0x91000000 kernel output range, 0x96000000 DTB (or final chosen address), U-Boot relocation/stack, LMB reserved-memory, initrd output range and splash/carveout non-overlap.
-5. Read back final U-Boot .config including CONFIG_FIT, CONFIG_CMD_BOOTM, CONFIG_SYS_BOOTM_LEN, CONFIG_LMB and CONFIG_OF_LIBFDT.
-
-## 6. Non-approval boundary
-
-This is a host-side design decision only. It does not approve recovery image creation, AVB/vbmeta changes, temporary boot, recovery boot, partition writes, fastboot, or flashing. No device command was run and no image was built.
+No device boot, reboot, ADB/Fastboot command, image creation, AVB modification, partition write or flash was performed.

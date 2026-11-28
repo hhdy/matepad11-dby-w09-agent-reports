@@ -50,15 +50,23 @@ Semantics:
 
 Do not copy the placeholder commands verbatim into a device environment yet. `ramdisk_wrapper_addr` must be selected from a verified free range that does not collide with the FIT staging buffer, U-Boot relocation/stack/malloc, ACK kernel destination, FDT, splash, or any secure/reserved-memory region.
 
-### 2.1 The second argument must be a plain address, not `addr:size`
+### 2.1 Direct Android wrapper mode uses a plain address
 
-With `CONFIG_FIT=y`, `select_ramdisk()` first tries `fit_parse_conf()` and `fit_parse_subimage()` before it converts the argument to a numeric address. In v2026.10, `fit_parse_conf()` only treats `#` as a delimiter and `fit_parse_subimage()` only treats `:` as a delimiter. A plain hexadecimal address has neither delimiter, so both parsers return 0 and `hextoul()` converts it into `rd_addr` as intended.
+For the CMD_ABOOTIMG global-pointer route in §2, the second parameter must be the plain hexadecimal wrapper address:
 
-Do **not** use `bootm ${fit_addr} ${wrapper_addr}:${wrapper_size}` for this route. The colon makes that syntax a FIT subimage specification, not a raw address/length or Android wrapper address. The separate `CONFIG_SUPPORT_RAW_INITRD` issue identified in the earlier RAM-map correction is therefore avoided by passing the Android wrapper as a plain address and letting `CMD_ABOOTIMG` parse its header.
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+bootm <FIT_ADDR> <ANDROID_WRAPPER_ADDR>
+```
+
+Do not append :<size> in this particular route. That would ask select_ramdisk() to interpret the second argument using FIT subimage syntax first, not the Android wrapper mode.
+
+This restriction is specific to passing the Android wrapper itself. The separate raw-payload addr:size route is valid with CONFIG_SUPPORT_RAW_INITRD=y; see §5 below.
 
 Source:
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fit.c
 - https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
+
 ## 3. Required U-Boot configuration
 
 Add the following explicit line to the target defconfig:
@@ -97,15 +105,27 @@ Earlier project reports identify the current live wrapper backup SHA-256 as `4dd
 
 Therefore `ANDROID_RAMDISK_PARSER_PATH=SOURCE_CONFIRMED`, while `CURRENT_LIVE_WRAPPER_COMPATIBILITY=UNKNOWN/HOLD` until the exact live bytes are re-read and validated.
 
-## 5. Alternative without the `bootm` Android second-argument workaround
+## 5. Alternative: extract payload, then use raw addr:size
 
-U-Boot's `abootimg get ramdisk <addr_var> <size_var>` subcommand also calls `android_image_get_ramdisk()` on the explicitly selected wrapper. This could extract the payload pointer and length into environment variables.
+The same U-Boot source provides a second route:
 
-Then one could either:
-- enable `CONFIG_SUPPORT_RAW_INITRD` and pass the raw payload using U-Boot's `<address>:<length>` raw-initrd syntax; or
-- build a FIT containing a ramdisk image node.
+```text
+abootimg addr <ANDROID_WRAPPER_ADDR>
+abootimg get ramdisk rd_data rd_size
+bootm <FIT_ADDR> ${rd_data}:${rd_size}
+```
 
-This alternative is not selected for the current design because it needs extra configuration or a rebuilt FIT and adds another command/data-path to maintain. The `CMD_ABOOTIMG` + external wrapper route is the narrower source-supported path.
+Requirements:
+- CONFIG_ANDROID_BOOT_IMAGE=y
+- CONFIG_CMD_ABOOTIMG=y
+- CONFIG_SUPPORT_RAW_INITRD=y
+- The second bootm parameter must identify the raw CPIO/gzip initramfs payload address and its true length, not the wrapper address/partition length.
+
+This route is source-supported even with CONFIG_FIT=y. select_ramdisk() does first call fit_parse_conf()/fit_parse_subimage() and the colon may initially be recorded as a FIT subimage separator. But it does not return at that point. It inspects the bytes at the parsed address with genimg_get_format(). A raw CPIO/gzip payload is not a FIT image, so the FIT case does not set done. The later CONFIG_SUPPORT_RAW_INITRD branch then parses the colon suffix as the raw payload length and sets the output ramdisk range.
+
+Consequently no fit_parse_subimage() patch is required for raw addr:size. The previous claim that the colon inevitably prevents the raw-initrd fallback was incorrect.
+
+This route is a valid alternative, but it requires a final build with SUPPORT_RAW_INITRD enabled and a host/sandbox test using the exact target wrapper/payload format. The simpler CMD_ABOOTIMG Android-format path in §2 remains the first-choice route because it needs only a plain wrapper address as the second bootm argument and does not require SUPPORT_RAW_INITRD.
 
 ## 6. Updated gate matrix
 

@@ -1,51 +1,14 @@
-file bytes read: 800324
-FDT header: magic=0xD00DFEED totalsize=800324 off_struct=0x38 off_strings=0xB1CD4 off_memrsv=0x28 version=17 last_comp=16
-memreserve entries: 0
-
-== /memory ==
-  /memory ABSENT
-
-== /reserved-memory children ==
-children with body: 37
-  hyp_region@80000000            base=0x80000000 size=0x600000 no-map
-  xbl_aop_region@80700000        base=0x80700000 size=0x160000 no-map
-  reserved-memory@80860000       base=0x80860000 size=0x20000 no-map compat=qcom,cmd-db
-  res_xbl_uefi_log_region@80880000 base=0x80880000 size=0x14000 no-map compat=removed-dma-pool
-  smem_region@80900000           base=0x80900000 size=0x200000 no-map
-  removed_region@80b00000        base=0x80b00000 size=0x5300000 no-map
-  pil_camera_region@86200000     base=0x86200000 size=0x500000 no-map compat=removed-dma-pool
-  pil_wlan_fw_region@86700000    base=0x86700000 size=0x100000 no-map compat=removed-dma-pool
-  pil_ipa_fw_region@86800000     base=0x86800000 size=0x10000 no-map compat=removed-dma-pool
-  pil_ipa_gsi_region@86810000    base=0x86810000 size=0xa000 no-map compat=removed-dma-pool
-  pil_gpu_region@8681a000        base=0x8681a000 size=0x2000 no-map compat=removed-dma-pool
-  pil_npu_region@86900000        base=0x86900000 size=0x500000 no-map compat=removed-dma-pool
-  pil_video_region@86e00000      base=0x86e00000 size=0x500000 no-map compat=removed-dma-pool
-  pil_cvp_region@87300000        base=0x87300000 size=0x500000 no-map compat=removed-dma-pool
-  pil_cdsp_region@87800000       base=0x87800000 size=0x1400000 no-map compat=removed-dma-pool
-  pil_slpi_region@88c00000       base=0x88c00000 size=0x1500000 no-map compat=removed-dma-pool
-  pil_adsp_region@8a100000       base=0x8a100000 size=0x1d00000 no-map compat=removed-dma-pool
-  pil_spss_region@8be00000       base=0x8be00000 size=0x100000 no-map compat=removed-dma-pool
-  cdsp_secure_heap@8bf00000      base=- size=- no-map compat=removed-dma-pool
-  adsp_region                    base=- size=- reusable compat=shared-dma-pool
-  sdsp_region                    base=- size=- reusable compat=shared-dma-pool
-  cdsp_region                    base=- size=- reusable compat=shared-dma-pool
-  cont_splash_region@9c000000    base=0x9c000000 size=0x2300000 
-  disp_rdump_region@9c000000     base=0x9c000000 size=0x800000 
-  dfps_data_region@9e300000      base=0x9e300000 size=0x100000 
-  mem_dump_region                base=- size=- reusable compat=shared-dma-pool
-  sp_region                      base=- size=- reusable compat=shared-dma-pool
-  user_contig_region             base=- size=- reusable compat=shared-dma-pool
-  rainbow_mem@b0000000           base=0xb0000000 size=0x400000 no-map compat=removed-dma-pool\0rainbow_mem
-  bootfail_mem@b0400000          base=0xb0400000 size=0x800 no-map compat=removed-dma-pool\0bootfail_mem
-  kerneldump                     base=0x0 size=0x0 
-  qseecom_region                 base=- size=- reusable compat=shared-dma-pool
-  qseecom_ta_region              base=- size=- reusable compat=shared-dma-pool
-  secure_display_region          base=- size=- reusable compat=shared-dma-pool
-  cnss_wlan_region               base=- size=- reusable compat=shared-dma-pool
-  linux,cma                      base=- size=- reusable compat=shared-dma-pool
-  mailbox_region                 base=- size=- no-map compat=shared-dma-pool
-
-== /chosen initrd ==
-  linux,initrd-start = 0x0000f0000000
-  linux,initrd-end = 0x0000f015749a
-  bootargs len=1187 (first 80 chars, sanitized): rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kpti=off earlycon=msm_geni_serial,0xa9000
+#address-cells=2 #size-cells=2 (fdtget rc=0/0)
+/memory/reg raw cells: 0 80000000 0 39900000 2 0 2 0 0 c0000000 0 c0000000
+decoded banks: 3
+  base=0x000080000000 size=0x000039900000 end=0x0000b9900000 (0.899 GiB)
+  base=0x000200000000 size=0x000200000000 end=0x000400000000 (8.000 GiB)
+  base=0x0000c0000000 size=0x0000c0000000 end=0x000180000000 (3.000 GiB)
+TOTAL = 12776898560 bytes = 11.899 GiB = 12.78 GB
+sorted: NO (reg order unsorted)
+overlaps: none
+gaps: [('0xb9900000', '0xc0000000', '0x6700000'), ('0x180000000', '0x200000000', '0x80000000')]
+zero-size banks: 0
+overflow check (base+size > 2^64): none
+top-level node named `memory` (no @): PRESENT
+node has device_type=memory: YES

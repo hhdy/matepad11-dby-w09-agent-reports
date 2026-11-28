@@ -219,3 +219,65 @@ U-Boot ELF/bin/map、FIT itb、gzip Image、DTB、wrapper ramdisk 及全部原�
 | ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD**（不变，但 HOLD 项数量显著减少） | — |
 
 **声明：本轮仅执行 adb devices/getprop×5/exec-out su -c cat /sys/firmware/fdt（只读）；无重启、无模式切换、无分区读取、无写入/刷写、无 AVB/vbmeta 修改、无 /dev/mem 或旁路读取；原始 FDT 仅存本地未上传。**
+
+## 19. 启动前最终纠错（2026-11-29 增量）
+
+### 19.1 RAM bank 解析修正（fdtget 直读 + 全量解码）
+
+fdtget 实读：/#address-cells=2、/#size-cells=2、/memory/reg 12 cells。根节点名为 `memory`（**无 @ 后缀**——§17.0.2 正则只匹配 memory@ 导致漏报，已修正）。按 4-cell 元组解码（reg 顺序**未排序**）：
+
+| bank | base | size | end | 容量 |
+|---|---|---|---|---|
+| 0 | 0x0000000080000000 | 0x39900000 | 0xB9900000 | 921.6 MiB (0.899 GiB) |
+| 1 | 0x0000000200000000 | 0x200000000 | **0x400000000** | 8.000 GiB |
+| 2 | 0x00000000C0000000 | 0xC0000000 | 0x180000000 | 3.000 GiB |
+
+**TOTAL = 12,776,898,560 B = 11.899 GiB**。§17.0.2 中『bank1 end=0x280000000』与『12.17 GiB』为错误值，以本表为准。排序：**reg 顺序未排序**（按地址序 bank0→bank2→bank1）；重叠=0；间隙=2（0xB9900000→0xC0000000 103 MiB；0x180000000→0x200000000 2 GiB）；零长度=0；溢出=0；top-level `memory`（无 @）节点 PRESENT。证据重生成：`evidence_final_fdt_parse.txt`。
+
+### 19.2 initrd / LMB 论证修正
+
+- `boot_fdt_add_mem_rsv_regions()`（boot/image-fdt.c）只把 **FDT /memreserve 与 /reserved-memory 固定 reg 节点**加入 LMB；**不读取 /chosen/linux,initrd-start/end** → ABL initrd（0xF0000000–0xF015749A）**不会被自动保留**。
+- 四地址追踪：**ABL 原 initrd** = gzip payload @0xF0000000（1,406,106 B，bank2 内）；**U-Boot 选取的 ramdisk 数据** = FIT v2 内嵌 `ramdisk-payload.gz`（位于 reserved3 暂存 FIT 缓冲，由 U-Boot 自身读取）；**LMB 目标** = bootm 按 LMB 从最大 bank（0x200000000+8G）顶部向下分配（运行时确定）；**最终 Linux initrd 地址** = `fdt_initrd()` 写入 ACK FDT chosen 的 LMB 分配结果并加最终 reservation。
+- 覆盖校验：FIT ramdisk 数据源 = reserved3 暂存缓冲（U-Boot 自管），**不源自 0xF0000000** → 无『搬移覆盖 ABL 原输入』问题；kernel/DTB 区 0x91000000–0x96000000 与 0xF0000000 无交叠 ✓。
+- **不得把 `fdt_initrd` 对最终 initrd 的 reservation 误表述为 ABL 原 initrd 已提前保留**——该区域在 U-Boot 侧无自动保护。
+
+### 19.3 wrapper/payload 不一致解决
+
+- final-FDT chosen 0xF0000000 指向 **gzip payload 而非 v0 wrapper** → **禁止 `abootimg addr 0xF0000000`**。normal HOS 路径 RAM 中无完整 wrapper；recovery 路径能否提供 = PARTIAL/UNKNOWN → **CMD_ABOOTIMG 路线 = CONDITIONAL/BLOCKED**。
+- **采用方案 B（FIT-native ramdisk）并实测**：FIT v2 `dby-w09-ack-v2.itb` 新增 ramdisk 子镜像（data = live wrapper 0x800 偏移提取的 gzip payload，sha `4f71768a…` 与 ABL initrd 字节级同源；compression=none 原样透传，保持与 ABL 行为一致）。**MKIMAGE_EXIT=0、DUMPIMAGE_EXIT=0（显式）**，三子镜像解析全 PASS。
+- **FIT v2 实际尺寸 = 20,484,879 B ≤ 25,165,824 B（24 MiB）→ PASS，余量 4,680,945 B（4.46 MiB）**；sha256 `61e29c68…ef87024`。
+
+### 19.4 reserved-memory 三向最终对照（final 39 正则项=38 实体+1 解析伪影；ACK 19；U-Boot ctrl 20）
+
+**关键更正：ACK 的 `memory@X` 与 final 的 `*_region@X` 为同区域异名**——17 组按 base/size/no-map **全部 MATCH**（仅节点名不同）。完整三向表：`evidence_three_way.txt`。重点：
+
+| 项 | final | ACK | U-Boot ctrl | 判定 |
+|---|---|---|---|---|
+| 17 组标准 carveout（hyp/xbl_aop/cmd-db/smem/removed/pil_×12） | *_region@X 同值 | memory@X 同值 | memory@X 同值 | **MATCH（异名）** |
+| cont_splash_region@9C000000+0x2300000 | 有，无 no-map | ABSENT | cont-splash 同值带 no-map | MATCH(base/size) **属性 DIFF** |
+| disp_rdump@9C000000+0x800000 | 有（与 cont_splash 同基址重叠） | ABSENT | ABSENT | FINAL-ONLY |
+| cdsp_secure_heap@8BF00000 | 动态 reg（no-map） | 固定 +0x4600000 | 固定同 ACK | base MATCH / size **DIFFERENT** |
+| 共享池 dyn 11 项（adsp/sdsp/cdsp/mem_dump/sp/user_contig/qseecom×2/secure_display/cnss_wlan/linux,cma/mailbox） | dyn | ABSENT | ABSENT | FINAL-ONLY（动态分配，ACK 由自身 CMA 供给） |
+| rainbow_mem/bootfail_mem/mem_dump/dfps_data/kerneldump | 有 | ABSENT | ABSENT | FINAL-ONLY（华为服务，AOSP 链不需要） |
+| framebuffer@9C000000 | ABSENT | ABSENT | 有 | U-ONLY |
+
+**原则：ABL external FDT 用于 RAM bank 解析 ≠ 其 reserved-memory 自动进入 ACK FIT DTB。** ACK DTB 保留标准 17 组（语义明确）；final-only 动态池与华为服务节点不迁移；cont_splash（若 U-Boot 复用 splash）与 cdsp_secure_heap 实际尺寸两项留待实机验证。LMB：U-Boot 运行时应将 external FDT 的 17 个固定 /reserved-memory 加入 LMB；动态池无固定地址不进 LMB。
+
+### 19.5 最终门禁
+
+| 项 | 值 |
+|---|---|
+| U-Boot 运行时 RAM 来源 | **usable**（external FDT 三 bank 11.899 GiB；控制 DTB 无静态 RAM 已证） |
+| kernel/FIT/FDT/ramdisk/U-Boot 区域重叠 | **静态无重叠**（kernel 解压区 0x91000000–0x93D80000；DTB 0x96000000 在其上；initrd 由 LMB 从 bank1 顶部分配；ABL initrd 0xF0000000 与全部目标区无交叠） |
+| recovery 两级调用链 / initrd label | **CONDITIONAL / PARTIAL（维持）** |
+| recovery 认证合法启动方式 | **UNKNOWN（维持）** |
+| host/sandbox PASS vs 实机 PASS | 本报告全部为 **host 级证据**；无任何实机 PASS 声明 |
+
+| 门 | 值 |
+|---|---|
+| HOST_PACKAGE_READINESS | **READY**（FIT v2 含 ramdisk，20,484,879 B ≤ 24 MiB，解析 PASS） |
+| DEVICE_BOOT_READINESS | **HOLD**（不变：entry chain CONDITIONAL、initrd label PARTIAL、recovery FDT UNKNOWN、认证 UNKNOWN） |
+| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED** |
+| ONEPASS_RESULT | **HOST_READY_DEVICE_HOLD** |
+
+**声明：本轮零设备操作——无连接、无 ADB/Fastboot、无重启、无分区读取/写入、无刷写、无 AVB/vbmeta 修改。** 原始 final-FDT 与全部二进制仅存本地，FIT v2 itb 不入库。

@@ -1,0 +1,8 @@
+==== scan loadmap01 (0x1000-0x109000) ====
+  0x0b4688  add      x1, x1, #0xb38                           reg=x1 -> TARGET 0x105b38 (SANITY_console_tty)
+  0x0b468c  add      x2, x2, #0xb55                           reg=x1 -> TARGET 0x105b38 (SANITY_console_tty)
+  0x0b4690  mov      w0, #0x40                                reg=x1 -> TARGET 0x105b38 (SANITY_console_tty)
+  0x0b4694  mov      x3, x19                                  reg=x1 -> TARGET 0x105b38 (SANITY_console_tty)
+
+# ==== functions referencing load-path strings ====
+  func~0x0B4194 : SANITY_console_tty   sites=0xb4688,0xb468c,0xb4690,0xb4694

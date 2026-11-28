@@ -1,0 +1,36 @@
+# ==== NORMAL BOOT (boot partition written, ImageBuffer = 96 MiB partition buffer) ====
+== STOCK normal boot (gz kernel) ==
+  ImageBuffer size        : 100663296 B (0x6000000)
+  kernel_size             : 22256282 (0x1539A9A)  (gz uncompressed=57470992/0x36CF010)
+  KernelLoadAddress       : ImageBuffer + 0x80000
+  kernel end offset       : 0x374F010
+  RamdiskLoadAddress (R)  : ImageBuffer + 0x5DE9000  (end - 0x217000)
+  DeviceTreeLoadAddr (D)  : ImageBuffer + 0x5BE8000  (R - 4K - 2M)
+  capacity check D-kLoad  : 0x5B68000 (95846400) PASS
+  overlap kernel vs R/D   : NONE (kernel_end 0x374F010 < R 0x5BE8000)
+== PREP10 normal boot (raw Image) ==
+  ImageBuffer size        : 100663296 B (0x6000000)
+  kernel_size             : 44820992 (0x2ABEA00)  (raw Image)
+  KernelLoadAddress       : ImageBuffer + 0x80000
+  kernel end offset       : 0x2B3EA00
+  RamdiskLoadAddress (R)  : ImageBuffer + 0x5E57000  (end - 0x1A9000)
+  DeviceTreeLoadAddr (D)  : ImageBuffer + 0x5C56000  (R - 4K - 2M)
+  capacity check D-kLoad  : 0x5BD6000 (96296960) PASS
+  overlap kernel vs R/D   : NONE (kernel_end 0x2B3EA00 < R 0x5C56000)
+
+# ==== FASTBOOT BOOT (RAM download; ImageBuffer = download buffer) ====
+== PREP10 fastboot boot (download buffer = file size) ==
+  ImageBuffer size        : 46563215 B (0x2C67F8F)
+  kernel_size             : 44820992 (0x2ABEA00)  (raw Image)
+  KernelLoadAddress       : ImageBuffer + 0x80000
+  kernel end offset       : 0x2B3EA00
+  RamdiskLoadAddress (R)  : ImageBuffer + 0x2ABEF8F  (end - 0x1A9000)
+  DeviceTreeLoadAddr (D)  : ImageBuffer + 0x28BDF8F  (R - 4K - 2M)
+  capacity check D-kLoad  : 0x283DF8F (42196879) PASS
+  overlap kernel vs R/D   : OVERLAP (kernel_end 0x2B3EA00 >= R 0x28BDF8F)
+
+PREP10: required ImageBuffer >= D+kernelsize+margin; file=46563215
+  D needs: kernel_load(0x80000) + ksz(44820992) + gap-to-R(53577216) + DTB-region(2M+4K+dtb) 
+  minimum coherent ImageBuffer ~ 102240143 B (0x6180F8F) vs download 46,563,215 (0x2C67F8F) -> fastboot RAM boot of PREP10 as-is: DOES NOT FIT (capacity check FAILS)
+
+CSV written: 12 rows

@@ -1,0 +1,24 @@
+gBS->ExitBootServices (ldr x8,[x8,#0xe8]) sites: 1
+
+---- site 0x034EA0 ----
+   0x034e80 mov      x3, x24
+   0x034e84 mov      x4, x25
+   0x034e88 ldr      x8, [x8, #0x38]
+   0x034e8c blr      x8
+   0x034e90 tbnz     x0, #0x3f, #0x34e24
+   0x034e94 ldr      x8, [x28, #0xfe8]
+   0x034e98 ldr      x0, [x19, #0xfd8]
+   0x034e9c ldur     x1, [x27, #-0x18]
+>> 0x034ea0 ldr      x8, [x8, #0xe8]
+   0x034ea4 blr      x8
+   0x034ea8 tbz      x0, #0x3f, #0x34efc
+   0x034eac mov      x0, x26
+   0x034eb0 mov      x1, x22
+   0x034eb4 bl       #0xdc94
+   0x034eb8 mov      x26, xzr
+   0x034ebc b        #0x34e20
+   0x034ec0 bl       #0x611b0
+   0x034ec4 tst      w0, #0xff
+   0x034ec8 b.eq     #0x34f08
+   0x034ecc mov      w0, #-0x80000000
+   0x034ed0 bl       #0x611d8

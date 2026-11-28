@@ -1,0 +1,13 @@
+object,image,start(rel ImageBuffer),end(rel),size_B,evidence
+kernel(literal hdr),stock,0x8000,0x1541a9a,22256282,boot header kernel_addr=0x8000 (UNUSED by ABL for 64-bit)
+kernel(literal hdr),prep10,0x8000,0x2ac6a00,44820992,boot header kernel_addr=0x8000 (UNUSED by ABL for 64-bit)
+ramdisk(literal hdr),stock,0x2000000,0x207ef32,519986,header ramdisk_addr=0x2000000 (UNUSED)
+ramdisk(literal hdr),prep10,0x2000000,0x207ef32,519986,header ramdisk_addr=0x2000000 (UNUSED)
+dtb(literal hdr),stock,0x1f00000,0x20964f3,1664243,header dtb_addr=0x1F00000 (UNUSED)
+dtb(literal hdr),prep10,0x1f00000,0x2028f8f,1216399,header dtb_addr=0x1F00000 (UNUSED)
+kernel(ABL actual off),stock,0x80000,0x374f010,57470992,"ImageBuffer+0x80000 (csel@0x374AC, gz decompressed)"
+kernel(ABL actual off),prep10,0x80000,0x2b3ea00,44820992,"ImageBuffer+0x80000 (csel@0x374AC, raw CopyMem@0x37818)"
+ramdisk(ABL actual off),stock,0x5de9000,0x5e67f32,519986,end-rounded (0x374D0-0x37508)
+ramdisk(ABL actual off),prep10,0x5e57000,0x5ed5f32,519986,end-rounded (0x374D0-0x37508)
+dtb(ABL actual off),stock,0x5be8000,0x5d7e4f3,1664243,R-4K-2M (0x374FC-0x37508)
+dtb(ABL actual off),prep10,0x5c56000,0x5d7ef8f,1216399,R-4K-2M (0x374FC-0x37508)

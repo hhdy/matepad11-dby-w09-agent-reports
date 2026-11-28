@@ -1,0 +1,23 @@
+claim,verdict,evidence_location,evidence_detail
+Input identity (6 frozen files),PASS,evidence/stage_a_parse_output.txt,sha256 all match taskbook §1 (abl.img b39de91b PE a14e29da stock boot 7a95c897 PREP10 d1d76c21 kernel f89a2839 sepramdisk 4dd6d91a)
+PE VA==file offset identity,PASS,evidence/stage_b1_output.txt,probe 0x105B26/0x118E68/0xCC668/0x62B44/0xB4630 all identity; sections .text 0x1000 .data 0x109000 .reloc 0x277000
+stock kernel payload is gzip,PASS,evidence/stage_a_parse_output.txt,magic 1f8b08; decompressed 57470992 B ARM64 Image text_offset=0x80000 image_size=70504448 flags=0x10
+PREP10 kernel is raw ARM64 Image,PASS,evidence/stage_a_parse_output.txt,magic 0x644D5241@+0x38 text_offset=0 image_size=45547520 flags=0xA (LE+4K+PHYS_BASE)
+stock header DTB x ramdisk literal overlap,PASS,evidence/stage_a_parse_output.txt,"[0x2000000,0x207EF32) fully inside DTB range; stock boots daily -> literal addrs not final placement"
+boot v2 parser field set,CONFIRMED,evidence/dis_bootlinux_full.txt lines 230-291,u32@(hdr+8/+0x10/+0x18/+0x24/+0x28) extracted to slots -0x40/-0x38/-0x3C/-0x44/Info+0x458; +0x0C/+0x14 never read as destinations
+kernel destination ImageBuffer+0x80000,CONFIRMED,evidence/dis_bootlinux_full.txt lines 548-557 (0x374A8-0x374C8),csel 0x80000(64-bit)/0x8000(32-bit) + ImageBuffer; unique pair site 0x374AC (find_loadoffset_pairs.txt)
+32/64 flag source,CONFIRMED,evidence/dis_bootlinux_full.txt lines 466-475 (0x37368-0x37380),payload[0x38]==0x644D5241 -> flag=0 else 1
+kernel relocation,ABSENT,evidence/dis_bootlinux_full.txt lines 761-774 (0x377FC-0x37830),raw: gBS->CopyMem(dst=kload src=payload len=kernel_size); gz: inflate@0x39AB0 to same dst; no text_offset/image_size parsing anywhere
+ramdisk/DTB placement formula,CONFIRMED,evidence/dis_bootlinux_full.txt lines 558-578 (0x374D0-0x37508),R=end-(round_down(ramdisk+B+page)+page); D=R-4K-2M; stp [x20-0x60] -> [R D]; D also TagsAddress slot -0x58
+capacity check,CONFIRMED,evidence/dis_bootlinux_full.txt line 571-573 (0x37504),x27=D-kernel_load; fail -> 'Not Enough space left to load kernel image'(0xCF250) refs@0x376CC/0x37BD0; NOTE: no kernel_end vs R check exists
+DTB copy to D,CONFIRMED,evidence/dis_bootlinux_full.txt lines 1378-1381 (0x38198-0x381BC),CopyMem(dst=[x20-0x58]=D src=blob len=be32(totalsize)); space check cmp (R-D) vs size @0x38130
+separate ramdisk path,PARTIAL,evidence/dis_loadramdisk.txt + census,LoadRamdisk@0x3969C strings + move_ramdisk_to_img_addr + linux,initrd-start/end fixup@0x3F0F0/0x3F33C; partition read chain not fully closed
+embedded ramdisk used as initrd,NO,evidence/dis_loadramdisk.txt + PREP04 byte evidence,initrd = separate ramdisk partition payload (gzip@0x800 of mini-bootimg); embedded payload unused for initrd
+ShutdownUefiBootServices,CONFIRMED,evidence/stage_b5_exit_output.txt + dis_shutdown_jump.txt,unique ExitBootServices(gBS+0xE8)@0x34EA0 inside func 0x34DB0; caller bl 0x34DB0@0x386E4 (find_bl_callers)
+kernel entry jump,CONFIRMED,evidence/dis_bootlinux_full.txt lines 1812-1827 (0x38868-0x388A4),blr x8 x8=[x20-0x70]=kload x0=[x20-0x58]=TagsAddress(FDT) x1=x2=x3=0 (arm64); 32-bit variant @0x38894
+normal boot PREP10 layout,SAFE,evidence/stage_c_output.txt,kernel +0x80000..+0x2B3EA00; R +0x5E57000; D +0x5C56000; capacity 0x5BD6000; no overlap (buffer 96MiB)
+fastboot boot PREP10 overlap,PRESENT,evidence/stage_c_output.txt,kernel_end 0x2B3EA00 >= R 0x2ABEF8F with 46563215 B download buffer; overlap 0x4FA71 B; explains FIRST-BOOT01 (RAMBOOT_NOT_CONFIRMED mechanism)
+PREP10 size limit,PASS,evidence/stage_c_output.txt,44.8MB raw < stock precedent 57.4MB decompressed; capacity margin 0x5BD6000
+text_offset contract mismatch,RISK(PARTIAL),memory_map.md last table,stock text_offset=0x80000 <-> ABL +0x80000 compatible; PREP10 text_offset=0 needs 2MB-aligned load; ABL gives +0x80000 offset (512K misalignment) — head.S behavior unverified
+svesnav comparison,PASS,evidence/svesnav_repack_boot.py,Image.gz compressed kernel + stock header params unchanged + --full-partition 96MiB delivery (avoids fastboot staging overflow)
+DEVICE_OPERATIONS,NONE,taskbook compliance,offline only; no adb/fastboot/dd/flash; no firmware binaries executed; no repackaging

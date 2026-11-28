@@ -1,0 +1,121 @@
+composed values total: 9277
+string-window hits: 98
+  site 0x021394 adr_add  reg=x2 va=0x0C803A -> set_g_fdt_addr
+  site 0x0213BC adr_add  reg=x27 va=0x0C8044 -> set_g_fdt_addr
+  site 0x0218C8 adr_add  reg=x11 va=0x0C8056 -> set_g_fdt_addr
+  site 0x02192C adr_add  reg=x2 va=0x0C8070 -> set_g_fdt_addr
+  site 0x0226A0 adr_add  reg=x2 va=0x0C807D -> set_g_fdt_addr
+  site 0x030530 adr_add  reg=x0 va=0x0CBC33 -> FailedLoadAuthBootImage
+  site 0x03053C adr_add  reg=x0 va=0x0CBC49 -> FailedLoadAuthBootImage
+  site 0x0305B0 adr_add  reg=x2 va=0x0CBC70 -> FailedLoadAuthBootImage
+  site 0x0305E0 adr_add  reg=x2 va=0x0CBC79 -> FailedLoadAuthBootImage
+  site 0x0308D0 adr_add  reg=x2 va=0x0CBC70 -> FailedLoadAuthBootImage
+  site 0x030900 adr_add  reg=x2 va=0x0CBC79 -> FailedLoadAuthBootImage
+  site 0x030EF4 adr_add  reg=x25 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x0327D8 adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x032D10 adr_add  reg=x0 va=0x0CBC79 -> FailedLoadAuthBootImage
+  site 0x032D28 adr_add  reg=x0 va=0x0CBC70 -> FailedLoadAuthBootImage
+  site 0x035010 adr_add  reg=x0 va=0x0CF3A6 -> DTBOffsetBeyondKernelSize
+  site 0x035030 adr_add  reg=x3 va=0x0CF3A6 -> DTBOffsetBeyondKernelSize
+  site 0x03607C adr_add  reg=x1 va=0x0CF899 -> OverflowKernelCopy
+  site 0x036C94 adr_add  reg=x8 va=0x0CF868 -> OverflowKernelCopy
+  site 0x0371F0 adr_add  reg=x1 va=0x0CF0A5 -> FailedKernelSize_log
+  site 0x03763C adr_add  reg=x1 va=0x0CF0E7 -> FailedKernelSize_log
+  site 0x03768C adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x0376CC adr_add  reg=x1 va=0x0CF28B -> NotEnoughSpace_kernel
+  site 0x0377B4 adr_add  reg=x1 va=0x0CF1FC -> UNCOMPRESSED_IMG
+  site 0x0377F4 adr_add  reg=x1 va=0x0CF222 -> UNCOMPRESSED_IMG
+  site 0x037958 adr_add  reg=x1 va=0x0CEA6C -> BootLinux_invalidparam
+  site 0x037988 adr_add  reg=x1 va=0x0CEA87 -> BootLinux_invalidparam
+  site 0x0379BC adr_add  reg=x1 va=0x0CEAA1 -> BootLinux_GetImage_failed
+  site 0x0379EC adr_add  reg=x1 va=0x0CEABB -> BootLinux_GetImage_failed
+  site 0x037A20 adr_add  reg=x1 va=0x0CEAD7 -> BootLinux_GetImage_failed
+  site 0x037A50 adr_add  reg=x1 va=0x0CEAF2 -> BootLinux_GetImage_failed
+  site 0x037A94 adr_add  reg=x1 va=0x0CEB28 -> KernelLoadAddr_log
+  site 0x037B84 adr_add  reg=x1 va=0x0CEA38 -> BootLinux_invalidparam
+  site 0x037BD0 adr_add  reg=x1 va=0x0CF25C -> NotEnoughSpace_kernel
+  site 0x037E88 adr_add  reg=x1 va=0x0CF3D1 -> DtbOffsetBeyondImageSize
+  site 0x037F4C adr_add  reg=x1 va=0x0CF401 -> DtbOffsetBeyondImageSize
+  site 0x037FB8 adr_add  reg=x1 va=0x0CF44D -> SingleAppendedDTBFound
+  site 0x03823C adr_add  reg=x1 va=0x0CF362 -> DTBOffsetBeyondKernelSize
+  site 0x03828C adr_add  reg=x1 va=0x0CF37D -> DTBOffsetBeyondKernelSize
+  site 0x038314 adr_add  reg=x1 va=0x0CF345 -> PatchedKernelDetected
+  site 0x038520 adr_add  reg=x1 va=0x0CF792 -> move_ramdisk_to_img_addr
+  site 0x03854C adr_add  reg=x1 va=0x0CEB2E -> KernelLoadAddr_log
+  site 0x0385CC adr_add  reg=x1 va=0x0CF7B7 -> move_ramdisk_to_img_addr
+  site 0x0386CC adr_add  reg=x1 va=0x0CEB57 -> KernelSizeActual_log
+  site 0x038854 adr_add  reg=x1 va=0x0CEB82 -> RamdiskSizeActual_log
+  site 0x0388CC adr_add  reg=x1 va=0x0CEBBB -> RamdiskOffset_log
+  site 0x03890C adr_add  reg=x1 va=0x0CEBDD -> RamdiskOffset_log
+  site 0x03895C adr_add  reg=x1 va=0x0CEBE6 -> RamdiskOffset_log
+  site 0x038A4C adr_add  reg=x1 va=0x0CECC9 -> ANDROID!_magic_str
+  site 0x038A80 adr_add  reg=x1 va=0x0CECE1 -> ANDROID!_magic_str
+  site 0x038B2C adr_add  reg=x1 va=0x0CECA7 -> ANDROID!_magic_str
+  site 0x038B60 adr_add  reg=x1 va=0x0CECBC -> ANDROID!_magic_str
+  site 0x039764 adr_add  reg=x1 va=0x0CF70F -> RamdiskSizeOverLimit
+  site 0x0398D4 adr_add  reg=x1 va=0x0CF73E -> RamdiskSizeOverLimit
+  site 0x03990C adr_add  reg=x1 va=0x0CF6EE -> start_loadramdisk
+  site 0x0399D4 adr_add  reg=x1 va=0x0CF772 -> move_ramdisk_to_img_addr
+  site 0x039AEC adr_add  reg=x1 va=0x0CF888 -> OverflowKernelCopy
+  site 0x039C0C adr_add  reg=x1 va=0x0CF8AF -> OverflowKernelCopy
+  site 0x03A050 adr_add  reg=x1 va=0x0D0F29 -> InvalidMemoryConfig
+  site 0x03A0F4 adr_add  reg=x1 va=0x0CFEC4 -> DtboCount_LocalBoardDtMatch
+  site 0x03B144 adr_add  reg=x1 va=0x0CFA85 -> DTBOffsetNull
+  site 0x03B270 adr_add  reg=x1 va=0x0CFAE6 -> BestMatchDTBTags
+  site 0x03B2E4 adr_add  reg=x1 va=0x0CFB0D -> BestMatchDTBTags
+  site 0x03B31C adr_add  reg=x1 va=0x0CFB28 -> BestMatchDTBTags
+  site 0x03B7B0 adr_add  reg=x3 va=0x0CFBF7 -> DTBOffsetIncorrect_noAppendedDTB
+  site 0x03B888 adr_add  reg=x1 va=0x0CFC02 -> DTBOffsetIncorrect_noAppendedDTB
+  site 0x03B8F4 adr_add  reg=x1 va=0x0CFC3B -> DTBOffsetIncorrect_noAppendedDTB
+  site 0x03CAD0 adr_add  reg=x22 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03CC48 adr_add  reg=x20 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03CDCC adr_add  reg=x22 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03CEA8 adr_add  reg=x22 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03D0DC adr_add  reg=x20 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03D198 adr_add  reg=x22 va=0x0CFE74 -> DtboCount_LocalBoardDtMatch
+  site 0x03D380 adr_add  reg=x1 va=0x0CFEB4 -> DtboCount_LocalBoardDtMatch
+  site 0x03DBF4 adr_add  reg=x2 va=0x0D0F5D -> InvalidMemoryConfig
+  site 0x03DC28 adr_add  reg=x2 va=0x0D0F93 -> RAM_Partitions
+  site 0x03DCA0 adr_add  reg=x1 va=0x0D0FC3 -> RAM_Partitions
+  site 0x03DD0C adr_add  reg=x1 va=0x0D0F42 -> InvalidMemoryConfig
+  site 0x03DD3C adr_add  reg=x1 va=0x0D0F6C -> InvalidMemoryConfig
+  site 0x03DD6C adr_add  reg=x1 va=0x0D0F9F -> RAM_Partitions
+  site 0x03DE74 adr_add  reg=x1 va=0x0D0F18 -> InvalidMemoryConfig
+  site 0x03EFC4 adr_add  reg=x26 va=0x0D0BBF -> kaslr_seed
+  site 0x03F0F0 adr_add  reg=x1 va=0x0D0C30 -> linux_initrd_start
+  site 0x03F138 adr_add  reg=x1 va=0x0D0C52 -> linux_initrd_start
+  site 0x03F33C adr_add  reg=x1 va=0x0D0C8D -> linux_initrd_end
+  site 0x03F8AC adr_add  reg=x1 va=0x0D0CB5 -> linux_initrd_end
+  site 0x04C260 adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x04C2A0 adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x04D0F8 adr_add  reg=x3 va=0x0D4910 -> KernelBaseAddress_log
+  site 0x04D58C adr_add  reg=x3 va=0x0D4910 -> KernelBaseAddress_log
+  site 0x04D628 adr_add  reg=x1 va=0x0D4924 -> KernelBaseAddress_log
+  site 0x04DA08 adr_add  reg=x1 va=0x0D4939 -> KernelBaseAddress_log
+  site 0x04DA0C adr_add  reg=x2 va=0x0D494C -> KernelModeCheck64
+  site 0x052DCC adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x052DF8 adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x052E0C adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x0559F0 adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+  site 0x055EEC adr_add  reg=x0 va=0x0CBC80 -> FailedLoadAuthBootImage
+
+# ==== functions referencing load-path strings ====
+  func~0x021314 : set_g_fdt_addr
+  func~0x021808 : set_g_fdt_addr
+  func~0x02FE10 : FailedLoadAuthBootImage
+  func~0x030618 : FailedLoadAuthBootImage
+  func~0x030DB4 : FailedLoadAuthBootImage
+  func~0x0322C0 : FailedLoadAuthBootImage
+  func~0x034DB4 : DTBOffsetBeyondKernelSize,OverflowKernelCopy
+  func~0x036C1C : BootLinux_GetImage_failed,BootLinux_invalidparam,DTBOffsetBeyondKernelSize,DtbOffsetBeyondImageSize,FailedKernelSize_log,FailedLoadAuthBootImage,KernelLoadAddr_log,KernelSizeActual_log,NotEnoughSpace_kernel,OverflowKernelCopy,PatchedKernelDetected,RamdiskOffset_log,RamdiskSizeActual_log,SingleAppendedDTBFound,UNCOMPRESSED_IMG,move_ramdisk_to_img_addr
+  func~0x0388E8 : ANDROID!_magic_str,RamdiskOffset_log
+  func~0x03969C : OverflowKernelCopy,RamdiskSizeOverLimit,move_ramdisk_to_img_addr,start_loadramdisk
+  func~0x039DC8 : BestMatchDTBTags,DTBOffsetNull,DtboCount_LocalBoardDtMatch,InvalidMemoryConfig
+  func~0x03B3A8 : DTBOffsetIncorrect_noAppendedDTB
+  func~0x03BA68 : DtboCount_LocalBoardDtMatch
+  func~0x03D9D4 : InvalidMemoryConfig,RAM_Partitions,kaslr_seed,linux_initrd_end,linux_initrd_start
+  func~0x03F474 : linux_initrd_end
+  func~0x04B65C : FailedLoadAuthBootImage,KernelBaseAddress_log
+  func~0x04D2C8 : KernelBaseAddress_log,KernelModeCheck64
+  func~0x0527D4 : FailedLoadAuthBootImage
+  func~0x05573C : FailedLoadAuthBootImage

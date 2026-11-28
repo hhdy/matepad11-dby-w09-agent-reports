@@ -1,72 +1,98 @@
-# K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 — 综合报告
+# K1_DBY_W09_UBOOT_CHAINLOADER_ONEPASS01 — 综合报告（§12 续行更新版）
 
-- 日期：2026-11-28；单次执行单报告；**无设备连接、无设备侧读取、无分区写入/刷写、无 AVB/vbmeta 修改**
-- ABL PE SHA：`a14e29da…dbb404` ✓（会话内复核）；基线：AUDIT01 `7f03c2fd`、GATE02 `8d1f1190`（直接采用，未重复）
+- 首版 commit `361f3894`；本版为 §12 授权后的一次性构建续行更新（2026-11-28）
+- §12 授权：用户明确授权 Ubuntu 24.04 主机 APT 安装构建依赖 + 主机端源码固定/构建/FIT 组装/离线验证；**非设备操作授权**
+- 全程无设备连接、无设备侧读取、无 reboot/临时启动、无分区写入/刷写、无 AVB/vbmeta 修改、无原始固件上传
+- **CoWave `pack-recovery.sh`（blob `0f3076bc…`）被禁止运行：该脚本使用 AVB flags=2 关闭校验，违反"不得修改/关闭验证"边界——本任务未运行它**
 
-## 1. ABL 静态收敛（§2）
+## 1. 环境与工具（§12.1）
 
-| 字段 | 值 |
-|---|---|
-| RECOVERY_ENTRY_CHAIN | **CONDITIONAL**（两次 BL/ptr 扫描 0 命中；按 §11.1 不再循环同类搜索——最小缺口仍为 blr 根数据流 pass） |
-| RECOVERY_INITRD_LABEL | **PARTIAL**（候选 ramdisk/erecovery_ramdisk 在册，选择表未定位） |
-| RECOVERY_INITRD_PAYLOAD_FORM | **UNKNOWN** |
-| ABL_MEMORY_REG_MUTATION | NOT_FOUND_IN_ANALYZED_PATH（GATE02 900 指令窗基线沿用） |
-| ABL_RESERVED_MEMORY_MUTATION | NOT_FOUND_IN_ANALYZED_PATH |
-| ABL_INITRD_MEMRESERVE | UNKNOWN（chosen 写入已证，memreserve 未证） |
-| ABL_RAM_BANK_VALUES | RUNTIME_DEPENDENT（EFI_RAMPARTITION provider 不在冻结 PE） |
+- Ubuntu 24.04 noble（WSL2），679 GB 可用，12 核，7 GB RAM
+- 安装（APT --no-install-recommends）：`gcc-aarch64-linux-gnu`、`device-tree-compiler`、`u-boot-tools`、bison/flex/libssl-dev/libgnutls28-dev/libncurses-dev/python3-dev/python3-setuptools/python3-pyelftools/swig/pkg-config/bc
+- 版本：aarch64-linux-gnu-gcc **13.3.0**；dtc **1.7.0**；mkimage **2025.10**；host gcc 13.3.0
 
-## 2. recovery 链备份 provenance 闭环（§11.2）
+## 2. CoWave 源码固定（§12.2）
 
-| 文件 | SHA-256 | 备注 |
+- Repo `CoWave-Fall/linux-on-arm-matepad11`，checkout **`b76d7e095104fc2a010f2d1dc43121a9e3484464`**，tree `2d6b79e3df31bfad1001da6e565a155794b5e7f7` ✓（与任务书一致；commit 未签名——记录，不声称签名验证）
+- blob SHA 核验：defconfig `38a39ecd…` ✓、build-uboot.sh `bb1e94b8…` ✓、pack-fit.sh `529bebcf…` ✓、fetch-sources.sh `a640962b…` ✓、pack-recovery.sh `0f3076bc…` ✓（均与 §12.2 表一致）；patches 目录 tree `a4440e3c…`（5 个补丁按顺序 `patch -p1` 全部应用成功，PATCHES_APPLIED）
+- 未运行 `fetch-sources.sh`（其会抓 Linux 7.3.4）；仅按固定 SHA 取 U-Boot v2026.10
+
+## 3. U-Boot v2026.10 获取与构建（§12.3–12.4）
+
+- 源码包 `u-boot-v2026.10.tar.gz`（github u-boot tag v2026.10），SHA-256 **`f943a883…b60c739` 校验通过**（与任务书/CoWave fetch-sources.sh 一致）
+- 5 补丁应用成功；`make O=build CROSS_COMPILE=aarch64-linux-gnu- dby-w09_defconfig`
+- **§12.4 显式配置调整**：`CONFIG_CMD_ABOOTIMG` defconfig 未含且默认未启（AI1 预判正确）→ 追加 `CONFIG_CMD_ABOOTIMG=y` + `olddefconfig` 重生成
+- **最终 .config 实测值**（非推断）：
+
+```
+CONFIG_POSITION_INDEPENDENT=y      CONFIG_INIT_SP_RELATIVE=y
+CONFIG_SYS_INIT_SP_BSS_OFFSET=0x180000
+CONFIG_ARCH_SNAPDRAGON=y           CONFIG_NR_DRAM_BANKS=24
+CONFIG_DEFAULT_DEVICE_TREE="qcom/sm8250-huawei-dby-w09"
+CONFIG_SYS_BOOTM_LEN=0x8000000     (128 MiB 解压上限)
+CONFIG_ANDROID_BOOT_IMAGE=y        CONFIG_ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR=y
+CONFIG_FIT=y                       CONFIG_CMD_BOOTM=y
+CONFIG_OF_LIBFDT=y                 CONFIG_OF_BOARD_SETUP=y
+CONFIG_SAVE_PREV_BL_FDT_ADDR=y     CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR=y
+CONFIG_CMD_ABOOTIMG=y              CONFIG_USB_FUNCTION_FASTBOOT=y
+```
+
+- 构建成功（-j12）：`u-boot` ELF 10,619,264 B sha `e0f24a18…93ad60`；`u-boot.bin` 1,548,760 B sha `f6dd2ae7…d99753`；`u-boot.map` sha `949cb0f4…fbcbcb`
+- PIE/ELF 审计：Type=**DYN**（PIE ✓）；Entry point **0x0**（PIE 相对入口，4 KiB 对齐 ✓ 平凡满足）；relative relocation 条目 6,675 行段
+- **ADB 交接路径就绪**：`CMD_ABOOTIMG=y` + `ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR=y` + v0–v2 parser（AI1 源码闭环）→ `abootimg addr <wrapper>` + `bootm <FIT> <wrapper>`（禁冒号形式）
+
+## 4. FIT 组装与验证（§12.5）
+
+- 输入身份（重算）：ACK Image `prep_kernel.bin` sha `f89a2839…bad21`（44,820,992 B）；VD DTB `prep_dtb.bin` sha `7bb9a1fb…996b7`（1,216,399 B）；gzip -6 → `Image.gz` 17,860,410 B
+- ITS：kernel（gzip，load/entry=0x91000000，**CoWave 参考地址，CONDITIONAL**——最终 RAM map 未捕获不作为本机已证布局）+ fdt（load=0x96000000，位于解压末端 0x93D80000 之上，无重叠）；配置名 `conf-dby-w09-vd`；**未写入任何 RAM tuples**
+- **完整 FIT 实际生成**：`dby-w09-ack.itb` = **19,078,551 B（18.20 MiB）≤ reserved3 25,165,824 B（24 MiB）→ 容量 PASS（真实文件）**
+- `mkimage -l` / `dumpimage -l` 结构解析 PASS：Kernel Image/gzip/17.03 MiB/AArch64/Load=Entry=0x91000000；Flat Device Tree/uncompressed/1.16 MiB/Load=0x96000000；默认配置 conf-dby-w09-vd ✓
+
+## 5. Android v0 外置 ramdisk wrapper（§12.5.5）
+
+- live wrapper `4dd6d91a…cfdbb` 本轮未重传；ADDENDUM01 实测：v0 头、payload@0x800 长 1,406,106、gzip→cpio newc（init/init.real/ksu.ko）
+- 路线核验：最终 .config `CMD_ABOOTIMG=y`+`IGNORE_BLOB_ADDR=y`（§3）+ AI1 v0–v2 parser 源码闭环 + 本地字段算术一致 → **wrapper 解析路径 = CONFIRMED（config+source 级）**；sandbox bootm 实测未运行（无沙箱环境落盘）→ 标 PARTIAL
+- 原始 ramdisk/CPIO 未上传 ✓
+
+## 6. 六份 recovery 备份 provenance —— 已闭环（§12.6）
+
+r155 `capture_manifest.tsv`（设备侧双次 SHA + 主机回读四列，label→/dev/block/by-name 精确对应）证明：
+
+| label | 块设备 | 设备侧 SHA（双次一致） |
 |---|---|---|
-| recovery.img | `95641758…1c5548` | **== erecovery.img 逐字节相同 → provenance 异常**（采集副本混淆或分区内容同名；无法证明为独立 recovery 备份） |
-| recovery_ramdisk.img | `1a703a84…2295` | **== erecovery_ramdisk.img 相同**（同上异常） |
-| recovery_vbmeta.img | `bf59d55d…507b` | 独立哈希 ✓ |
-| erecovery.img | `95641758…1c5548` | 与 recovery.img 同 |
-| erecovery_ramdisk.img | `1a703a84…2295` | 与 recovery_ramdisk.img 同 |
-| erecovery_vbmeta.img | `ed04c848…6c73f` | 独立哈希 ✓ |
+| recovery | sda19/by-name/recovery | `95641758…1c5548` |
+| erecovery | sda16/by-name/erecovery | `95641758…1c5548`（**真机内容本就相同**） |
+| recovery_ramdisk | sda20 | `b6fa0371…2295`（== erecovery_ramdisk sda17） |
+| erecovery_ramdisk | sda17 | 同上 |
+| recovery_vbmeta | sda24 | `bf59d55d…507b`（≠ erecovery_vbmeta `ed04c848…`） |
+| erecovery_vbmeta | sda23 | `ed04c848…6c73f` |
 
-来源 manifest：r155 copies-primary（2026-11-25 采集，PREP12 分区 inventory label 对应）。**判定：recovery/recovery_vbmeta 备份不构成已验证独立恢复能力 → 写入门禁维持 NO-GO**（recovery.img 身份必须先解决）。
+**结论：重复哈希是 HOS4.3 出厂内容本身（recovery 与 erecovery 主镜像/ramdisk/vendor 逐字节一致，仅 vbmeta 不同），非采集错误。** 六文件各自独立双次设备侧验证 + 主机回读一致 → **`RECOVERY_WRITE_SURFACE_BACKUPS = COMPLETE`**（GATE02 的 INCOMPLETE 升级）。
 
-## 3. U-Boot 源码/工具链/配置/构建（§3）
+## 7. 认证门禁（§11.6，保持谨慎）
 
-- CoWave repo 未在本 pass 固定 clone（时间预算内优先完成备份/FDT/容量项）；上游 v2026.10 源码未落盘。
-- 工具链盘点（Ubuntu-24.04，gcc 13.3.0 host）：**aarch64-linux-gnu-gcc 缺失、dtc 缺失、mkimage 缺失**（任务书禁装新工具）→ **U-Boot 构建 BLOCKED**；FIT 实体构建 BLOCKED（缺 dtc/mkimage）。
-- 最终 `.config` = MISSING（依赖构建）；14 项 CONFIG 未取值。
+LoadImageAndAuth/VB2 路径存在；对 recovery 容器替换 kernel 后能否通过既有认证 = **UNKNOWN**（与前轮一致）。若需 OEM 私钥/vbmeta 修改 → AUTH_BLOCKED。未生成 recovery 候选。
 
-## 4. FIT 容量预算（§4.2，仅计算非构建）
+## 8. 最终门禁（§7）
 
-- gzip ACK Image（`f89a2839…`，gzip -6 实测）= **17,860,410 B ≈ 17.04 MiB**
-- VD DTB（`7bb9a1fb…`，1,216,399 B ≈ 1.16 MiB）+ ITS/元数据/对齐开销 ≈ 0.2 MiB
-- **预算合计 ≈ 18.4 MiB < reserved3 25,165,824 B（24 MiB）→ 容量预算信号 PASS（算术）**；实际 FIT 文件 = UNKNOWN_NOT_BUILT（缺 mkimage/dtc）。gzip 路线使 24 MiB 方案可行——这是本轮最重要的正信号。
+| 门 | 值 | 变化 |
+|---|---|---|
+| HOST_PACKAGE_READINESS | **READY**（U-Boot 构建 ✓ 17 项 config ✓ PIE ✓；FIT 真实文件 ✓ 19,078,551 B ≤ 24 MiB ✓ 解析 ✓；wrapper 解析路径 config+source 级 ✓；残留：sandbox bootm 实测 PARTIAL） | BLOCKED → READY |
+| DEVICE_BOOT_READINESS | **HOLD**（备份 COMPLETE↑；但 entry chain CONDITIONAL、initrd label PARTIAL、RAM/final-FDT UNKNOWN、认证 UNKNOWN、reserved-memory 37 节点对照未做） | NO_GO → HOLD |
+| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED**（final-FDT 只读 capture 为 RAM/reserved 唯一权威证据） | 不变 |
+| **ONEPASS_RESULT** | **HOST_READY_DEVICE_HOLD** | PARTIAL_BLOCKED → 升级 |
 
-## 5. ACK / DTB / ramdisk 输入（§4）
+**HOST_READY_DEVICE_HOLD 不是刷写授权。** 设备侧任何操作（含 final-FDT 只读采集）须用户另行明确授权（§11.7/§11.8 预置流程适用）。
 
-- ACK Image `f89a2839…`（44,820,992 B，text_offset=0，flags=0xA）、VD DTB `7bb9a1fb…`（1,216,399 B）来源=PREP 冻结构建 ✓。
-- live separate ramdisk `4dd6d91a…`（v0 wrapper，payload `4f71768a…`，cpio 含 init/init.real/ksu.ko）— ADDENDUM01 已解析，本轮未重复。
-- wrapper 沙箱解析验证：未执行（无 U-Boot 源码/沙箱环境落盘）→ PARTIAL。
+## 9. 残留未闭合项（最小证据）
 
-## 6. recovery 认证门禁（§5）
+1. recovery→BootLinux 两级调用链：blr 根数据流 pass（静态）
+2. recovery initrd label/payload form：LoadRamdisk 调用者参数窗（静态）
+3. ABL `/memory/reg`、memreserve、reserved-memory：final-FDT capture（设备只读，需授权）
+4. reserved-memory 37 children 对照：final-FDT capture 后进行
+5. sandbox bootm 命令路径实测（可选 host 项）
+6. 认证行为：ABL 对 recovery 容器的 AVB 判定（静态或授权后验证）
 
-LoadImageAndAuth/VB2 路径存在（字符串/调用站点已证），但 **AVB/vbmeta 对 recovery 容器的实际验证行为未闭合**（前轮 auth 问题仍 UNKNOWN）。替换 kernel 的候选能否通过合法认证 = **UNKNOWN；若需 OEM 私钥/vbmeta 修改则 AUTH_BLOCKED**。未生成任何候选。
+## 10. 二进制不入库声明
 
-## 7. 最终门禁（§7）
-
-| 门 | 值 |
-|---|---|
-| HOST_PACKAGE_READINESS | **BLOCKED**（缺 aarch64-gcc/dtc/mkimage；U-Boot 源码未固定） |
-| DEVICE_BOOT_READINESS | **NO_GO / HOLD**（调用链 CONDITIONAL、initrd label PARTIAL、RAM UNKNOWN、备份 provenance 异常、认证 UNKNOWN、reserved-memory 37 节点对照未做） |
-| USER_AUTHORIZATION_GATE | **AUTHORIZATION_REQUIRED**（唯一权威 final-FDT capture） |
-| **ONEPASS_RESULT** | **PARTIAL_BLOCKED** |
-
-## 8. 未闭合项与唯一最小证据
-
-1. U-Boot 构建：安装 aarch64 交叉工具链 + dtc/mkimage（主机侧，需用户许可"安装工具"）后即可解 BLOCK。
-2. recovery.img 身份异常：对照采集 manifest 或设备 label（只读，需授权）。
-3. A1 blr 根数据流 pass；A2 label 表（静态，一次）。
-4. final-FDT capture（设备只读，需授权）→ 唯一可解 RAM/RESERVED 全部 UNKNOWN。
-5. CoWave 源码固定 + defconfig 落盘。
-
-## 声明
-
-无设备连接/读取、无 reboot/临时启动、无分区写入/刷写、无 AVB/vbmeta 修改、无原始固件上传 ✓。回读后任务结束，不再创建后续任务书。
+U-Boot ELF/bin/map、FIT itb、gzip Image、DTB、wrapper ramdisk 及全部原始固件**仅存本地**（`/home/kerneldev/build/`、workspace `UBOOT_CHAINLOADER_ADAPT01/fit/`），GitHub 仅上传本脱敏报告与脚本清单 ✓

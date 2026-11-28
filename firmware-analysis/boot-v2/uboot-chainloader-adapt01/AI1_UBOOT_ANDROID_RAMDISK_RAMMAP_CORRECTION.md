@@ -79,7 +79,7 @@ abootimg get ramdisk 调用 android_image_get_ramdisk()，把返回的 payload �
 - ARCH_SNAPDRAGON 在 arch/arm/Kconfig 中 select ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR，因此旧式 v0-v2 wrapper 的 ramdisk_addr 不会强制将 payload 搬到 header 声明的固定 DDR 地址，而是允许在 wrapper 当前缓冲区内原位引用。
 - Android header v3+ 需要 vendor_boot image；当前设备没有已确认的 vendor_boot 分区，不能假定这一分支适用。
 
-但当前 live separate ramdisk 备份虽然已有文件 SHA 记录，header version、page_size、kernel_size、ramdisk_size、payload offset/length 仍必须按当前 live backup 的精确 SHA 重新核验。此前 ROUND2/ROUND64 的固件包副本 header-v0 不能代替 live backup 的身份核验。
+但当前项目证据中有两份不同的 2,097,152 B ramdisk 候选：K1_FASTBOOT_GATE01_AI1_REVIEW.md 将 SHA `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb` 标为 stock separate-ramdisk backup；ROUND64 Phase F 将 SHA `5c20e4781f701e075ab30d3f8389172435e5591579bb5971f1b29331862fddc0` 标为 `ramdisk.img`，其历史 header-v0 / page_size=2048 / payload=1,322,962 B 只适用于后一份。二者不是同一字节文件，现有报告没有闭合其采集来源是否相同；在确认分区标签、采集路径、时间和 SHA 前，不能把 5c20 的 header/payload 事实套用到 4dd6，也不能把任一候选未经核实称为当前 live wrapper。
 
 源码：
 - https://github.com/u-boot/u-boot/blob/v2026.10/cmd/abootimg.c

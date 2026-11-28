@@ -1,0 +1,18 @@
+id,claim,evidence_source,evidence_grade,status,limitation
+E01,Reference repository identity,12 pinned blob SHAs fetched at commit 116cb1fe06110543ce03217e8bd8f35c12ca89c3,A,PASS,Source identity only
+E02,Direct ABL uses boot v2 plus separate ramdisk,linux-dby-w09 README.md,A,CONFIRMED_FOR_PUBLIC_PROJECT,Not an Android 17 package
+E03,fastboot boot refused,linux-dby-w09 README.md,B,REPORTED,Exact HOS4.3 behavior unknown
+E04,Stock boot repack method,repack_boot.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Target stock hash differs from public fixed guard
+E05,STOCK_PAYLOAD_SIZE 24412160,repack_boot.py,A,CONFIRMED,Script payload boundary not partition size
+E06,Full partition backups,install_images.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Only selected/changed partitions backed up
+E07,Readback checks image prefix,install_images.py and matepad-kernel-install,A,CONFIRMED_SOURCE_BEHAVIOR,Untouched tail not compared
+E08,Automatic rollback,installer source,A,NOT_PRESENT,Manual restore guidance only
+E09,ACK Image header facts,taskbook and ROUND158 build report,B,REPORTED,Raw artifact not reparsed here
+E10,ABL raw/gzip dispatch and destination offset,prior ABL reports/taskbook,C,PARTIAL,No closed ACK loader trace
+E11,ACK physical buffer residue mod 0x200000,not available,UNKNOWN,OPEN,Needs fixed address proof or authorized read-only observation
+E12,Android ramdisk contains Huawei init/init.real,taskbook/prior capture references,B,REPORTED,Raw partition bytes not re-read
+E13,Android bootconfig transfer contract,not closed in reviewed reports,C,UNKNOWN,Do not infer from Linux cmdline
+E14,Live VD stock Entry 2 / board-id 0x200e,ROUND158 and ROUND159 target evidence,B,REPORTED,Prior evidence reused
+E15,Public overlay is VG 0x206a,svesnav dby-w09-rootparam.dtso,A,CONFIRMED,Must not transplant to VD
+E16,Complete write/readback/rollback recovery,ROUND158 and installer source,C,PARTIAL,Full chain backup/GPT/rollback/rehearsal incomplete
+E17,Device connected or modified,this task execution,A,NO,No device operations performed

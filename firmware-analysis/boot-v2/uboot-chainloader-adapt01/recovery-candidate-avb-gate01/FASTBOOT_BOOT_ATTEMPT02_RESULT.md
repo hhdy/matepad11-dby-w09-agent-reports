@@ -42,3 +42,15 @@ U-Boot Recovery 链式路线在**当前 ABL 上不可行**，除非：
 - 改用其他启动入口（reserved3 FIT 直读等）——需重新评估入口可行性。
 
 **下一步建议交 AI1**：基于『unlocked 态 ABL 拒绝完整 kernel 替换 recovery（Load Error）』这一决定性事实，重新评估 U-Boot chainloader 路线是否继续；或转向 ①ramdisk-only 形态研究（kernel 无法替换，路线价值有限）②EDL/9xx 通道（GhostLock 工具链已有）③其他启动入口。
+
+## MILESTONE 1 ACHIEVED — U-Boot 2026.10 实机运行（2026-11-29 补）
+
+`adb reboot recovery` 后设备重启，USB 枚举变为 PID_4EE0 "Android Sooner Single ADB Interface" + fastboot 序列号 `?`；`getvar all` 回显 **version-bootloader: U-Boot 2026.10**、downloadsize=0x07000000（112 MiB）。用户屏幕显示 `dwc3-generic-peripheral usb@a600000` 日志 + fastboot 活动记录（usb@a600000 = SM8250 DWC3，与 ACK cmdline 的 usbcontroller 参数同控制器）。
+
+**确认事实**：
+- ABL → recovery 候选加载 → U-Boot kernel 运行 → DRAM 初始化 → USB fastboot 上线：**全链路实机打通**
+- U-Boot fastboot 协议响应正常（getvar product=qrd / version=0.4 / all）
+- CoWave env（0005 patch）已生效：`preboot=scsi scan`（UFS 自动扫描）；bootmenu：`Boot Linux from reserved3`（scsi read FIT→0x98000000→bootm）/ `Boot HarmonyOS`（bcb）/ `Enable fastboot mode` / `Reset`
+- `oem help` → not recognized（U-Boot 无 oem 处理器，无碍）；`ep1in-bulk not queued` 为 gadget 噪声
+
+当前设备处于 U-Boot fastboot 模式（bootmenu_2）。下一里程碑需用户授权：写 FIT v2（20,484,879 B）到 reserved3，随后经 U-Boot 菜单 `Boot Linux from reserved3` → bootm ACK。

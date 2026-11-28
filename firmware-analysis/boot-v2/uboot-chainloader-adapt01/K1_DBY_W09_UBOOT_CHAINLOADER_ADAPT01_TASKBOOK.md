@@ -291,3 +291,56 @@ AI1 已提交两份源码结果供参考：
 ### 13.4 仍然不得做的事项
 
 保持本任务原有全部禁止事项：不得连接设备、ADB/Fastboot/OEM 命令、reboot、fastboot boot、分区写入、刷写、构建 U-Boot/FIT/recovery、生成候选或公开固件二进制。此补充不改变任何操作授权。
+
+## 13.5 AI1 source-review updates (2026-11-28) — apply before further local work
+
+New AI1 reports:
+- `AI1_UBOOT_PIE_ENTRY_AND_RUNTIME_RAMMAP_REVIEW.md`
+- `AI1_UBOOT_EXTERNAL_ANDROID_RAMDISK_HANDOFF_FIX.md`
+- `AI1_UBOOT_ANDROID_RAMDISK_RAMMAP_CORRECTION.md` (updated with the new handoff workaround)
+- `AI1_UBOOT_PREVBL_FDT_RAM_FALLBACK.md` (updated with the exact fallback trigger)
+- `AI1_UBOOT_FIT_GZIP_LIMIT_REVIEW.md`
+
+### 13.5.1 Do not repeat the generic source review
+
+The following upstream findings are now source-closed for U-Boot v2026.10:
+- PIE entry checks 4 KiB alignment and applies AArch64 relative relocations; `INIT_SP_RELATIVE` defaults on when `POSITION_INDEPENDENT` is enabled (except the documented QEMU case).
+- ARM `arch_fixup_fdt()` writes `gd->dram[]` into the Linux FDT `/memory/reg`.
+- Snapdragon `board_fdt_blob_setup()` prefers the internal control-FDT RAM map, but falls back to `get_prev_bl_fdt_addr()` if the internal FDT has no usable `/memory/reg`.
+- `qcom_parse_memory()` returns `-ENODATA` when `/memory` or `reg` is missing, or there are no non-zero-size banks. This makes a target internal DTS with no usable memory `reg` a possible way to reuse the ABL-provided external memory map without replacing the rest of the U-Boot control DTS.
+- U-Boot's generic external Android-wrapper second-argument route fails if `CMD_ABOOTIMG` is disabled or its global pointer is not set. A source-supported workaround exists: enable `CONFIG_CMD_ABOOTIMG=y`, execute `abootimg addr <wrapper-address>`, then `bootm <FIT-address> <wrapper-address>` using a plain hexadecimal address (no `:size`). `ARCH_SNAPDRAGON` selects `ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR`; Android header v0-v2 parsing can then return the wrapper's in-place ramdisk payload pointer and length.
+- The default ARM64 U-Boot gzip decompression capacity is 128 MiB; the known ACK `image_size` (45,547,520 B) is below it. This does **not** prove the compressed FIT fits in the 24 MiB `reserved3` partition.
+
+Do not create a custom raw-initrd parser patch or embed the ramdisk in FIT unless the above `CMD_ABOOTIMG` route fails host-side validation. Do not use `bootm FIT_ADDR wrapper_addr:size`; the colon is consumed as a FIT subimage delimiter.
+
+### 13.5.2 Remaining local read-only work — exactly two evidence groups
+
+**A. Current live separate ramdisk wrapper**
+
+- Use only the already-frozen current live backup identified in the existing project record (expected SHA-256 `4dd6d91a2d456e1cccbf86acd799cbfd6971f52ba2bfe3c879bb73940a3cfdbb`). Recompute the SHA-256 before parsing. If the local bytes do not match, stop and report the actual file identity; do not substitute the older ROUND64 package copy SHA `5c20e478…` or its header/payload values.
+- Record `ANDROID!` magic, header version, header size, page size, kernel size, ramdisk size, computed ramdisk payload offset/length, bounds versus the 2 MiB partition, payload SHA-256, gzip magic, decompressed CPIO format, and required init/init.real/ksu content. Separate direct byte observations from inherited historical reports.
+- Evaluate the exact parser arithmetic used by U-Boot v2026.10 `android_image_get_data()` / `android_image_get_ramdisk()` for the observed header version. If it is not v0-v2 compatible, mark this workaround BLOCKED; do not try an unreviewed header conversion.
+- Do not upload the raw ramdisk or decompressed CPIO. Publish only hashes and sanitized field/value evidence.
+
+**B. Exact HOS4.3 ABL recovery-to-U-Boot handoff**
+
+- Use only the frozen Hybrid ABL PE SHA-256 `a14e29daf5c2f08edd2125202cf62140186005a6a37cb91cf85ef93747dbb404`.
+- Starting from the recovery boot-mode decision/BCB path, trace the selected recovery partition through LoadImageAndAuth to the BootLinux routine. Prove or disprove that recovery lands in the same `0x36C1C–0x388E8` BootLinux tail already audited for normal/fastboot paths.
+- Record the actual compressed-U-Boot payload address, decompression destination, entry address, and proof of 4 KiB alignment. The `+0x80000` arithmetic preserves a 4 KiB boundary if its source buffer is 4 KiB aligned, but do not use that arithmetic alone as proof of the recovery branch.
+- Prove whether x0 at the U-Boot entry still contains the final post-ABL FDT pointer. If so, connect it to U-Boot's `save_boot_params()` / `get_prev_bl_fdt_addr()` path.
+- Determine whether `UpdateDeviceTree` builds real `/memory/reg` banks from EFI RAM Partition Protocol data or only updates reserved-memory metadata. Keep this distinction explicit. Do not infer the final RAM tuples without a byte-level final-FDT capture.
+
+### 13.5.3 Output and stop condition
+
+Produce one concise addendum report under this directory with:
+- exact live wrapper hash + sanitized parser field table + payload hash/bounds;
+- ABL recovery branch call graph and exact 4 KiB entry arithmetic;
+- x0/FDT source finding and whether `/memory/reg` is populated;
+- updated gates: `RECOVERY_TO_UBOOT_HANDOFF`, `ABL_X0_FINAL_FDT`, `LIVE_RAMDISK_CMD_ABOOTIMG_COMPATIBILITY`, `TARGET_RAM_BANK_SOURCE`;
+- a strict statement of any evidence still BLOCKED/UNKNOWN.
+
+Stop after this single report and GitHub read-back. No new repeated audit rounds.
+
+### 13.5.4 Unchanged safety limits
+
+No device connection, ADB/Fastboot/OEM commands, reboot, temporary boot, recovery selection, partition reads from the live device, U-Boot build, FIT/recovery image generation, partition write, signing, AVB/vbmeta modification, or flash operation. This task remains read-only against already-authorized local files and frozen source artifacts.

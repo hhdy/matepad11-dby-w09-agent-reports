@@ -50,6 +50,15 @@ Semantics:
 
 Do not copy the placeholder commands verbatim into a device environment yet. `ramdisk_wrapper_addr` must be selected from a verified free range that does not collide with the FIT staging buffer, U-Boot relocation/stack/malloc, ACK kernel destination, FDT, splash, or any secure/reserved-memory region.
 
+### 2.1 The second argument must be a plain address, not `addr:size`
+
+With `CONFIG_FIT=y`, `select_ramdisk()` first tries `fit_parse_conf()` and `fit_parse_subimage()` before it converts the argument to a numeric address. In v2026.10, `fit_parse_conf()` only treats `#` as a delimiter and `fit_parse_subimage()` only treats `:` as a delimiter. A plain hexadecimal address has neither delimiter, so both parsers return 0 and `hextoul()` converts it into `rd_addr` as intended.
+
+Do **not** use `bootm ${fit_addr} ${wrapper_addr}:${wrapper_size}` for this route. The colon makes that syntax a FIT subimage specification, not a raw address/length or Android wrapper address. The separate `CONFIG_SUPPORT_RAW_INITRD` issue identified in the earlier RAM-map correction is therefore avoided by passing the Android wrapper as a plain address and letting `CMD_ABOOTIMG` parse its header.
+
+Source:
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-fit.c
+- https://github.com/u-boot/u-boot/blob/v2026.10/boot/image-board.c
 ## 3. Required U-Boot configuration
 
 Add the following explicit line to the target defconfig:

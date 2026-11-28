@@ -1,0 +1,14 @@
+gBS pointer loads: 262
+gBS-based slot loads: 235
+AllocatePages sites (gBS-proven): 1
+  0x03468C base=x8
+AllocatePool sites (gBS-proven): 7
+  0x00DD64 base=x8
+  0x05109C base=x8
+  0x0520B0 base=x8
+  0x071ED8 base=x8
+  0x071F20 base=x8
+  0x07FE68 base=x8
+  0x085D64 base=x8
+slot histogram: {'LocateProtocol': 86, 'slot+0x98': 16, 'AllocatePool': 7, 'FreePool': 8, 'FreePages': 2, 'CopyMem': 43, 'Stall': 3, 'SetMem': 30, 'slot+0x170': 2, 'slot+0x68': 2, 'slot+0x70': 4, 'slot+0x50': 2, 'SetWatchdogTimer': 4, 'GetMemoryMap': 4, 'AllocatePages': 1, 'ExitBootServices': 1, 'CalculateCrc32': 8, 'slot+0x138': 1, 'slot+0x60': 1, 'slot+0x118': 1, 'slot+0x120': 1, 'slot+0x58': 4, 'RaiseTPL': 1, 'slot+0x20': 1, 'slot+0xD00': 2}
+counterexamples 0x30858/0x55944 counted: 0 (must be 0) []

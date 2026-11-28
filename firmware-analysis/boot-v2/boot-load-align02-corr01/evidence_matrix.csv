@@ -1,0 +1,25 @@
+claim,verdict,evidence
+0x32968 identity,CONFIRMED gBS->LocateProtocol tail-call wrapper,dis 0x32968: ldr x8,[x8,#0x140]; br x8
+ordinary path GUID,{A04D2E95-8E39-B92B-3475-9EDD62779846} vendor name UNKNOWN,guid_dump.py bytes@0x107F70 mixed-endian parse
+ordinary +0x28 method target,UNKNOWN (provider not in frozen PE; GUID occurs once=callsite only),guid_dump.py occurrence scan
+ordinary callsite purpose,partition query (x0=UTF-16 secdata) unrelated to ImageBuffer,dis 0x307C0-0x30874
+fastboot GUID,{A000398E-69C9-3B72-225B-4E965964D211} UNKNOWN,guid_dump.py bytes@0x107FA0
+fastboot +0x28 method target,UNKNOWN (provider not in frozen PE),occurrence scan
+fastboot w0=0xC5 semantics,constant gated at 0x55910 cmp w8,#0xC5 then passed; meaning UNKNOWN (provider missing),dis 0x558E0-0x5596C
+AI1 misclassification correction,ACCEPTED — both sites are vendor protocol vtable slots not gBS->AllocatePages,safe_alloc_scan v2 counterexample check
+gBS->AllocatePages sites,exactly 1: 0x3468C,evidence_safe_alloc.txt (262 gBS loads / 235 slot loads / counterexamples 0)
+allocator helper,0x34624 AllocateAnyPages(0) EfiBootServicesData(4) EFI_SIZE_TO_PAGES; callers 0x2F73C 0x2F8B8; returns UEFI page base,dis 0x345C0-0x34714 + find_bl_callers
+ImageBuffer dataflow,helper return -> Info+0x130 writer @0x30344 stp x22,x26,[x20,#0x130]; read @0x36F04,dis_loadauth.txt + dis_bootlinux_full.txt
+ImageBuffer pointer kind,identity-mapped physical (UEFI boot services era; no virt2phys anywhere),design property + unique ExitBootServices @0x34EA0
+alignment guarantee,4KiB (EFI page allocator only; no 2MiB mask/realignment in helper or loader),helper full disassembly + LOAD_MAP01 unique-offset evidence
+ImageBuffer phys residue,runtime UNKNOWN,static limit
+stock alignment,UNKNOWN (empirical pass in observed boots only),K1_BOOT_LOAD_ALIGN02_CORR01_REPORT.md §0
+prep10 alignment,UNKNOWN (requires residue 0x180000),report formula
+ACK source commit pin,PASS 40-digit 8ad08f75ddf056e1ee600e1339e0463c5fcbdc9a,git rev-parse HEAD in a31-apply
+head.S text_offset slot,CONFIRMED .quad 0 @L59 IS the text_offset slot; no _kernel_offset_le symbol in this tree,ack_head_header_source_resolution.md
+kernel_size/flags generation,CONFIRMED DEFINE_IMAGE_LE64(_end-_text)=45547520 __HEAD_FLAGS=0xA,image.h L37-66
+config RELOCATABLE/RANDOMIZE_BASE,PARTIAL (build config file not found locally),report §5
+TEXT_OFFSET_0x80000_FIX,CONDITIONAL (source-level change affects __PHYS_OFFSET and relocation; needs full rebuild),ack_head_header_source_resolution.md
+BOOT_WRITE_GATE,HOLD,K1_BOOT_LOAD_ALIGN02_CORR01_REPORT.md §0
+FINAL_RESULT,ALIGNMENT_UNKNOWN,K1_BOOT_LOAD_ALIGN02_CORR01_REPORT.md §0
+DEVICE_OPERATIONS,NONE,offline only
